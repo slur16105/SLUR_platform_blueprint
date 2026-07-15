@@ -1,0 +1,101 @@
+# generated: 2026-07-15
+# last_updated: 2026-07-15
+# project: SLUR_platform_blueprint
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; sprint-status surfaces open ones
+
+generated: 2026-07-15
+last_updated: 2026-07-15
+project: SLUR_platform_blueprint
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: 기반과 계정
+  epic-1: backlog
+  1-1-walking-skeleton: backlog            # 걷는 뼈대 (프로젝트 골격과 배포)
+  1-2-email-auth-api: backlog              # 이메일 가입·로그인 API
+  1-3-kakao-login: backlog                 # 카카오 로그인
+  1-4-rbac: backlog                        # 역할과 권한 분기 (RBAC)
+  1-5-flutter-login: backlog               # Flutter 로그인 화면
+  1-6-web-login-role: backlog              # 웹 로그인과 Role 분기
+  epic-1-retrospective: optional
+
+  # Epic 2: 입점
+  epic-2: backlog
+  2-1-seller-application: backlog          # 입점 신청
+  2-2-admin-approval: backlog              # 관리자 입점 승인·반려
+  2-3-seller-shipping-fee: backlog         # 판매자 배송비 설정
+  epic-2-retrospective: optional
+
+  # Epic 3: 상품 — 등록과 진열
+  epic-3: backlog
+  3-1-category-management: backlog         # 카테고리 관리
+  3-2-product-create-images: backlog       # 상품 등록 — 기본 정보와 이미지
+  3-3-variant-grid-stock: backlog          # 옵션 조합 그리드와 재고
+  3-4-seller-product-management: backlog   # 판매자 상품 관리
+  3-5-buyer-product-browse: backlog        # 구매자 상품 목록·상세
+  epic-3-retrospective: optional
+
+  # Epic 4: 구매 — 장바구니부터 주문·취소까지
+  epic-4: backlog
+  4-1-cart: backlog                        # 장바구니
+  4-2-order-model-shipping-calc: backlog   # 주문 데이터 모델과 배송비 계산 (주문서 미리보기)
+  4-3-order-state-engine: backlog          # 주문 상태 전이 엔진
+  4-4-order-creation: backlog              # 주문 생성
+  4-5-auto-cancel: backlog                 # 미입금 자동취소
+  4-6-buyer-cancel: backlog                # 구매자 취소
+  epic-4-retrospective: optional
+
+  # Epic 5: 주문 운영 — 세 역할의 주문 화면
+  epic-5: backlog
+  5-1-buyer-order-history: backlog         # 구매자 주문내역·상세
+  5-2-admin-payment-confirm: backlog       # 관리자 입금 확인
+  5-3-seller-order-shipping: backlog       # 판매자 주문관리와 배송 처리
+  5-4-seller-dashboard: backlog            # 판매자 대시보드
+  5-5-admin-order-intervention: backlog    # 관리자 주문 개입
+  5-6-admin-lookup: backlog                # 관리자 조회 (회원·판매자·상품)
+  epic-5-retrospective: optional
+
+  # Epic 6: 법적 고지와 오픈 준비
+  epic-6: backlog
+  6-1-legal-pages-footer: backlog          # 약관·개인정보처리방침과 푸터
+  6-2-seller-info-disclosure: backlog      # 중개자 지위·판매자 신원정보 노출
+  epic-6-retrospective: optional
