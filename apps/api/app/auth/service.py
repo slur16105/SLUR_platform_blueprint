@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.kakao import fetch_identity
-from app.auth.models import AuthProvider, RefreshToken, User
+from app.auth.models import AuthProvider, RefreshToken, User, UserRole
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.security import CODE_UNAUTHORIZED, create_access_token
@@ -38,7 +38,13 @@ def _hash_refresh(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+async def get_roles(session: AsyncSession, user_id: uuid.UUID) -> list[str]:
+    rows = await session.scalars(select(UserRole.role).where(UserRole.user_id == user_id))
+    return sorted(rows)
+
+
 async def _issue_tokens(session: AsyncSession, user_id: uuid.UUID) -> tuple[str, str]:
+    roles = await get_roles(session, user_id)  # 발급 시점의 역할을 claim에 (반영은 다음 토큰부터)
     raw = secrets.token_urlsafe(48)
     session.add(
         RefreshToken(
@@ -52,7 +58,7 @@ async def _issue_tokens(session: AsyncSession, user_id: uuid.UUID) -> tuple[str,
     except IntegrityError as exc:  # token_hash 충돌 등 극히 드문 경우 — 원인을 왜곡하지 않는다
         await session.rollback()
         raise AppError("internal_error", "잠시 후 다시 시도해 주세요.", status_code=500) from exc
-    return create_access_token(user_id), raw
+    return create_access_token(user_id, roles), raw
 
 
 async def signup(session: AsyncSession, email: str, password: str, name: str, phone: str | None) -> tuple[str, str]:

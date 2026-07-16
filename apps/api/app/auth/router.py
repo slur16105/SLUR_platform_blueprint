@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import service
 from app.auth.schemas import KakaoLoginRequest, LoginRequest, MeResponse, RefreshRequest, SignupRequest, TokenResponse
 from app.core.db import get_session
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id, get_token_payload
 
 router = APIRouter(prefix="/auth")
 
@@ -38,6 +38,11 @@ async def logout(body: RefreshRequest, session: AsyncSession = Depends(get_sessi
 async def kakao_login(body: KakaoLoginRequest, session: AsyncSession = Depends(get_session)) -> TokenResponse:
     access, refresh = await service.kakao_login(session, body.code, body.redirect_uri)
     return TokenResponse(access_token=access, refresh_token=refresh)
+
+
+@router.get("/roles")
+async def roles(payload: dict = Depends(get_token_payload)) -> dict:
+    return {"roles": payload.get("roles") or []}  # 빈 배열 = 구매자 (암묵 기본)
 
 
 @router.get("/me", response_model=MeResponse)
