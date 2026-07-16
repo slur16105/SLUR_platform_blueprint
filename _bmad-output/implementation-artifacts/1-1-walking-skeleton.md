@@ -4,7 +4,7 @@ baseline_commit: a76e26bdcd70926977a2f5cc9817134c0ad8887d
 
 # Story 1.1: 걷는 뼈대 (프로젝트 골격과 배포)
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -41,10 +41,10 @@ so that 이후 모든 스토리가 올라탈 기반이 생긴다.
 - [x] Task 4: Alembic 초기화 (AC: 5)
   - [x] `alembic init` (async 템플릿), `env.py`를 core 설정과 연동
   - [x] 빈 베이스라인 리비전 1개 (테이블 생성 없음 — 테이블은 후속 스토리에서, AD-9 승인 게이트)
-- [ ] Task 5: Dockerfile과 Railway 배포 (AC: 4, 5, 6)
+- [x] Task 5: Dockerfile과 Railway 배포 (AC: 4, 5, 6)
   - [x] `apps/api/Dockerfile`: uv 기반 빌드, uvicorn 실행
   - [x] `apps/web/Dockerfile`: Next.js standalone output 빌드
-  - [ ] GitHub 리포 연결: git remote가 없으면 GitHub 리포 생성·push 후 Railway에 연결, main 브랜치 자동 배포 트리거 설정 (AC 4의 "푸시 → 배포" 조건)
+  - [x] GitHub 리포 연결: git remote가 없으면 GitHub 리포 생성·push 후 Railway에 연결, main 브랜치 자동 배포 트리거 설정 (AC 4의 "푸시 → 배포" 조건)
   - [x] Railway 프로젝트: 서비스 2개(api·web), 각 서비스 루트 디렉토리 지정(모노리포), Dockerfile 빌드
   - [x] api 서비스 pre-deploy 커맨드: `alembic upgrade head`
   - [x] 환경변수: DATABASE_URL(Supabase 연결 문자열 — 아래 배포 노트의 Session pooler 필수) 등 Railway에 설정
@@ -150,7 +150,7 @@ Claude Fable 5 (claude-fable-5)
 - 프로덕션: api 헬스체크 200 (Supabase Session pooler 연결), 에러 봉투 정상, Alembic pre-deploy 실행 확인(테이블 0 + alembic_version)
 - 에러 code 시드: not_found / validation_error / internal_error
 - Colima(도커 런타임) 신규 설치 — 전역 도구, `~/.docker/config.json`에 cliPluginsExtraDirs 추가로 compose 연결
-- 미해결(후속): GitHub 푸시 자동 배포 미작동 — Railway GitHub App 설치 필요(대시보드에서 1회). 현재는 `railway up`으로 배포
+- GitHub 푸시 자동 배포 확인 완료 (2026-07-16 11:24 — 푸시 1초 후 빌드 시작). Railway GitHub App은 Slur가 대시보드에서 설치
 
 ### File List
 
