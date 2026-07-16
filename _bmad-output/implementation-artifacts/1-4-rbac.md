@@ -4,7 +4,7 @@ baseline_commit: 91217144b9d0fb0c65c19f024b38c1496f433e61
 
 # Story 1.4: 역할과 권한 분기 (RBAC)
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -34,8 +34,8 @@ so that 클라이언트를 우회한 권한 상승이 불가능하다.
   - [x] 가입 직후 access 토큰의 roles claim 없음 → 보호 엔드포인트(테스트용 probe 라우트) 403 `forbidden`
   - [x] admin 부여 후 refresh → 새 access로 통과 / 이전 access는 여전히 403 (반영 시점 규칙 검증)
   - [x] 부트스트랩 멱등성
-- [ ] Task 5: 배포·검증
-  - [ ] push 자동 배포 → 프로덕션에서 Slur 계정 가입 + 부트스트랩 → refresh 후 `GET /auth/roles`에 "admin" 확인 (관리자 전용 실 엔드포인트는 2.2에서 — 이 스토리의 프로덕션 검증 범위는 여기까지)
+- [x] Task 5: 배포·검증
+  - [x] push 자동 배포 → 프로덕션에서 Slur 계정 가입 + 부트스트랩 → refresh 후 `GET /auth/roles`에 "admin" 확인 (관리자 전용 실 엔드포인트는 2.2에서 — 이 스토리의 프로덕션 검증 범위는 여기까지)
 
 ## Dev Notes
 
