@@ -5,6 +5,7 @@ import pytest
 import respx
 
 TOKEN_URL = "https://kauth.kakao.com/oauth/token"
+TOKEN_INFO_URL = "https://kapi.kakao.com/v1/user/access_token_info"
 ME_URL = "https://kapi.kakao.com/v2/user/me"
 REQ = {"code": "auth-code", "redirect_uri": "http://localhost:3000/auth/kakao/callback"}
 
@@ -159,3 +160,52 @@ async def test_kakao_weird_identity_shapes(client, clean_auth_tables):
     res = await client.post("/api/v1/auth/kakao", json=REQ)
     me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {res.json()['access_token']}"})
     assert len(me.json()["name"]) == 100
+
+
+NATIVE_REQ = {"kakao_access_token": "kakao-native-at"}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_native_login(client, clean_auth_tables):
+    respx.mock.get(TOKEN_INFO_URL).mock(return_value=httpx.Response(200, json={"id": 12345, "app_id": 999999}))
+    respx.mock.get(ME_URL).mock(
+        return_value=httpx.Response(200, json={"id": 12345, "kakao_account": {"profile": {"nickname": "네이티브"}}})
+    )
+    res = await client.post("/api/v1/auth/kakao/native", json=NATIVE_REQ)
+    assert res.status_code == 200
+    me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {res.json()['access_token']}"})
+    assert me.json()["name"] == "네이티브"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_native_app_id_mismatch_401(client, clean_auth_tables):
+    respx.mock.get(TOKEN_INFO_URL).mock(return_value=httpx.Response(200, json={"id": 12345, "app_id": 111}))
+    res = await client.post("/api/v1/auth/kakao/native", json=NATIVE_REQ)
+    assert res.status_code == 401
+    assert res.json()["code"] == "invalid_kakao_token"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_native_invalid_token_401(client, clean_auth_tables):
+    respx.mock.get(TOKEN_INFO_URL).mock(return_value=httpx.Response(401, json={"code": -401}))
+    res = await client.post("/api/v1/auth/kakao/native", json=NATIVE_REQ)
+    assert res.status_code == 401
+    assert res.json()["code"] == "invalid_kakao_token"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_native_same_account_as_code_flow(client, clean_auth_tables):
+    # 코드 플로우로 가입한 카카오 계정 → 네이티브로 재로그인해도 같은 계정
+    mock_kakao(respx.mock, kakao_id=777)
+    r1 = await client.post("/api/v1/auth/kakao", json=REQ)
+    me1 = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {r1.json()['access_token']}"})
+
+    respx.mock.get(TOKEN_INFO_URL).mock(return_value=httpx.Response(200, json={"id": 777, "app_id": 999999}))
+    respx.mock.get(ME_URL).mock(return_value=httpx.Response(200, json={"id": 777, "kakao_account": {}}))
+    r2 = await client.post("/api/v1/auth/kakao/native", json=NATIVE_REQ)
+    me2 = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {r2.json()['access_token']}"})
+    assert me1.json()["id"] == me2.json()["id"]

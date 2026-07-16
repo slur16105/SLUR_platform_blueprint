@@ -11,7 +11,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.kakao import fetch_identity
+from app.auth.kakao import KakaoIdentity, fetch_identity, fetch_identity_from_token
 from app.auth.models import AuthProvider, RefreshToken, User, UserRole
 from app.core.config import get_settings
 from app.core.errors import AppError
@@ -142,8 +142,14 @@ CODE_EMAIL_CONFLICT = "email_conflict"
 
 
 async def kakao_login(session: AsyncSession, code: str, redirect_uri: str) -> tuple[str, str]:
-    identity = await fetch_identity(code, redirect_uri)
+    return await _kakao_login_with_identity(session, await fetch_identity(code, redirect_uri))
 
+
+async def kakao_native_login(session: AsyncSession, kakao_access_token: str) -> tuple[str, str]:
+    return await _kakao_login_with_identity(session, await fetch_identity_from_token(kakao_access_token))
+
+
+async def _kakao_login_with_identity(session: AsyncSession, identity: KakaoIdentity) -> tuple[str, str]:
     link = await session.scalar(
         select(AuthProvider).where(
             AuthProvider.provider == "kakao", AuthProvider.provider_user_id == identity.provider_user_id

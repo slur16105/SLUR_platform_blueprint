@@ -7,6 +7,7 @@ os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://slur:slur@localhost:
 os.environ.setdefault("JWT_SECRET", "test-secret-minimum-32-characters-long!")
 os.environ.setdefault("KAKAO_REST_API_KEY", "test-kakao-key")
 os.environ.setdefault("KAKAO_CLIENT_SECRET", "test-kakao-secret")
+os.environ.setdefault("KAKAO_APP_ID", "999999")
 
 
 @pytest.fixture

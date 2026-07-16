@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # 카카오 OAuth — 미설정이어도 앱은 부팅되고, 카카오 로그인만 502 (전면 장애 방지)
     kakao_rest_api_key: str = ""
     kakao_client_secret: str = ""
+    kakao_app_id: int = 0  # 콘솔 앱 ID — 네이티브 토큰 app_id 검증용
     # 서버측 redirect_uri allowlist — 콘솔 등록 목록에만 의존하지 않는다 (코드 주입 방어)
     kakao_redirect_uris: list[str] = ["http://localhost:3000/auth/kakao/callback"]
 

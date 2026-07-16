@@ -43,3 +43,7 @@ class MeResponse(BaseModel):
 class KakaoLoginRequest(BaseModel):
     code: str = Field(min_length=1, max_length=512)
     redirect_uri: str = Field(min_length=1, max_length=512)
+
+
+class KakaoNativeLoginRequest(BaseModel):
+    kakao_access_token: str = Field(min_length=1, max_length=512)
