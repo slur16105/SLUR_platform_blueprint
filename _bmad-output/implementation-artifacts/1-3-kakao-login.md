@@ -19,17 +19,17 @@ so that 비밀번호 없이 바로 쇼핑을 시작할 수 있다.
   - [ ] `auth_providers` Alembic 리비전
 - [ ] Task 2: 카카오 OAuth 연동 (AC: 1)
   - [ ] 의존성: `httpx`를 런타임 의존성으로 승격 (현재 dev 전용)
-  - [ ] `core/config.py`: `kakao_rest_api_key`(환경변수 필수), `kakao_client_secret`(선택)
+  - [ ] `core/config.py`: `kakao_rest_api_key`·`kakao_client_secret` (신규 카카오 앱은 client_secret **필수** — 토큰 요청에 포함, 누락 시 KOE010)
   - [ ] `auth/service.py`: 인가 코드 → kauth.kakao.com 토큰 교환 → kapi.kakao.com/v2/user/me 사용자 조회. **카카오 access token은 신원 확인 즉시 폐기 — 저장 금지 (AD-5)**
-  - [ ] 카카오 API 오류(무효 코드, 네트워크)는 401 `invalid_kakao_code` 또는 502 `kakao_unavailable` 봉투로
+  - [ ] 오류 구분: 카카오 4xx(KOE320 무효 코드 등) → 401 `invalid_kakao_code` / 카카오 5xx·타임아웃 → 502 `kakao_unavailable`
 - [ ] Task 3: 계정 생성·연결 로직 (AC: 1, 2)
   - [ ] `POST /api/v1/auth/kakao` — 요청 `{"code": str, "redirect_uri": str}`, 응답은 기존 TokenResponse (1.2와 동일 계약)
   - [ ] (provider='kakao', provider_user_id=카카오 id) 존재 → 기존 계정 로그인
-  - [ ] 미존재 + 카카오가 **인증된(verified) 이메일** 제공 + 같은 이메일 계정 존재 → 그 계정에 카카오 연결 (자동 링크)
-  - [ ] 그 외 → 새 계정 생성 (email은 카카오 제공 시만, name은 카카오 닉네임, password_hash NULL)
+  - [ ] 미존재 + 카카오 이메일(verified·valid)이 기존 계정과 충돌 → **409 `email_conflict`** "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요." (자동 링크 금지 — 아래 보안 근거)
+  - [ ] 그 외 → 새 계정 생성 — email은 카카오가 verified+valid로 제공하고 충돌 없을 때만 저장(아니면 NULL), name은 카카오 닉네임(미동의 시 "카카오 사용자" 폴백), password_hash NULL
   - [ ] 트랜잭션: 연결·생성과 refresh 발급이 한 트랜잭션
 - [ ] Task 4: 테스트 (AC: 전체)
-  - [ ] 카카오 API는 respx(httpx mock)로 모킹 — 신규 가입 / 재로그인(계정 1개 유지) / verified 이메일 자동 링크 / unverified 이메일은 새 계정 / 무효 코드 401
+  - [ ] `respx`를 dev 의존성 추가. 모킹 시나리오 — 신규 가입 / 재로그인(계정 1개 유지) / 이메일 충돌 409 / unverified 이메일은 email NULL 새 계정 / 닉네임 미동의 폴백 / 무효 코드 401 / 카카오 타임아웃 502
 - [ ] Task 5: 배포·검증
   - [ ] KAKAO_REST_API_KEY Railway 변수 + railway.ts preserve() (**Slur 제공 필요 — 카카오 개발자 앱**)
   - [ ] 프로덕션 검증은 실 인가 코드가 필요하므로 Story 1.5(Flutter 로그인 화면)에서 E2E로 수행 — 이 스토리는 배포+모킹 테스트까지
@@ -52,12 +52,13 @@ so that 비밀번호 없이 바로 쇼핑을 시작할 수 있다.
 
 - 토큰 교환: `POST https://kauth.kakao.com/oauth/token` (grant_type=authorization_code, client_id=REST API 키, redirect_uri, code)
 - 사용자 조회: `GET https://kapi.kakao.com/v2/user/me` (Bearer) → `id`(회원번호), `kakao_account.email` + `is_email_verified`, `profile.nickname`
-- 이메일은 동의 항목 — 미동의 시 없음 (users.email NULL 허용이 이 대비)
+- 이메일은 동의 항목 — 미동의 시 없음 (users.email NULL 허용이 이 대비). `is_email_verified`와 `is_email_valid` 둘 다 true일 때만 이메일을 신뢰
+- **카카오 앱 설정 요건 (Slur)**: 동의항목에서 닉네임(profile_nickname)·이메일(account_email) 활성화 필요. 이메일 동의항목은 앱 유형에 따라 추가 신청(영업일 3~5일)이 필요할 수 있음 — 이메일 없이도 로그인은 동작하므로 차단 요소는 아님
 - redirect_uri는 카카오 앱 설정에 등록된 것과 일치해야 함 — Flutter/웹 각각 등록 필요 (1.5·1.6에서)
 
-### 자동 링크 정책 (보안 근거)
+### 자동 링크 금지 (보안 근거 — 검증 리뷰에서 확정)
 
-같은 이메일 계정 자동 연결은 **카카오가 이메일을 verified로 표시할 때만**. unverified 이메일로 링크하면 타인 이메일을 카카오에 등록해 계정 탈취가 가능하므로 새 계정으로 분리한다. `[ASSUMPTION]` 이 정책은 표준 보안 관행 — Slur 승인 시 함께 확인.
+v1은 이메일이 같아도 계정을 **자동 연결하지 않는다**. 우리 이메일 가입은 본인 확인이 없으므로(이메일 인증 생략, FR-4), 공격자가 피해자 이메일로 먼저 가입해두면 피해자의 카카오 로그인이 공격자 계정에 연결되는 선점 탈취(pre-account-takeover)가 성립하기 때문. 충돌 시 409로 이메일 로그인을 안내하고, 계정 연결 기능은 필요 확인 시 별도 스토리로 (본인 확인 절차와 함께).
 
 ### 아키텍처·승계
 
