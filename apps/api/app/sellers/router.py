@@ -8,7 +8,7 @@ from app.core.errors import AppError
 from app.core.security import get_current_user_id, require_role
 from app.products import service as products_service
 from app.products import storage as products_storage
-from app.products.schemas import PresignRequest, ProductCreate, ProductImageResponse, ProductResponse, VariantResponse, VariantsReplace
+from app.products.schemas import PresignRequest, ProductCreate, ProductUpdate, ProductImageResponse, ProductResponse, VariantResponse, VariantsReplace
 from app.sellers import service
 from app.sellers.schemas import ApplicationRequest, ApplicationResponse, SellerMeResponse, ShippingFees
 
@@ -111,6 +111,20 @@ async def replace_variants(
 ) -> ProductResponse:
     seller = await service.get_my_seller(session, user_id)
     product = await products_service.replace_variants(session, seller.id, product_id, body.variants)
+    images = (await products_service.get_product_images(session, [product.id])).get(product.id, [])
+    variants = (await products_service.get_variants(session, [product.id])).get(product.id, [])
+    return _product_response(product, images, variants)
+
+
+@router.patch("/products/{product_id}", response_model=ProductResponse)
+async def update_product(
+    product_id: uuid.UUID,
+    body: ProductUpdate,
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+) -> ProductResponse:
+    seller = await service.get_my_seller(session, user_id)
+    product = await products_service.update_product(session, seller.id, product_id, body)
     images = (await products_service.get_product_images(session, [product.id])).get(product.id, [])
     variants = (await products_service.get_variants(session, [product.id])).get(product.id, [])
     return _product_response(product, images, variants)

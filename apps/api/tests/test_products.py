@@ -120,3 +120,24 @@ async def test_malformed_image_path_403(client, clean_products):
         res = await client.post("/api/v1/sellers/products",
             json={**_product_body(sid, cid), "image_paths": [bad]}, headers=_auth(t))
         assert res.status_code == 403, bad
+
+
+@pytest.mark.asyncio
+async def test_update_product(client, clean_products):
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t, name="수정테스트")
+    t, sid = await _seller_with_prefix(client, admin_t)
+    res = await client.post("/api/v1/sellers/products", json=_product_body(sid, cid), headers=_auth(t))
+    pid = res.json()["id"]
+
+    res = await client.patch(f"/api/v1/sellers/products/{pid}", json={"base_price": 4500, "status": "hidden"}, headers=_auth(t))
+    assert res.status_code == 200
+    assert res.json()["base_price"] == 4500 and res.json()["status"] == "hidden"
+    assert res.json()["name"] == "결 좋은 엽서"  # 부분 수정 — 나머지 유지
+
+    res = await client.patch(f"/api/v1/sellers/products/{pid}", json={"status": "판매중"}, headers=_auth(t))
+    assert res.status_code == 422  # Literal 밖
+
+    import uuid as u
+    res = await client.patch(f"/api/v1/sellers/products/{u.uuid4()}", json={"name": "x"}, headers=_auth(t))
+    assert res.status_code == 404

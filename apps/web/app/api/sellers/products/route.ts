@@ -15,6 +15,17 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ content_type: body.content_type }),
     });
   }
+  if (body.op === "patch") {
+    if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/.test(body.id)) {
+      return Response.json({ code: "validation_error", message: "입력값이 올바르지 않습니다.", details: [] }, { status: 422 });
+    }
+    const { op, id, ...fields } = body;
+    return proxyWithRefresh(req, `/api/v1/sellers/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+  }
   if (body.op === "variants") {
     if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/.test(body.id)) {
       return Response.json({ code: "validation_error", message: "입력값이 올바르지 않습니다.", details: [] }, { status: 422 });

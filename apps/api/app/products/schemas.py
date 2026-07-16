@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -117,3 +118,21 @@ class ProductResponse(BaseModel):
     category_id: uuid.UUID
     images: list[ProductImageResponse] = []
     variants: list[VariantResponse] = []
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    base_price: int | None = Field(default=None, ge=0, le=100_000_000)
+    description: str | None = Field(default=None, min_length=1, max_length=5000)
+    category_id: uuid.UUID | None = None
+    status: Literal["active", "soldout", "hidden"] | None = None
+
+    @field_validator("name", "description")
+    @classmethod
+    def not_blank(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("필수 입력입니다.")
+        return v

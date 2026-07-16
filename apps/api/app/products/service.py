@@ -193,3 +193,21 @@ def check_purchasable(product: Product, variant: Variant, qty: int) -> bool:
         and qty > 0
         and variant.stock >= qty
     )
+
+
+async def update_product(session: AsyncSession, seller_id: uuid.UUID, product_id: uuid.UUID, data) -> Product:
+    product = await session.scalar(select(Product).where(Product.id == product_id, Product.seller_id == seller_id))
+    if product is None:
+        raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
+    fields = data.model_dump(exclude_none=True)
+    if "category_id" in fields:
+        if await session.get(Category, fields["category_id"]) is None:
+            raise AppError("not_found", "카테고리를 찾을 수 없습니다.", status_code=404)
+    for key, value in fields.items():
+        setattr(product, key, value)
+    try:
+        await session.commit()
+    except IntegrityError as exc:  # 카테고리 동시 삭제 레이스
+        await session.rollback()
+        raise AppError("not_found", "카테고리를 찾을 수 없습니다.", status_code=404) from exc
+    return product
