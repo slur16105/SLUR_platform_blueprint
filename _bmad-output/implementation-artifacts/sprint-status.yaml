@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-16  # 3-2 done
+last_updated: 2026-07-17  # 3-3 done
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -69,7 +69,7 @@ development_status:
   epic-3: in-progress
   3-1-category-management: done            # 카테고리 관리
   3-2-product-create-images: done          # 상품 등록 — 기본 정보와 이미지
-  3-3-variant-grid-stock: in-progress      # 옵션 조합 그리드와 재고
+  3-3-variant-grid-stock: done             # 옵션 조합 그리드와 재고
   3-4-seller-product-management: backlog   # 판매자 상품 관리
   3-5-buyer-product-browse: backlog        # 구매자 상품 목록·상세
   epic-3-retrospective: optional

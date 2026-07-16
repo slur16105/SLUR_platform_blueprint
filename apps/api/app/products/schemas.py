@@ -57,6 +57,18 @@ class VariantsReplace(BaseModel):
         combos = [(x.option1_value.strip(), x.option2_value.strip()) for x in v]
         if len(set(combos)) != len(combos):
             raise ValueError("중복된 옵션 조합이 있습니다.")
+        # 그리드 정합성: 축 이름은 전 행 동일, 값과 이름은 짝으로 (혼재 데이터가 구매자 UI로 상속되는 것 방지)
+        names1 = {x.option1_name.strip() for x in v}
+        names2 = {x.option2_name.strip() for x in v}
+        if len(names1) > 1 or len(names2) > 1:
+            raise ValueError("옵션 이름이 행마다 다릅니다. 조합을 다시 만들어 주세요.")
+        n1, n2 = names1.pop(), names2.pop()
+        for x in v:
+            has_v1, has_v2 = bool(x.option1_value.strip()), bool(x.option2_value.strip())
+            if bool(n1) != has_v1 or bool(n2) != has_v2:
+                raise ValueError("옵션 이름과 값이 짝이 맞지 않습니다.")
+        if not n1 and len(v) > 1:
+            raise ValueError("옵션 없는 상품의 조합은 1개여야 합니다.")
         return v
 
 

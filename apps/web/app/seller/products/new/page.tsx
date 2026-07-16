@@ -23,6 +23,7 @@ export default function NewProductPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [createdId, setCreatedId] = useState<string | null>(null); // variants 실패 후 재시도 시 POST 중복 방지
 
   useEffect(() => {
     fetch("/api/admin/categories").then(async (r) => {
@@ -74,8 +75,8 @@ export default function NewProductPage() {
   }
 
   function buildRows() {
-    const v1 = axis1.values.split(",").map((v) => v.trim()).filter(Boolean);
-    const v2 = axis2.values.split(",").map((v) => v.trim()).filter(Boolean);
+    const v1 = [...new Set(axis1.values.split(",").map((v) => v.trim()).filter(Boolean))];
+    const v2 = [...new Set(axis2.values.split(",").map((v) => v.trim()).filter(Boolean))];
     if (v1.length === 0) return void setError("옵션 1의 값을 콤마로 구분해 입력해 주세요.");
     const combos = v2.length > 0 ? v1.flatMap((a) => v2.map((b) => [a, b] as const)) : v1.map((a) => [a, ""] as const);
     if (combos.length > 100) return void setError("옵션 조합은 최대 100개까지입니다.");
@@ -88,23 +89,28 @@ export default function NewProductPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/sellers/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          base_price: Number(price),
-          description: description.trim(),
-          category_id: categoryId,
-          image_paths: images.map((i) => i.path),
-          stock: useOptions ? 0 : Number(stock),
-        }),
-      });
-      const data = await res.json();
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (!res.ok) {
-        setError(data.details?.[0]?.reason ?? data.message ?? "등록에 실패했습니다.");
-        return;
+      let productId = createdId;
+      if (!productId) {
+        const res = await fetch("/api/sellers/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            base_price: Number(price),
+            description: description.trim(),
+            category_id: categoryId,
+            image_paths: images.map((i) => i.path),
+            stock: useOptions ? 0 : Number(stock),
+          }),
+        });
+        const data = await res.json();
+        if (res.status === 401) return void (window.location.href = "/login");
+        if (!res.ok) {
+          setError(data.details?.[0]?.reason ?? data.message ?? "등록에 실패했습니다.");
+          return;
+        }
+        productId = data.id as string;
+        setCreatedId(productId);
       }
       if (useOptions && rows.length > 0) {
         const vr = await fetch("/api/sellers/products", {
@@ -112,11 +118,11 @@ export default function NewProductPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             op: "variants",
-            id: data.id,
+            id: productId,
             variants: rows.map((r) => ({
               option1_name: axis1.name.trim(), option1_value: r.option1_value,
               option2_name: r.option2_value ? axis2.name.trim() : "", option2_value: r.option2_value,
-              extra_price: Number(r.extra_price), stock: Number(r.stock), is_active: r.is_active,
+              extra_price: Number(r.extra_price) || 0, stock: Number(r.stock) || 0, is_active: r.is_active,
             })),
           }),
         });

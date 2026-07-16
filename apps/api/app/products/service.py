@@ -141,8 +141,11 @@ async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_
     product = await session.scalar(
         select(Product).where(Product.id == product_id, Product.seller_id == seller_id)
     )
-    if product is None:  # 타인 상품·미존재 구분 없이 (존재 노출 방지)
+    if product is None:  # 타인 상품·미존재 구분 없이 404 (존재 노출 방지 — 스펙의 403에서 의도적 변경)
         raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
+    for item in items:  # 음수 실판매가 방지 (base + extra >= 0)
+        if product.base_price + item.extra_price < 0:
+            raise AppError("validation_error", "추가금액이 상품 가격보다 낮을 수 없습니다.", status_code=422)
     from sqlalchemy import delete as sqldelete
 
     await session.execute(sqldelete(Variant).where(Variant.product_id == product_id))
@@ -157,7 +160,9 @@ async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
-        raise AppError(CODE_DUPLICATE_VARIANT, "중복된 옵션 조합이 있습니다.", status_code=422) from exc
+        if "variants" in str(exc.orig) and "unique" in str(exc.orig).lower():
+            raise AppError(CODE_DUPLICATE_VARIANT, "중복된 옵션 조합이 있습니다.", status_code=422) from exc
+        raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404) from exc  # 동시 상품 삭제 등
     return product
 
 
@@ -174,7 +179,11 @@ async def get_variants(session: AsyncSession, product_ids: list[uuid.UUID]) -> d
 
 
 def check_purchasable(product: Product, variant: Variant, qty: int) -> bool:
-    """AD-10 단일 술어 — "이 조합을 지금 qty개 살 수 있는가". carts·orders는 이 함수만 쓴다."""
+    """AD-10 단일 술어 — "이 조합을 지금 qty개 살 수 있는가". carts·orders는 이 함수만 쓴다.
+
+    주의: 표시·사전 검증용 bool이다. 실제 재고 차감은 반드시 조건부 UPDATE(stock >= qty)로 —
+    이 술어 통과 후 차감하는 check-then-act는 oversell 레이스 (AD-4).
+    """
     return (
         product is not None
         and variant is not None
