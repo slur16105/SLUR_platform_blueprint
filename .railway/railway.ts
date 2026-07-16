@@ -27,6 +27,7 @@ export default defineRailway(() => {
     replicas: 1,
     env: {
       NODE_ENV: "production",
+      API_BASE_URL: "https://api-production-8bfb.up.railway.app",
     },
   });
 
