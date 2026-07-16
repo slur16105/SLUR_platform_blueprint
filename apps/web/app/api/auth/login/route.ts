@@ -4,9 +4,14 @@ import { API_BASE, COOKIE_ACCESS, COOKIE_REFRESH, COOKIE_ROLE, cookieOptions } f
 
 export async function POST(req: NextRequest) {
   // login-CSRF 방어: 크로스사이트 폼 POST 차단
+  // 프록시(Railway) 뒤에서는 nextUrl.host가 내부 호스트일 수 있어 forwarded 헤더까지 비교
   const origin = req.headers.get("origin");
-  if (origin && new URL(origin).host !== req.nextUrl.host) {
-    return NextResponse.json({ code: "forbidden", message: "허용되지 않은 요청입니다.", details: [] }, { status: 403 });
+  if (origin) {
+    const originHost = new URL(origin).host;
+    const hosts = [req.headers.get("x-forwarded-host"), req.headers.get("host"), req.nextUrl.host].filter(Boolean);
+    if (!hosts.includes(originHost)) {
+      return NextResponse.json({ code: "forbidden", message: "허용되지 않은 요청입니다.", details: [] }, { status: 403 });
+    }
   }
   const body = await req.json().catch(() => null);
   if (!body) {
