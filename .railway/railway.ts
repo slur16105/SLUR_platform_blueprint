@@ -13,6 +13,7 @@ export default defineRailway(() => {
       ENVIRONMENT: "production",
       // 시크릿 — 값은 Railway에만 존재 (railway variables로 설정). IaC는 존재만 선언
       DATABASE_URL: preserve(),
+      JWT_SECRET: preserve(),
     },
   });
 

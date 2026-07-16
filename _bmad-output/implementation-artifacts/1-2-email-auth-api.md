@@ -1,6 +1,10 @@
+---
+baseline_commit: 6624a7e9b1235eb3da0f668e307b927937cb37a8
+---
+
 # Story 1.2: 이메일 가입·로그인 API
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 
@@ -16,23 +20,23 @@ so that 계정으로 서비스를 이용할 수 있다.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: 스키마 승인과 마이그레이션 (AC: 1) — **AD-9 게이트: 아래 컬럼 초안을 Slur 승인 후 작성**
-  - [ ] `users`·`refresh_tokens` Alembic 리비전 (아래 승인된 초안대로)
+- [x] Task 1: 스키마 승인과 마이그레이션 (AC: 1) — **AD-9 게이트: 아래 컬럼 초안을 Slur 승인 후 작성**
+  - [x] `users`·`refresh_tokens` Alembic 리비전 (아래 승인된 초안대로)
   - [ ] 로컬 적용 + Railway pre-deploy로 프로덕션 적용 확인
-- [ ] Task 2: 보안 기반 (AC: 1, 3)
-  - [ ] 의존성 추가·핀: `argon2-cffi`(해시), `pyjwt`(JWT) — 사용자 승인 필요 시 명시
-  - [ ] `auth/service.py`: Argon2id 해시·검증, access JWT 발급(30분)·검증, refresh 토큰 발급(14일)·회전
-  - [ ] refresh 토큰은 **원문이 아니라 SHA-256 해시로 저장** (DB 유출 시에도 재사용 불가)
-  - [ ] `core/config.py`에 `jwt_secret`(환경변수 필수), 토큰 수명 설정 추가 — Railway에 JWT_SECRET 변수 설정
-- [ ] Task 3: 엔드포인트 (AC: 1, 2, 3)
-  - [ ] `POST /api/v1/auth/signup` — 이메일·비밀번호·이름·(선택)휴대폰. 성공 시 access+refresh 반환. 중복 이메일 → 409 `email_already_exists`
-  - [ ] `POST /api/v1/auth/login` — 실패 시 401 `invalid_credentials` (이메일 존재 여부를 구분해 노출하지 않는다)
-  - [ ] `POST /api/v1/auth/refresh` — 유효한 refresh로 새 access+refresh 발급(회전), 이전 refresh 폐기. 무효 토큰 → 401 `invalid_token`
-  - [ ] `POST /api/v1/auth/logout` — 해당 refresh 토큰 폐기(revoked_at)
-  - [ ] `GET /api/v1/auth/me` — access 토큰으로 본인 정보 조회
-- [ ] Task 4: 테스트 (AC: 전체)
-  - [ ] 가입 성공/중복(409)/검증 실패(422), 로그인 성공/실패(401), refresh 회전(이전 토큰 재사용 시 401), 로그아웃 후 refresh 거부, me 인증/무인증(401 `unauthorized`)
-  - [ ] 테스트 DB 격리: 각 테스트 후 생성 데이터 정리 (트랜잭션 롤백 or 테이블 truncate 픽스처)
+- [x] Task 2: 보안 기반 (AC: 1, 3)
+  - [x] 의존성 추가·핀: `argon2-cffi`(해시), `pyjwt`(JWT) — 사용자 승인 필요 시 명시
+  - [x] `auth/service.py`: Argon2id 해시·검증, access JWT 발급(30분)·검증, refresh 토큰 발급(14일)·회전
+  - [x] refresh 토큰은 **원문이 아니라 SHA-256 해시로 저장** (DB 유출 시에도 재사용 불가)
+  - [x] `core/config.py`에 `jwt_secret`(환경변수 필수), 토큰 수명 설정 추가 — Railway에 JWT_SECRET 변수 설정
+- [x] Task 3: 엔드포인트 (AC: 1, 2, 3)
+  - [x] `POST /api/v1/auth/signup` — 이메일·비밀번호·이름·(선택)휴대폰. 성공 시 access+refresh 반환. 중복 이메일 → 409 `email_already_exists`
+  - [x] `POST /api/v1/auth/login` — 실패 시 401 `invalid_credentials` (이메일 존재 여부를 구분해 노출하지 않는다)
+  - [x] `POST /api/v1/auth/refresh` — 유효한 refresh로 새 access+refresh 발급(회전), 이전 refresh 폐기. 무효 토큰 → 401 `invalid_token`
+  - [x] `POST /api/v1/auth/logout` — 해당 refresh 토큰 폐기(revoked_at)
+  - [x] `GET /api/v1/auth/me` — access 토큰으로 본인 정보 조회
+- [x] Task 4: 테스트 (AC: 전체)
+  - [x] 가입 성공/중복(409)/검증 실패(422), 로그인 성공/실패(401), refresh 회전(이전 토큰 재사용 시 401), 로그아웃 후 refresh 거부, me 인증/무인증(401 `unauthorized`)
+  - [x] 테스트 DB 격리: 각 테스트 후 생성 데이터 정리 (트랜잭션 롤백 or 테이블 truncate 픽스처)
 - [ ] Task 5: 배포·검증 (AC: 전체)
   - [ ] JWT_SECRET Railway 변수 설정(railway.ts에 preserve 선언), push → 자동 배포
   - [ ] 프로덕션에서 가입→로그인→refresh→logout 시나리오 curl 검증 후 테스트 계정 정리

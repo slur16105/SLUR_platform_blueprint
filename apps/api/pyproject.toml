@@ -4,10 +4,12 @@ version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
     "alembic==1.18.*",
+    "argon2-cffi>=25.1.0",
     "asyncpg==0.31.*",
     "fastapi==0.139.*",
-    "pydantic==2.13.*",
+    "pydantic[email]==2.13.*",
     "pydantic-settings==2.14.*",
+    "pyjwt>=2.13.0",
     "sqlalchemy[asyncio]==2.0.51",
     "uvicorn[standard]==0.51.*",
 ]
@@ -21,4 +23,6 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
