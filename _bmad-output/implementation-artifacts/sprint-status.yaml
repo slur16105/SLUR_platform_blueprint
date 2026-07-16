@@ -61,7 +61,7 @@ development_status:
   # Epic 2: 입점
   epic-2: in-progress
   2-1-seller-application: done             # 입점 신청
-  2-2-admin-approval: backlog              # 관리자 입점 승인·반려
+  2-2-admin-approval: in-progress          # 관리자 입점 승인·반려
   2-3-seller-shipping-fee: backlog         # 판매자 배송비 설정
   epic-2-retrospective: optional
 

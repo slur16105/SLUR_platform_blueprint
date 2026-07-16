@@ -184,3 +184,15 @@ async def _kakao_login_with_identity(session: AsyncSession, identity: KakaoIdent
             raise AppError("service_unavailable", "잠시 후 다시 시도해 주세요.", status_code=503) from exc
         raise AppError(CODE_EMAIL_CONFLICT, "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요.", status_code=409) from exc
     return await _issue_tokens(session, user.id)
+
+
+async def grant_role(session: AsyncSession, user_id: uuid.UUID, role: str) -> None:
+    """역할 부여 (멱등). 반영은 다음 토큰 발급부터 — 호출부가 재로그인 안내 책임."""
+    existing = await session.scalar(select(UserRole).where(UserRole.user_id == user_id, UserRole.role == role))
+    if existing is not None:
+        return
+    session.add(UserRole(user_id=user_id, role=role))
+    try:
+        await session.flush()
+    except IntegrityError:  # 동시 부여 레이스 — 멱등 유지
+        await session.rollback()

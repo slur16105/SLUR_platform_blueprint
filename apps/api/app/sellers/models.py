@@ -39,3 +39,32 @@ class SellerApplication(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True  # 관리자 이력 보존
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class Seller(Base):
+    __tablename__ = "sellers"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False  # 계정당 1프로필
+    )
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("seller_applications.id", ondelete="RESTRICT"), nullable=False  # 승인 근거 보존
+    )
+    # 살아있는 프로필 — 신청서에서 복사, 이후 수정 가능 (신청서는 불변 이력)
+    brand_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    brand_intro: Mapped[str] = mapped_column(String(500), nullable=False)
+    company_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    representative_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    business_registration_number: Mapped[str] = mapped_column(String(10), nullable=False)
+    mail_order_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    business_address: Mapped[str] = mapped_column(String(255), nullable=False)
+    contact_phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    # 배송비 (원 단위 정수, 0=무료) — 입력 UI는 Story 2.3
+    base_shipping_fee: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
+    jeju_extra_fee: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
+    island_extra_fee: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
