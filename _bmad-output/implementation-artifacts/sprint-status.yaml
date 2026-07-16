@@ -71,7 +71,7 @@ development_status:
   3-2-product-create-images: done          # 상품 등록 — 기본 정보와 이미지
   3-3-variant-grid-stock: done             # 옵션 조합 그리드와 재고
   3-4-seller-product-management: in-progress # 판매자 상품 관리
-  3-5-buyer-product-browse: backlog        # 구매자 상품 목록·상세
+  3-5-buyer-product-browse: in-progress    # 구매자 상품 목록·상세
   epic-3-retrospective: optional
 
   # Epic 4: 구매 — 장바구니부터 주문·취소까지

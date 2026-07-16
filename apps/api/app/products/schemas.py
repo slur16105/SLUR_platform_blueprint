@@ -136,3 +136,35 @@ class ProductUpdate(BaseModel):
         if not v:
             raise ValueError("필수 입력입니다.")
         return v
+
+
+class PublicVariant(BaseModel):
+    id: uuid.UUID
+    option1_name: str
+    option1_value: str
+    option2_name: str
+    option2_value: str
+    final_price: int  # base + extra — 백엔드 계산 (AD-12)
+    purchasable: bool  # 단일 술어 결과 (AD-10)
+
+
+class PublicProductItem(BaseModel):
+    id: uuid.UUID
+    name: str
+    brand_name: str
+    price_from: int  # 활성 조합 최저가 (백엔드 계산)
+    main_image_url: str | None
+    sold_out: bool
+    category_id: uuid.UUID
+
+
+class PublicProductList(BaseModel):
+    items: list[PublicProductItem]
+    total: int
+    page: int
+
+
+class PublicProductDetail(PublicProductItem):
+    description: str
+    image_urls: list[str]
+    variants: list[PublicVariant]

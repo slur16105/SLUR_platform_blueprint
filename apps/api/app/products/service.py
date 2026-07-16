@@ -5,8 +5,10 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.errors import AppError
 from app.products.models import Category, Product, ProductImage, Variant
+from app.sellers.models import Seller
 
 logger = logging.getLogger("slur.products")
 
@@ -211,3 +213,69 @@ async def update_product(session: AsyncSession, seller_id: uuid.UUID, product_id
         await session.rollback()
         raise AppError("not_found", "카테고리를 찾을 수 없습니다.", status_code=404) from exc
     return product
+
+
+def _image_url(path: str) -> str:
+    base = get_settings().supabase_url
+    return f"{base}/storage/v1/object/public/product-images/{path}"
+
+
+def _public_fields(product: Product, variants: list[Variant]) -> dict:
+    prices = [product.base_price + v.extra_price for v in variants if v.is_active]
+    purchasable_any = any(check_purchasable(product, v, 1) for v in variants)
+    return {
+        "price_from": min(prices) if prices else product.base_price,  # 조합 0개(비정상)는 base 폴백
+        "sold_out": not purchasable_any,
+    }
+
+
+async def list_public_products(session: AsyncSession, category_id: uuid.UUID | None, page: int):
+    size = get_settings().page_size
+    base = select(Product).where(Product.status != "hidden")  # 숨김 제외, 품절은 노출 (PRD)
+    if category_id is not None:
+        base = base.where(Product.category_id == category_id)
+    total = await session.scalar(select(func.count()).select_from(base.subquery()))
+    rows = list(await session.scalars(
+        base.order_by(Product.created_at.desc(), Product.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    ids = [p.id for p in rows]
+    images = await get_product_images(session, ids)
+    variants = await get_variants(session, ids)
+    sellers = {}
+    if rows:
+        seller_rows = await session.scalars(select(Seller).where(Seller.id.in_({p.seller_id for p in rows})))
+        sellers = {sl.id: sl for sl in seller_rows}
+    items = []
+    for p in rows:
+        imgs = images.get(p.id, [])
+        items.append({
+            "id": p.id, "name": p.name, "category_id": p.category_id,
+            "brand_name": sellers[p.seller_id].brand_name if p.seller_id in sellers else "",
+            "main_image_url": _image_url(imgs[0].path) if imgs else None,
+            **_public_fields(p, variants.get(p.id, [])),
+        })
+    return items, total or 0
+
+
+async def get_public_product(session: AsyncSession, product_id: uuid.UUID) -> dict:
+    product = await session.scalar(select(Product).where(Product.id == product_id, Product.status != "hidden"))
+    if product is None:
+        raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
+    images = (await get_product_images(session, [product.id])).get(product.id, [])
+    variants = (await get_variants(session, [product.id])).get(product.id, [])
+    seller = await session.get(Seller, product.seller_id)
+    return {
+        "id": product.id, "name": product.name, "category_id": product.category_id,
+        "brand_name": seller.brand_name if seller else "",
+        "description": product.description,
+        "main_image_url": _image_url(images[0].path) if images else None,
+        "image_urls": [_image_url(i.path) for i in images],
+        "variants": [{
+            "id": v.id,
+            "option1_name": v.option1_name, "option1_value": v.option1_value,
+            "option2_name": v.option2_name, "option2_value": v.option2_value,
+            "final_price": product.base_price + v.extra_price,
+            "purchasable": check_purchasable(product, v, 1),
+        } for v in variants],
+        **_public_fields(product, variants),
+    }
