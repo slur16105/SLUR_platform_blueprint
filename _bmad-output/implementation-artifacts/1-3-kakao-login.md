@@ -4,7 +4,7 @@ baseline_commit: 849e3b9fe78e12b677d2702166b11ede8d53895e
 
 # Story 1.3: 카카오 로그인
 
-Status: in-progress
+Status: review
 
 ## Story
 
