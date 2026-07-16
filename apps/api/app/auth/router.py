@@ -42,7 +42,8 @@ async def kakao_login(body: KakaoLoginRequest, session: AsyncSession = Depends(g
 
 @router.get("/roles")
 async def roles(payload: dict = Depends(get_token_payload)) -> dict:
-    return {"roles": payload.get("roles") or []}  # 빈 배열 = 구매자 (암묵 기본)
+    r = payload.get("roles")
+    return {"roles": r if isinstance(r, list) else []}  # 빈 배열 = 구매자 (암묵 기본)
 
 
 @router.get("/me", response_model=MeResponse)

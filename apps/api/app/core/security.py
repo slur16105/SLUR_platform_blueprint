@@ -25,6 +25,7 @@ def create_access_token(user_id: uuid.UUID, roles: list[str] | None = None) -> s
     settings = get_settings()
     now = datetime.now(timezone.utc)
     payload = {
+        "iss": "slur-api",  # 토큰 용도 격리 — 같은 키로 서명된 타 용도 토큰 차단
         "sub": str(user_id),
         "roles": roles or [],  # 구매자는 빈 배열 (암묵 기본)
         "iat": now,
@@ -36,7 +37,7 @@ def create_access_token(user_id: uuid.UUID, roles: list[str] | None = None) -> s
 def decode_access_token(token: str) -> dict:
     settings = get_settings()
     try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"], options={"require": ["exp", "sub"]})
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"], issuer="slur-api", options={"require": ["exp", "sub", "iss"]})
         uuid.UUID(payload["sub"])  # sub 형식 검증
         return payload
     except (jwt.PyJWTError, KeyError, ValueError) as exc:

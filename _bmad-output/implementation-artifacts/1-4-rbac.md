@@ -4,7 +4,7 @@ baseline_commit: 91217144b9d0fb0c65c19f024b38c1496f433e61
 
 # Story 1.4: 역할과 권한 분기 (RBAC)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -72,8 +72,18 @@ so that 클라이언트를 우회한 권한 상승이 불가능하다.
 
 ### Agent Model Used
 
-### Debug Log References
+Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
 
+- user_roles 마이그레이션(CHECK+UNIQUE), 역할 JWT claims, require_role 팩토리, GET /auth/roles, 부트스트랩 CLI
+- 프로덕션: miny332@gmail.com 가입 → railway run 부트스트랩 → /auth/roles ["admin"] 확인 (최초 관리자 생성 완료)
+- 리뷰 반영: 부트스트랩 감사 로그(누가·어디서·누구에게)+동시 실행 멱등+명확한 오류 종료, JWT iss 바인딩(slur-api), /auth/roles 비배열 claim 가드
+- 수용 트레이드오프(기록): 역할 변경 30분 창(스토리 명시), /auth/roles는 토큰 claim 반환(설계), 역할 조합 검사·claim 화이트리스트는 필요 시
+- 테스트 28/28
+
 ### File List
+
+- apps/api/app/auth/{models.py(+UserRole),service.py(+get_roles),router.py(+/roles),bootstrap.py(신규)}
+- apps/api/app/core/security.py(claims·require_role·iss), alembic/versions/7b39984edd2b_user_roles.py
+- apps/api/tests/test_rbac.py(신규)
