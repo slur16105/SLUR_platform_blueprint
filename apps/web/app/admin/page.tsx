@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import LogoutButton from "../logout-button";
+import CategoryPanel from "./category-panel";
 import "./admin.css";
 
 type Application = {
@@ -21,6 +22,7 @@ type Application = {
 };
 
 export default function AdminHome() {
+  const [tab, setTab] = useState<"applications" | "categories">("applications");
   const [items, setItems] = useState<Application[]>([]);
   const [status, setStatus] = useState("pending");
   const [rejecting, setRejecting] = useState<string | null>(null);
@@ -75,9 +77,16 @@ export default function AdminHome() {
   return (
     <main className="page_admin">
       <header className="p_head">
-        <h1 className="p_title">입점 신청 관리</h1>
+        <h1 className="p_title">SLUR 관리자</h1>
         <LogoutButton />
       </header>
+      <div className="p_tabs">
+        <button type="button" className={`btn m_small${tab === "applications" ? " m_primary" : " m_ghost"}`}
+          onClick={() => setTab("applications")}>입점 신청</button>
+        <button type="button" className={`btn m_small${tab === "categories" ? " m_primary" : " m_ghost"}`}
+          onClick={() => setTab("categories")}>카테고리</button>
+      </div>
+      {tab === "categories" ? <CategoryPanel /> : <>
       <div className="p_tabs">
         {(["pending", "approved", "rejected"] as const).map((s) => (
           <button key={s} type="button"
@@ -127,6 +136,7 @@ export default function AdminHome() {
           </li>
         ))}
       </ul>
+      </>}
     </main>
   );
 }

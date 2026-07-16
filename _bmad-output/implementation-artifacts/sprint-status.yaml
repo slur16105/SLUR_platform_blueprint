@@ -66,8 +66,8 @@ development_status:
   epic-2-retrospective: optional
 
   # Epic 3: 상품 — 등록과 진열
-  epic-3: backlog
-  3-1-category-management: backlog         # 카테고리 관리
+  epic-3: in-progress
+  3-1-category-management: in-progress     # 카테고리 관리
   3-2-product-create-images: backlog       # 상품 등록 — 기본 정보와 이미지
   3-3-variant-grid-stock: backlog          # 옵션 조합 그리드와 재고
   3-4-seller-product-management: backlog   # 판매자 상품 관리

@@ -23,6 +23,7 @@ from app.core.db import Base
 # autogenerate가 모델을 보려면 각 도메인 models를 import해야 한다 — 새 도메인 추가 시 여기에 등록
 import app.auth.models  # noqa: F401
 import app.sellers.models  # noqa: F401
+import app.products.models  # noqa: F401
 
 # configparser는 %를 보간 문법으로 해석하므로 %% 로 이스케이프 (URL 인코딩된 비밀번호 대응)
 config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))

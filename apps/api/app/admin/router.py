@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
 from app.core.security import require_role
+from app.products import service as products_service
+from app.products.schemas import CategoryCreate, CategoryOrder, CategoryRename, CategoryResponse
 from app.sellers import service as sellers_service
 from app.sellers.schemas import ApplicationResponse
 
@@ -72,3 +74,43 @@ async def reject(
 ) -> ApplicationAdminItem:
     row = await sellers_service.reject_application(session, application_id, admin_id, body.reason)
     return ApplicationAdminItem.model_validate(row, from_attributes=True)
+
+
+@router.post("/categories", response_model=CategoryResponse, status_code=201)
+async def create_category(
+    body: CategoryCreate,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> CategoryResponse:
+    row = await products_service.create_category(session, body.name)
+    return CategoryResponse.model_validate(row, from_attributes=True)
+
+
+@router.patch("/categories/{category_id}", response_model=CategoryResponse)
+async def rename_category(
+    category_id: uuid.UUID,
+    body: CategoryRename,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> CategoryResponse:
+    row = await products_service.rename_category(session, category_id, body.name)
+    return CategoryResponse.model_validate(row, from_attributes=True)
+
+
+@router.put("/categories/order", response_model=list[CategoryResponse])
+async def reorder_categories(
+    body: CategoryOrder,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> list[CategoryResponse]:
+    rows = await products_service.reorder_categories(session, body.ids)
+    return [CategoryResponse.model_validate(c, from_attributes=True) for c in rows]
+
+
+@router.delete("/categories/{category_id}", status_code=204)
+async def delete_category(
+    category_id: uuid.UUID,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    await products_service.delete_category(session, category_id)
