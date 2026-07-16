@@ -19,7 +19,13 @@ async def list_categories(session: AsyncSession) -> list[Category]:
     return list(rows)
 
 
+MAX_CATEGORIES = 100  # reorder ids 상한과 대칭
+
+
 async def create_category(session: AsyncSession, name: str) -> Category:
+    count = await session.scalar(select(func.count()).select_from(Category))
+    if count is not None and count >= MAX_CATEGORIES:
+        raise AppError("validation_error", f"카테고리는 최대 {MAX_CATEGORIES}개까지 만들 수 있습니다.", status_code=422)
     max_order = await session.scalar(select(func.coalesce(func.max(Category.sort_order), -1)))
     category = Category(name=name, sort_order=max_order + 1)
     session.add(category)
@@ -46,7 +52,7 @@ async def rename_category(session: AsyncSession, category_id: uuid.UUID, name: s
 
 async def reorder_categories(session: AsyncSession, ids: list[uuid.UUID]) -> list[Category]:
     existing = {c.id for c in await list_categories(session)}
-    if set(ids) != existing:  # 전체 목록과 정확히 일치해야 순서가 모호하지 않다
+    if len(ids) != len(existing) or set(ids) != existing:  # 중복 id·부분 목록 모두 거부
         raise AppError("validation_error", "카테고리 목록이 최신이 아닙니다. 새로고침해 주세요.", status_code=422)
     for order, cid in enumerate(ids):
         await session.execute(update(Category).where(Category.id == cid).values(sort_order=order))

@@ -9,6 +9,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   // { op: "create"|"rename"|"order"|"delete", ... }
   const body = await req.json().catch(() => ({}));
+  const needsId = body.op === "rename" || body.op === "delete";
+  if (needsId && (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/.test(body.id))) {
+    return Response.json({ code: "validation_error", message: "입력값이 올바르지 않습니다.", details: [] }, { status: 422 });
+  }
   const json = { headers: { "Content-Type": "application/json" } };
   switch (body.op) {
     case "create":

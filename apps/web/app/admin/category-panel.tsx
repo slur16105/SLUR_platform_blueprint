@@ -25,20 +25,29 @@ export default function CategoryPanel() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function op(body: Record<string, unknown>) {
+  async function op(body: Record<string, unknown>): Promise<boolean> {
     setError(null);
-    const res = await fetch("/api/admin/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.status === 403) return void (window.location.href = "/no-role");
-    if (!res.ok && res.status !== 204) {
-      const data = await res.json().catch(() => null);
-      setError(data?.details?.[0]?.reason ?? data?.message ?? "처리에 실패했습니다.");
-      return;
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 403) {
+        window.location.href = "/no-role";
+        return false;
+      }
+      if (!res.ok && res.status !== 204) {
+        const data = await res.json().catch(() => null);
+        setError(data?.details?.[0]?.reason ?? data?.message ?? "처리에 실패했습니다.");
+        return false;
+      }
+      await load();
+      return true;
+    } catch {
+      setError("네트워크 연결을 확인해 주세요.");
+      return false;
     }
-    load();
   }
 
   function move(idx: number, dir: -1 | 1) {
@@ -62,7 +71,7 @@ export default function CategoryPanel() {
         {items.map((c, idx) => (
           <li className="card i_row" key={c.id}>
             {editing === c.id ? (
-              <form className="i_edit" onSubmit={(e) => { e.preventDefault(); op({ op: "rename", id: c.id, name: editName.trim() }); setEditing(null); }}>
+              <form className="i_edit" onSubmit={async (e) => { e.preventDefault(); if (await op({ op: "rename", id: c.id, name: editName.trim() })) setEditing(null); }}>
                 <input className="input_text" value={editName} maxLength={30} onChange={(e) => setEditName(e.target.value)} />
                 <button className="btn m_small m_primary" type="submit">저장</button>
                 <button className="btn m_small m_ghost" type="button" onClick={() => setEditing(null)}>취소</button>

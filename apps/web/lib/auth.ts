@@ -64,8 +64,13 @@ export async function proxyWithRefresh(
     }
   }
 
-  const body = await upstream.json().catch(() => ({ code: "service_unavailable", message: "일시적인 오류입니다.", details: [] }));
-  const res = NextResponse.json(body, { status: upstream.status });
+  let res: NextResponse;
+  if (upstream.status === 204) {
+    res = new NextResponse(null, { status: 204 }); // 본문 없는 응답 — json 생성 시 TypeError 방지
+  } else {
+    const body = await upstream.json().catch(() => ({ code: "service_unavailable", message: "일시적인 오류입니다.", details: [] }));
+    res = NextResponse.json(body, { status: upstream.status });
+  }
   if (rotated) setSessionCookies(res, rotated.access_token, rotated.refresh_token);
   if (upstream.status === 401) clearSessionCookies(res); // 갱신 실패 — 클라이언트는 /login으로
   return res;

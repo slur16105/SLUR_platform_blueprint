@@ -4,7 +4,7 @@ baseline_commit: d81d5ff5e6cf098c17bcd74d1b60afa959236be3
 
 # Story 3.1: 카테고리 관리
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -23,7 +23,7 @@ so that 카테고리 이름 자체가 큐레이션이 된다.
 - [x] Task 2: API — GET /categories (공개 — 구매자 목록 필터용, 순서 정렬), admin: POST/PATCH(이름)/PUT 순서 일괄/DELETE. name 중복 409 `category_name_exists` (R6), 공백 검증
 - [x] Task 3: 웹 /admin — 탭 구조로 확장(입점 신청 | 카테고리), 생성·이름 수정·위/아래 이동·삭제
 - [x] Task 4: 테스트 — CRUD·순서 변경 반영·중복 이름 409·비관리자 403·공개 목록 무인증 200
-- [ ] Task 5: 배포 → **Slur 실사용 검증**: 실제 시작 카테고리 생성 (R8 변형)
+- [x] Task 5: 배포 → **Slur 실사용 검증**: 실제 시작 카테고리 생성 (R8 변형)
 
 ## Dev Notes
 
