@@ -17,6 +17,8 @@ export default defineRailway(() => {
       KAKAO_REST_API_KEY: preserve(),
       KAKAO_CLIENT_SECRET: preserve(),
       KAKAO_APP_ID: preserve(),
+      SUPABASE_URL: preserve(),
+      SUPABASE_SERVICE_KEY: preserve(),
     },
   });
 

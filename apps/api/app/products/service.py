@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
-from app.products.models import Category
+from app.products.models import Category, Product, ProductImage
 
 logger = logging.getLogger("slur.products")
 
@@ -70,3 +70,53 @@ async def delete_category(session: AsyncSession, category_id: uuid.UUID) -> None
     except IntegrityError as exc:  # 3.2에서 products FK RESTRICT — 소속 상품 존재
         await session.rollback()
         raise AppError(CODE_CATEGORY_IN_USE, "소속 상품이 있는 카테고리는 삭제할 수 없습니다.", status_code=409) from exc
+
+
+CODE_INVALID_IMAGE_PATH = "invalid_image_path"
+
+
+def _validate_image_ownership(seller_id: uuid.UUID, paths: list[str]) -> None:
+    prefix = f"{seller_id}/"
+    for p in paths:
+        if not p.startswith(prefix) or ".." in p:  # 타 판매자 이미지 도용·경로 탈출 차단
+            raise AppError(CODE_INVALID_IMAGE_PATH, "올바르지 않은 이미지입니다.", status_code=403)
+
+
+async def create_product(session: AsyncSession, seller_id: uuid.UUID, data) -> Product:
+    _validate_image_ownership(seller_id, data.image_paths)
+    category = await session.get(Category, data.category_id)
+    if category is None:
+        raise AppError("not_found", "카테고리를 찾을 수 없습니다.", status_code=404)
+    product = Product(
+        seller_id=seller_id,
+        category_id=data.category_id,
+        name=data.name,
+        base_price=data.base_price,
+        description=data.description,
+    )
+    session.add(product)
+    await session.flush()
+    for order, path in enumerate(data.image_paths):
+        session.add(ProductImage(product_id=product.id, path=path, sort_order=order))
+    await session.commit()
+    logger.info("product %s created by seller %s", product.id, seller_id)
+    return product
+
+
+async def list_my_products(session: AsyncSession, seller_id: uuid.UUID) -> list[Product]:
+    rows = await session.scalars(
+        select(Product).where(Product.seller_id == seller_id).order_by(Product.created_at.desc(), Product.id.desc())
+    )
+    return list(rows)
+
+
+async def get_product_images(session: AsyncSession, product_ids: list[uuid.UUID]) -> dict:
+    if not product_ids:
+        return {}
+    rows = await session.scalars(
+        select(ProductImage).where(ProductImage.product_id.in_(product_ids)).order_by(ProductImage.sort_order)
+    )
+    grouped: dict = {}
+    for img in rows:
+        grouped.setdefault(img.product_id, []).append(img)
+    return grouped
