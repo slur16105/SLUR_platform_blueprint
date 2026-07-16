@@ -40,7 +40,7 @@ async def _truncate_auth():
     if "localhost" not in get_settings().database_url and "127.0.0.1" not in get_settings().database_url:
         raise RuntimeError("테스트 정리는 로컬 DB에서만 허용된다")
     async with engine.begin() as conn:
-        await conn.execute(text("TRUNCATE refresh_tokens, users CASCADE"))
+        await conn.execute(text("TRUNCATE refresh_tokens, users CASCADE"))  # FK CASCADE로 하위 테이블 동반 정리
 
 
 @pytest.fixture

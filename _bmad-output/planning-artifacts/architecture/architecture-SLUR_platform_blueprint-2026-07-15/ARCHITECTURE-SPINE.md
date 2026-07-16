@@ -213,7 +213,7 @@ Alembic 마이그레이션은 Railway pre-deploy 단계에서 실행한다.
 erDiagram
     users ||--o{ user_roles : ""
     users ||--o{ auth_providers : ""
-    users ||--o| seller_applications : ""
+    users ||--o{ seller_applications : ""
     users ||--o| sellers : ""
     sellers ||--o{ products : ""
     categories ||--o{ products : ""

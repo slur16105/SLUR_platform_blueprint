@@ -21,10 +21,10 @@ so that 심사 후 판매를 시작할 수 있다.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: 스키마 승인·마이그레이션 — **AD-9 게이트: 아래 초안 Slur 승인 후** (`seller_applications`)
-- [ ] Task 2: API (sellers 도메인 첫 가동) — `POST /api/v1/sellers/applications` (인증 필수), `GET /api/v1/sellers/applications/me` (내 신청 상태). 사업자등록번호 10자리 숫자 검증(하이픈 제거 정규화), 재직 pending 시 409
-- [ ] Task 3: 웹 화면 — `/apply` 신청 폼(슬러 디자인, 로그인 필요 → 미로그인 시 /login), 제출 후·재방문 시 "심사 중" 상태 화면. 반려된 경우 사유 표시+재신청 가능
-- [ ] Task 4: 테스트 — 제출 성공/필드 누락 422/중복 pending 409/reject 후 재신청 허용/비로그인 401 + 동시 제출 레이스(partial unique)
+- [x] Task 1: 스키마 승인·마이그레이션 — **AD-9 게이트: 아래 초안 Slur 승인 후** (`seller_applications`)
+- [x] Task 2: API (sellers 도메인 첫 가동) — `POST /api/v1/sellers/applications` (인증 필수), `GET /api/v1/sellers/applications/me` (내 신청 상태). 사업자등록번호 10자리 숫자 검증(하이픈 제거 정규화), 재직 pending 시 409
+- [x] Task 3: 웹 화면 — `/apply` 신청 폼(슬러 디자인, 로그인 필요 → 미로그인 시 /login), 제출 후·재방문 시 "심사 중" 상태 화면. 반려된 경우 사유 표시+재신청 가능
+- [x] Task 4: 테스트 — 제출 성공/필드 누락 422/중복 pending 409/reject 후 재신청 허용/비로그인 401 + 동시 제출 레이스(partial unique)
 - [ ] Task 5: 배포·프로덕션 E2E (R8: curl 시나리오 — 가입→신청→상태 조회→정리)
 
 ## Dev Notes

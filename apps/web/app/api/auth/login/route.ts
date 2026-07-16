@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { API_BASE, COOKIE_ACCESS, COOKIE_REFRESH, COOKIE_ROLE, cookieOptions } from "@/lib/auth";
+import { API_BASE, COOKIE_ROLE, cookieOptions, setSessionCookies } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   // login-CSRF 방어: 크로스사이트 폼 POST 차단
@@ -43,8 +43,7 @@ export async function POST(req: NextRequest) {
   const role = roles.includes("admin") ? "admin" : roles.includes("seller") ? "seller" : "none";
 
   const res = NextResponse.json({ role });
-  res.cookies.set(COOKIE_ACCESS, data.access_token, cookieOptions(60 * 30));
-  res.cookies.set(COOKIE_REFRESH, data.refresh_token, cookieOptions(60 * 60 * 24 * 14, "/api/auth")); // path 제한 — 페이지 요청에 refresh 미탑재
+  setSessionCookies(res, data.access_token, data.refresh_token);
   res.cookies.set(COOKIE_ROLE, role, { ...cookieOptions(60 * 60 * 24 * 14), httpOnly: false });
   return res;
 }

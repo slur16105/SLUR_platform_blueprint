@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { API_BASE, COOKIE_ACCESS, COOKIE_REFRESH, COOKIE_ROLE } from "@/lib/auth";
+import { API_BASE, COOKIE_REFRESH, clearSessionCookies } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const refresh = req.cookies.get(COOKIE_REFRESH)?.value;
@@ -13,8 +13,6 @@ export async function POST(req: NextRequest) {
     }).catch(() => {}); // 멱등 — 서버 실패해도 쿠키는 지운다
   }
   const res = NextResponse.json({ ok: true });
-  res.cookies.delete(COOKIE_ACCESS);
-  res.cookies.delete({ name: COOKIE_REFRESH, path: "/api/auth" });
-  res.cookies.delete(COOKIE_ROLE);
+  clearSessionCookies(res);
   return res;
 }

@@ -1,0 +1,49 @@
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, Field, field_validator
+
+
+def _validate_brn(value: str) -> str:
+    """사업자등록번호 — 하이픈 제거 후 10자리 + 국세청 체크섬."""
+    digits = value.replace("-", "").strip()
+    if len(digits) != 10 or not digits.isdigit():
+        raise ValueError("사업자등록번호는 숫자 10자리여야 합니다.")
+    weights = [1, 3, 7, 1, 3, 7, 1, 3, 5]
+    total = sum(int(d) * w for d, w in zip(digits[:9], weights))
+    total += (int(digits[8]) * 5) // 10
+    if (10 - total % 10) % 10 != int(digits[9]):
+        raise ValueError("올바르지 않은 사업자등록번호입니다.")
+    return digits
+
+
+class ApplicationRequest(BaseModel):
+    company_name: str = Field(min_length=1, max_length=100)
+    representative_name: str = Field(min_length=1, max_length=50)
+    business_registration_number: str = Field(max_length=20)
+    mail_order_number: str = Field(min_length=1, max_length=50)
+    business_address: str = Field(min_length=1, max_length=255)
+    contact_phone: str = Field(min_length=1, max_length=20)
+    brand_name: str = Field(min_length=1, max_length=50)
+    brand_intro: str = Field(min_length=1, max_length=500)
+
+    @field_validator("business_registration_number")
+    @classmethod
+    def brn_valid(cls, v: str) -> str:
+        return _validate_brn(v)
+
+    @field_validator("company_name", "representative_name", "brand_name", "brand_intro")
+    @classmethod
+    def not_blank(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("필수 입력입니다.")
+        return v
+
+
+class ApplicationResponse(BaseModel):
+    id: uuid.UUID
+    status: str
+    brand_name: str
+    rejection_reason: str | None
+    created_at: datetime

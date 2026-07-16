@@ -7,7 +7,7 @@ export function middleware(req: NextRequest) {
   const role = req.cookies.get("slur_role")?.value;
   const hasSession = role !== undefined;
 
-  if (!hasSession && (pathname.startsWith("/seller") || pathname.startsWith("/admin"))) {
+  if (!hasSession && (pathname.startsWith("/seller") || pathname.startsWith("/admin") || pathname.startsWith("/apply"))) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
   if (pathname.startsWith("/admin") && role !== "admin") {
@@ -19,4 +19,4 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/seller/:path*", "/admin/:path*"] };
+export const config = { matcher: ["/seller/:path*", "/admin/:path*", "/apply/:path*", "/apply"] };
