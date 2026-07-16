@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-16  # Epic 1 done (6/6)
+last_updated: 2026-07-16  # Epic 1 done + 회고 완료
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -56,7 +56,7 @@ development_status:
   1-4-rbac: done                           # 역할과 권한 분기 (RBAC)
   1-5-flutter-login: done                  # Flutter 로그인 화면
   1-6-web-login-role: done                 # 웹 로그인과 Role 분기
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
   # Epic 2: 입점
   epic-2: backlog
@@ -99,3 +99,14 @@ development_status:
   6-1-legal-pages-footer: backlog          # 약관·개인정보처리방침과 푸터
   6-2-seller-info-disclosure: backlog      # 중개자 지위·판매자 신원정보 노출
   epic-6-retrospective: optional
+
+# Epic 1 회고 (2026-07-16) — Epic 2부터 적용. 스토리 작성·구현 시 이 목록을 먼저 읽는다.
+action_items:
+  - { id: R1, status: open, text: "Railway 변수는 CLI --set으로만 + 즉시 확인. config apply의 변수 반영 신뢰 금지. 신규 변수는 railway.ts preserve() 동시 선언" }
+  - { id: R2, status: open, text: "구현 셀프체크 6종 후 리뷰行: 외부호출 타임아웃 / 실패 로깅 / 동시성 레이스 / 입력 길이 상한 / 외부 응답 이형 방어 / 외부 토큰 즉시 파기" }
+  - { id: R3, status: open, text: "쿠키·Origin·CORS 미들웨어는 프로덕션(프록시 뒤) 실요청 검증 후에만 done" }
+  - { id: R4, status: open, text: "스키마 제약은 보류-왕복 대신 그 자리에서 결정·기록 (AD-9 초안 표 방식 유지)" }
+  - { id: R5, status: open, text: "스토리마다 '의도적 보류' + 해소 예정 스토리 명시, 새 스토리는 이전 보류 목록 스캔부터" }
+  - { id: R6, status: open, text: "에러 code는 Dev Notes에 사전 시드 선언, 화면 스토리는 code별 클라이언트 반응 표" }
+  - { id: R7, status: open, text: "Epic 2 첫 관리자 데이터 스토리에 페이지 단 FastAPI 판정 필수 Task (slur_role 쿠키는 UX 힌트일 뿐)" }
+  - { id: R8, status: open, text: "프로덕션 E2E curl 시나리오를 Task에 사전 명시, 테스트 데이터 즉시 정리 (1.2 패턴 표준화)" }
