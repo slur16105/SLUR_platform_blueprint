@@ -134,8 +134,31 @@ docker-compose.yml     # postgres:17 + api
 
 ### Agent Model Used
 
+Claude Fable 5 (claude-fable-5)
+
 ### Debug Log References
+
+- 배포 실패 #1 (2835e2b6): Alembic env.py에서 configparser가 URL 인코딩 비밀번호의 `%`를 보간 문법으로 해석 → `database_url.replace("%", "%%")` 이스케이프로 해결
+- 배포 실패 #2 (819a0fa3): 컨테이너가 8000 고정 포트로 리슨해 Railway 헬스체크(PORT 환경변수 기준) 실패 → Dockerfile CMD를 `${PORT:-8000}` shell 형태로 변경
+- web 502: Railway 도메인 타깃 포트가 앱 리슨 포트(8080)와 불일치 → `railway domain update --port 8080`
+- Supabase pooler 호스트는 `aws-1-ap-northeast-2`(aws-0 아님) — 로컬 사전 검증으로 발견. 스토리 Dev Notes의 aws-0 표기는 리전별로 다름을 확인
+- Railway MCP 인증 불안정(간헐 Unauthorized) → CLI + IaC(`railway config apply`)로 우회. `.railway/railway.ts`가 서비스 설정의 진실 소스
 
 ### Completion Notes List
 
+- 로컬: `docker compose up` → 헬스체크 200(PG17 연결), 404/422 에러 봉투 검증, pytest 3/3 통과
+- 프로덕션: api 헬스체크 200 (Supabase Session pooler 연결), 에러 봉투 정상, Alembic pre-deploy 실행 확인(테이블 0 + alembic_version)
+- 에러 code 시드: not_found / validation_error / internal_error
+- Colima(도커 런타임) 신규 설치 — 전역 도구, `~/.docker/config.json`에 cliPluginsExtraDirs 추가로 compose 연결
+- 미해결(후속): GitHub 푸시 자동 배포 미작동 — Railway GitHub App 설치 필요(대시보드에서 1회). 현재는 `railway up`으로 배포
+
 ### File List
+
+- apps/api/pyproject.toml, uv.lock, Dockerfile, alembic.ini
+- apps/api/app/main.py, app/core/{config,db,errors}.py
+- apps/api/app/{auth,sellers,products,carts,orders,admin}/{router,service,models,schemas}.py
+- apps/api/alembic/env.py, alembic/versions/6a946b59cb95_baseline_no_tables.py
+- apps/api/tests/{conftest.py,test_health_and_errors.py}
+- apps/web/ (Next.js 16.2 골격 + Dockerfile, next.config.ts standalone)
+- apps/mobile/ (Flutter 3.44 골격 + flutter_riverpod)
+- docker-compose.yml, .env.example, .gitignore, .railway/railway.ts, package.json
