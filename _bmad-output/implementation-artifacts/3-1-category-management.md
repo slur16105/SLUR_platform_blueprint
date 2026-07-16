@@ -4,7 +4,7 @@ baseline_commit: d81d5ff5e6cf098c17bcd74d1b60afa959236be3
 
 # Story 3.1: 카테고리 관리
 
-Status: review
+Status: done
 
 ## Story
 
@@ -39,4 +39,11 @@ Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
 
+- 프로덕션: Slur가 실제 시작 카테고리 생성·수정·순서변경 완료. 삭제 경로는 리뷰가 잡은 BFF 204 버그(TypeError→500) 수정 후 자동 검증(204)
+- 리뷰 반영: reorder 중복 id 가드, 카테고리 100개 상한(ids 상한과 대칭), UI op() 오류 처리·수정 폼 유실 방지, BFF id UUID 검증
+- 보류: 동시 reorder 잠금(관리자 1인 운영 전제), category_in_use 409 경로 테스트는 3.2 FK 생성 시 필수
+
 ### File List
+
+- apps/api/app/products/{models,schemas,service,router}.py, app/admin/router.py, alembic/versions/6aa436d15e2b, tests/test_categories.py
+- apps/web/app/{admin/{page.tsx,category-panel.tsx,admin.css}, api/admin/categories/route.ts}, lib/auth.ts(204 처리)
