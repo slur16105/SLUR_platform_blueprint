@@ -4,7 +4,7 @@ baseline_commit: a76e26bdcd70926977a2f5cc9817134c0ad8887d
 
 # Story 1.1: 걷는 뼈대 (프로젝트 골격과 배포)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -162,3 +162,25 @@ Claude Fable 5 (claude-fable-5)
 - apps/web/ (Next.js 16.2 골격 + Dockerfile, next.config.ts standalone)
 - apps/mobile/ (Flutter 3.44 골격 + flutter_riverpod)
 - docker-compose.yml, .env.example, .gitignore, .railway/railway.ts, package.json
+
+
+## Senior Developer Review (AI)
+
+- **일시**: 2026-07-16 · **방식**: 병렬 3-레이어 (Blind Hunter / Edge Case Hunter / Acceptance Auditor)
+- **결과**: Changes Requested → **전 항목 즉시 반영 완료** (아래) → Approve
+- **오탐 기각 10건**: Railway DB 부재/DATABASE_URL 미설정(변수로 설정됨 — 배포 성공 사실로 반증), lock 파일 미커밋(리뷰 diff 제외였을 뿐), .env.example 부재(존재), Python 3.14 리스크(스파인 웹검증 핀), npm railway 패키지(공식 IaC SDK), compose에 web 없음(의도), 빈 골격 파일(의도), 테스트 실 DB 요구(스토리 명시·CI Deferred), alembic.ini 주석(생성기 기본), 로컬 마이그레이션 부재(의도 — .env로 수동)
+
+### Action Items (전부 해결)
+
+- [x] [High] 비-404 HTTP 에러가 internal_error로 뭉개짐 → 405 method_not_allowed·기타 http_error 매핑, 한국어 메시지 (errors.py)
+- [x] [High] 500 핸들러 미로깅 → logger.exception + 기본 로깅 설정
+- [x] [High] 헬스체크 무타임아웃 → 5초 타임아웃 + DB 불능 시 503 service_unavailable (code 시드 추가)
+- [x] [High] CORS 미들웨어 부재 → 설정 기반 오리진 (core/config.cors_origins)
+- [x] [High] CMD에 exec 없어 SIGTERM 미전달 → exec 추가 (graceful shutdown)
+- [x] [High] 테스트가 전역 app 오염 + 거짓 주석 → validation_probe 픽스처(teardown 포함), 405 테스트 추가 (4/4 통과)
+- [x] [Med] preDeployCommand --no-sync 비대칭 → 통일
+- [x] [Med] 의존성 == 핀 통일 (pydantic·pydantic-settings·uvicorn), web healthcheckPath, compose restart 정책
+- [x] [Med] .dockerignore 2종, apps/api/.gitignore 보강, 잔재물 디렉토리 3개 제거
+- [x] [Med] db.py URL 스킴 정규화(postgresql://→asyncpg), _engine 간접층 제거
+- [x] [Low] web lang=ko·title=SLUR, railway.ts에 DATABASE_URL preserve() 선언(IaC 삭제 사고 방지)
+- [x] [부수 발견] Railway 루트 디렉토리가 /apps/api/app으로 어긋나 있던 것 IaC로 교정
