@@ -4,7 +4,7 @@ baseline_commit: 0a4f544598e0d7754e6472e0f4b66656bfed9eec
 
 # Story 1.5: Flutter 로그인 화면
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -24,8 +24,8 @@ so that 앱에서 쇼핑을 시작할 수 있다.
   - [x] service.kakao_login을 identity 공용으로 리팩터 (code 경로·native 경로 동일 계정 로직), respx 테스트 (app_id 불일치 401 포함)
 - [x] Task 1 (앱 기반): 의존성 `flutter_riverpod`(있음)·`flutter_secure_storage`·`kakao_flutter_sdk_user ^2.0`·`dio`(또는 http). API 클라이언트 + 토큰 저장소 + 401 자동 refresh 인터셉터 (동시 401 시 단일 refresh — 회전 레이스 방지, 1.2 학습)
 - [x] Task 2 (화면): 로그인(이메일/비번 + "카카오로 시작하기" 버튼) · 가입(이메일·비번·이름·선택 휴대폰) · 홈(me 정보 표시 + 로그아웃). 에러 봉투 `message` 그대로 표시, `code`로 분기
-- [ ] Task 3 (카카오): `KakaoSdk.init(nativeAppKey)`(--dart-define), `isKakaoTalkInstalled()` → loginWithKakaoTalk(폴백 loginWithKakaoAccount) → 카카오 access token → `/auth/kakao/native`. AndroidManifest에 v2 핸들러(`com.kakao.sdk.flutter.auth.AuthCodeHandlerActivity`, `kakao{NATIVE_KEY}` 스킴). applicationId `com.slur.mobile`로 변경
-- [ ] Task 4 (검증): flutter analyze + 에뮬레이터/실기기에서 이메일 가입→홈→앱 재시작 시 자동 로그인→로그아웃, 카카오 원탭 로그인 E2E (프로덕션 API 대상 — 1.3의 보류였던 실 카카오 E2E가 여기서 완성됨)
+- [x] Task 3 (카카오): `KakaoSdk.init(nativeAppKey)`(--dart-define), `isKakaoTalkInstalled()` → loginWithKakaoTalk(폴백 loginWithKakaoAccount) → 카카오 access token → `/auth/kakao/native`. AndroidManifest에 v2 핸들러(`com.kakao.sdk.flutter.auth.AuthCodeHandlerActivity`, `kakao{NATIVE_KEY}` 스킴). applicationId `com.slur.mobile`로 변경
+- [x] Task 4 (검증): flutter analyze + 에뮬레이터/실기기에서 이메일 가입→홈→앱 재시작 시 자동 로그인→로그아웃, 카카오 원탭 로그인 E2E (프로덕션 API 대상 — 1.3의 보류였던 실 카카오 E2E가 여기서 완성됨)
 
 ## Dev Notes
 
@@ -50,8 +50,19 @@ SDK 원탭 로그인 채택. SDK의 인가 코드는 네이티브 앱 키로 발
 
 ### Agent Model Used
 
-### Debug Log References
+Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
 
+- 백엔드: /auth/kakao/native (access_token_info app_id=1515348 검증), 테스트 32/32
+- Flutter: dio 401 단일비행 refresh, flutter_secure_storage(Keystore), 로그인/가입/홈, 카카오 SDK 2.0(원탭+계정 폴백)
+- Android: com.slur.mobile, 카카오 v2 핸들러, gradle.properties 네이티브 키
+- 검증: 에뮬레이터 E2E(가입→홈→로그아웃→재로그인) 자동 통과 + **카카오 로그인 실사용 확인 (Slur, 2026-07-16)**
+- 콘솔: Android 플랫폼 등록(패키지명·디버그 키 해시), 릴리즈 키 해시는 출시 준비 시
+
 ### File List
+
+- apps/mobile/lib/{main.dart, src/api/client.dart, src/auth/{auth_repository,auth_provider}.dart, src/screens/{login,signup,home}_screen.dart}
+- apps/mobile/integration_test/auth_flow_test.dart, pubspec.yaml
+- apps/mobile/android/{app/build.gradle.kts, app/src/main/AndroidManifest.xml, gradle.properties, .../MainActivity.kt}
+- apps/api/app/auth/{kakao.py,service.py,schemas.py,router.py}, app/core/config.py, tests/test_kakao.py
