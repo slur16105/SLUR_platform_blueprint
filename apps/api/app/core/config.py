@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     jwt_secret: str = Field(min_length=32)
     access_token_minutes: int = 30
     refresh_token_days: int = 14
+    # 카카오 OAuth (환경변수 필수 — 신규 카카오 앱은 client_secret도 필수)
+    kakao_rest_api_key: str
+    kakao_client_secret: str
 
 
 @lru_cache

@@ -38,3 +38,8 @@ class MeResponse(BaseModel):
     email: str | None
     name: str
     phone: str | None
+
+
+class KakaoLoginRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=512)
+    redirect_uri: str = Field(min_length=1, max_length=512)

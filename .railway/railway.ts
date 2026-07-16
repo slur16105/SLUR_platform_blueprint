@@ -14,6 +14,8 @@ export default defineRailway(() => {
       // 시크릿 — 값은 Railway에만 존재 (railway variables로 설정). IaC는 존재만 선언
       DATABASE_URL: preserve(),
       JWT_SECRET: preserve(),
+      KAKAO_REST_API_KEY: preserve(),
+      KAKAO_CLIENT_SECRET: preserve(),
     },
   });
 

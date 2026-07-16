@@ -1,6 +1,10 @@
+---
+baseline_commit: 849e3b9fe78e12b677d2702166b11ede8d53895e
+---
+
 # Story 1.3: 카카오 로그인
 
-Status: draft
+Status: in-progress
 
 ## Story
 
@@ -15,24 +19,24 @@ so that 비밀번호 없이 바로 쇼핑을 시작할 수 있다.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: 스키마 승인과 마이그레이션 (AC: 1, 2) — **AD-9 게이트: 아래 초안 Slur 승인 후 작성**
-  - [ ] `auth_providers` Alembic 리비전
-- [ ] Task 2: 카카오 OAuth 연동 (AC: 1)
-  - [ ] 의존성: `httpx`를 런타임 의존성으로 승격 (현재 dev 전용)
-  - [ ] `core/config.py`: `kakao_rest_api_key`·`kakao_client_secret` (신규 카카오 앱은 client_secret **필수** — 토큰 요청에 포함, 누락 시 KOE010)
-  - [ ] `auth/service.py`: 인가 코드 → kauth.kakao.com 토큰 교환 → kapi.kakao.com/v2/user/me 사용자 조회. **카카오 access token은 신원 확인 즉시 폐기 — 저장 금지 (AD-5)**
-  - [ ] 오류 구분: 카카오 4xx(KOE320 무효 코드 등) → 401 `invalid_kakao_code` / 카카오 5xx·타임아웃 → 502 `kakao_unavailable`
-- [ ] Task 3: 계정 생성·연결 로직 (AC: 1, 2)
-  - [ ] `POST /api/v1/auth/kakao` — 요청 `{"code": str, "redirect_uri": str}`, 응답은 기존 TokenResponse (1.2와 동일 계약)
-  - [ ] (provider='kakao', provider_user_id=카카오 id) 존재 → 기존 계정 로그인
-  - [ ] 미존재 + 카카오 이메일(verified·valid)이 기존 계정과 충돌 → **409 `email_conflict`** "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요." (자동 링크 금지 — 아래 보안 근거)
-  - [ ] 그 외 → 새 계정 생성 — email은 카카오가 verified+valid로 제공하고 충돌 없을 때만 저장(아니면 NULL), name은 카카오 닉네임(미동의 시 "카카오 사용자" 폴백), password_hash NULL
-  - [ ] 트랜잭션: 연결·생성과 refresh 발급이 한 트랜잭션
-- [ ] Task 4: 테스트 (AC: 전체)
-  - [ ] `respx`를 dev 의존성 추가. 모킹 시나리오 — 신규 가입 / 재로그인(계정 1개 유지) / 이메일 충돌 409 / unverified 이메일은 email NULL 새 계정 / 닉네임 미동의 폴백 / 무효 코드 401 / 카카오 타임아웃 502
-- [ ] Task 5: 배포·검증
-  - [ ] KAKAO_REST_API_KEY Railway 변수 + railway.ts preserve() (**Slur 제공 필요 — 카카오 개발자 앱**)
-  - [ ] 프로덕션 검증은 실 인가 코드가 필요하므로 Story 1.5(Flutter 로그인 화면)에서 E2E로 수행 — 이 스토리는 배포+모킹 테스트까지
+- [x] Task 1: 스키마 승인과 마이그레이션 (AC: 1, 2) — **AD-9 게이트: 아래 초안 Slur 승인 후 작성**
+  - [x] `auth_providers` Alembic 리비전
+- [x] Task 2: 카카오 OAuth 연동 (AC: 1)
+  - [x] 의존성: `httpx`를 런타임 의존성으로 승격 (현재 dev 전용)
+  - [x] `core/config.py`: `kakao_rest_api_key`·`kakao_client_secret` (신규 카카오 앱은 client_secret **필수** — 토큰 요청에 포함, 누락 시 KOE010)
+  - [x] `auth/service.py`: 인가 코드 → kauth.kakao.com 토큰 교환 → kapi.kakao.com/v2/user/me 사용자 조회. **카카오 access token은 신원 확인 즉시 폐기 — 저장 금지 (AD-5)**
+  - [x] 오류 구분: 카카오 4xx(KOE320 무효 코드 등) → 401 `invalid_kakao_code` / 카카오 5xx·타임아웃 → 502 `kakao_unavailable`
+- [x] Task 3: 계정 생성·연결 로직 (AC: 1, 2)
+  - [x] `POST /api/v1/auth/kakao` — 요청 `{"code": str, "redirect_uri": str}`, 응답은 기존 TokenResponse (1.2와 동일 계약)
+  - [x] (provider='kakao', provider_user_id=카카오 id) 존재 → 기존 계정 로그인
+  - [x] 미존재 + 카카오 이메일(verified·valid)이 기존 계정과 충돌 → **409 `email_conflict`** "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요." (자동 링크 금지 — 아래 보안 근거)
+  - [x] 그 외 → 새 계정 생성 — email은 카카오가 verified+valid로 제공하고 충돌 없을 때만 저장(아니면 NULL), name은 카카오 닉네임(미동의 시 "카카오 사용자" 폴백), password_hash NULL
+  - [x] 트랜잭션: 연결·생성과 refresh 발급이 한 트랜잭션
+- [x] Task 4: 테스트 (AC: 전체)
+  - [x] `respx`를 dev 의존성 추가. 모킹 시나리오 — 신규 가입 / 재로그인(계정 1개 유지) / 이메일 충돌 409 / unverified 이메일은 email NULL 새 계정 / 닉네임 미동의 폴백 / 무효 코드 401 / 카카오 타임아웃 502
+- [x] Task 5: 배포·검증
+  - [x] KAKAO_REST_API_KEY Railway 변수 + railway.ts preserve() (**Slur 제공 필요 — 카카오 개발자 앱**)
+  - [x] 프로덕션 검증은 실 인가 코드가 필요하므로 Story 1.5(Flutter 로그인 화면)에서 E2E로 수행 — 이 스토리는 배포+모킹 테스트까지
 
 ## Dev Notes
 

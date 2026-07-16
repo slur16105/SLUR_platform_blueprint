@@ -11,7 +11,8 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.models import RefreshToken, User
+from app.auth.kakao import fetch_identity
+from app.auth.models import AuthProvider, RefreshToken, User
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.security import CODE_UNAUTHORIZED, create_access_token
@@ -129,3 +130,43 @@ async def get_user(session: AsyncSession, user_id: uuid.UUID) -> User:
     if user is None:
         raise AppError(CODE_UNAUTHORIZED, "로그인이 필요합니다.", status_code=401)
     return user
+
+
+CODE_EMAIL_CONFLICT = "email_conflict"
+
+
+async def kakao_login(session: AsyncSession, code: str, redirect_uri: str) -> tuple[str, str]:
+    identity = await fetch_identity(code, redirect_uri)
+
+    link = await session.scalar(
+        select(AuthProvider).where(
+            AuthProvider.provider == "kakao", AuthProvider.provider_user_id == identity.provider_user_id
+        )
+    )
+    if link is not None:  # 재로그인 — 기존 계정 (AC 2)
+        return await _issue_tokens(session, link.user_id)
+
+    email = normalize_email(identity.email) if identity.email else None
+    if email is not None:
+        existing = await session.scalar(select(User.id).where(User.email == email))
+        if existing is not None:
+            # 자동 링크 금지 (선점 계정 탈취 방어) — 이메일 로그인 안내
+            raise AppError(CODE_EMAIL_CONFLICT, "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요.", status_code=409)
+
+    user = User(email=email, password_hash=None, name=identity.nickname or "카카오 사용자", phone=None)
+    session.add(user)
+    try:
+        await session.flush()
+        session.add(AuthProvider(user_id=user.id, provider="kakao", provider_user_id=identity.provider_user_id))
+        await session.flush()
+    except IntegrityError as exc:  # 동시 첫 로그인 레이스 — UNIQUE(provider, provider_user_id)가 최종 방어
+        await session.rollback()
+        retry = await session.scalar(
+            select(AuthProvider).where(
+                AuthProvider.provider == "kakao", AuthProvider.provider_user_id == identity.provider_user_id
+            )
+        )
+        if retry is not None:
+            return await _issue_tokens(session, retry.user_id)
+        raise AppError(CODE_EMAIL_CONFLICT, "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요.", status_code=409) from exc
+    return await _issue_tokens(session, user.id)

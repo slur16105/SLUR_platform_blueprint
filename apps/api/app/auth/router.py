@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import service
-from app.auth.schemas import LoginRequest, MeResponse, RefreshRequest, SignupRequest, TokenResponse
+from app.auth.schemas import KakaoLoginRequest, LoginRequest, MeResponse, RefreshRequest, SignupRequest, TokenResponse
 from app.core.db import get_session
 from app.core.security import get_current_user_id
 
@@ -32,6 +32,12 @@ async def refresh(body: RefreshRequest, session: AsyncSession = Depends(get_sess
 @router.post("/logout", status_code=204)
 async def logout(body: RefreshRequest, session: AsyncSession = Depends(get_session)) -> None:
     await service.logout(session, body.refresh_token)
+
+
+@router.post("/kakao", response_model=TokenResponse)
+async def kakao_login(body: KakaoLoginRequest, session: AsyncSession = Depends(get_session)) -> TokenResponse:
+    access, refresh = await service.kakao_login(session, body.code, body.redirect_uri)
+    return TokenResponse(access_token=access, refresh_token=refresh)
 
 
 @router.get("/me", response_model=MeResponse)
