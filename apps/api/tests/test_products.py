@@ -141,3 +141,24 @@ async def test_update_product(client, clean_products):
     import uuid as u
     res = await client.patch(f"/api/v1/sellers/products/{u.uuid4()}", json={"name": "x"}, headers=_auth(t))
     assert res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_other_seller_cannot_patch(client, clean_products):
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t, name="권한테스트")
+    t1, sid1 = await _seller_with_prefix(client, admin_t)
+    pid = (await client.post("/api/v1/sellers/products", json=_product_body(sid1, cid), headers=_auth(t1))).json()["id"]
+
+    # 제2 판매자 생성
+    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller2@example.com", "password": "password123", "name": "판매자2"})
+    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
+    app2 = await client.post("/api/v1/sellers/applications", json={**{
+        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "220-81-62517",
+        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
+        "brand_name": "둘째굿즈", "brand_intro": "второй"}}, headers=_auth(t2raw))
+    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
+    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
+
+    res = await client.patch(f"/api/v1/sellers/products/{pid}", json={"base_price": 1}, headers=_auth(t2))
+    assert res.status_code == 404  # 타인 상품 — 존재 비노출

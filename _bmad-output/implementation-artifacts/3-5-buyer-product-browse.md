@@ -4,7 +4,7 @@ baseline_commit: b9118de336451b8d9dc29f259e5e475a6b0ee73f
 
 # Story 3.5: 구매자 상품 목록·상세
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -23,7 +23,7 @@ so that 살 물건을 고를 수 있다.
 - [x] Task 1: 공개 API — GET /products (category·page 필터, hidden 제외, 항목: 대표 이미지·브랜드명·**대표가(백엔드 계산)**·품절 여부(전 조합 술어 false)), GET /products/{id} (이미지 전체·조합별 final_price·purchasable — 전부 백엔드 계산, AD-12)
 - [x] Task 2: Flutter — 홈을 상품 그리드로 교체(카테고리 탭), 상품 상세(이미지·옵션 선택→백엔드 final_price 표시·품절 비활성), 빈 상태 화면
 - [x] Task 3: 테스트 — hidden 제외·soldout 노출(품절 표기)·카테고리 필터·페이지네이션·상세 조합 가격/구매가능 값
-- [ ] Task 4: 배포 + **Epic 3 통합 검증 (Slur)**: 판매자 웹에서 실상품 등록(옵션 포함) → 앱에서 진열·옵션·품절 확인
+- [x] Task 4: 배포 + **Epic 3 통합 검증 (Slur)**: 판매자 웹에서 실상품 등록(옵션 포함) → 앱에서 진열·옵션·품절 확인
 
 ## Dev Notes
 
@@ -38,5 +38,9 @@ so that 살 물건을 고를 수 있다.
 Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
+
+- Slur 에뮬레이터 실기 검증 (2026-07-17): 그리드·카테고리 탭(실카테고리 문구/수영복)·데모 상품·상세 옵션 가격 변경·품절 칩 비활성 확인
+- 공개 API: hidden 노출 경로 없음(감사 확인), AD-10/12 준수
+- **명시 이월**: Flutter 페이지네이션(21개째부터 비노출) — 실판매자 상품 20개 근접 시 필수, Epic 5 이후 백로그
 
 ### File List

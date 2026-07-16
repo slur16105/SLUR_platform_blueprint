@@ -202,6 +202,12 @@ async def update_product(session: AsyncSession, seller_id: uuid.UUID, product_id
     if product is None:
         raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
     fields = data.model_dump(exclude_none=True)
+    if "base_price" in fields:  # 할인 조합(extra 음수)과의 불변식: base + extra >= 0 (3.3 가드의 대칭)
+        min_extra = await session.scalar(
+            select(func.coalesce(func.min(Variant.extra_price), 0)).where(Variant.product_id == product_id)
+        )
+        if fields["base_price"] + (min_extra or 0) < 0:
+            raise AppError("validation_error", "옵션 추가금액보다 낮은 가격으로 변경할 수 없습니다.", status_code=422)
     if "category_id" in fields:
         if await session.get(Category, fields["category_id"]) is None:
             raise AppError("not_found", "카테고리를 찾을 수 없습니다.", status_code=404)

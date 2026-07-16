@@ -29,13 +29,14 @@ export default function SellerProducts() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function toggleStatus(p: Product) {
+  async function setStatus(p: Product, status: string) {
     setError(null);
     const res = await fetch("/api/sellers/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ op: "patch", id: p.id, status: NEXT_STATUS[p.status] ?? "active" }),
+      body: JSON.stringify({ op: "patch", id: p.id, status }),
     }).catch(() => null);
+    if (res?.status === 401) return void (window.location.href = "/login");
     if (!res || !res.ok) return void setError("상태 변경에 실패했습니다.");
     load();
   }
@@ -62,9 +63,9 @@ export default function SellerProducts() {
                 <span className="i_meta">{p.base_price.toLocaleString()}원 · 재고 {stock} · <span className="badge" data-state={p.status}>{STATUS_LABEL[p.status]}</span></span>
               </div>
               <div className="i_actions">
-                <button className="btn m_small m_ghost" type="button" onClick={() => toggleStatus(p)}>
-                  {p.status === "active" ? "숨기기" : "판매 재개"}
-                </button>
+                {p.status !== "active" && <button className="btn m_small m_primary" type="button" onClick={() => setStatus(p, "active")}>판매 재개</button>}
+                {p.status === "active" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "soldout")}>품절 처리</button>}
+                {p.status !== "hidden" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "hidden")}>숨기기</button>}
               </div>
             </li>
           );

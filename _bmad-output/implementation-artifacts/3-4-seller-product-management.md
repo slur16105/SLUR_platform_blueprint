@@ -4,7 +4,7 @@ baseline_commit: 427fbefc541f57acf2c58b188e7dc52597413acb
 
 # Story 3.4: 판매자 상품 관리
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -37,5 +37,8 @@ so that 상품을 최신 상태로 유지한다.
 Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
+
+- 리뷰 반영: PATCH 가격 불변식(base+extra>=0 대칭 가드), 제2 판매자 실권한 테스트, 3상태 버튼(판매재개/품절/숨기기), 401 리다이렉트
+- 보류: 상세 수정 페이지·이미지 수정(실사용 피드백 후), IMG_BASE 하드코딩(환경 이동 시 정리)
 
 ### File List
