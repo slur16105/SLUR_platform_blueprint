@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
     }).catch(() => {}); // 멱등 — 서버 실패해도 쿠키는 지운다
   }
   const res = NextResponse.json({ ok: true });
-  for (const name of [COOKIE_ACCESS, COOKIE_REFRESH, COOKIE_ROLE]) res.cookies.delete(name);
+  res.cookies.delete(COOKIE_ACCESS);
+  res.cookies.delete({ name: COOKIE_REFRESH, path: "/api/auth" });
+  res.cookies.delete(COOKIE_ROLE);
   return res;
 }

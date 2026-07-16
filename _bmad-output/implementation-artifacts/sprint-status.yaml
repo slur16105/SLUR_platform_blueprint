@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-16  # 1-6 in-progress
+last_updated: 2026-07-16  # Epic 1 done (6/6)
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -49,13 +49,13 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   # Epic 1: 기반과 계정
-  epic-1: in-progress
+  epic-1: done
   1-1-walking-skeleton: done               # 걷는 뼈대 (프로젝트 골격과 배포)
   1-2-email-auth-api: done                 # 이메일 가입·로그인 API
   1-3-kakao-login: done                    # 카카오 로그인
   1-4-rbac: done                           # 역할과 권한 분기 (RBAC)
   1-5-flutter-login: done                  # Flutter 로그인 화면
-  1-6-web-login-role: in-progress          # 웹 로그인과 Role 분기
+  1-6-web-login-role: done                 # 웹 로그인과 Role 분기
   epic-1-retrospective: optional
 
   # Epic 2: 입점

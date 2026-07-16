@@ -4,7 +4,7 @@ baseline_commit: 97013f8750d804731e372a864e8600a5c9825bdd
 
 # Story 1.6: 웹 로그인과 Role 분기
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -43,4 +43,14 @@ Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
 
+- httpOnly 쿠키 BFF 확정 (스파인 Deferred 해소): Route Handler 프록시, refresh는 path=/api/auth 제한
+- 슬러 디자인 시스템 시드 (토큰 8종+global+button/input/card/alert), slur-ux 문법 준수 (리뷰 감사 확인)
+- 리뷰 반영: Origin 검증(login-CSRF), roles 조회 실패 시 강등 대신 503, authedFetch 죽은 코드 제거, 로그아웃 캐시 잔상 제거, middleware role 쿠키 기준
+- 검증: 로컬+프로덕션 — admin 로그인→/admin 200, 미로그인 307→/login, 에러 봉투 표시. 함정 기록: railway config apply가 web env 추가를 조용히 누락 → 변수는 CLI 직접 설정이 확실
+- 백로그: Epic 2에서 /admin 페이지에 데이터 붙일 때 페이지 단 FastAPI 판정 필수 (role 쿠키는 위조 가능한 UX 힌트)
+
 ### File List
+
+- apps/web/{lib/auth.ts, middleware.ts, app/api/auth/{login,logout}/route.ts}
+- apps/web/app/{login/page.tsx, login/login.css, seller/page.tsx, admin/page.tsx, no-role/page.tsx, logout-button.tsx, page.tsx, layout.tsx, globals.css}
+- apps/web/app/styles/slur/ (디자인 시스템 시드)
