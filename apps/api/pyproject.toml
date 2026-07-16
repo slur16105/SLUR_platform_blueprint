@@ -14,7 +14,7 @@ dependencies = [
     "uvicorn[standard]==0.51.*",
     "email-validator==2.3.*",
     "httpx==0.28.*",
-    ]
+]
 
 [dependency-groups]
 dev = [

@@ -4,7 +4,7 @@ baseline_commit: 849e3b9fe78e12b677d2702166b11ede8d53895e
 
 # Story 1.3: 카카오 로그인
 
-Status: review
+Status: done
 
 ## Story
 
@@ -79,8 +79,27 @@ v1은 이메일이 같아도 계정을 **자동 연결하지 않는다**. 우리
 
 ### Agent Model Used
 
+Claude Fable 5 (claude-fable-5)
+
 ### Debug Log References
+
+- 프로덕션 검증: 가짜 코드 → 실 카카오 API 도달 → 401 invalid_kakao_code (키·시크릿 정상)
 
 ### Completion Notes List
 
+- auth_providers 마이그레이션(승인 스키마), 카카오 토큰 미저장, 자동 링크 금지(409)
+- 리뷰 반영: redirect_uri 서버측 allowlist(KAKAO_REDIRECT_URIS), 카카오 응답 이형 방어(비JSON·id≤0·비dict·닉네임 100자·이메일 255자), 429→502, 레이스 fallback 메시지 정확화, _issue_tokens 오분류 수정, KAKAO_* 미설정 시 전면 장애 대신 카카오만 502
+- 테스트 24/24 (카카오 13 시나리오 — 발신 파라미터 검증 포함)
+
+### 의도적 보류 (후속 추적)
+
+- state/PKCE 세션 바인딩: 클라이언트 인증 플로우가 정해지는 1.5(Flutter SDK)·1.6(웹)에서 함께 확정
+- provider 컬럼 CHECK 제약: 다음 마이그레이션(1.4 user_roles)에 동승
+- /auth/kakao 레이트리밋: 로그인 브루트포스 방어와 한 묶음 (v1 범위 밖, 오픈 게이트 재검토)
+- 카카오 선점(verified 이메일 저장이 이메일 가입 차단, 비밀번호 설정 플로우 부재): 계정 연결 기능과 한 묶음으로 필요 확인 시
+
 ### File List
+
+- apps/api/app/auth/{kakao.py(신규),models.py,schemas.py,service.py,router.py}
+- apps/api/app/core/config.py, alembic/versions/b660f7c62253_auth_providers.py, alembic/env.py
+- apps/api/tests/{test_kakao.py(신규),conftest.py}, pyproject.toml, .railway/railway.ts

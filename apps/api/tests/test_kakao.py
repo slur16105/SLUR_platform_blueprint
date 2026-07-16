@@ -6,7 +6,7 @@ import respx
 
 TOKEN_URL = "https://kauth.kakao.com/oauth/token"
 ME_URL = "https://kapi.kakao.com/v2/user/me"
-REQ = {"code": "auth-code", "redirect_uri": "http://localhost:3000/callback"}
+REQ = {"code": "auth-code", "redirect_uri": "http://localhost:3000/auth/kakao/callback"}
 
 
 def mock_kakao(router, kakao_id=12345, nickname="카카오테스터", email=None, verified=True, valid=True):
@@ -89,3 +89,73 @@ async def test_kakao_timeout_502(client, clean_auth_tables):
     res = await client.post("/api/v1/auth/kakao", json=REQ)
     assert res.status_code == 502
     assert res.json()["code"] == "kakao_unavailable"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_redirect_uri_not_allowlisted_401(client, clean_auth_tables):
+    res = await client.post("/api/v1/auth/kakao", json={"code": "auth-code", "redirect_uri": "https://evil.example.com/cb"})
+    assert res.status_code == 401
+    assert res.json()["code"] == "invalid_kakao_code"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_token_request_includes_required_params(client, clean_auth_tables):
+    captured = {}
+
+    def capture(request):
+        captured.update(dict(httpx.QueryParams(request.content.decode())))
+        return httpx.Response(200, json={"access_token": "kakao-at"})
+
+    respx.mock.post(TOKEN_URL).mock(side_effect=capture)
+    respx.mock.get(ME_URL).mock(return_value=httpx.Response(200, json={"id": 777, "kakao_account": {}}))
+    await client.post("/api/v1/auth/kakao", json=REQ)
+    assert captured["grant_type"] == "authorization_code"
+    assert captured["code"] == "auth-code"
+    assert captured["redirect_uri"] == REQ["redirect_uri"]
+    assert captured["client_id"] and captured["client_secret"]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_me_5xx_502(client, clean_auth_tables):
+    respx.mock.post(TOKEN_URL).mock(return_value=httpx.Response(200, json={"access_token": "kakao-at"}))
+    respx.mock.get(ME_URL).mock(return_value=httpx.Response(500))
+    res = await client.post("/api/v1/auth/kakao", json=REQ)
+    assert res.status_code == 502
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_non_json_body_502(client, clean_auth_tables):
+    respx.mock.post(TOKEN_URL).mock(return_value=httpx.Response(200, text="<html>proxy error</html>"))
+    res = await client.post("/api/v1/auth/kakao", json=REQ)
+    assert res.status_code == 502
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_email_valid_false_null(client, clean_auth_tables):
+    mock_kakao(respx.mock, email="v@example.com", verified=True, valid=False)
+    res = await client.post("/api/v1/auth/kakao", json=REQ)
+    me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {res.json()['access_token']}"})
+    assert me.json()["email"] is None
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_kakao_weird_identity_shapes(client, clean_auth_tables):
+    # id=0 → 401, 100자 초과 닉네임 → 잘려서 저장
+    respx.mock.post(TOKEN_URL).mock(return_value=httpx.Response(200, json={"access_token": "at"}))
+    respx.mock.get(ME_URL).mock(return_value=httpx.Response(200, json={"id": 0}))
+    res = await client.post("/api/v1/auth/kakao", json=REQ)
+    assert res.status_code == 401
+
+    long_name = "가" * 150
+    respx.mock.get(ME_URL).mock(
+        return_value=httpx.Response(200, json={"id": 555, "kakao_account": {"profile": {"nickname": long_name}}})
+    )
+    res = await client.post("/api/v1/auth/kakao", json=REQ)
+    me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {res.json()['access_token']}"})
+    assert len(me.json()["name"]) == 100

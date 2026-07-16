@@ -35,6 +35,12 @@ def _unavailable() -> AppError:
 
 async def fetch_identity(code: str, redirect_uri: str) -> KakaoIdentity:
     settings = get_settings()
+    if not settings.kakao_rest_api_key or not settings.kakao_client_secret:
+        logger.error("kakao keys not configured")
+        raise _unavailable()
+    if redirect_uri not in settings.kakao_redirect_uris:
+        logger.info("kakao redirect_uri not in allowlist: %s", redirect_uri)
+        raise _invalid()
     try:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             token_res = await client.post(
@@ -47,17 +53,20 @@ async def fetch_identity(code: str, redirect_uri: str) -> KakaoIdentity:
                     "code": code,
                 },
             )
-            if token_res.status_code >= 500:
+            if token_res.status_code >= 500 or token_res.status_code == 429:
                 raise _unavailable()
             if token_res.status_code != 200:
                 logger.info("kakao token exchange failed: %s", token_res.status_code)
                 raise _invalid()
-            access_token = token_res.json().get("access_token")
+            try:
+                access_token = token_res.json().get("access_token")
+            except ValueError as exc:
+                raise _unavailable() from exc
             if not access_token:
                 raise _invalid()
 
             me_res = await client.get(_ME_URL, headers={"Authorization": f"Bearer {access_token}"})
-            if me_res.status_code >= 500:
+            if me_res.status_code >= 500 or me_res.status_code == 429:
                 raise _unavailable()
             if me_res.status_code != 200:
                 raise _invalid()
@@ -65,14 +74,26 @@ async def fetch_identity(code: str, redirect_uri: str) -> KakaoIdentity:
         logger.warning("kakao unreachable: %s", type(exc).__name__)
         raise _unavailable() from exc
 
-    body = me_res.json()
-    kakao_id = body.get("id")
-    if kakao_id is None:
+    try:
+        body = me_res.json()
+    except ValueError as exc:
+        raise _unavailable() from exc
+    kakao_id = body.get("id") if isinstance(body, dict) else None
+    if not isinstance(kakao_id, int) or kakao_id <= 0:  # 0·음수·비정수 방어 (표기 차이로 인한 중복 계정 차단)
         raise _invalid()
-    account = body.get("kakao_account") or {}
+    account = body.get("kakao_account")
+    account = account if isinstance(account, dict) else {}
     email = account.get("email")
-    # verified + valid일 때만 이메일을 신뢰한다
+    # verified + valid일 때만 이메일을 신뢰한다 (+ DB 컬럼 한계 방어)
     if not (account.get("is_email_verified") and account.get("is_email_valid")):
         email = None
-    nickname = (account.get("profile") or {}).get("nickname")
+    if email is not None and (not isinstance(email, str) or len(email) > 255):
+        email = None
+    profile = account.get("profile")
+    profile = profile if isinstance(profile, dict) else {}
+    nickname = profile.get("nickname")
+    if isinstance(nickname, str):
+        nickname = nickname.strip()[:100] or None  # varchar(100)·공백-only 방어
+    else:
+        nickname = None
     return KakaoIdentity(provider_user_id=str(kakao_id), nickname=nickname, email=email)

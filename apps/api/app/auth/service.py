@@ -49,9 +49,9 @@ async def _issue_tokens(session: AsyncSession, user_id: uuid.UUID) -> tuple[str,
     )
     try:
         await session.commit()
-    except IntegrityError as exc:  # token_hash 충돌 등 — 상태를 명확히 되돌린다
+    except IntegrityError as exc:  # token_hash 충돌 등 극히 드문 경우 — 원인을 왜곡하지 않는다
         await session.rollback()
-        raise AppError(CODE_INVALID_TOKEN, "다시 로그인해 주세요.", status_code=401) from exc
+        raise AppError("internal_error", "잠시 후 다시 시도해 주세요.", status_code=500) from exc
     return create_access_token(user_id), raw
 
 
@@ -168,5 +168,7 @@ async def kakao_login(session: AsyncSession, code: str, redirect_uri: str) -> tu
         )
         if retry is not None:
             return await _issue_tokens(session, retry.user_id)
+        if email is None:  # 이메일 충돌일 수 없는 레이스 — 오도성 메시지 방지
+            raise AppError("service_unavailable", "잠시 후 다시 시도해 주세요.", status_code=503) from exc
         raise AppError(CODE_EMAIL_CONFLICT, "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요.", status_code=409) from exc
     return await _issue_tokens(session, user.id)
