@@ -4,7 +4,7 @@ baseline_commit: 6624a7e9b1235eb3da0f668e307b927937cb37a8
 
 # Story 1.2: 이메일 가입·로그인 API
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -22,7 +22,7 @@ so that 계정으로 서비스를 이용할 수 있다.
 
 - [x] Task 1: 스키마 승인과 마이그레이션 (AC: 1) — **AD-9 게이트: 아래 컬럼 초안을 Slur 승인 후 작성**
   - [x] `users`·`refresh_tokens` Alembic 리비전 (아래 승인된 초안대로)
-  - [ ] 로컬 적용 + Railway pre-deploy로 프로덕션 적용 확인
+  - [x] 로컬 적용 + Railway pre-deploy로 프로덕션 적용 확인
 - [x] Task 2: 보안 기반 (AC: 1, 3)
   - [x] 의존성 추가·핀: `argon2-cffi`(해시), `pyjwt`(JWT) — 사용자 승인 필요 시 명시
   - [x] `auth/service.py`: Argon2id 해시·검증, access JWT 발급(30분)·검증, refresh 토큰 발급(14일)·회전
@@ -37,9 +37,9 @@ so that 계정으로 서비스를 이용할 수 있다.
 - [x] Task 4: 테스트 (AC: 전체)
   - [x] 가입 성공/중복(409)/검증 실패(422), 로그인 성공/실패(401), refresh 회전(이전 토큰 재사용 시 401), 로그아웃 후 refresh 거부, me 인증/무인증(401 `unauthorized`)
   - [x] 테스트 DB 격리: 각 테스트 후 생성 데이터 정리 (트랜잭션 롤백 or 테이블 truncate 픽스처)
-- [ ] Task 5: 배포·검증 (AC: 전체)
-  - [ ] JWT_SECRET Railway 변수 설정(railway.ts에 preserve 선언), push → 자동 배포
-  - [ ] 프로덕션에서 가입→로그인→refresh→logout 시나리오 curl 검증 후 테스트 계정 정리
+- [x] Task 5: 배포·검증 (AC: 전체)
+  - [x] JWT_SECRET Railway 변수 설정(railway.ts에 preserve 선언), push → 자동 배포
+  - [x] 프로덕션에서 가입→로그인→refresh→logout 시나리오 curl 검증 후 테스트 계정 정리
 
 ## Dev Notes
 
@@ -121,8 +121,24 @@ so that 계정으로 서비스를 이용할 수 있다.
 
 ### Agent Model Used
 
+Claude Fable 5 (claude-fable-5)
+
 ### Debug Log References
+
+- pytest-asyncio 루프 불일치(엔진 풀이 첫 루프에 바인딩) → pyproject에 test/fixture loop scope를 session으로 통일
+- 프로덕션 프로브에서 `.test` TLD 이메일이 422 — email-validator가 예약 도메인 거부 (정상 동작 확인)
 
 ### Completion Notes List
 
+- 스키마 Slur 승인(2026-07-16) 후 autogenerate 마이그레이션 — 로컬·프로덕션(pre-deploy) 적용 확인
+- Argon2id(argon2-cffi 25.1), PyJWT 2.13, refresh SHA-256 저장·회전, 에러 code 4종 시드
+- 테스트 11/11 (auth 7 신규), 프로덕션 E2E 8단계 전부 통과, 테스트 계정 삭제 완료
+- JWT_SECRET Railway 변수 + railway.ts preserve() 선언
+
 ### File List
+
+- apps/api/app/auth/{models,schemas,service,router}.py
+- apps/api/app/core/{security.py,config.py(+jwt 설정)}
+- apps/api/alembic/env.py(+모델 등록), alembic/versions/6e7ec5b149e5_users_and_refresh_tokens.py
+- apps/api/tests/{conftest.py(+격리 픽스처),test_auth.py}
+- apps/api/pyproject.toml(+argon2-cffi·pyjwt·email-validator, 루프 스코프), .railway/railway.ts(+JWT_SECRET preserve)
