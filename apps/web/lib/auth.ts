@@ -22,6 +22,7 @@ export function setSessionCookies(res: NextResponse, access: string, refresh: st
 export function clearSessionCookies(res: NextResponse) {
   res.cookies.delete(COOKIE_ACCESS);
   res.cookies.delete({ name: COOKIE_REFRESH, path: REFRESH_PATH });
+  res.cookies.delete({ name: COOKIE_REFRESH, path: "/api/auth" }); // 1.6 시절 path 쿠키 마이그레이션 정리
   res.cookies.delete(COOKIE_ROLE);
 }
 
@@ -46,15 +47,19 @@ export async function proxyWithRefresh(
   if (upstream.status === 401) {
     const refresh = req.cookies.get(COOKIE_REFRESH)?.value;
     if (refresh) {
-      const r = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refresh }),
-        cache: "no-store",
-      });
-      if (r.ok) {
-        rotated = await r.json();
-        upstream = await call(rotated!.access_token);
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refresh }),
+          cache: "no-store",
+        });
+        if (r.ok) {
+          rotated = await r.json();
+          upstream = await call(rotated!.access_token);
+        }
+      } catch {
+        // 네트워크 예외 — 아래에서 401 그대로 처리 (500 방지)
       }
     }
   }

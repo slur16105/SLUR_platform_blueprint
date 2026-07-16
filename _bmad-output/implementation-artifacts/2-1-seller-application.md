@@ -4,7 +4,7 @@ baseline_commit: edfa09117e7b2ffe657c2122a423d39b34c8052f
 
 # Story 2.1: 입점 신청
 
-Status: draft
+Status: done
 
 ## Story
 
@@ -25,7 +25,7 @@ so that 심사 후 판매를 시작할 수 있다.
 - [x] Task 2: API (sellers 도메인 첫 가동) — `POST /api/v1/sellers/applications` (인증 필수), `GET /api/v1/sellers/applications/me` (내 신청 상태). 사업자등록번호 10자리 숫자 검증(하이픈 제거 정규화), 재직 pending 시 409
 - [x] Task 3: 웹 화면 — `/apply` 신청 폼(슬러 디자인, 로그인 필요 → 미로그인 시 /login), 제출 후·재방문 시 "심사 중" 상태 화면. 반려된 경우 사유 표시+재신청 가능
 - [x] Task 4: 테스트 — 제출 성공/필드 누락 422/중복 pending 409/reject 후 재신청 허용/비로그인 401 + 동시 제출 레이스(partial unique)
-- [ ] Task 5: 배포·프로덕션 E2E (R8: curl 시나리오 — 가입→신청→상태 조회→정리)
+- [x] Task 5: 배포·프로덕션 E2E (R8: curl 시나리오 — 가입→신청→상태 조회→정리)
 
 ## Dev Notes
 
@@ -77,4 +77,18 @@ Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
 
+- seller_applications 마이그레이션(승인 스키마, 부분 유니크 인덱스), 신청 API+상태 조회, 웹 /apply(슬러 디자인)
+- refresh 쿠키 path /api 개정 + 옛 path 쿠키 마이그레이션 정리(리뷰 발견), proxyWithRefresh 공용 BFF 헬퍼
+- 리뷰 반영: constraint명 확인 후 409 매핑, 전각 숫자 차단, 공백-only·연락처 형식 검증, 검증 메시지 한국어화, 최신 조회 타이브레이커, 반려 후 재신청·동시 제출 레이스 테스트 보강
+- 테스트 41/41. 프로덕션 E2E: 제출→pending·중복 409·미인증 401. 테스트 신청 1건(검증굿즈)은 2.2 검증용으로 의도적 보존
+- 문서 정정: 상태 조회는 GET Route Handler(클라이언트 컴포넌트) — 서버 컴포넌트 직접 호출 계획에서 변경 (refresh 가능 이점)
+
+### 의도적 보류
+
+- proxyWithRefresh 동시 회전 레이스(다중 BFF 요청 동시 401): BFF 라우트가 늘어나는 2.2+에서 구조 개선 검토
+- returnTo 파라미터(로그인 후 원래 페이지 복귀): UX 개선 백로그
+
 ### File List
+
+- apps/api/app/sellers/{models,schemas,service,router}.py, alembic/versions/ca64b8ab1e3b, alembic/env.py, app/core/errors.py, tests/test_seller_application.py
+- apps/web/{lib/auth.ts, middleware.ts, app/api/auth/{login,logout}/route.ts, app/api/sellers/apply/route.ts, app/apply/{page.tsx,apply.css}}

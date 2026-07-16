@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-16  # Epic 1 done + 회고 완료
+last_updated: 2026-07-16  # 2-1 done
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -60,7 +60,7 @@ development_status:
 
   # Epic 2: 입점
   epic-2: in-progress
-  2-1-seller-application: in-progress      # 입점 신청
+  2-1-seller-application: done             # 입점 신청
   2-2-admin-approval: backlog              # 관리자 입점 승인·반려
   2-3-seller-shipping-fee: backlog         # 판매자 배송비 설정
   epic-2-retrospective: optional

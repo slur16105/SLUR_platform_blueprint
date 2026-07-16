@@ -81,3 +81,47 @@ async def test_no_application_404(client, clean_applications):
     t = await _token(client)
     res = await client.get("/api/v1/sellers/applications/me", headers=_auth(t))
     assert res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_reapply_after_reject(client, clean_applications):
+    t = await _token(client)
+    res = await client.post("/api/v1/sellers/applications", json=VALID_APP, headers=_auth(t))
+    app_id = res.json()["id"]
+
+    # 반려 처리 (2.2 API 전이라 DB 직접 — 반려 후 재신청 경로 검증)
+    from sqlalchemy import text as sqltext
+    from app.core.db import engine
+
+    async with engine.begin() as conn:
+        await conn.execute(sqltext("UPDATE seller_applications SET status='rejected', rejection_reason='결이 다름' WHERE id = :i"), {"i": app_id})
+
+    me = await client.get("/api/v1/sellers/applications/me", headers=_auth(t))
+    assert me.json()["status"] == "rejected" and me.json()["rejection_reason"] == "결이 다름"
+
+    res = await client.post("/api/v1/sellers/applications", json=VALID_APP, headers=_auth(t))
+    assert res.status_code == 201  # 재신청은 새 행
+
+
+@pytest.mark.asyncio
+async def test_concurrent_submission_race(client, clean_applications):
+    import asyncio
+
+    t = await _token(client)
+    results = await asyncio.gather(
+        client.post("/api/v1/sellers/applications", json=VALID_APP, headers=_auth(t)),
+        client.post("/api/v1/sellers/applications", json=VALID_APP, headers=_auth(t)),
+    )
+    codes = sorted(r.status_code for r in results)
+    assert codes == [201, 409]  # 정확히 하나만 성공
+
+
+@pytest.mark.asyncio
+async def test_fullwidth_brn_rejected(client, clean_applications):
+    t = await _token(client)
+    res = await client.post(
+        "/api/v1/sellers/applications",
+        json={**VALID_APP, "business_registration_number": "２２０８１６２５１７"},
+        headers=_auth(t),
+    )
+    assert res.status_code == 422

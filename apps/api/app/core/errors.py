@@ -55,8 +55,16 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+        def _reason(err: dict) -> str:
+            msg = err.get("msg", "")
+            if msg.startswith("Value error, "):
+                return msg[len("Value error, "):]  # 우리 validator의 한국어 메시지
+            if msg == "Field required":
+                return "필수 입력입니다."
+            return msg
+
         details = [
-            {"field": ".".join(str(loc) for loc in err.get("loc", [])), "reason": err.get("msg", "")}
+            {"field": ".".join(str(loc) for loc in err.get("loc", [])), "reason": _reason(err)}
             for err in exc.errors()
         ]
         return JSONResponse(status_code=422, content=_envelope(CODE_VALIDATION_ERROR, "입력값이 올바르지 않습니다.", details))

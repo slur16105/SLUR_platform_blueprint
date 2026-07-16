@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 def _validate_brn(value: str) -> str:
     """사업자등록번호 — 하이픈 제거 후 10자리 + 국세청 체크섬."""
     digits = value.replace("-", "").strip()
-    if len(digits) != 10 or not digits.isdigit():
+    if len(digits) != 10 or not digits.isdigit() or not digits.isascii():  # 전각 숫자 차단
         raise ValueError("사업자등록번호는 숫자 10자리여야 합니다.")
     weights = [1, 3, 7, 1, 3, 7, 1, 3, 5]
     total = sum(int(d) * w for d, w in zip(digits[:9], weights))
@@ -32,7 +32,15 @@ class ApplicationRequest(BaseModel):
     def brn_valid(cls, v: str) -> str:
         return _validate_brn(v)
 
-    @field_validator("company_name", "representative_name", "brand_name", "brand_intro")
+    @field_validator("contact_phone")
+    @classmethod
+    def phone_format(cls, v: str) -> str:
+        v = v.strip()
+        if not v or not all(c.isdigit() or c == "-" for c in v) or not v.isascii() or sum(c.isdigit() for c in v) < 9:
+            raise ValueError("연락처 형식이 올바르지 않습니다.")
+        return v
+
+    @field_validator("company_name", "representative_name", "brand_name", "brand_intro", "mail_order_number", "business_address")
     @classmethod
     def not_blank(cls, v: str) -> str:
         v = v.strip()
