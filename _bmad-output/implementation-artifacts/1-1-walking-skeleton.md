@@ -23,27 +23,27 @@ so that 이후 모든 스토리가 올라탈 기반이 생긴다.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: 모노리포 골격 생성 (AC: 1)
-  - [ ] 리포 루트에 `apps/api`, `apps/web`, `apps/mobile` 생성
-  - [ ] `apps/api`: uv 프로젝트 (`uv init`, Python 3.14), 의존성 버전 핀 — fastapi·uvicorn[standard]·sqlalchemy[asyncio]·asyncpg·alembic·pydantic-settings + 개발 의존성 pytest·pytest-asyncio·httpx
-  - [ ] `apps/api/app/` 도메인 모듈 골격: `core/` + `auth/ sellers/ products/ carts/ orders/ admin/` — 각 폴더에 `router.py`(라우트 0개의 `router = APIRouter()` export)·`service.py`·`models.py`·`schemas.py` (고정 명명, main.py가 import해도 죽지 않아야 함)
-  - [ ] `apps/web`: `npx create-next-app@16.2` (App Router, TypeScript) — 핀 버전으로 생성, 자동 최신 설치 금지
-  - [ ] `apps/mobile`: Flutter 3.44로 `flutter create` (Android 타깃, 로컬 SDK 버전 확인 후 진행) + `flutter_riverpod` 3.x만 추가
-- [ ] Task 2: FastAPI core (AC: 1, 2, 6)
-  - [ ] `core/config.py`: Pydantic Settings — DATABASE_URL 등 전부 환경변수, 기본값에 시크릿 금지
-  - [ ] `core/db.py`: SQLAlchemy 2.0 async engine + 세션 의존성
-  - [ ] `core/errors.py`: 공통 예외 타입 + 전역 핸들러 — 모든 에러(404·422·500 포함)를 `{code(문자열 enum), message(한국어), details(배열)}` 봉투로 변환
-  - [ ] `GET /api/v1/health`: DB `SELECT 1` 확인 포함 200 응답 — 도메인 소속이 아니므로 `main.py`(또는 core 라우터)에 직접 정의 (core에 도메인 코드 금지 규칙과 무관한 인프라 엔드포인트)
-  - [ ] 각 도메인 `router.py`를 `/api/v1` 프리픽스로 등록하는 조립 코드 (`main.py`) — 이후 리소스 경로 관례는 `/api/v1/{복수형-리소스}`, 필드 snake_case, page 기반 페이지네이션 (스파인 API 컨벤션)
-- [ ] Task 3: 로컬 개발 환경 (AC: 1)
-  - [ ] `docker-compose.yml`: postgres:17 + api 서비스 (web·mobile은 로컬 프로세스로 실행) — postgres에 healthcheck를 걸고 api는 `depends_on: condition: service_healthy`로 대기 (간헐적 초기 연결 실패 방지). 로컬은 로컬 PG만 사용 — Supabase는 prod 전용 (스파인 환경·운영 표)
-  - [ ] `.env.example` 작성, `.gitignore`에 `.env` 확인 (이미 있음)
-- [ ] Task 4: Alembic 초기화 (AC: 5)
-  - [ ] `alembic init` (async 템플릿), `env.py`를 core 설정과 연동
-  - [ ] 빈 베이스라인 리비전 1개 (테이블 생성 없음 — 테이블은 후속 스토리에서, AD-9 승인 게이트)
+- [x] Task 1: 모노리포 골격 생성 (AC: 1)
+  - [x] 리포 루트에 `apps/api`, `apps/web`, `apps/mobile` 생성
+  - [x] `apps/api`: uv 프로젝트 (`uv init`, Python 3.14), 의존성 버전 핀 — fastapi·uvicorn[standard]·sqlalchemy[asyncio]·asyncpg·alembic·pydantic-settings + 개발 의존성 pytest·pytest-asyncio·httpx
+  - [x] `apps/api/app/` 도메인 모듈 골격: `core/` + `auth/ sellers/ products/ carts/ orders/ admin/` — 각 폴더에 `router.py`(라우트 0개의 `router = APIRouter()` export)·`service.py`·`models.py`·`schemas.py` (고정 명명, main.py가 import해도 죽지 않아야 함)
+  - [x] `apps/web`: `npx create-next-app@16.2` (App Router, TypeScript) — 핀 버전으로 생성, 자동 최신 설치 금지
+  - [x] `apps/mobile`: Flutter 3.44로 `flutter create` (Android 타깃, 로컬 SDK 버전 확인 후 진행) + `flutter_riverpod` 3.x만 추가
+- [x] Task 2: FastAPI core (AC: 1, 2, 6)
+  - [x] `core/config.py`: Pydantic Settings — DATABASE_URL 등 전부 환경변수, 기본값에 시크릿 금지
+  - [x] `core/db.py`: SQLAlchemy 2.0 async engine + 세션 의존성
+  - [x] `core/errors.py`: 공통 예외 타입 + 전역 핸들러 — 모든 에러(404·422·500 포함)를 `{code(문자열 enum), message(한국어), details(배열)}` 봉투로 변환
+  - [x] `GET /api/v1/health`: DB `SELECT 1` 확인 포함 200 응답 — 도메인 소속이 아니므로 `main.py`(또는 core 라우터)에 직접 정의 (core에 도메인 코드 금지 규칙과 무관한 인프라 엔드포인트)
+  - [x] 각 도메인 `router.py`를 `/api/v1` 프리픽스로 등록하는 조립 코드 (`main.py`) — 이후 리소스 경로 관례는 `/api/v1/{복수형-리소스}`, 필드 snake_case, page 기반 페이지네이션 (스파인 API 컨벤션)
+- [x] Task 3: 로컬 개발 환경 (AC: 1)
+  - [x] `docker-compose.yml`: postgres:17 + api 서비스 (web·mobile은 로컬 프로세스로 실행) — postgres에 healthcheck를 걸고 api는 `depends_on: condition: service_healthy`로 대기 (간헐적 초기 연결 실패 방지). 로컬은 로컬 PG만 사용 — Supabase는 prod 전용 (스파인 환경·운영 표)
+  - [x] `.env.example` 작성, `.gitignore`에 `.env` 확인 (이미 있음)
+- [x] Task 4: Alembic 초기화 (AC: 5)
+  - [x] `alembic init` (async 템플릿), `env.py`를 core 설정과 연동
+  - [x] 빈 베이스라인 리비전 1개 (테이블 생성 없음 — 테이블은 후속 스토리에서, AD-9 승인 게이트)
 - [ ] Task 5: Dockerfile과 Railway 배포 (AC: 4, 5, 6)
-  - [ ] `apps/api/Dockerfile`: uv 기반 빌드, uvicorn 실행
-  - [ ] `apps/web/Dockerfile`: Next.js standalone output 빌드
+  - [x] `apps/api/Dockerfile`: uv 기반 빌드, uvicorn 실행
+  - [x] `apps/web/Dockerfile`: Next.js standalone output 빌드
   - [ ] GitHub 리포 연결: git remote가 없으면 GitHub 리포 생성·push 후 Railway에 연결, main 브랜치 자동 배포 트리거 설정 (AC 4의 "푸시 → 배포" 조건)
   - [ ] Railway 프로젝트: 서비스 2개(api·web), 각 서비스 루트 디렉토리 지정(모노리포), Dockerfile 빌드
   - [ ] api 서비스 pre-deploy 커맨드: `alembic upgrade head`
