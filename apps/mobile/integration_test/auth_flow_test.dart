@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:slur_mobile/main.dart' as app;
 
-const email = 'e2e-flutter@example.com';
+final email = 'e2e-${DateTime.now().millisecondsSinceEpoch}@example.com';
 const password = 'e2e-password-123';
 
 void main() {

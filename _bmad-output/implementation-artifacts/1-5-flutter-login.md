@@ -4,7 +4,7 @@ baseline_commit: 0a4f544598e0d7754e6472e0f4b66656bfed9eec
 
 # Story 1.5: Flutter 로그인 화면
 
-Status: review
+Status: done
 
 ## Story
 
@@ -59,6 +59,11 @@ Claude Fable 5 (claude-fable-5)
 - Android: com.slur.mobile, 카카오 v2 핸들러, gradle.properties 네이티브 키
 - 검증: 에뮬레이터 E2E(가입→홈→로그아웃→재로그인) 자동 통과 + **카카오 로그인 실사용 확인 (Slur, 2026-07-16)**
 - 콘솔: Android 플랫폼 등록(패키지명·디버그 키 해시), 릴리즈 키 해시는 출시 준비 시
+
+### Senior Developer Review (AI) — 반영 요약
+
+- 조건부 승인 → 전 항목 반영: 카카오 SDK 토큰 즉시 파기, logout noAuth(회전 우회 방지), 세션 중 갱신 실패 → 로그인 화면 배선(AC 2 완성), me() 401만 null(오프라인 강등 방지), save 원자화, signup catch-all, E2E 이메일 유니크
+- 백로그: 카카오 취소 시 폴백 UX 미세 조정 (Epic 3 앱 작업 시)
 
 ### File List
 

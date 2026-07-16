@@ -4,7 +4,10 @@ import '../api/client.dart';
 import 'auth_repository.dart';
 
 final tokenStorageProvider = Provider((ref) => TokenStorage());
-final apiClientProvider = Provider((ref) => ApiClient(ref.watch(tokenStorageProvider)));
+final apiClientProvider = Provider((ref) => ApiClient(
+      ref.watch(tokenStorageProvider),
+      onSessionExpired: () => ref.invalidate(currentUserProvider), // 갱신 실패 → 로그인 화면
+    ));
 final authRepositoryProvider =
     Provider((ref) => AuthRepository(ref.watch(apiClientProvider), ref.watch(tokenStorageProvider)));
 

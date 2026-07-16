@@ -55,6 +55,11 @@ class AuthRepository {
       await _saveTokens(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.from(e);
+    } finally {
+      // 카카오 SDK가 평문 저장한 토큰은 신원 교환 후 즉시 파기 (AD-5 정신)
+      try {
+        await kakao.UserApi.instance.logout();
+      } catch (_) {/* 파기 실패는 치명 아님 */}
     }
   }
 
@@ -62,8 +67,9 @@ class AuthRepository {
     try {
       final res = await _api.dio.get('/api/v1/auth/me');
       return res.data as Map<String, dynamic>;
-    } on DioException {
-      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) return null; // 미인증만 null — 오프라인은 에러로 전파
+      rethrow;
     }
   }
 
@@ -71,7 +77,9 @@ class AuthRepository {
     final refresh = await _storage.refresh;
     if (refresh != null) {
       try {
-        await _api.dio.post('/api/v1/auth/logout', data: {'refresh_token': refresh});
+        // noAuth: access 만료로 인한 401→회전 경로를 타지 않게 (구 refresh 잔존 방지)
+        await _api.dio.post('/api/v1/auth/logout',
+            data: {'refresh_token': refresh}, options: Options(extra: {'noAuth': true}));
       } on DioException {
         // 멱등 — 서버 실패해도 로컬은 지운다
       }

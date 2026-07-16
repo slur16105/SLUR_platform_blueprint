@@ -15,8 +15,16 @@ class TokenStorage {
   Future<String?> get refresh async => _storage.read(key: 'refresh_token');
 
   Future<void> save(String access, String refresh) async {
-    await _storage.write(key: 'access_token', value: access);
-    await _storage.write(key: 'refresh_token', value: refresh);
+    // 회전 직후 부분 실패 방지 — 둘 다 쓰고, 실패 시 전체 클리어(다음 시작 시 재로그인)
+    try {
+      await Future.wait([
+        _storage.write(key: 'access_token', value: access),
+        _storage.write(key: 'refresh_token', value: refresh),
+      ]);
+    } catch (_) {
+      await clear();
+      rethrow;
+    }
   }
 
   Future<void> clear() async {
@@ -41,7 +49,7 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  ApiClient(this._storage) {
+  ApiClient(this._storage, {this.onSessionExpired}) {
     _dio = Dio(BaseOptions(
       baseUrl: apiBaseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -75,6 +83,7 @@ class ApiClient {
 
   late final Dio _dio;
   final TokenStorage _storage;
+  final void Function()? onSessionExpired; // 갱신 실패 → 로그인 화면 전환 배선 (AC 2)
   Future<bool>? _refreshing; // 단일 비행(single-flight) 보장
 
   Dio get dio => _dio;
@@ -91,8 +100,10 @@ class ApiClient {
           data: {'refresh_token': refresh}, options: Options(extra: {'noAuth': true}));
       await _storage.save(res.data['access_token'] as String, res.data['refresh_token'] as String);
       return true;
-    } on DioException {
-      await _storage.clear(); // 갱신 실패 → 로그인 화면으로 (AC 2)
+    } catch (_) {
+      // DioException 외(캐스트·스토리지 오류)도 세션 종료로 수렴
+      await _storage.clear();
+      onSessionExpired?.call(); // 세션 중 갱신 실패 → 즉시 로그인 화면 (AC 2)
       return false;
     }
   }

@@ -27,6 +27,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('가입에 실패했습니다. 다시 시도해 주세요.')));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
