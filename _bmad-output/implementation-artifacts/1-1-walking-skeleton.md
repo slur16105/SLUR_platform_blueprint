@@ -45,13 +45,13 @@ so that 이후 모든 스토리가 올라탈 기반이 생긴다.
   - [x] `apps/api/Dockerfile`: uv 기반 빌드, uvicorn 실행
   - [x] `apps/web/Dockerfile`: Next.js standalone output 빌드
   - [ ] GitHub 리포 연결: git remote가 없으면 GitHub 리포 생성·push 후 Railway에 연결, main 브랜치 자동 배포 트리거 설정 (AC 4의 "푸시 → 배포" 조건)
-  - [ ] Railway 프로젝트: 서비스 2개(api·web), 각 서비스 루트 디렉토리 지정(모노리포), Dockerfile 빌드
-  - [ ] api 서비스 pre-deploy 커맨드: `alembic upgrade head`
-  - [ ] 환경변수: DATABASE_URL(Supabase 연결 문자열 — 아래 배포 노트의 Session pooler 필수) 등 Railway에 설정
-- [ ] Task 6: 검증 (AC: 전체)
-  - [ ] 로컬: `docker compose up` → 헬스체크 200, 404/422 에러 봉투 형식 확인
-  - [ ] 프로드: Railway 공개 URL 헬스체크 200 (Supabase 연결), web URL 응답
-  - [ ] `grep -r supabase apps/web apps/mobile` → 0건 확인 (AC 3)
+  - [x] Railway 프로젝트: 서비스 2개(api·web), 각 서비스 루트 디렉토리 지정(모노리포), Dockerfile 빌드
+  - [x] api 서비스 pre-deploy 커맨드: `alembic upgrade head`
+  - [x] 환경변수: DATABASE_URL(Supabase 연결 문자열 — 아래 배포 노트의 Session pooler 필수) 등 Railway에 설정
+- [x] Task 6: 검증 (AC: 전체)
+  - [x] 로컬: `docker compose up` → 헬스체크 200, 404/422 에러 봉투 형식 확인
+  - [x] 프로드: Railway 공개 URL 헬스체크 200 (Supabase 연결), web URL 응답
+  - [x] `grep -r supabase apps/web apps/mobile` → 0건 확인 (AC 3)
 
 ## Dev Notes
 
