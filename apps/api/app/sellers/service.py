@@ -104,3 +104,23 @@ async def reject_application(session: AsyncSession, application_id: uuid.UUID, a
     await session.commit()
     logger.info("application %s rejected by %s", application_id, admin_id)
     return application
+
+
+CODE_NOT_SELLER = "forbidden"
+
+
+async def get_my_seller(session: AsyncSession, user_id: uuid.UUID) -> Seller:
+    seller = await session.scalar(select(Seller).where(Seller.user_id == user_id))
+    if seller is None:  # 역할은 있는데 프로필이 없는 비정상 상태 방어
+        raise AppError(CODE_NOT_SELLER, "판매자 정보를 찾을 수 없습니다.", status_code=403)
+    return seller
+
+
+async def update_shipping_fees(session: AsyncSession, user_id: uuid.UUID, base: int, jeju: int, island: int) -> Seller:
+    seller = await get_my_seller(session, user_id)
+    seller.base_shipping_fee = base
+    seller.jeju_extra_fee = jeju
+    seller.island_extra_fee = island
+    await session.commit()
+    logger.info("shipping fees updated for seller %s", seller.id)
+    return seller

@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
 
+from app.core.config import get_settings
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -55,3 +57,23 @@ class ApplicationResponse(BaseModel):
     brand_name: str
     rejection_reason: str | None
     created_at: datetime
+
+
+class ShippingFees(BaseModel):
+    base_shipping_fee: int = Field(ge=0)
+    jeju_extra_fee: int = Field(ge=0)
+    island_extra_fee: int = Field(ge=0)
+
+    @field_validator("base_shipping_fee", "jeju_extra_fee", "island_extra_fee")
+    @classmethod
+    def within_cap(cls, v: int) -> int:
+        cap = get_settings().max_shipping_fee
+        if v > cap:
+            raise ValueError(f"배송비는 {cap:,}원을 넘을 수 없습니다.")
+        return v
+
+
+class SellerMeResponse(ShippingFees):
+    brand_name: str
+    brand_intro: str
+    company_name: str

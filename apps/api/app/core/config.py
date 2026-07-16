@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     jwt_secret: str = Field(min_length=32)
     access_token_minutes: int = 30
     refresh_token_days: int = 14
+    max_shipping_fee: int = 100_000  # 배송비 오입력 방어 상한 (원)
     # 카카오 OAuth — 미설정이어도 앱은 부팅되고, 카카오 로그인만 502 (전면 장애 방지)
     kakao_rest_api_key: str = ""
     kakao_client_secret: str = ""
