@@ -10,11 +10,14 @@ class Base(DeclarativeBase):
     pass
 
 
-def _engine():
-    return create_async_engine(get_settings().database_url, pool_pre_ping=True)
+def _normalize(url: str) -> str:
+    # 매니지드 환경이 postgresql:// 스킴을 주입해도 async 드라이버로 강제
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
 
-engine = _engine()
+engine = create_async_engine(_normalize(get_settings().database_url), pool_pre_ping=True)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 

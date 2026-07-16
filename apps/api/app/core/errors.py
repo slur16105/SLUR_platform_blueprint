@@ -4,6 +4,7 @@ code는 문자열 enum(클라이언트 분기용), message는 한국어(그대�
 details는 필드별 오류 배열. 클라이언트는 code로만 분기한다.
 """
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -11,9 +12,21 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+logger = logging.getLogger("slur.errors")
+
 CODE_NOT_FOUND = "not_found"
+CODE_METHOD_NOT_ALLOWED = "method_not_allowed"
 CODE_VALIDATION_ERROR = "validation_error"
+CODE_HTTP_ERROR = "http_error"
+CODE_SERVICE_UNAVAILABLE = "service_unavailable"
 CODE_INTERNAL_ERROR = "internal_error"
+
+# 상태 코드별 기본 code/한국어 message — 여기 없는 코드는 http_error로 수렴
+_HTTP_DEFAULTS: dict[int, tuple[str, str]] = {
+    404: (CODE_NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."),
+    405: (CODE_METHOD_NOT_ALLOWED, "허용되지 않은 요청 방식입니다."),
+    503: (CODE_SERVICE_UNAVAILABLE, "일시적으로 서비스를 사용할 수 없습니다."),
+}
 
 
 class AppError(Exception):
@@ -37,9 +50,8 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-        if exc.status_code == 404:
-            return JSONResponse(status_code=404, content=_envelope(CODE_NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."))
-        return JSONResponse(status_code=exc.status_code, content=_envelope(CODE_INTERNAL_ERROR, str(exc.detail)))
+        code, message = _HTTP_DEFAULTS.get(exc.status_code, (CODE_HTTP_ERROR, "요청을 처리할 수 없습니다."))
+        return JSONResponse(status_code=exc.status_code, content=_envelope(code, message))
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -51,4 +63,5 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("unhandled error: %s %s", request.method, request.url.path)
         return JSONResponse(status_code=500, content=_envelope(CODE_INTERNAL_ERROR, "서버 내부 오류가 발생했습니다."))

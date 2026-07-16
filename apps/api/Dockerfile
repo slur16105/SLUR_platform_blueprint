@@ -11,4 +11,4 @@ COPY alembic ./alembic
 
 EXPOSE 8000
 # Railway는 PORT 환경변수로 포트를 지정한다 — 로컬 compose에선 기본 8000
-CMD ["sh", "-c", "uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
