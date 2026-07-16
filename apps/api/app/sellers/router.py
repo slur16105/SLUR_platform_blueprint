@@ -8,7 +8,7 @@ from app.core.errors import AppError
 from app.core.security import get_current_user_id, require_role
 from app.products import service as products_service
 from app.products import storage as products_storage
-from app.products.schemas import PresignRequest, ProductCreate, ProductImageResponse, ProductResponse
+from app.products.schemas import PresignRequest, ProductCreate, ProductImageResponse, ProductResponse, VariantResponse, VariantsReplace
 from app.sellers import service
 from app.sellers.schemas import ApplicationRequest, ApplicationResponse, SellerMeResponse, ShippingFees
 
@@ -57,11 +57,12 @@ async def update_shipping_fees(
     return SellerMeResponse.model_validate(seller, from_attributes=True)
 
 
-def _product_response(product, images) -> ProductResponse:
+def _product_response(product, images, variants=()) -> ProductResponse:
     return ProductResponse(
         id=product.id, name=product.name, base_price=product.base_price, description=product.description,
         status=product.status, category_id=product.category_id,
         images=[ProductImageResponse(path=i.path, sort_order=i.sort_order) for i in images],
+        variants=[VariantResponse.model_validate(v, from_attributes=True) for v in variants],
     )
 
 
@@ -84,7 +85,8 @@ async def create_product(
     seller = await service.get_my_seller(session, user_id)
     product = await products_service.create_product(session, seller.id, body)
     images = (await products_service.get_product_images(session, [product.id])).get(product.id, [])
-    return _product_response(product, images)
+    variants = (await products_service.get_variants(session, [product.id])).get(product.id, [])
+    return _product_response(product, images, variants)
 
 
 @router.get("/products", response_model=list[ProductResponse])
@@ -94,5 +96,21 @@ async def list_products(
 ) -> list[ProductResponse]:
     seller = await service.get_my_seller(session, user_id)
     rows = await products_service.list_my_products(session, seller.id)
-    images = await products_service.get_product_images(session, [p.id for p in rows])
-    return [_product_response(p, images.get(p.id, [])) for p in rows]
+    ids = [p.id for p in rows]
+    images = await products_service.get_product_images(session, ids)
+    variants = await products_service.get_variants(session, ids)
+    return [_product_response(p, images.get(p.id, []), variants.get(p.id, [])) for p in rows]
+
+
+@router.put("/products/{product_id}/variants", response_model=ProductResponse)
+async def replace_variants(
+    product_id: uuid.UUID,
+    body: VariantsReplace,
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+) -> ProductResponse:
+    seller = await service.get_my_seller(session, user_id)
+    product = await products_service.replace_variants(session, seller.id, product_id, body.variants)
+    images = (await products_service.get_product_images(session, [product.id])).get(product.id, [])
+    variants = (await products_service.get_variants(session, [product.id])).get(product.id, [])
+    return _product_response(product, images, variants)

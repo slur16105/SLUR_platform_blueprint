@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -55,3 +55,25 @@ class ProductImage(Base):
     )
     path: Mapped[str] = mapped_column(String(300), nullable=False)  # Storage 경로 — URL은 표현 계층에서 조립
     sort_order: Mapped[int] = mapped_column(nullable=False, default=0)  # 0 = 대표 이미지
+
+
+class Variant(Base):
+    __tablename__ = "variants"
+    __table_args__ = (
+        UniqueConstraint("product_id", "option1_value", "option2_value"),  # 중복 조합 방지
+        CheckConstraint("stock >= 0", name="ck_variants_stock"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    product_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # 옵션 없음 = 빈 문자열 (UNIQUE 동작 위해 NULL 금지)
+    option1_name: Mapped[str] = mapped_column(String(20), nullable=False, default="")
+    option1_value: Mapped[str] = mapped_column(String(30), nullable=False, default="")
+    option2_name: Mapped[str] = mapped_column(String(20), nullable=False, default="")
+    option2_value: Mapped[str] = mapped_column(String(30), nullable=False, default="")
+    extra_price: Mapped[int] = mapped_column(nullable=False, default=0)  # 원 단위 정수, 음수 허용(할인 조합)
+    stock: Mapped[int] = mapped_column(nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(nullable=False, default=True)  # 수동 품절 토글
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

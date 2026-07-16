@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
-from app.products.models import Category, Product, ProductImage
+from app.products.models import Category, Product, ProductImage, Variant
 
 logger = logging.getLogger("slur.products")
 
@@ -102,6 +102,8 @@ async def create_product(session: AsyncSession, seller_id: uuid.UUID, data) -> P
     )
     session.add(product)
     await session.flush()
+    # AC 2: 옵션 없는 상품도 조합 1개 (데이터 구조 통일)
+    session.add(Variant(product_id=product.id, stock=data.stock))
     for order, path in enumerate(data.image_paths):
         session.add(ProductImage(product_id=product.id, path=path, sort_order=order))
     try:
@@ -130,3 +132,55 @@ async def get_product_images(session: AsyncSession, product_ids: list[uuid.UUID]
     for img in rows:
         grouped.setdefault(img.product_id, []).append(img)
     return grouped
+
+
+CODE_DUPLICATE_VARIANT = "duplicate_variant"
+
+
+async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_id: uuid.UUID, items) -> Product:
+    product = await session.scalar(
+        select(Product).where(Product.id == product_id, Product.seller_id == seller_id)
+    )
+    if product is None:  # 타인 상품·미존재 구분 없이 (존재 노출 방지)
+        raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
+    from sqlalchemy import delete as sqldelete
+
+    await session.execute(sqldelete(Variant).where(Variant.product_id == product_id))
+    for item in items:
+        session.add(Variant(
+            product_id=product_id,
+            option1_name=item.option1_name.strip(), option1_value=item.option1_value.strip(),
+            option2_name=item.option2_name.strip(), option2_value=item.option2_value.strip(),
+            extra_price=item.extra_price, stock=item.stock, is_active=item.is_active,
+        ))
+    try:
+        await session.commit()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise AppError(CODE_DUPLICATE_VARIANT, "중복된 옵션 조합이 있습니다.", status_code=422) from exc
+    return product
+
+
+async def get_variants(session: AsyncSession, product_ids: list[uuid.UUID]) -> dict:
+    if not product_ids:
+        return {}
+    rows = await session.scalars(
+        select(Variant).where(Variant.product_id.in_(product_ids)).order_by(Variant.created_at, Variant.id)
+    )
+    grouped: dict = {}
+    for v in rows:
+        grouped.setdefault(v.product_id, []).append(v)
+    return grouped
+
+
+def check_purchasable(product: Product, variant: Variant, qty: int) -> bool:
+    """AD-10 단일 술어 — "이 조합을 지금 qty개 살 수 있는가". carts·orders는 이 함수만 쓴다."""
+    return (
+        product is not None
+        and variant is not None
+        and variant.product_id == product.id
+        and product.status == "active"
+        and variant.is_active
+        and qty > 0
+        and variant.stock >= qty
+    )

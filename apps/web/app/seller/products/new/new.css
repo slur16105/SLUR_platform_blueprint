@@ -8,3 +8,10 @@
 .page_product_new .i_thumb { display: flex; flex-direction: column; gap: var(--space-4); }
 .page_product_new .i_thumb img { width: 72px; height: 72px; border: 1px solid var(--color-border-default); border-radius: var(--radius-8); object-fit: cover; }
 .page_product_new .i_thumb[data-state="main"] img { border: 2px solid var(--color-brand); }
+.page_product_new .p_options { display: flex; flex-direction: column; gap: var(--space-12); }
+.page_product_new .i_axes { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-8); }
+.page_product_new .i_axes .btn { grid-column: 1 / -1; }
+.page_product_new .i_grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.page_product_new .i_grid th { padding: var(--space-8); border-bottom: 1px solid var(--color-border-default); color: var(--color-text-muted); font-weight: var(--weight-medium); text-align: left; }
+.page_product_new .i_grid td { padding: var(--space-4) var(--space-8); border-bottom: 1px solid var(--color-border-subtle); }
+.page_product_new .i_grid .input_text.m_small { width: 90px; height: 2rem; }
