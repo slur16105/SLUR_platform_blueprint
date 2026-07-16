@@ -191,8 +191,9 @@ async def grant_role(session: AsyncSession, user_id: uuid.UUID, role: str) -> No
     existing = await session.scalar(select(UserRole).where(UserRole.user_id == user_id, UserRole.role == role))
     if existing is not None:
         return
-    session.add(UserRole(user_id=user_id, role=role))
     try:
-        await session.flush()
+        async with session.begin_nested():  # savepoint — 실패해도 호출자 트랜잭션은 보존
+            session.add(UserRole(user_id=user_id, role=role))
+            await session.flush()
     except IntegrityError:  # 동시 부여 레이스 — 멱등 유지
-        await session.rollback()
+        pass

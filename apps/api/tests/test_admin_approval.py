@@ -63,3 +63,20 @@ async def test_non_admin_403(client, clean_auth_tables):
     t = signup.json()["access_token"]
     res = await client.get("/api/v1/admin/seller-applications", headers=_auth(t))
     assert res.status_code == 403 and res.json()["code"] == "forbidden"
+
+
+@pytest.mark.asyncio
+async def test_approve_already_seller_409(client, clean_auth_tables):
+    admin_t = await _admin_token(client)
+    app_id, brand_refresh = await _submit_application(client)
+    await client.post(f"/api/v1/admin/seller-applications/{app_id}/approve", headers=_auth(admin_t))
+
+    # 같은 계정이 (비정상적으로) 다시 신청 — pending 인덱스는 새 신청을 허용
+    r = await client.post("/api/v1/auth/refresh", json={"refresh_token": brand_refresh})
+    t = r.json()["access_token"]
+    res = await client.post("/api/v1/sellers/applications", json=VALID_APP, headers=_auth(t))
+    second_id = res.json()["id"]
+
+    res = await client.post(f"/api/v1/admin/seller-applications/{second_id}/approve", headers=_auth(admin_t))
+    assert res.status_code == 409
+    assert res.json()["code"] == "application_not_pending"

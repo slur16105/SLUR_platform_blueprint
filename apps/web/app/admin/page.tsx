@@ -29,11 +29,21 @@ export default function AdminHome() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (s: string) => {
-    const res = await fetch(`/api/admin/applications?status=${s}`);
-    if (res.status === 401) return void (window.location.href = "/login");
-    if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
-    const data = await res.json();
-    setItems(data.items ?? []);
+    setNotice(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/applications?status=${s}`);
+      if (res.status === 401) return void (window.location.href = "/login");
+      if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
+      if (!res.ok) {
+        setError("목록을 불러오지 못했습니다. 새로고침해 주세요.");
+        return;
+      }
+      const data = await res.json();
+      setItems(data.items ?? []);
+    } catch {
+      setError("네트워크 연결을 확인해 주세요.");
+    }
   }, []);
 
   useEffect(() => {

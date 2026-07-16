@@ -51,7 +51,7 @@ async def list_applications(session: AsyncSession, status: str, page: int, size:
     base = select(SellerApplication).where(SellerApplication.status == status)
     total = await session.scalar(select(func.count()).select_from(base.subquery()))
     rows = await session.scalars(
-        base.order_by(SellerApplication.created_at.desc()).offset((page - 1) * size).limit(size)
+        base.order_by(SellerApplication.created_at.desc(), SellerApplication.id.desc()).offset((page - 1) * size).limit(size)
     )
     return list(rows), total or 0
 
@@ -74,6 +74,15 @@ async def _claim_pending(session: AsyncSession, application_id: uuid.UUID, admin
 
 async def approve_application(session: AsyncSession, application_id: uuid.UUID, admin_id: uuid.UUID) -> Seller:
     from app.auth.service import grant_role  # 순환 회피를 위한 지연 import (admin→sellers→auth 방향 유지)
+
+    # 이미 판매자인 계정의 재신청 승인 사전 차단 (autoflush로 인한 500 방지 — 리뷰 H1)
+    target = await session.scalar(
+        select(SellerApplication.user_id).where(SellerApplication.id == application_id)
+    )
+    if target is not None:
+        already = await session.scalar(select(Seller.id).where(Seller.user_id == target))
+        if already is not None:
+            raise AppError(CODE_NOT_PENDING, "이미 판매자인 계정입니다.", status_code=409)
 
     application = await _claim_pending(session, application_id, admin_id, "approved", None)
     seller = Seller(

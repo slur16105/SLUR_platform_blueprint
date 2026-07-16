@@ -4,7 +4,7 @@ baseline_commit: d9b2239c7ee96324d4af439dba2083dcdbd12acb
 
 # Story 2.2: 관리자 입점 승인·반려
 
-Status: review
+Status: done
 
 ## Story
 
@@ -38,6 +38,8 @@ so that 플랫폼의 결을 유지하며 판매자를 받아들인다.
 Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
+
+- 리뷰 반영: 이미 판매자 재신청 승인 사전 차단(H1 — 500→409 실경로화, 회귀 테스트), grant_role savepoint 격리(M1 — 호출자 트랜잭션 보호), 목록 타이브레이커, 로드 실패 표시, BFF id 검증
 
 - 프로덕션 검증: Slur가 /admin에서 테스트 신청(검증굿즈) 상세 확인 후 반려 처리 완료 (2026-07-16) — 첫 실무 화면 사용
 - 승인 트랜잭션(신청→프로필→역할 원자), 이중 처리 조건부 UPDATE 방어, grant_role 공용화(bootstrap 재사용)

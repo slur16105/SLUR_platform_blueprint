@@ -4,7 +4,7 @@ baseline_commit: 6748487a564f32f8853539eecc6c4b0fe6b3f29b
 
 # Story 2.3: 판매자 배송비 설정
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -22,7 +22,7 @@ so that 주문 시 배송비가 자동 계산된다.
 - [x] Task 1: API — GET/PUT `/api/v1/sellers/me` (require_role("seller"), 프로필+배송비 3종). 금액: 0 이상 정수, 상한 100,000원(오입력 방어 — AD-13: core/config 상수). 스키마 변경 없음 (2.2에서 컬럼 선반영)
 - [x] Task 2: 웹 /seller — 판매자 센터에 프로필 요약 + 배송비 설정 폼 (BFF 라우트, R7: FastAPI seller 판정)
 - [x] Task 3: 테스트 — 저장·재조회, 음수/소수/문자 422, 상한 초과 422, 비판매자 403
-- [ ] Task 4: 배포 → 프로덕션 E2E (R8: 신청→Slur 대신 API로 승인 불가하므로 **테스트 계정을 관리자 API로 승인** 후 판매자 토큰으로 설정 저장→조회→정리)
+- [x] Task 4: 배포 → 프로덕션 E2E (R8: 신청→Slur 대신 API로 승인 불가하므로 **테스트 계정을 관리자 API로 승인** 후 판매자 토큰으로 설정 저장→조회→정리)
 
 ## Dev Notes
 
@@ -37,5 +37,7 @@ so that 주문 시 배송비가 자동 계산된다.
 Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
+
+- 프로덕션 E2E: 신청→승인→역할 반영→배송비 저장(3000/3000/5000)→재조회 전체 사이클 통과, 테스트 데이터 정리(sellers→users 순서)
 
 ### File List
