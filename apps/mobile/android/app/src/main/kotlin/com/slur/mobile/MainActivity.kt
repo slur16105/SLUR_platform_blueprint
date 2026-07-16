@@ -1,4 +1,4 @@
-package com.example.slur_mobile
+package com.slur.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

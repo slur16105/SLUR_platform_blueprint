@@ -22,8 +22,8 @@ so that 앱에서 쇼핑을 시작할 수 있다.
 - [x] Task 0 (백엔드): 네이티브 카카오 엔드포인트 — `POST /api/v1/auth/kakao/native` `{"kakao_access_token"}`
   - [x] `kakao.py`: `/v1/user/access_token_info`로 **app_id가 우리 앱과 일치하는지 검증**(타 앱 토큰 대입 차단 — 필수), 기존 /v2/user/me 파싱 재사용(헬퍼 분리). config에 `kakao_app_id` 추가 (콘솔 앱 ID, 숫자)
   - [x] service.kakao_login을 identity 공용으로 리팩터 (code 경로·native 경로 동일 계정 로직), respx 테스트 (app_id 불일치 401 포함)
-- [ ] Task 1 (앱 기반): 의존성 `flutter_riverpod`(있음)·`flutter_secure_storage`·`kakao_flutter_sdk_user ^2.0`·`dio`(또는 http). API 클라이언트 + 토큰 저장소 + 401 자동 refresh 인터셉터 (동시 401 시 단일 refresh — 회전 레이스 방지, 1.2 학습)
-- [ ] Task 2 (화면): 로그인(이메일/비번 + "카카오로 시작하기" 버튼) · 가입(이메일·비번·이름·선택 휴대폰) · 홈(me 정보 표시 + 로그아웃). 에러 봉투 `message` 그대로 표시, `code`로 분기
+- [x] Task 1 (앱 기반): 의존성 `flutter_riverpod`(있음)·`flutter_secure_storage`·`kakao_flutter_sdk_user ^2.0`·`dio`(또는 http). API 클라이언트 + 토큰 저장소 + 401 자동 refresh 인터셉터 (동시 401 시 단일 refresh — 회전 레이스 방지, 1.2 학습)
+- [x] Task 2 (화면): 로그인(이메일/비번 + "카카오로 시작하기" 버튼) · 가입(이메일·비번·이름·선택 휴대폰) · 홈(me 정보 표시 + 로그아웃). 에러 봉투 `message` 그대로 표시, `code`로 분기
 - [ ] Task 3 (카카오): `KakaoSdk.init(nativeAppKey)`(--dart-define), `isKakaoTalkInstalled()` → loginWithKakaoTalk(폴백 loginWithKakaoAccount) → 카카오 access token → `/auth/kakao/native`. AndroidManifest에 v2 핸들러(`com.kakao.sdk.flutter.auth.AuthCodeHandlerActivity`, `kakao{NATIVE_KEY}` 스킴). applicationId `com.slur.mobile`로 변경
 - [ ] Task 4 (검증): flutter analyze + 에뮬레이터/실기기에서 이메일 가입→홈→앱 재시작 시 자동 로그인→로그아웃, 카카오 원탭 로그인 E2E (프로덕션 API 대상 — 1.3의 보류였던 실 카카오 E2E가 여기서 완성됨)
 

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.slur_mobile"
+    namespace = "com.slur.mobile"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,8 +15,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.slur_mobile"
+        applicationId = "com.slur.mobile"
+        // 카카오 SDK 매니페스트 스킴 — gradle.properties의 kakaoNativeAppKey에서 주입
+        manifestPlaceholders["kakaoNativeAppKey"] = project.findProperty("kakaoNativeAppKey") ?: ""
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
