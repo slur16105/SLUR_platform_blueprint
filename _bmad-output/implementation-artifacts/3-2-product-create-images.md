@@ -4,7 +4,7 @@ baseline_commit: 6fd0f7d6f653cc771fce5e4559d84658faa961e0
 
 # Story 3.2: 상품 등록 — 기본 정보와 이미지
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -20,11 +20,11 @@ so that 구매자에게 즉시 노출된다.
 ## Tasks / Subtasks
 
 - [x] Task 1: 마이그레이션 (Slur 승인 2026-07-16) — products(category FK **RESTRICT** — 3.1 보류였던 category_in_use 경로 활성화), product_images(sort_order 0=대표, product FK CASCADE)
-- [x] Task 2: 이미지 presign API — POST /sellers/products/images/presign {content_type} → Supabase createSignedUploadUrl (10분), 경로 `{seller_id}/{uuid}.{ext}`. jpeg/png/webp만, 버킷 5MB 제한
+- [x] Task 2: 이미지 presign API — POST /sellers/products/images/presign {content_type} → Supabase createSignedUploadUrl (토큰 수명 Supabase 고정 2시간 — 스펙 정정), 경로 `{seller_id}/{uuid}.{ext}`. jpeg/png/webp만, 버킷 5MB 제한
 - [x] Task 3: 상품 API — POST /sellers/products (이미지 경로 1~11개: 대표+추가10, 본인 소유 경로 검증), GET /sellers/products (내 상품 목록). 등록 즉시 active
 - [x] Task 4: 웹 — 판매자 센터에 상품 등록 폼 (이미지 파일 선택→presign→브라우저가 직접 Storage PUT→경로 수집→등록)
 - [x] Task 5: 테스트 — 등록/이미지 0장 422/11장 초과 422/비소유 경로 403/카테고리 삭제 시 category_in_use 409(3.1 보류 이행)/presign 비판매자 403
-- [ ] Task 6: 배포 + Slur 실사용 검증 준비 (실제 상품 등록은 3.3 옵션까지 묶어서)
+- [x] Task 6: 배포 + Slur 실사용 검증 준비 (실제 상품 등록은 3.3 옵션까지 묶어서)
 
 ## Dev Notes
 
@@ -42,4 +42,12 @@ Claude Fable 5 (claude-fable-5)
 
 ### Completion Notes List
 
+- 프로덕션 E2E: presign→실제 PNG 업로드(200)→상품 등록(active)→공개 이미지 URL(200), 정리 완료 (storage 삭제는 SQL 불가 — Storage API로만, 함정 기록)
+- 리뷰 반영: 이미지 경로 presign 형식 정규식 검증(도용·오염·비존재 임의 문자열 일괄 차단), 카테고리 확인-커밋 레이스 404, presign 응답 이형 방어, 프런트 stale closure 카운터, presign 401 리다이렉트
+- 버킷 allowed_mime_types(jpeg/png/webp)·5MB는 생성 시 설정 확인 (M-2 해소)
+- 보류: 고아 이미지 정리 잡(오픈 게이트), too_many_images 전용 code(validation 422로 수용)
+
 ### File List
+
+- apps/api/app/products/{models,schemas,service,storage}.py, app/sellers/router.py, app/core/config.py, alembic/versions/802baf4b79a7, tests/test_products.py
+- apps/web/app/{seller/{page.tsx,products/new/{page.tsx,new.css}}, api/sellers/products/route.ts}

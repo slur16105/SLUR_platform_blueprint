@@ -43,5 +43,8 @@ async def create_signed_upload(seller_id: uuid.UUID, content_type: str) -> dict:
         body = res.json()
     except ValueError as exc:
         raise AppError(CODE_STORAGE_UNAVAILABLE, "이미지 업로드가 일시적으로 불가합니다.", status_code=502) from exc
-    # 클라이언트는 upload_url로 PUT (Authorization: Bearer token 불필요 — token이 url에 포함)
-    return {"path": path, "upload_url": f"{settings.supabase_url}/storage/v1{body['url']}"}
+    url = body.get("url") if isinstance(body, dict) else None
+    if not url:
+        raise AppError(CODE_STORAGE_UNAVAILABLE, "이미지 업로드가 일시적으로 불가합니다.", status_code=502)
+    # 클라이언트는 upload_url로 PUT (token이 url에 포함). 토큰 수명은 Supabase 고정(2시간)
+    return {"path": path, "upload_url": f"{settings.supabase_url}/storage/v1{url}"}

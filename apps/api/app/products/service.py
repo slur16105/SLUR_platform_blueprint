@@ -75,10 +75,16 @@ async def delete_category(session: AsyncSession, category_id: uuid.UUID) -> None
 CODE_INVALID_IMAGE_PATH = "invalid_image_path"
 
 
+import re
+
+_IMAGE_PATH_RE = re.compile(r"^[0-9a-f-]{36}/[0-9a-f-]{36}\.(jpg|png|webp)$")  # presign이 발급하는 형식만
+
+
 def _validate_image_ownership(seller_id: uuid.UUID, paths: list[str]) -> None:
     prefix = f"{seller_id}/"
     for p in paths:
-        if not p.startswith(prefix) or ".." in p:  # 타 판매자 이미지 도용·경로 탈출 차단
+        # presign 형식 대조 — 타 판매자 도용·경로 탈출·임의 문자열(URL 오염) 일괄 차단
+        if not _IMAGE_PATH_RE.fullmatch(p) or not p.startswith(prefix):
             raise AppError(CODE_INVALID_IMAGE_PATH, "올바르지 않은 이미지입니다.", status_code=403)
 
 
@@ -98,7 +104,11 @@ async def create_product(session: AsyncSession, seller_id: uuid.UUID, data) -> P
     await session.flush()
     for order, path in enumerate(data.image_paths):
         session.add(ProductImage(product_id=product.id, path=path, sort_order=order))
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as exc:  # 확인-커밋 사이 카테고리 삭제 레이스
+        await session.rollback()
+        raise AppError("not_found", "카테고리를 찾을 수 없습니다.", status_code=404) from exc
     logger.info("product %s created by seller %s", product.id, seller_id)
     return product
 

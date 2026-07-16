@@ -22,12 +22,14 @@ async def _category(client, admin_t, name="문구"):
 
 
 def _product_body(seller_prefix, category_id, n_images=2):
+    import uuid as _u
+
     return {
         "name": "결 좋은 엽서",
         "base_price": 3000,
         "description": "손으로 그린 엽서입니다.",
         "category_id": category_id,
-        "image_paths": [f"{seller_prefix}/img-{i}.jpg" for i in range(n_images)],
+        "image_paths": [f"{seller_prefix}/{_u.uuid7()}.jpg" for i in range(n_images)],
     }
 
 
@@ -80,9 +82,10 @@ async def test_foreign_image_path_403(client, clean_products):
     cid = await _category(client, admin_t)
     t, _sid = await _seller_with_prefix(client, admin_t)
 
+    import uuid as _u
     res = await client.post(
         "/api/v1/sellers/products",
-        json={**_product_body("other-seller-id", cid)},
+        json={**_product_body(str(_u.uuid4()), cid)},  # 형식은 유효하나 타 판매자 prefix
         headers=_auth(t),
     )
     assert res.status_code == 403
@@ -106,3 +109,14 @@ async def test_presign_requires_seller(client, clean_products):
     signup = await client.post("/api/v1/auth/signup", json={"email": "b2@example.com", "password": "password123", "name": "구매자"})
     res = await client.post("/api/v1/sellers/products/images/presign", json={"content_type": "image/jpeg"}, headers=_auth(signup.json()["access_token"]))
     assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_malformed_image_path_403(client, clean_products):
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t, name="잡화")
+    t, sid = await _seller_with_prefix(client, admin_t)
+    for bad in [f"{sid}/evil.html", f"{sid}/a?b=c.jpg", f"{sid}/../x.jpg", "x" * 301]:
+        res = await client.post("/api/v1/sellers/products",
+            json={**_product_body(sid, cid), "image_paths": [bad]}, headers=_auth(t))
+        assert res.status_code == 403, bad

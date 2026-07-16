@@ -31,8 +31,9 @@ export default function NewProductPage() {
   async function addImages(files: FileList | null) {
     if (!files) return;
     setError(null);
+    let count = images.length;  // stale closure 방지 — 로컬 카운터
     for (const file of Array.from(files)) {
-      if (images.length >= 11) {
+      if (count >= 11) {
         setError("이미지는 대표 1장 포함 최대 11장까지입니다.");
         return;
       }
@@ -42,6 +43,7 @@ export default function NewProductPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ op: "presign", content_type: file.type }),
         });
+        if (pre.status === 401) return void (window.location.href = "/login");
         const data = await pre.json();
         if (!pre.ok) {
           setError(data.message ?? "이미지 업로드 준비에 실패했습니다.");
@@ -57,6 +59,7 @@ export default function NewProductPage() {
           return;
         }
         setImages((prev) => [...prev, { path: data.path, preview: URL.createObjectURL(file) }]);
+        count += 1;
       } catch {
         setError("네트워크 연결을 확인해 주세요.");
         return;
