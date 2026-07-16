@@ -1,6 +1,10 @@
+---
+baseline_commit: a76e26bdcd70926977a2f5cc9817134c0ad8887d
+---
+
 # Story 1.1: 걷는 뼈대 (프로젝트 골격과 배포)
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 
