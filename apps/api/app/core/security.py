@@ -30,7 +30,7 @@ def create_access_token(user_id: uuid.UUID) -> str:
 def decode_access_token(token: str) -> uuid.UUID:
     settings = get_settings()
     try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"], options={"require": ["exp", "sub"]})
         return uuid.UUID(payload["sub"])
     except (jwt.PyJWTError, KeyError, ValueError) as exc:
         raise AppError(CODE_UNAUTHORIZED, "로그인이 필요합니다.", status_code=401) from exc

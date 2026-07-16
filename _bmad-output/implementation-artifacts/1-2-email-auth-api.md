@@ -4,7 +4,7 @@ baseline_commit: 6624a7e9b1235eb3da0f668e307b927937cb37a8
 
 # Story 1.2: 이메일 가입·로그인 API
 
-Status: review
+Status: done
 
 ## Story
 
@@ -142,3 +142,23 @@ Claude Fable 5 (claude-fable-5)
 - apps/api/alembic/env.py(+모델 등록), alembic/versions/6e7ec5b149e5_users_and_refresh_tokens.py
 - apps/api/tests/{conftest.py(+격리 픽스처),test_auth.py}
 - apps/api/pyproject.toml(+argon2-cffi·pyjwt·email-validator, 루프 스코프), .railway/railway.ts(+JWT_SECRET preserve)
+
+
+## Senior Developer Review (AI)
+
+- **일시**: 2026-07-16 · **방식**: 병렬 3-레이어 · **결과**: Changes Requested → 전 항목 반영 → Approve
+- AC 감사: **위반 없음** (승인 스키마·API 계약·AD-2/5/8 전부 준수 확인)
+
+### Action Items (반영 완료)
+
+- [x] [High] 로그인 타이밍 공격 — 미존재 계정에도 더미 해시 검증 (응답 시간 균일화)
+- [x] [High] refresh 회전 레이스 — 조건부 UPDATE...RETURNING으로 원자적 폐기 (동시 요청 중 1개만 성공)
+- [x] [High] 비밀번호 상한 128자 (해싱 DoS 방지), refresh_token 길이 제한
+- [x] [Med] argon2 예외 전체 catch(InvalidHash 등→401) + check_needs_rehash 재해싱
+- [x] [Med] logout 멱등화(204, 토큰 유효성 비노출), JWT require [exp,sub], JWT_SECRET 최소 32자 검증
+- [x] [Med] email 유니코드 정규화(NFC+casefold) 공용 함수, 인증 실패 로깅, phone 패턴·name 공백 검증
+- [x] [Low] CODE_UNAUTHORIZED 상수 통일, 테스트 사전 정리+로컬 DB 가드, 의존성 == 핀 통일
+
+### 의도적 보류 (v1 범위 결정 — 후속 추적)
+
+- 재사용 탐지 시 전 토큰 폐기(스토리 명시 제외), 로그인 레이트 리밋/계정 잠금, 절대 세션 수명, 만료 토큰 정리 배치, lower(email) DB 함수 인덱스(다음 마이그레이션에 동승 예정), signup 409의 계정 존재 노출(커머스 표준 트레이드오프로 수용)

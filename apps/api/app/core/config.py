@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,8 +12,8 @@ class Settings(BaseSettings):
     database_url: str  # postgresql+asyncpg://... — 환경변수 필수, 기본값 없음
     # CORS 허용 오리진 — 콤마 구분 환경변수 CORS_ORIGINS로 재정의 (web 도메인 추가용)
     cors_origins: list[str] = ["http://localhost:3000", "https://web-production-abfe1.up.railway.app"]
-    # 인증 (JWT_SECRET은 환경변수 필수 — 기본값 없음)
-    jwt_secret: str
+    # 인증 (JWT_SECRET은 환경변수 필수 — 기본값 없음, HS256 브루트포스 방지 최소 32자)
+    jwt_secret: str = Field(min_length=32)
     access_token_minutes: int = 30
     refresh_token_days: int = 14
 

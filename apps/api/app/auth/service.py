@@ -1,24 +1,36 @@
 import hashlib
+import logging
 import secrets
+import unicodedata
 import uuid
 from datetime import datetime, timedelta, timezone
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
-from sqlalchemy import select
+from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import RefreshToken, User
 from app.core.config import get_settings
 from app.core.errors import AppError
-from app.core.security import create_access_token
+from app.core.security import CODE_UNAUTHORIZED, create_access_token
+
+logger = logging.getLogger("slur.auth")
 
 CODE_EMAIL_EXISTS = "email_already_exists"
 CODE_INVALID_CREDENTIALS = "invalid_credentials"
 CODE_INVALID_TOKEN = "invalid_token"
 
 _hasher = PasswordHasher()  # 기본이 Argon2id
+# 미존재 계정에도 동일한 해시 검증 비용을 지불해 타이밍 채널을 막는다
+_DUMMY_HASH = _hasher.hash("timing-equalizer-dummy")
+
+_VERIFY_ERRORS = (VerifyMismatchError, InvalidHashError, VerificationError)
+
+
+def normalize_email(email: str) -> str:
+    return unicodedata.normalize("NFC", email).strip().casefold()
 
 
 def _hash_refresh(raw: str) -> str:
@@ -34,12 +46,16 @@ async def _issue_tokens(session: AsyncSession, user_id: uuid.UUID) -> tuple[str,
             expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_days),
         )
     )
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as exc:  # token_hash 충돌 등 — 상태를 명확히 되돌린다
+        await session.rollback()
+        raise AppError(CODE_INVALID_TOKEN, "다시 로그인해 주세요.", status_code=401) from exc
     return create_access_token(user_id), raw
 
 
 async def signup(session: AsyncSession, email: str, password: str, name: str, phone: str | None) -> tuple[str, str]:
-    email = email.strip().lower()
+    email = normalize_email(email)
     existing = await session.scalar(select(User.id).where(User.email == email))
     if existing:
         raise AppError(CODE_EMAIL_EXISTS, "이미 가입된 이메일입니다.", status_code=409)
@@ -54,40 +70,62 @@ async def signup(session: AsyncSession, email: str, password: str, name: str, ph
 
 
 async def login(session: AsyncSession, email: str, password: str) -> tuple[str, str]:
-    email = email.strip().lower()
+    email = normalize_email(email)
     user = await session.scalar(select(User).where(User.email == email))
-    # 이메일 부재와 비밀번호 불일치를 구분해 노출하지 않는다
+    # 이메일 부재와 비밀번호 불일치를 구분해 노출하지 않는다 (응답 시간 포함 — 더미 해시 검증)
     if user is None or user.password_hash is None:
+        try:
+            _hasher.verify(_DUMMY_HASH, password)
+        except _VERIFY_ERRORS:
+            pass
+        logger.info("login failed (unknown account)")
         raise AppError(CODE_INVALID_CREDENTIALS, "이메일 또는 비밀번호가 올바르지 않습니다.", status_code=401)
     try:
         _hasher.verify(user.password_hash, password)
-    except VerifyMismatchError as exc:
+    except _VERIFY_ERRORS as exc:
+        logger.info("login failed (bad credentials)")
         raise AppError(CODE_INVALID_CREDENTIALS, "이메일 또는 비밀번호가 올바르지 않습니다.", status_code=401) from exc
+    if _hasher.check_needs_rehash(user.password_hash):
+        user.password_hash = _hasher.hash(password)
+        await session.commit()
     return await _issue_tokens(session, user.id)
 
 
-async def _get_active_token(session: AsyncSession, raw: str) -> RefreshToken:
-    token = await session.scalar(select(RefreshToken).where(RefreshToken.token_hash == _hash_refresh(raw)))
+async def _claim_token(session: AsyncSession, raw: str) -> RefreshToken | None:
+    """활성 refresh 토큰을 원자적으로 폐기하며 가져온다.
+
+    조건부 UPDATE라 같은 토큰의 동시 요청은 정확히 하나만 성공한다 (회전 레이스 방어).
+    """
     now = datetime.now(timezone.utc)
-    if token is None or token.revoked_at is not None or token.expires_at <= now:
-        raise AppError(CODE_INVALID_TOKEN, "다시 로그인해 주세요.", status_code=401)
-    return token
+    result = await session.execute(
+        update(RefreshToken)
+        .where(
+            RefreshToken.token_hash == _hash_refresh(raw),
+            RefreshToken.revoked_at.is_(None),
+            RefreshToken.expires_at > now,
+        )
+        .values(revoked_at=now)
+        .returning(RefreshToken)
+    )
+    return result.scalar_one_or_none()
 
 
 async def refresh(session: AsyncSession, raw: str) -> tuple[str, str]:
-    token = await _get_active_token(session, raw)
-    token.revoked_at = datetime.now(timezone.utc)  # 회전: 이전 토큰 폐기
+    token = await _claim_token(session, raw)
+    if token is None:
+        logger.info("refresh rejected (invalid/revoked/expired token)")
+        raise AppError(CODE_INVALID_TOKEN, "다시 로그인해 주세요.", status_code=401)
     return await _issue_tokens(session, token.user_id)
 
 
 async def logout(session: AsyncSession, raw: str) -> None:
-    token = await _get_active_token(session, raw)
-    token.revoked_at = datetime.now(timezone.utc)
+    # 멱등: 이미 폐기·만료·미존재여도 조용히 성공 (재시도·중복 클릭 안전, 토큰 유효성 비노출)
+    await _claim_token(session, raw)
     await session.commit()
 
 
 async def get_user(session: AsyncSession, user_id: uuid.UUID) -> User:
     user = await session.get(User, user_id)
     if user is None:
-        raise AppError("unauthorized", "로그인이 필요합니다.", status_code=401)
+        raise AppError(CODE_UNAUTHORIZED, "로그인이 필요합니다.", status_code=401)
     return user

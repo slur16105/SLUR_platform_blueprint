@@ -4,7 +4,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://slur:slur@localhost:5432/slur")
-os.environ.setdefault("JWT_SECRET", "test-secret")
+os.environ.setdefault("JWT_SECRET", "test-secret-minimum-32-characters-long!")
 
 
 @pytest.fixture
@@ -28,12 +28,21 @@ def validation_probe():
     app.router.routes = [r for r in app.router.routes if getattr(r, "path", "") != "/api/v1/_validation_probe"]
 
 
-@pytest.fixture
-async def clean_auth_tables():
-    """auth 테스트 격리 — 테스트 종료 후 생성 데이터 제거."""
-    yield
+async def _truncate_auth():
     from sqlalchemy import text
+    from app.core.config import get_settings
     from app.core.db import engine
 
+    # 안전장치: 로컬 DB가 아니면 절대 TRUNCATE하지 않는다
+    if "localhost" not in get_settings().database_url and "127.0.0.1" not in get_settings().database_url:
+        raise RuntimeError("테스트 정리는 로컬 DB에서만 허용된다")
     async with engine.begin() as conn:
         await conn.execute(text("TRUNCATE refresh_tokens, users CASCADE"))
+
+
+@pytest.fixture
+async def clean_auth_tables():
+    """auth 테스트 격리 — 시작 전·종료 후 모두 정리 (직전 크래시 잔재 방어)."""
+    await _truncate_auth()
+    yield
+    await _truncate_auth()

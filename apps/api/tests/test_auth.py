@@ -69,6 +69,10 @@ async def test_logout_revokes_refresh(client, clean_auth_tables):
     res = await client.post("/api/v1/auth/logout", json={"refresh_token": refresh})
     assert res.status_code == 204
 
+    # 멱등: 같은 토큰으로 재로그아웃해도 204 (토큰 유효성 비노출)
+    res = await client.post("/api/v1/auth/logout", json={"refresh_token": refresh})
+    assert res.status_code == 204
+
     res = await client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
     assert res.status_code == 401
 
