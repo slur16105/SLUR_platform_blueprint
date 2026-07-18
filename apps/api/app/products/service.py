@@ -148,16 +148,30 @@ async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_
     for item in items:  # 음수 실판매가 방지 (base + extra >= 0)
         if product.base_price + item.extra_price < 0:
             raise AppError("validation_error", "추가금액이 상품 가격보다 낮을 수 없습니다.", status_code=422)
-    from sqlalchemy import delete as sqldelete
-
-    await session.execute(sqldelete(Variant).where(Variant.product_id == product_id))
+    # upsert: 동일 조합(option1_value, option2_value)은 id 보존 — cart_items FK 생존 (4.1, 3.3 보류 해소)
+    existing = {
+        (v.option1_value, v.option2_value): v
+        for v in await session.scalars(select(Variant).where(Variant.product_id == product_id))
+    }
+    incoming_keys = set()
     for item in items:
-        session.add(Variant(
-            product_id=product_id,
-            option1_name=item.option1_name.strip(), option1_value=item.option1_value.strip(),
-            option2_name=item.option2_name.strip(), option2_value=item.option2_value.strip(),
-            extra_price=item.extra_price, stock=item.stock, is_active=item.is_active,
-        ))
+        key = (item.option1_value.strip(), item.option2_value.strip())
+        incoming_keys.add(key)
+        if key in existing:
+            v = existing[key]
+            v.option1_name = item.option1_name.strip()
+            v.option2_name = item.option2_name.strip()
+            v.extra_price, v.stock, v.is_active = item.extra_price, item.stock, item.is_active
+        else:
+            session.add(Variant(
+                product_id=product_id,
+                option1_name=item.option1_name.strip(), option1_value=key[0],
+                option2_name=item.option2_name.strip(), option2_value=key[1],
+                extra_price=item.extra_price, stock=item.stock, is_active=item.is_active,
+            ))
+    for key, v in existing.items():  # 판매자가 실제로 지운 조합만 삭제 → cart_items는 SET NULL
+        if key not in incoming_keys:
+            await session.delete(v)
     try:
         await session.commit()
     except IntegrityError as exc:
@@ -178,6 +192,33 @@ async def get_variants(session: AsyncSession, product_ids: list[uuid.UUID]) -> d
     for v in rows:
         grouped.setdefault(v.product_id, []).append(v)
     return grouped
+
+
+async def get_variant_purchase_info(session: AsyncSession, variant_ids: list[uuid.UUID]) -> dict:
+    """variant id별 variant·product·브랜드명·대표 이미지 URL 배치 조회.
+
+    carts·orders가 variant를 볼 때는 이 함수만 쓴다 (AD-2: 타 도메인의 모델 직접 import 금지).
+    """
+    if not variant_ids:
+        return {}
+    rows = (await session.execute(
+        select(Variant, Product).join(Product, Variant.product_id == Product.id).where(Variant.id.in_(variant_ids))
+    )).all()
+    images = await get_product_images(session, list({p.id for _, p in rows}))
+    sellers = {}
+    if rows:
+        seller_rows = await session.scalars(select(Seller).where(Seller.id.in_({p.seller_id for _, p in rows})))
+        sellers = {s.id: s for s in seller_rows}
+    out = {}
+    for v, p in rows:
+        imgs = images.get(p.id, [])
+        out[v.id] = {
+            "variant": v,
+            "product": p,
+            "brand_name": sellers[p.seller_id].brand_name if p.seller_id in sellers else "",
+            "image_url": _image_url(imgs[0].path) if imgs else None,
+        }
+    return out
 
 
 def check_purchasable(product: Product, variant: Variant, qty: int) -> bool:

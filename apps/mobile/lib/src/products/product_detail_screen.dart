@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/client.dart';
+import '../carts/cart_screen.dart';
+import '../carts/carts_api.dart';
 import 'products_api.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -13,6 +16,34 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   String? _selectedVariantId;
+  int _qty = 1;
+  bool _adding = false;
+
+  Future<void> _addToCart(String variantId) async {
+    setState(() => _adding = true);
+    try {
+      await ref.read(cartApiProvider).add(variantId, _qty);
+      ref.invalidate(cartProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('장바구니에 담았어요.'),
+        action: SnackBarAction(
+          label: '장바구니 보기',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const CartScreen()),
+          ),
+        ),
+      ));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (e.code == 'not_purchasable' || e.code == 'not_found') {
+        ref.invalidate(productDetailProvider(widget.productId)); // 품절·삭제 반영 갱신
+      }
+    } finally {
+      if (mounted) setState(() => _adding = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,13 +104,33 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                     ],
+                    Row(
+                      children: [
+                        const Text('수량', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        _qtyButton(Icons.remove, _qty > 1, () => setState(() => _qty--)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('$_qty', style: const TextStyle(fontSize: 16)),
+                        ),
+                        _qtyButton(Icons.add, _qty < 999, () => setState(() => _qty++)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
                     Text(p['description'] as String, style: const TextStyle(height: 1.6)),
                     const SizedBox(height: 24),
                     FilledButton(
-                      onPressed: null, // 장바구니는 Epic 4
-                      child: Text(p['sold_out'] == true ? '품절' : '장바구니 (준비 중)'),
+                      // 옵션 미선택·품절·요청 중에는 비활성
+                      onPressed: p['sold_out'] == true || selected == null || _adding
+                          ? null
+                          : () => _addToCart(selected['id'] as String),
+                      child: Text(p['sold_out'] == true
+                          ? '품절'
+                          : selected == null
+                              ? '옵션을 선택해 주세요'
+                              : '장바구니 담기'),
                     ),
                   ],
                 ),
@@ -87,6 +138,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _qtyButton(IconData icon, bool enabled, VoidCallback onTap) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: OutlinedButton(
+        onPressed: enabled ? onTap : null,
+        style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
+        child: Icon(icon, size: 16),
       ),
     );
   }
