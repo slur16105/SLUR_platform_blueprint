@@ -4,7 +4,7 @@ baseline_commit: c7bc8b6e1918561f94c5ab865a826a72146de9a8
 
 # Story 4.1: 장바구니
 
-Status: review
+Status: done
 
 ## Story
 
@@ -55,7 +55,7 @@ so that 한 번에 주문할 수 있다.
 | created_at / updated_at | timestamptz | |
 | UNIQUE | (user_id, variant_id) | PG는 NULL 중복 허용 — SET NULL 후에도 안전 |
 
-**SET NULL 근거**: FR-35는 "삭제된 항목도 구매 불가로 **표시**"를 요구 — CASCADE면 행이 소리 없이 사라져 표시 불가. variant_id NULL이면 `check_purchasable(product, None, qty)`가 이미 false를 반환(술어가 None 방어)하므로 추가 분기 최소. 단 NULL 항목은 상품 정보 조인 불가 → "판매 종료된 상품" 고정 문구로 표시. **대안(기각 추천)**: CASCADE(조용한 소멸 — FR-35 위반 소지), RESTRICT+soft delete(과설계)
+**SET NULL 근거**: FR-35는 "삭제된 항목도 구매 불가로 **표시**"를 요구 — CASCADE면 행이 소리 없이 사라져 표시 불가. NULL 항목은 variant·product 조인 불가 → `get_cart`가 `meta is None` 분기에서 술어 호출 없이 "판매 종료된 상품" 고정 dict을 만든다 (`service.py:56~63`). **대안(기각 추천)**: CASCADE(조용한 소멸 — FR-35 위반 소지), RESTRICT+soft delete(과설계)
 **upsert 전환 근거**: 판매자가 그리드 재저장만 해도 전 구매자 장바구니가 끊기는 것을 방지. 동일 조합 = (option1_value, option2_value) 매칭
 
 ### 에러 code 시드 (R6)
@@ -121,3 +121,23 @@ Claude Fable 5 (claude-fable-5)
 - apps/mobile/lib/src/carts/cart_screen.dart (신규)
 - apps/mobile/lib/src/products/product_detail_screen.dart (수정 — 수량 스테퍼·담기 활성화)
 - apps/mobile/lib/src/screens/home_screen.dart (수정 — 장바구니 아이콘)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-19) — Blind Hunter · Edge Case Hunter · Acceptance Auditor 병렬 리뷰. 3 decision-needed · 4 patch · 8 defer · 23 dismiss.**
+
+- [x] [Review][Decision→Defer] 합산 후 총량이 재고 초과해도 담기 성공 — 스토리 Completion Notes에서 이미 policy로 확정("담기 응답은 성공, GET이 purchasable false로 정직히 반영, 4.4가 최종 진실"). Slur 리뷰에서 현행 유지 승인 (2026-07-19). 4.4 주문 생성에서 조건부 UPDATE로 최종 진실 확보
+- [x] [Review][Decision→Defer] variants upsert flush 순서 임시 UNIQUE 위반 위험 — 완화 시 재저장 로직 재구조화(삭제 flush 선행) 필요. 3.4·3.5에서 확정된 흐름 변경 → 스토리 4.1 범위 밖. Slur 리뷰에서 현행 유지 승인 (2026-07-19). 별도 스토리로 승격 후보
+- [x] [Review][Decision→Defer] Flutter `guard()` finally 무조건 `invalidate` — UX 취향 결정. 실패-스낵바-refresh 튐 vs 서버-클라 정합 보장의 트레이드오프. 현행이 정합성 편에 서 있어 유지. Slur 리뷰에서 현행 유지 승인 (2026-07-19)
+- [x] [Review][Patch] `add_item`의 IntegrityError 미처리로 담기 중 조합 삭제 시 500 [`apps/api/app/carts/service.py`] — `try/except IntegrityError`로 감싸 `not_found` 404로 변환 (`replace_variants`·`create_product` 패턴과 대칭)
+- [x] [Review][Patch] Flutter `_won` 헬퍼 4곳 중복 [`carts/cart_screen.dart`, `products/product_detail_screen.dart`, `screens/home_screen.dart`] — `apps/mobile/lib/src/format.dart`로 승격, `formatWon()` 공통 사용
+- [x] [Review][Patch] Unused logger 제거 [`apps/api/app/carts/service.py`] — `logger = logging.getLogger("slur.carts")` 및 `import logging` 제거
+- [x] [Review][Patch] Dev Notes 문서-코드 불일치 정정 [`4-1-cart.md`] — SET NULL 근거 문구를 실제 `get_cart` 분기 흐름(`meta is None`에서 술어 호출 없이 fallback dict 생성)에 맞게 재작성
+- [x] [Review][Defer] IntegrityError 원인 판정 문자열 매칭 취약 [`products/service.py:179`] — `exc.orig.diag.constraint_name` 기반으로 승격 후보. 실용상 PG 메시지 안정적이라 즉시 위험 없음
+- [x] [Review][Defer] 담기 합산·캡의 race 테스트 부재 [`tests/test_carts.py:159~172`] — 순차 담기만 검증. `asyncio.gather()`로 병행 담기 시 원자적 upsert·999 캡 안전성 회귀 봉인 테스트 후속
+- [x] [Review][Defer] Alembic downgrade가 cart_items를 drop만 함 [`alembic/versions/7fceea006abe_cart_items.py:41~46`] — 프로덕션 롤백 시 카트 데이터 유실. 일반 alembic 관행이며 v1 완주엔 지장 없음
+- [x] [Review][Defer] AD-13: `999` 리터럴 4곳 확산 [`carts/service.py:16`, `carts/models.py:22`, `carts/schemas.py:8,12`, `cart_screen.dart:140,144`, `product_detail_screen.dart:116`] — 스토리 스펙이 "1~999 서버·클라 양쪽 강제"로 고정했으므로 v1 지장 없음. 블루프린트 추출 시 `core/config`로 승격
+- [x] [Review][Defer] RefreshIndicator future await 형식 [`cart_screen.dart:27`] — `onRefresh: () async => ref.refresh(cartProvider.future)`가 arrow 함수라 반환된 Future를 자동 await하지 않아 스피너가 조기 dismiss 가능. `() async { await ref.refresh(cartProvider.future); }` 명시 형식이 안전
+- [x] [Review][Defer] 사용자 이탈 후 API 실패 시 스낵바 유실 [`cart_screen.dart:92~95`] — `context.mounted == false`면 오류 표시 없이 무음. 로깅·재시도 큐 후속
+- [x] [Review][Defer] PATCH `quantity=1000` 방어 테스트 부재 — 스테퍼가 강제하므로 실용 영향 없으나 API 계약 회귀 봉인 후보
+- [x] [Review][Defer] variants upsert 매칭이 exact match — 대소문자·strip 이후 남는 공백만 다르면 다른 조합으로 취급되어 SET NULL 조용한 소멸 위험 [`products/service.py:158`]. UX 가이드(대소문자 표기 통일) + 판매자 저장 시 정규화 후속

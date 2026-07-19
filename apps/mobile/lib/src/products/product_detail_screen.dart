@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/client.dart';
 import '../carts/cart_screen.dart';
 import '../carts/carts_api.dart';
+import '../format.dart';
 import 'products_api.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -82,7 +83,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     Text(p['name'] as String,
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    Text('${_won(price as int)}원',
+                    Text('${formatWon(price as int)}원',
                         style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     if (hasOptions) ...[
@@ -153,8 +154,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       ),
     );
   }
-
-  String _won(int v) => v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
 
   String _optionLabel(List<Map<String, dynamic>> variants) {
     final v = variants.first;

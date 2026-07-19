@@ -1,16 +1,14 @@
-import logging
 import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import uuid7
 from app.carts.models import CartItem
 from app.core.errors import AppError
 from app.products import service as products_service
-
-logger = logging.getLogger("slur.carts")
 
 CODE_NOT_PURCHASABLE = "not_purchasable"
 MAX_CART_QTY = 999  # ck_cart_items_quantity와 대칭
@@ -42,7 +40,11 @@ async def add_item(session: AsyncSession, user_id: uuid.UUID, variant_id: uuid.U
         .returning(CartItem)
     )
     item = (await session.execute(stmt)).scalar_one()
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as exc:  # 사전 검증 이후 판매자가 조합 삭제한 레이스 — FK 위반
+        await session.rollback()
+        raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404) from exc
     return item
 
 

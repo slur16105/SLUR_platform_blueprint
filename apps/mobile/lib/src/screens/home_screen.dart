@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_provider.dart';
 import '../carts/cart_screen.dart';
+import '../format.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_api.dart';
 
@@ -125,11 +126,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 6),
           Text(p['brand_name'] as String, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
           Text(p['name'] as String, maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text('${_won(p['price_from'] as int)}원', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('${formatWon(p['price_from'] as int)}원', style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
-
-  String _won(int v) => v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
 }

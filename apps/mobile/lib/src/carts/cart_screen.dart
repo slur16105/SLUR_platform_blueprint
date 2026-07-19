@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/client.dart';
+import '../format.dart';
 import 'carts_api.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -55,7 +56,7 @@ class CartScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('상품 합계', style: TextStyle(fontSize: 15)),
-                Text('${_won(total)}원',
+                Text('${formatWon(total)}원',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
@@ -72,8 +73,6 @@ class CartScreen extends ConsumerWidget {
       ),
     );
   }
-
-  String _won(int v) => v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
 }
 
 class _CartItemTile extends ConsumerWidget {
@@ -130,7 +129,7 @@ class _CartItemTile extends ConsumerWidget {
                   const Text('구매 불가',
                       style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600))
                 else if (price != null)
-                  Text('${_won(price * qty)}원',
+                  Text('${formatWon(price * qty)}원',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Row(
@@ -169,6 +168,4 @@ class _CartItemTile extends ConsumerWidget {
       ),
     );
   }
-
-  String _won(int v) => v.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
 }
