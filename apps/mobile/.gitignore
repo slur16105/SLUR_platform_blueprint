@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android 빌드 산출물 (루트 /build/ 규칙이 android/build/를 잡지 못함)
+android/build/
