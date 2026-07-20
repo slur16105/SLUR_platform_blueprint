@@ -197,3 +197,11 @@ async def grant_role(session: AsyncSession, user_id: uuid.UUID, role: str) -> No
             await session.flush()
     except IntegrityError:  # 동시 부여 레이스 — 멱등 유지
         pass
+
+
+async def get_users_by_ids(session: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, User]:
+    """user id별 배치 조회 — admin 주문 화면(입금 확인 등)이 쓴다 (AD-2: 모델 직접 import 금지)."""
+    if not user_ids:
+        return {}
+    rows = await session.scalars(select(User).where(User.id.in_(user_ids)))
+    return {u.id: u for u in rows}

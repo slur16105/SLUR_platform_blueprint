@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -15,6 +15,8 @@ class Order(Base):
     __tablename__ = "orders"
     __table_args__ = (
         CheckConstraint("payment_status IN ('pending_payment', 'paid', 'canceled')", name="ck_orders_payment_status"),
+        # 입금대기 partial index — 5.2 목록·4.5 배치 공용 (Slur 승인 2026-07-20)
+        Index("ix_orders_pending", "deposit_due_at", postgresql_where=text("payment_status = 'pending_payment'")),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)

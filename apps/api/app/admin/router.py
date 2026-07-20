@@ -114,3 +114,59 @@ async def delete_category(
     session: AsyncSession = Depends(get_session),
 ) -> None:
     await products_service.delete_category(session, category_id)
+
+
+# ---------------------------------------------------------------------------
+# 입금 확인 (Story 5.2) — admin→orders service 경유 (AD-2)
+# ---------------------------------------------------------------------------
+
+from datetime import datetime  # noqa: E402
+
+from app.core.errors import AppError  # noqa: E402
+from app.orders import service as orders_service  # noqa: E402
+
+
+class PendingOrderItem(BaseModel):
+    order_id: uuid.UUID  # 전체 UUID — 8자 충돌 대비 병기 (5.1 이월 결정)
+    order_no: str
+    created_at: datetime
+    deposit_due_at: datetime
+    expired: bool  # 서버 파생 (AD-12)
+    buyer_name: str
+    buyer_email: str
+    grand_total: int  # 잔여 활성분 — 입금 대조 금액
+    title: str
+
+
+class PendingOrderList(BaseModel):
+    items: list[PendingOrderItem]
+    total: int
+    page: int
+
+
+class ConfirmPaymentRequest(BaseModel):
+    note: str = Field(default="", max_length=500)  # order_events 메모 (FR-29)
+
+
+@router.get("/orders/pending", response_model=PendingOrderList)
+async def list_pending_orders(
+    page: int = 1,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """입금대기 목록 — 페이지 단 판정 포함 admin 전용 (R7)."""
+    if page < 1 or page > 10000:
+        raise AppError("validation_error", "올바르지 않은 페이지입니다.", status_code=422)
+    return await orders_service.list_pending_orders(session, page)
+
+
+@router.post("/orders/{order_id}/confirm-payment", status_code=204)
+async def confirm_payment(
+    order_id: uuid.UUID,
+    body: ConfirmPaymentRequest | None = None,
+    admin_id: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """입금 확인 — paid 전이 (엔진 경유, 연쇄 preparing 포함)."""
+    body = body or ConfirmPaymentRequest()
+    await orders_service.confirm_payment(session, admin_id, order_id, body.note)

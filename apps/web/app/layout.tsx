@@ -15,6 +15,8 @@ import "./styles/slur/components/input.css";
 import "./styles/slur/components/card.css";
 import "./styles/slur/components/alert.css";
 import "./styles/slur/components/badge.css";
+import "./styles/slur/components/table.css";
+import "./styles/slur/components/modal.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
