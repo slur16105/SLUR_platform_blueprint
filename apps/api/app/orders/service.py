@@ -791,3 +791,14 @@ async def deliver_sub_order(session: AsyncSession, seller_id: uuid.UUID, user_id
         actor_role=t.ROLE_SELLER, actor_user_id=user_id,
     )
     await session.commit()
+
+
+async def seller_shipping_counts(session: AsyncSession, seller_id: uuid.UUID) -> dict:
+    """판매자 대시보드 카운트 — preparing(신규·배송 대기)·shipping (5.4, AD-12 서버 계산)."""
+    rows = (await session.execute(
+        select(SubOrder.shipping_status, func.count())
+        .where(SubOrder.seller_id == seller_id, SubOrder.shipping_status.in_([t.SUB_PREPARING, t.SUB_SHIPPING]))
+        .group_by(SubOrder.shipping_status)
+    )).all()
+    counts = dict(rows)
+    return {"preparing_count": counts.get(t.SUB_PREPARING, 0), "shipping_count": counts.get(t.SUB_SHIPPING, 0)}

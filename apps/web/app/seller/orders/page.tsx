@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import LogoutButton from "../../logout-button";
 import "./orders.css";
@@ -48,8 +49,14 @@ function shortUuid(id: string) {
   return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
 
-export default function SellerOrders() {
-  const [tab, setTab] = useState<Tab>("preparing");
+function isTab(v: string | null): v is Tab {
+  return v !== null && TABS.some((t) => t.key === v);
+}
+
+function SellerOrdersInner() {
+  // 대시보드 카드에서 ?status=shipping 으로 진입 시 해당 탭으로 시작 (미지정·오타는 preparing)
+  const initialStatus = useSearchParams().get("status");
+  const [tab, setTab] = useState<Tab>(isTab(initialStatus) ? initialStatus : "preparing");
   const [items, setItems] = useState<SubOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
@@ -393,5 +400,14 @@ export default function SellerOrders() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function SellerOrders() {
+  // useSearchParams는 프리렌더 시 Suspense 경계가 필요 (Next 16 규약)
+  return (
+    <Suspense fallback={null}>
+      <SellerOrdersInner />
+    </Suspense>
   );
 }

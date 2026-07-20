@@ -220,3 +220,35 @@ async def deliver_sub_order(
     """배송 완료."""
     seller = await service.get_my_seller(session, user_id)
     await orders_service.deliver_sub_order(session, seller.id, user_id, sub_order_id)
+
+
+# ---------------------------------------------------------------------------
+# 판매자 대시보드 (Story 5.4) — 집계 전부 서버 계산 (AD-12)
+# ---------------------------------------------------------------------------
+
+
+class LowStockItem(BaseModel):
+    product_id: uuid.UUID
+    product_name: str
+    option_text: str
+    stock: int
+
+
+class SellerDashboard(BaseModel):
+    preparing_count: int  # 신규 주문(입금 완료·배송준비 대기) — epics "paid 건수"와 동일 값 (승인된 구체화)
+    shipping_count: int
+    low_stock: list[LowStockItem]
+    low_stock_threshold: int  # settings 값 — 화면 표기용
+
+
+@router.get("/dashboard", response_model=SellerDashboard)
+async def seller_dashboard(
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+):
+    """판매자 랜딩 대시보드 — 처리할 일 요약 (라우터 층 조합, 5.3 관례)."""
+    seller = await service.get_my_seller(session, user_id)
+    counts = await orders_service.seller_shipping_counts(session, seller.id)
+    threshold = await orders_service.get_int_setting(session, orders_service.SETTING_LOW_STOCK_THRESHOLD, minimum=0)
+    low = await products_service.low_stock_variants(session, seller.id, threshold)
+    return {**counts, "low_stock": low, "low_stock_threshold": threshold}

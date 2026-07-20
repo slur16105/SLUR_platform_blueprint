@@ -360,3 +360,21 @@ async def deduct_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -
         update(Variant).where(Variant.id == variant_id, Variant.stock >= qty).values(stock=Variant.stock - qty)
     )
     return result.rowcount == 1
+
+
+async def low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, threshold: int, limit: int = 20) -> list[dict]:
+    """품절 임박 — 활성 상품·활성 조합만, 재고 오름차순 (5.4 대시보드. 판매 종료·숨김은 대상 아님)."""
+    rows = (await session.execute(
+        select(Variant, Product)
+        .join(Product, Variant.product_id == Product.id)
+        .where(
+            Product.seller_id == seller_id, Product.status == "active",
+            Variant.is_active.is_(True), Variant.stock <= threshold,
+        )
+        .order_by(Variant.stock, Variant.created_at)
+        .limit(limit)
+    )).all()
+    return [{
+        "product_id": p.id, "product_name": p.name,
+        "option_text": variant_option_text(v), "stock": v.stock,
+    } for v, p in rows]

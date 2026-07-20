@@ -7,3 +7,23 @@
 .page_seller .p_links { display: flex; gap: var(--space-8); }
 .page_seller .p_links .btn { flex: 1; }
 .page_seller .p_note { color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+.page_seller .p_dashboard { display: flex; flex-direction: column; gap: var(--space-12); }
+.page_seller .p_dashboard .alert { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); }
+.page_seller .p_loading { padding: var(--space-16); color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+.page_seller .p_stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12); }
+.page_seller .p_stat { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-16); color: inherit; text-decoration: none; transition: background var(--duration-fast) var(--ease-standard); }
+.page_seller .p_stat:hover { background: var(--color-surface-hover); }
+.page_seller .p_stat .i_label { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_seller .p_stat .i_value { font-size: var(--text-2xl); font-weight: var(--weight-bold); color: var(--color-text-primary); }
+.page_seller .p_low_stock { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
+.page_seller .p_low_stock .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); }
+.page_seller .p_low_stock .p_subtitle { font-size: var(--text-base); }
+.page_seller .p_low_stock .i_link { font-size: var(--text-sm); color: var(--color-text-brand); text-decoration: none; }
+.page_seller .p_low_stock .i_link:hover { text-decoration: underline; }
+.page_seller .p_low_stock .i_empty { color: var(--color-text-muted); font-size: var(--text-sm); }
+.page_seller .i_stock_list { display: flex; flex-direction: column; }
+.page_seller .i_stock_row { display: flex; align-items: center; gap: var(--space-8); padding: var(--space-8) 0; border-bottom: 1px solid var(--color-border-subtle); font-size: var(--text-sm); }
+.page_seller .i_stock_row:last-child { border-bottom: none; }
+.page_seller .i_stock_row .i_name { color: var(--color-text-primary); }
+.page_seller .i_stock_row .i_option { color: var(--color-text-secondary); }
+.page_seller .i_stock_row .i_stock { margin-left: auto; font-weight: var(--weight-semibold); color: var(--color-danger); }

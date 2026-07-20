@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import LogoutButton from "../logout-button";
 import "./seller.css";
@@ -12,6 +12,20 @@ type Profile = {
   base_shipping_fee: number;
   jeju_extra_fee: number;
   island_extra_fee: number;
+};
+
+type LowStockItem = {
+  product_id: string;
+  product_name: string;
+  option_text: string;
+  stock: number;
+};
+
+type Dashboard = {
+  preparing_count: number;
+  shipping_count: number;
+  low_stock: LowStockItem[];
+  low_stock_threshold: number;
 };
 
 const FEE_FIELDS = [
@@ -26,6 +40,27 @@ export default function SellerHome() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [dashError, setDashError] = useState<string | null>(null);
+
+  // 대시보드 값은 전부 서버 응답 표시만 (AD-12) — 클라이언트 계산 없음
+  const loadDashboard = useCallback(async () => {
+    setDashError(null);
+    setDashboard(null);
+    try {
+      const res = await fetch("/api/seller/dashboard");
+      if (res.status === 401) return void (window.location.href = "/login");
+      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (!res.ok) return void setDashError("대시보드를 불러오지 못했습니다.");
+      setDashboard(await res.json());
+    } catch {
+      setDashError("네트워크 연결을 확인해 주세요.");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   useEffect(() => {
     fetch("/api/sellers/me").then(async (r) => {
@@ -80,6 +115,48 @@ export default function SellerHome() {
         </div>
         <LogoutButton />
       </header>
+      <section className="p_dashboard" aria-label="대시보드">
+        {dashError ? (
+          <div className="alert m_inline m_danger" role="alert">
+            {dashError}
+            <button className="btn m_small m_ghost" type="button" onClick={loadDashboard}>다시 시도</button>
+          </div>
+        ) : !dashboard ? (
+          <p className="p_loading" role="status">대시보드를 불러오는 중…</p>
+        ) : (
+          <>
+            <div className="p_stats">
+              <a className="card p_stat" href="/seller/orders">
+                <span className="i_label">신규 주문 (배송준비 대기)</span>
+                <strong className="i_value">{dashboard.preparing_count}건</strong>
+              </a>
+              <a className="card p_stat" href="/seller/orders?status=shipping">
+                <span className="i_label">배송중</span>
+                <strong className="i_value">{dashboard.shipping_count}건</strong>
+              </a>
+            </div>
+            <div className="card p_low_stock">
+              <div className="i_head">
+                <h2 className="p_subtitle">품절 임박 — 재고 {dashboard.low_stock_threshold}개 이하</h2>
+                <a className="i_link" href="/seller/products">상품 관리로 →</a>
+              </div>
+              {dashboard.low_stock.length === 0 ? (
+                <p className="i_empty">품절 임박 상품이 없습니다.</p>
+              ) : (
+                <ul className="i_stock_list">
+                  {dashboard.low_stock.map((s, idx) => (
+                    <li className="i_stock_row" key={`${s.product_id}-${idx}`}>
+                      <span className="i_name">{s.product_name}</span>
+                      {s.option_text && <span className="i_option">{s.option_text}</span>}
+                      <strong className="i_stock">{s.stock}개</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </>
+        )}
+      </section>
       <form className="card p_panel" onSubmit={save}>
         <h2 className="p_subtitle">배송비 설정</h2>
         {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
