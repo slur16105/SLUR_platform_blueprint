@@ -363,3 +363,49 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
         "deposit_account": deposit_account,
         "deposit_due_at": order.deposit_due_at,
     }
+
+
+# ---------------------------------------------------------------------------
+# 미입금 자동취소 (Story 4.5) — 엔진 조합 + 대상 선별만, 로직 재구현 금지 (AD-3·AD-4)
+# ---------------------------------------------------------------------------
+
+import logging  # noqa: E402
+
+logger = logging.getLogger("slur.orders")
+
+
+async def auto_cancel_expired_orders(session: AsyncSession) -> int:
+    """기한 경과 pending_payment 주문을 system 역할로 자동취소. 취소한 주문 수 반환.
+
+    기한 판정은 4.4가 스냅샷한 deposit_due_at < DB now()만 쓴다 — unpaid_cancel_days 재조회 금지
+    (재계산하면 설정 변경이 기존 주문 기한을 소급 변경). 주문 1건 = 트랜잭션 1건: 한 주문의 실패가
+    배치 전체를 막지 않도록 개별 commit, 예외 시 반드시 rollback 후 다음 주문 (세션 오염 방지). 멱등.
+    """
+    target_ids = list(await session.scalars(
+        select(Order.id)
+        .where(Order.payment_status == t.ORDER_PENDING_PAYMENT, Order.deposit_due_at < func.now())
+        .order_by(Order.created_at, Order.id)
+    ))
+    canceled = 0
+    for order_id in target_ids:
+        try:
+            item_ids = list(await session.scalars(
+                select(OrderItem.id)
+                .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
+                .where(SubOrder.order_id == order_id, OrderItem.status == t.ITEM_ORDERED)
+            ))
+            for item_id in item_ids:  # 재고 복원·cancellations는 엔진 경로가 소유
+                await cancel_order_item(
+                    session, order_item_id=item_id, actor_role=t.ROLE_SYSTEM, actor_user_id=None,
+                    reason="미입금 자동취소", responsibility=t.ROLE_SYSTEM,
+                )
+            await transition(
+                session, layer=t.LAYER_ORDER, entity_id=order_id, to_status=t.ORDER_CANCELED,
+                actor_role=t.ROLE_SYSTEM, actor_user_id=None,
+            )
+            await session.commit()
+            canceled += 1
+        except Exception:  # 개별 격리 — 오염된 주문 하나가 배치를 막지 않는다 (다음 주기 재시도)
+            logger.exception("auto-cancel 실패 order=%s", order_id)
+            await session.rollback()
+    return canceled

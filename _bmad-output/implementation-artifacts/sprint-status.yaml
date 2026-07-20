@@ -80,7 +80,7 @@ development_status:
   4-2-order-model-shipping-calc: done   # 주문 데이터 모델과 배송비 계산 (주문서 미리보기)
   4-3-order-state-engine: done    # 주문 상태 전이 엔진
   4-4-order-creation: done          # 주문 생성
-  4-5-auto-cancel: backlog                 # 미입금 자동취소
+  4-5-auto-cancel: review             # 미입금 자동취소
   4-6-buyer-cancel: backlog                # 구매자 취소
   epic-4-retrospective: optional
 

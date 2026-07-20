@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +18,22 @@ from app.sellers.router import router as sellers_router
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title=get_settings().app_name)
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # 스케줄러는 러닝 루프가 있는 여기서만 start (테스트 ASGITransport는 lifespan 미실행 → 자연 미기동)
+    from app.core.scheduler import create_scheduler
+
+    scheduler = create_scheduler()
+    scheduler.start()
+    logging.getLogger("slur.scheduler").info(
+        "scheduler started (auto-cancel every %d min)", get_settings().auto_cancel_interval_minutes
+    )
+    yield
+    scheduler.shutdown(wait=False)
+
+
+app = FastAPI(title=get_settings().app_name, lifespan=lifespan)
 register_error_handlers(app)
 app.add_middleware(
     CORSMiddleware,

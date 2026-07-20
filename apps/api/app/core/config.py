@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "slur-api"
+    auto_cancel_interval_minutes: int = 10  # 미입금 자동취소 주기 (AD-13 — 리터럴 금지, env 오버라이드 가능)
     environment: str = "local"  # local | production
     database_url: str  # postgresql+asyncpg://... — 환경변수 필수, 기본값 없음
     # CORS 허용 오리진 — 콤마 구분 환경변수 CORS_ORIGINS로 재정의 (web 도메인 추가용)
