@@ -18,7 +18,8 @@ type PendingOrder = {
 };
 
 function formatDateTime(s: string) {
-  return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" });
+  // 판매자 화면과 대사 시 시간 불일치 방지 — KST 고정
+  return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
 }
 
 function shortUuid(id: string) {

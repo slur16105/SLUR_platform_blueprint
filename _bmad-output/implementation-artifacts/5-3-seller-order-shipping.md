@@ -4,7 +4,7 @@ baseline_commit: 58f6a47918ec28969c01c8eb2a04718c1fd2c92a
 
 # Story 5.3: 판매자 주문관리와 배송 처리
 
-Status: review
+Status: done
 
 ## Story
 
@@ -27,7 +27,7 @@ So that 주문을 이행할 수 있다.
   - [x] `POST /api/v1/sellers/sub-orders/{id}/deliver` — 동일 패턴, shipping→delivered
 - [x] Task 2: Next.js 판매자 주문관리 화면 (AC 1·3)
   - [x] `/seller/orders` — 판매자 센터 네비에 진입 링크. 상태 탭(배송준비/배송중/배송완료) + 목록 카드/테이블: 주문번호·주문일·수령인·주소·요청사항·라인(상품명·옵션·수량 — 취소 라인 구분 표시)·배송비
-  - [x] preparing 행: [배송 시작] → 모달(택배사 선택/입력 + 송장번호) → ship POST → 성공 시 행 이동(탭 카운트 갱신), 422 message 표시
+  - [x] preparing 행: [배송 시작] → 모달(택배사 선택/입력 + 송장번호) → ship POST → 성공 시 재조회로 행 정리(탭별 카운트 UI는 없음 — 리뷰 문언 정정), 422 message 표시
   - [x] shipping 행: 송장 표시 + [배송 완료] → 확인 → deliver POST
   - [x] 슬러 시스템 CSS·기존 seller 페이지 관례 (5.2 admin 패턴 대칭), R7 판정(401→login, 403→no-role)
 - [x] Task 3: 테스트 (`tests/test_seller_orders.py` 신설)
@@ -89,3 +89,17 @@ Claude Fable 5 (claude-fable-5) — Next.js 화면은 병렬 서브에이전트 
 - apps/web/app/api/seller/orders/route.ts (신규 — BFF)
 - apps/web/app/seller/orders/page.tsx·orders.css (신규)
 - apps/web/app/seller/page.tsx·seller.css (수정 — 주문 관리 링크)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind+Edge 통합 · Acceptance Auditor 병렬. 실질 위반 없음(경미 2). 0 decision-needed · 10 patch · 2 defer · 2 dismiss.**
+
+- [x] [Review][Patch] **전-취소 묶음 유령 발송** — 엔진에 shipping 진입 가드(활성 라인 0 → 422) + `all_canceled` 필드로 UI 버튼 억제·배지
+- [x] [Review][Patch] **422/404 message가 load()의 setError(null)에 상쇄 — 한 프레임도 미표시** — keepAlerts 옵션으로 해소
+- [x] [Review][Patch] 뒷페이지 마지막 행 처리 후 좌초 — 성공 시 재조회(빈 페이지 이동 재사용)
+- [x] [Review][Patch] carrier·tracking 공백 패딩 저장 — 엔진 strip 저장 (구매자 화면·송장 조회 오염 방지)
+- [x] [Review][Patch] 취소 라인 표시·NULL ship 422·페이지 경계·strip 테스트 공백 — 테스트 1종 보강 (138/138)
+- [x] [Review][Patch] 도서산간 +0원 노이즈 숨김 / 택배사 Enter 포커스 이동 / KST 고정(admin 화면 포함) / 탭 카운트 문언 정정 — 일괄 반영
+- [x] [Review][Defer] 자기 소유 NULL sub_order의 ship 422가 존재를 누설 — 입금 후 어차피 노출될 자기 주문 정보라 실해 미미. invalid_transition 코드 분리(4.3 defer)와 함께 후속
+- [x] [Review][Defer] 모달 풀 포커스 트랩 — 5.2·5.3 공통 부재(ESC·초기 포커스·submitting 가드는 있음). 웹 공통 모달 컴포넌트 승격 시 일괄 (블루프린트)
+- 최종: 백엔드 138/138, tsc 0, 신규 lint 유형 0

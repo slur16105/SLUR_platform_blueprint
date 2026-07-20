@@ -23,6 +23,7 @@ type SubOrder = {
   address1: string;
   address2: string;
   order_note: string;
+  all_canceled: boolean; // 서브주문 전 라인 취소 — 발송 대상 아님
   items: OrderLine[];
   shipping_fee: number;
   remote_extra_fee: number;
@@ -39,7 +40,8 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 function formatDateTime(s: string) {
-  return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" });
+  // 관리자 화면과 대사 시 시간 불일치 방지 — KST 고정
+  return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
 }
 
 function shortUuid(id: string) {
@@ -65,6 +67,7 @@ export default function SellerOrders() {
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadSeq = useRef(0); // 요청 세대 카운터 — 탭·페이지 연타 시 늦은 응답 폐기
   const carrierRef = useRef<HTMLInputElement | null>(null);
+  const trackingRef = useRef<HTMLInputElement | null>(null);
   const deliverBtnRef = useRef<HTMLButtonElement | null>(null);
 
   function showNotice(msg: string) {
@@ -73,11 +76,14 @@ export default function SellerOrders() {
     noticeTimer.current = setTimeout(() => setNotice(null), 5000); // 성공 토스트 5초 후 자동 소멸
   }
 
-  const load = useCallback(async (t: Tab, p: number) => {
+  // keepAlerts: 처리 직후 재조회 — 방금 띄운 토스트·에러 메시지를 지우지 않는다
+  const load = useCallback(async (t: Tab, p: number, opts?: { keepAlerts?: boolean }) => {
     const gen = ++loadSeq.current;
-    setError(null);
-    setNotice(null); // 목록 재조회 시 토스트 초기화
-    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    if (!opts?.keepAlerts) {
+      setError(null);
+      setNotice(null); // 목록 재조회 시 토스트 초기화
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    }
     try {
       const res = await fetch(`/api/seller/orders?status=${t}&page=${p}`);
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
@@ -163,19 +169,18 @@ export default function SellerOrders() {
       if (res.status === 401) return void (window.location.href = "/login");
       if (res.status === 403) return void (window.location.href = "/no-role");
       if (res.status === 204) {
-        // 성공 — 이 탭에서 벗어난 행만 제거하고 토스트
-        setItems((prev) => prev.filter((o) => o.sub_order_id !== target.sub_order_id));
-        setTotal((t) => Math.max(0, t - 1));
+        // 성공 — 토스트 후 재조회 (마지막 행 처리 시 빈 뒷페이지 이동 로직 재사용)
         showNotice(successMsg);
         closeModals();
+        load(tab, page, { keepAlerts: true });
         return;
       }
       const data = await res.json().catch(() => null);
       setError(data?.message ?? "처리에 실패했습니다.");
       if (res.status === 422 || res.status === 404) {
-        // 상태가 이미 바뀜(422 invalid_transition) 또는 없는 주문(404) — 메시지 표시 후 목록 재조회
+        // 상태가 이미 바뀜(422 invalid_transition) 또는 없는 주문(404) — 메시지 유지한 채 목록 재조회
         closeModals();
-        load(tab, page);
+        load(tab, page, { keepAlerts: true });
       }
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
@@ -250,6 +255,7 @@ export default function SellerOrders() {
                       onClick={() => copyOrderId(o.order_id)}>
                       {copied === o.order_id ? "복사됨" : shortUuid(o.order_id)}
                     </button>
+                    {o.all_canceled && <span className="badge m_small m_danger">전체 취소됨</span>}
                   </td>
                   <td className="m_muted">{formatDateTime(o.created_at)}</td>
                   <td>
@@ -273,8 +279,14 @@ export default function SellerOrders() {
                     </ul>
                   </td>
                   <td className="m_num">
-                    <span className="i_fee">기본 {o.shipping_fee.toLocaleString()}원</span>
-                    <span className="i_fee">도서산간 +{o.remote_extra_fee.toLocaleString()}원</span>
+                    {o.all_canceled ? (
+                      <span className="i_fee">-</span> /* 전체 취소 — 발송·배송비 없음 */
+                    ) : (
+                      <>
+                        <span className="i_fee">기본 {o.shipping_fee.toLocaleString()}원</span>
+                        {o.remote_extra_fee > 0 && <span className="i_fee">도서산간 +{o.remote_extra_fee.toLocaleString()}원</span>}
+                      </>
+                    )}
                   </td>
                   {tab !== "preparing" && (
                     <td>
@@ -284,14 +296,19 @@ export default function SellerOrders() {
                   )}
                   {tab === "preparing" && (
                     <td>
-                      <button className="btn m_small m_primary" type="button"
-                        onClick={() => { setShipping(o); setCarrier(""); setTracking(""); setFormError(null); }}>배송 시작</button>
+                      {/* 전체 취소된 서브주문은 발송 유도 자체를 제거 (유령 발송 방지) */}
+                      {!o.all_canceled && (
+                        <button className="btn m_small m_primary" type="button"
+                          onClick={() => { setShipping(o); setCarrier(""); setTracking(""); setFormError(null); }}>배송 시작</button>
+                      )}
                     </td>
                   )}
                   {tab === "shipping" && (
                     <td>
-                      <button className="btn m_small m_primary" type="button"
-                        onClick={() => setDelivering(o)}>배송 완료</button>
+                      {!o.all_canceled && (
+                        <button className="btn m_small m_primary" type="button"
+                          onClick={() => setDelivering(o)}>배송 완료</button>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -330,11 +347,12 @@ export default function SellerOrders() {
                 <span className="i_label">택배사</span>
                 <input className="input_text" type="text" maxLength={50} ref={carrierRef}
                   placeholder="예: CJ대한통운" value={carrier}
-                  onChange={(e) => setCarrier(e.target.value)} />
+                  onChange={(e) => setCarrier(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); trackingRef.current?.focus(); } }} />
               </label>
               <label className="field">
                 <span className="i_label">송장번호</span>
-                <input className="input_text" type="text" maxLength={50}
+                <input className="input_text" type="text" maxLength={50} ref={trackingRef}
                   placeholder="숫자·문자 그대로 입력 (1~50자)" value={tracking}
                   onChange={(e) => setTracking(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submitShip(); }} />

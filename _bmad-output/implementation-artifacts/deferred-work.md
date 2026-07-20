@@ -58,3 +58,8 @@
 
 - **ix_orders_pending이 목록 ORDER BY(created_at) 미커버 + non-CONCURRENTLY 생성** — v1 무해(pending 행 소수). 실서비스 규모 재적용 시 CONCURRENTLY·정렬 포함 재설계 (오픈 게이트)
 - **웹 lint 베이스라인 (react-hooks/set-state-in-effect 등 6건)** — 전 목록 페이지 공통 load-on-mount 패턴. 일괄 리팩터 스토리 후보 (블루프린트 추출 전)
+
+## Deferred from: code review of 5-3-seller-order-shipping (2026-07-20)
+
+- **자기 소유 NULL(미결제) sub_order ship 422의 존재 누설** — 실해 미미(자기 주문). invalid_transition 코드 분리와 묶어 후속
+- **웹 모달 풀 포커스 트랩 부재 (5.2·5.3 공통)** — ESC·초기 포커스·submitting 가드는 구현됨. 공통 모달 컴포넌트 승격 시 일괄 (블루프린트 추출)

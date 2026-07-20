@@ -153,3 +153,68 @@ async def test_other_seller_403(client, clean_products):
     assert (await client.post(
         f"/api/v1/sellers/sub-orders/{u.uuid4()}/deliver", headers=_auth(t2)
     )).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_canceled_lines_and_ghost_ship_guard(client, clean_products):
+    """리뷰 반영: 취소 라인 구분 표시·all_canceled·전-취소 묶음 배송 시작 422·NULL ship 422·페이지 경계."""
+    from app.core.db import async_session_factory
+
+    st, pid, vs = await _shop(client, stock=9)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+
+    # 미결제(NULL) sub_order에 ship → 422 (전이표 미정의)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[2]["id"], "quantity": 1}, headers=_auth(bt))
+    ids = await _cart_ids(client, bt)
+    r = await client.post(
+        "/api/v1/orders",
+        json={"cart_item_ids": ids, "expected_grand_total": await _expected(client, bt), **ADDRESS}, headers=_auth(bt),
+    )
+    async with async_session_factory() as session:
+        null_sid = str(await session.scalar(select(SubOrder.id).where(SubOrder.order_id == u.UUID(r.json()["order_id"]))))
+    res = await client.post(
+        f"/api/v1/sellers/sub-orders/{null_sid}/ship",
+        json={"carrier": "CJ", "tracking_number": "1"}, headers=_auth(st),
+    )
+    assert res.status_code == 422 and res.json()["code"] == "invalid_transition"
+
+    # paid 주문에서 관리자 라인 취소로 전-취소 묶음 조성 → all_canceled·유령 발송 가드
+    oid, sid = await _paid_order(client, bt, admin_t, vs)
+    from app.orders.models import OrderItem as OI
+
+    async with async_session_factory() as session:
+        item_id = await session.scalar(select(OI.id).join(SubOrder, OI.sub_order_id == SubOrder.id)
+                                       .where(SubOrder.id == u.UUID(sid)))
+        await service.cancel_order_item(
+            session, order_item_id=item_id, actor_role=t.ROLE_ADMIN, actor_user_id=None,
+            reason="판매자 품절", responsibility="seller",
+        )
+        await session.commit()
+
+    body = (await client.get(ORDERS_URL, headers=_auth(st))).json()
+    row = next(r2 for r2 in body["items"] if r2["sub_order_id"] == sid)
+    assert row["all_canceled"] is True
+    assert row["items"][0]["status"] == "canceled"  # 취소 라인 구분 표시
+
+    res = await client.post(
+        f"/api/v1/sellers/sub-orders/{sid}/ship",
+        json={"carrier": "CJ대한통운", "tracking_number": "555"}, headers=_auth(st),
+    )
+    assert res.status_code == 422 and "취소" in res.json()["message"]  # 유령 발송 가드
+
+    # carrier·tracking strip 저장 확인
+    oid2, sid2 = await _paid_order(client, bt, admin_t, vs)
+    res = await client.post(
+        f"/api/v1/sellers/sub-orders/{sid2}/ship",
+        json={"carrier": "  CJ대한통운  ", "tracking_number": " 777 "}, headers=_auth(st),
+    )
+    assert res.status_code == 204
+    async with async_session_factory() as session:
+        sub = await session.get(SubOrder, u.UUID(sid2))
+        assert sub.carrier == "CJ대한통운" and sub.tracking_number == "777"
+
+    # 페이지 경계
+    assert (await client.get(ORDERS_URL, params={"page": 0}, headers=_auth(st))).status_code == 422
+    assert (await client.get(ORDERS_URL, params={"page": 10001}, headers=_auth(st))).status_code == 422

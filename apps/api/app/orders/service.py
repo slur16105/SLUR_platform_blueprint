@@ -184,8 +184,13 @@ async def transition(
     elif layer == t.LAYER_SUB_ORDER:
         if to_status == t.SUB_SHIPPING:
             t.guard_shipping_info(carrier, tracking_number)
-            entity.carrier = carrier
-            entity.tracking_number = tracking_number
+            has_active = await session.scalar(
+                select(exists().where(OrderItem.sub_order_id == entity.id, OrderItem.status == t.ITEM_ORDERED))
+            )
+            if not has_active:  # 전 라인 취소된 묶음 — 유령 발송 방지 (5.3 리뷰)
+                raise AppError("invalid_transition", "전체 취소된 주문 묶음은 배송을 시작할 수 없습니다.", status_code=422)
+            entity.carrier = carrier.strip()  # 공백 패딩이 구매자 화면·송장 조회로 새지 않게
+            entity.tracking_number = tracking_number.strip()
         order_id = entity.order_id
     else:
         order_id = entity.id
@@ -751,6 +756,7 @@ async def list_seller_sub_orders(session: AsyncSession, seller_id: uuid.UUID, st
             } for i in items_by_sub.get(sub.id, [])],
             "shipping_fee": sub.shipping_fee, "remote_extra_fee": sub.remote_extra_fee,
             "shipping_status": sub.shipping_status, "carrier": sub.carrier, "tracking_number": sub.tracking_number,
+            "all_canceled": not any(i.status == t.ITEM_ORDERED for i in items_by_sub.get(sub.id, [])),  # UI 버튼 억제용
         })
     return {"items": out, "total": total, "page": page, "size": size}
 

@@ -15,6 +15,7 @@
 .page_seller_orders .i_order_no { display: block; font-weight: var(--weight-bold); color: var(--color-text-primary); }
 .page_seller_orders .i_uuid { display: inline-block; padding: 0; border: none; background: transparent; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
 .page_seller_orders .i_uuid:hover { color: var(--color-text-brand); text-decoration: underline; }
+.page_seller_orders td > .badge { display: inline-flex; margin-top: var(--space-4); }
 .page_seller_orders .i_recipient { display: block; color: var(--color-text-primary); }
 .page_seller_orders .i_phone { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_seller_orders .i_address { max-width: 280px; }

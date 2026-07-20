@@ -165,6 +165,7 @@ class SellerSubOrderItem(BaseModel):
     shipping_status: str
     carrier: str | None
     tracking_number: str | None
+    all_canceled: bool  # 전 라인 취소 — UI 버튼 억제 (유령 발송 방지)
 
 
 class SellerOrderList(BaseModel):
