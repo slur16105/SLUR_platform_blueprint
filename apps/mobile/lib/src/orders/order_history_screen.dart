@@ -19,8 +19,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   final List<Map<String, dynamic>> _items = [];
   int _total = 0;
   int _page = 0; // 마지막으로 로드한 페이지 (0 = 미로드)
-  bool _loading = false;
+  bool _refreshing = false; // 첫 페이지(새로고침) 로드 중
+  bool _loadingMore = false; // 다음 페이지 로드 중
   bool _initialLoaded = false; // 첫 페이지 로드 완료 여부
+  int _generation = 0; // 새로고침 세대 — 진행 중이던 _loadMore 결과의 뒤늦은 반영 방지
   String? _error;
 
   // 서버 total 기준으로만 다음 페이지 존재 판단 (items.length < total)
@@ -33,10 +35,12 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   }
 
   /// 첫 페이지 로드 (당겨서 새로고침 시에도 사용 — 목록 초기화 후 재조회)
+  /// 진행 중인 _loadMore와 무관하게 항상 실행된다 (세대 증가로 이전 결과 무효화)
   Future<void> _loadFirst() async {
-    if (_loading) return;
+    if (_refreshing) return;
+    _generation++; // 진행 중이던 _loadMore 응답은 세대 불일치로 폐기됨
     setState(() {
-      _loading = true;
+      _refreshing = true;
       _error = null;
     });
     try {
@@ -57,19 +61,24 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       if (!mounted) return;
       setState(() => _error = '오류가 발생했습니다. 다시 시도해 주세요.');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _refreshing = false);
     }
   }
 
   /// 다음 페이지 로드 — items.length < total일 때만
   Future<void> _loadMore() async {
-    if (_loading || !_initialLoaded || !_hasMore) return;
-    setState(() => _loading = true);
+    if (_refreshing || _loadingMore || !_initialLoaded || !_hasMore) return;
+    final generation = _generation; // 요청 시점 세대 기록
+    setState(() => _loadingMore = true);
     try {
       final body = await ref.read(ordersApiProvider).listOrders(page: _page + 1);
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return; // 새로고침이 끼어들었으면 폐기
       setState(() {
-        _items.addAll((body['items'] as List).cast<Map<String, dynamic>>());
+        // offset 페이징 중 새 주문 유입으로 밀려 내려온 중복 카드 제거
+        final seen = {for (final o in _items) o['order_id']};
+        _items.addAll((body['items'] as List)
+            .cast<Map<String, dynamic>>()
+            .where((o) => !seen.contains(o['order_id'])));
         _total = body['total'] as int;
         _page = body['page'] as int;
       });
@@ -81,7 +90,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('오류가 발생했습니다. 다시 시도해 주세요.')));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _loadingMore = false);
     }
   }
 
@@ -89,7 +98,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('주문 내역')),
-      body: !_initialLoaded && _loading
+      body: !_initialLoaded && _refreshing
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: () async {

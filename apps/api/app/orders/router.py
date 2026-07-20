@@ -60,8 +60,8 @@ async def list_my_orders(
     session: AsyncSession = Depends(get_session),
 ):
     """주문내역 목록 (최신순, page 기반) — 대표 상태·금액은 서버 파생 (AD-12)."""
-    if page < 1:
-        raise AppError("validation_error", "페이지는 1 이상이어야 합니다.", status_code=422)
+    if page < 1 or page > 10000:  # 상한 — 거대 offset 스캔 부하 방지
+        raise AppError("validation_error", "올바르지 않은 페이지입니다.", status_code=422)
     return await service.list_my_orders(session, user_id, page)
 
 

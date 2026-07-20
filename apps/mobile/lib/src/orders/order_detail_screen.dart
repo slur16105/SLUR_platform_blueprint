@@ -57,41 +57,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   /// 묶음 취소 — 사유 입력(선택) 다이얼로그 후 취소 요청
   Future<void> _cancelSubOrder(Map<String, dynamic> sub) async {
     if (_canceling) return;
-    final controller = TextEditingController();
     // 확인 시 사유 문자열(빈 문자열 가능), 취소/닫기 시 null
+    // controller는 다이얼로그 위젯이 소유·dispose (닫힘 애니메이션 중 접근 안전)
     final reason = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('${sub['brand_name']} 묶음 취소'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('이 판매자 묶음의 주문을 취소할까요?'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: '취소 사유 (선택)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('닫기'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: const Text('묶음 취소'),
-          ),
-        ],
-      ),
+      builder: (_) => _CancelReasonDialog(brandName: sub['brand_name'] as String),
     );
-    controller.dispose();
     if (reason == null || !mounted) return;
 
     setState(() => _canceling = true);
@@ -145,7 +116,19 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ? Center(
               child: _loading
                   ? const CircularProgressIndicator()
-                  : Text(_error ?? '주문을 불러오지 못했습니다.'),
+                  // 최초 로드 실패 — 안내 + 다시 시도 (목록 화면과 대칭)
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_error ?? '주문을 불러오지 못했습니다.',
+                            style: TextStyle(color: Colors.grey.shade600)),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: _fetch,
+                          child: const Text('다시 시도'),
+                        ),
+                      ],
+                    ),
             )
           : RefreshIndicator(
               onRefresh: () async {
@@ -391,10 +374,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   /// 입금 안내 박스 — deposit_info != null(입금대기)일 때만 표시
   Widget _depositBox(Map<String, dynamic> deposit) {
     final dueAtRaw = deposit['deposit_due_at'];
+    final expired = deposit['expired'] == true; // 기한 경과 여부도 서버 판정 값 (AD-12)
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: expired ? Colors.red.shade50 : Colors.orange.shade50,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -402,11 +386,73 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         children: [
           const Text('입금 안내', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
+          if (expired) ...[
+            Text(
+              '입금 기한이 지났습니다. 곧 자동취소됩니다.',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red.shade700),
+            ),
+            const SizedBox(height: 8),
+          ],
           _infoRow('입금 금액', '${formatWon(deposit['grand_total'] as int)}원'),
           _infoRow('입금 계좌', '${deposit['deposit_account']}'),
           _infoRow('입금 기한', dueAtRaw is String ? formatDueAt(dueAtRaw) : '-'),
         ],
       ),
+    );
+  }
+}
+
+/// 묶음 취소 사유 입력 다이얼로그 — 확인 시 사유(빈 문자열 가능), 닫기 시 null 반환
+class _CancelReasonDialog extends StatefulWidget {
+  const _CancelReasonDialog({required this.brandName});
+  final String brandName;
+
+  @override
+  State<_CancelReasonDialog> createState() => _CancelReasonDialogState();
+}
+
+class _CancelReasonDialogState extends State<_CancelReasonDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('${widget.brandName} 묶음 취소'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('이 판매자 묶음의 주문을 취소할까요?'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              labelText: '취소 사유 (선택)',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 2,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('닫기'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: const Text('묶음 취소'),
+        ),
+      ],
     );
   }
 }

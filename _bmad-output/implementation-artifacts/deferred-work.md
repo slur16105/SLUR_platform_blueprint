@@ -47,3 +47,9 @@
 ## Deferred from: code review of 4-6-buyer-cancel (2026-07-20)
 
 - **잠금 직전 극소 윈도의 선취소 라인 → generic invalid_transition message** — 데이터 안전(전체 rollback·재시도 성공), UX 계약만 저하. invalid_transition 코드 분리(4.3 defer)와 묶어 후속
+
+## Deferred from: code review of 5-1-buyer-order-history (2026-07-20)
+
+- **브랜드명 라이브 조회 (스냅샷 아님)** — 의도된 결정: 판매자 프로필은 살아있는 정보, AD-7 스냅샷 대상은 상품명·옵션·금액. 리브랜딩 소급 표시 수용. 스냅샷 승격은 운영 피드백 후
+- **order_no(UUID 8자리) 충돌 대응 미정** — **5.2 관리자 입금 확인 설계에서 결정** (입금자 대조 흐름에 전체 UUID/주문일 병기 여부)
+- **offset 페이지네이션 커서 전환** — v1 규모 무해(클라 dedupe로 완화). 블루프린트 추출 시

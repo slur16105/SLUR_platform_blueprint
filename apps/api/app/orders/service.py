@@ -2,6 +2,8 @@ import logging
 import uuid
 
 from sqlalchemy import func, select
+
+from app.core.config import get_settings
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.carts import service as carts_service
@@ -489,8 +491,6 @@ async def cancel_sub_order(session: AsyncSession, user_id: uuid.UUID, sub_order_
 # 구매자 주문내역·상세 (Story 5.1) — 파생 값의 단일 소스 (AD-6·AD-12)
 # ---------------------------------------------------------------------------
 
-from app.core.config import get_settings  # noqa: E402
-
 # 표시 전용 파생 상태 — transitions.py 상수·DB CHECK에 추가 금지, transition() 입력 사용 금지
 DISPLAY_AWAITING_PAYMENT = "awaiting_payment"
 DISPLAY_CANCELED = "canceled"
@@ -515,7 +515,12 @@ def derive_order_status(order_payment: str, sub_statuses: list[str]) -> str:
         return DISPLAY_CANCELED
     if order_payment == t.ORDER_PENDING_PAYMENT:
         return DISPLAY_AWAITING_PAYMENT
-    if all(s == t.SUB_DELIVERED for s in active):
+    done_states = {t.SUB_DELIVERED, t.SUB_CONFIRMED}  # confirmed(v1 미사용)도 완료 동급 — 역행 표시 방지
+    known = {t.SUB_PREPARING, t.SUB_SHIPPING, *done_states, DISPLAY_AWAITING_PAYMENT}
+    for st_ in active:
+        if st_ not in known:
+            logger.warning("derive_order_status: 미지 묶음 상태 %s — preparing으로 폴백", st_)
+    if all(s in done_states for s in active):
         return t.SUB_DELIVERED
     if any(s == t.SUB_SHIPPING for s in active):
         return t.SUB_SHIPPING
@@ -545,16 +550,29 @@ async def _order_view_rows(session: AsyncSession, order_ids: list[uuid.UUID]) ->
     return subs_by_order, items_by_sub, brand_by_seller
 
 
-def _amounts(subs: list, items_by_sub: dict) -> tuple[int, int, int]:
-    """활성(ordered) 라인만 합산 — 부분 취소 후 과입금 방지 (5.1 금액 파생 규칙)."""
+def _amounts(subs: list, items_by_sub: dict, *, only_active: bool = True) -> tuple[int, int, int]:
+    """활성(ordered) 라인만 합산 — 부분 취소 후 과입금 방지 (5.1 금액 파생 규칙).
+
+    전-취소 주문의 '표시' 금액은 only_active=False로 원 주문 금액을 쓴다 (0원 카드 방지) —
+    입금 안내(deposit_info)는 항상 활성 기준이며 전-취소 주문은 pending이 아니라 안내 자체가 없다.
+    """
     item_total = shipping_total = 0
     for sub in subs:
-        active = [i for i in items_by_sub.get(sub.id, []) if i.status == t.ITEM_ORDERED]
-        if not active:
-            continue  # 전-취소 묶음은 배송비도 제외
-        item_total += sum((i.unit_price + i.extra_price) * i.quantity for i in active)
+        lines = items_by_sub.get(sub.id, [])
+        picked = [i for i in lines if i.status == t.ITEM_ORDERED] if only_active else lines
+        if not picked:
+            continue  # (활성 기준) 전-취소 묶음은 배송비도 제외
+        item_total += sum((i.unit_price + i.extra_price) * i.quantity for i in picked)
         shipping_total += sub.shipping_fee + sub.remote_extra_fee
     return item_total, shipping_total, item_total + shipping_total
+
+
+def _display_amounts(subs: list, items_by_sub: dict) -> tuple[int, int, int]:
+    """표시용 금액 — 활성 기준, 전-취소 주문(활성 0)은 원 주문 금액으로 폴백."""
+    item_total, shipping_total, grand = _amounts(subs, items_by_sub)
+    if grand == 0 and any(items_by_sub.get(s.id) for s in subs):
+        return _amounts(subs, items_by_sub, only_active=False)
+    return item_total, shipping_total, grand
 
 
 async def list_my_orders(session: AsyncSession, user_id: uuid.UUID, page: int) -> dict:
@@ -569,22 +587,22 @@ async def list_my_orders(session: AsyncSession, user_id: uuid.UUID, page: int) -
     for order in orders:
         subs = subs_by_order.get(order.id, [])
         sub_views = []
-        first_name, line_count = None, 0
+        all_lines, active_lines = [], []
         for sub in subs:
             lines = items_by_sub.get(sub.id, [])
+            all_lines += lines
             active = [i for i in lines if i.status == t.ITEM_ORDERED]
-            shown = active or lines  # 전-취소 주문 카드에도 상품명은 보여준다
-            if shown and first_name is None:
-                first_name = shown[0].product_name
-            line_count += len(lines)
+            active_lines += active
             sub_views.append({
                 "brand_name": brand.get(sub.seller_id, ""),
                 "display_status": derive_sub_status(order.payment_status, sub.shipping_status, bool(active)),
             })
-        _, _, grand = _amounts(subs, items_by_sub)
-        title = first_name or "주문 상품"
-        if line_count > 1:
-            title = f"{title} 외 {line_count - 1}건"
+        _, _, grand = _display_amounts(subs, items_by_sub)
+        # title·건수·금액은 같은 기준 — 활성 라인이 있으면 활성만, 전-취소 주문은 전체 라인 (원 주문 표시)
+        basis = active_lines or all_lines
+        title = basis[0].product_name if basis else "주문 상품"
+        if len(basis) > 1:
+            title = f"{title} 외 {len(basis) - 1}건"
         out.append({
             "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
             "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
@@ -616,13 +634,16 @@ async def get_my_order(session: AsyncSession, user_id: uuid.UUID, order_id: uuid
                 "line_total": (i.unit_price + i.extra_price) * i.quantity, "status": i.status,
             } for i in lines],
         })
-    item_total, shipping_total, grand = _amounts(subs, items_by_sub)
+    item_total, shipping_total, grand = _display_amounts(subs, items_by_sub)
     deposit_info = None
     if order.payment_status == t.ORDER_PENDING_PAYMENT:
+        _, _, active_grand = _amounts(subs, items_by_sub)  # 입금 안내는 항상 활성 기준 (과입금 방지)
+        db_now = await session.scalar(select(func.now()))
         deposit_info = {
-            "grand_total": grand,  # 잔여 활성분 — 부분 취소 후 과입금 방지
+            "grand_total": active_grand,
             "deposit_account": await get_setting(session, SETTING_DEPOSIT_ACCOUNT),
             "deposit_due_at": order.deposit_due_at,
+            "expired": order.deposit_due_at < db_now,  # 자동취소 배치 전 창 — 만료 표시 (리뷰 반영)
         }
     return {
         "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,

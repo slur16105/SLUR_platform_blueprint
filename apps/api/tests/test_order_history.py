@@ -102,10 +102,12 @@ async def test_derive_matrix(client, clean_products):
     assert await status() == ("awaiting_payment", "awaiting_payment", True)
     await _pay(oid)
     assert await status() == ("preparing", "preparing", False)  # preparing 진입 → 취소 불가 (AC 3 파생)
-    await _ship(sid)
+    await _ship(sid, to="delivered")
     d = (await client.get(f"{ORDERS}/{oid}", headers=_auth(bt))).json()
-    assert d["display_status"] == "shipping"
+    assert d["display_status"] == "delivered"  # 전 활성 묶음 delivered → 대표 delivered
+    assert d["sub_orders"][0]["display_status"] == "delivered"
     assert d["sub_orders"][0]["carrier"] == "CJ대한통운" and d["sub_orders"][0]["tracking_number"] == "9876543210"  # FR-21
+    assert d["deposit_info"] is None
 
     # 별도 주문: 전 취소 → canceled
     await client.post("/api/v1/carts/items", json={"variant_id": vs[1]["id"], "quantity": 1}, headers=_auth(bt))
@@ -114,6 +116,8 @@ async def test_derive_matrix(client, clean_products):
     d2 = (await client.get(f"{ORDERS}/{oid2}", headers=_auth(bt))).json()
     assert d2["display_status"] == "canceled"
     assert d2["sub_orders"][0]["display_status"] == "canceled" and d2["sub_orders"][0]["cancellable"] is False
+    assert d2["grand_total"] == (3000 + vs[1]["extra_price"]) + 3000  # 전-취소 표시 금액 = 원 주문 금액 (0원 아님)
+    assert d2["deposit_info"] is None  # order canceled — 입금 안내 없음
 
 
 @pytest.mark.asyncio
@@ -199,3 +203,53 @@ async def test_detail_snapshot_immutable_and_ownership(client, clean_products):
     assert d["item_total"] == line["line_total"]
     assert d["grand_total"] == d["item_total"] + d["shipping_total"]
     assert d["recipient_name"] == ADDRESS["recipient_name"]
+
+
+@pytest.mark.asyncio
+async def test_pagination_two_pages(client, clean_products):
+    """page_size 초과 데이터 — offset 동작·total 정합·빈 페이지."""
+    from app.core.config import get_settings
+
+    size = get_settings().page_size
+    st, pid, vs = await _shop(client, stock=999)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    n = size + 2
+    for _ in range(n):
+        await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+        await _make_order(client, bt)
+
+    p1 = (await client.get(ORDERS, headers=_auth(bt))).json()
+    p2 = (await client.get(ORDERS, params={"page": 2}, headers=_auth(bt))).json()
+    assert p1["total"] == n and len(p1["items"]) == size
+    assert len(p2["items"]) == 2 and p2["page"] == 2
+    ids1 = {i["order_id"] for i in p1["items"]}
+    assert not ids1 & {i["order_id"] for i in p2["items"]}  # 페이지 간 중복 없음
+    p3 = (await client.get(ORDERS, params={"page": 3}, headers=_auth(bt))).json()
+    assert p3["items"] == []  # 빈 페이지
+    assert (await client.get(ORDERS, params={"page": 10001}, headers=_auth(bt))).status_code == 422  # 상한
+
+
+@pytest.mark.asyncio
+async def test_expired_deposit_flag(client, clean_products):
+    """만료된 pending 주문 — deposit_info.expired true (자동취소 배치 전 창 표시)."""
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import update as sa_update
+
+    from app.core.db import async_session_factory
+    from app.orders.models import Order as OrderModel
+
+    st, pid, vs = await _shop(client, stock=5)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    oid, _ = await _make_order(client, bt)
+    d = (await client.get(f"{ORDERS}/{oid}", headers=_auth(bt))).json()
+    assert d["deposit_info"]["expired"] is False
+    async with async_session_factory() as session:
+        await session.execute(sa_update(OrderModel).where(OrderModel.id == u.UUID(oid))
+                              .values(deposit_due_at=datetime.now(timezone.utc) - timedelta(hours=1)))
+        await session.commit()
+    d = (await client.get(f"{ORDERS}/{oid}", headers=_auth(bt))).json()
+    assert d["deposit_info"]["expired"] is True

@@ -4,7 +4,7 @@ baseline_commit: 17181be8a7f952f41e7301e4357d983264995c72
 
 # Story 5.1: 구매자 주문내역·상세
 
-Status: review
+Status: done
 
 ## Story
 
@@ -121,3 +121,23 @@ Claude Fable 5 (claude-fable-5) — Flutter는 병렬 서브에이전트
 - apps/mobile/lib/src/orders/order_detail_screen.dart (신규)
 - apps/mobile/lib/src/screens/home_screen.dart (수정 — 내역 아이콘)
 - apps/mobile/lib/src/orders/order_complete_screen.dart (수정 — 내역 링크 활성화)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind+Edge 통합 · Acceptance Auditor 병렬. Acceptance 위반 없음(경미 2건). 0 decision-needed · 12 patch · 2 defer · 2 dismiss.**
+
+- [x] [Review][Patch] 카드 title이 전-취소 묶음 상품명 선택 가능 — 활성 라인 우선을 주문 단위로 재구성, title·건수·금액 동일 기준
+- [x] [Review][Patch] "외 n건"이 취소 라인 포함 집계 — 기준 통일 (활성 우선, 전-취소 주문은 전체)
+- [x] [Review][Patch] 전-취소 주문 표시 금액 0원 — `_display_amounts` 폴백(원 주문 금액). 입금 안내는 항상 활성 기준 유지(과입금 방지 불변)
+- [x] [Review][Patch] 만료된 입금 안내 무표시 — `deposit_info.expired` 서버 파생 + 경고 문구("곧 자동취소")
+- [x] [Review][Patch] 상세 최초 로드 실패 재시도 불가 — 재시도 버튼
+- [x] [Review][Patch] 목록 새로고침이 _loadMore에 막혀 스킵 — 플래그 분리 + 세대 카운터로 늦은 append 폐기
+- [x] [Review][Patch] offset 페이징 중복 카드 — order_id dedupe
+- [x] [Review][Patch] derive_order_status 미지 상태 강등 — confirmed 완료 동급 + 미지 값 경고 로그
+- [x] [Review][Patch] page 상한 부재 — 10000 상한 422
+- [x] [Review][Patch] 취소 다이얼로그 controller dispose 크래시 가능 — StatefulWidget 소유로 전환
+- [x] [Review][Patch] delivered 파생·2페이지·전-취소 금액·expired 테스트 공백 — 6종으로 보강 (129/129)
+- [x] [Review][Patch] mid-file import — 상단 승격
+- [x] [Review][Defer] 브랜드명 라이브 조회 (스냅샷 아님) — **의도 명문화: 판매자 프로필은 살아있는 정보(AD-7 스냅샷 대상은 상품명·금액), 리브랜딩 소급 표시는 수용.** 스냅샷 승격 필요성은 운영 피드백 후
+- [x] [Review][Defer] order_no 8자리 충돌 대응 — **5.2 입금 확인 설계에서 결정** (관리자 대조 흐름에 전체 UUID 병기 여부)
+- 최종: 백엔드 129/129, flutter analyze 오류 0
