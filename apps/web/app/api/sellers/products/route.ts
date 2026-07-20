@@ -19,8 +19,11 @@ export async function POST(req: NextRequest) {
     if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/.test(body.id)) {
       return Response.json({ code: "validation_error", message: "입력값이 올바르지 않습니다.", details: [] }, { status: 422 });
     }
-    const { op, id, ...fields } = body;
-    return proxyWithRefresh(req, `/api/v1/sellers/products/${id}`, {
+    // op·id는 라우팅용이라 백엔드로 전달하지 않는다 (나머지 필드만 PATCH 본문)
+    const fields = { ...body };
+    delete fields.op;
+    delete fields.id;
+    return proxyWithRefresh(req, `/api/v1/sellers/products/${body.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(fields),

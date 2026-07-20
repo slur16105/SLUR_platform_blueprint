@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 
 import LogoutButton from "../../../logout-button";
 import { STATUS_LABEL, statusBadgeClass, statusLabel } from "../status";
@@ -97,6 +98,7 @@ function shortUuid(id: string) {
 }
 
 export default function AdminOrderDetail() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = typeof params?.id === "string" ? params.id : "";
   const [detail, setDetail] = useState<OrderDetail | null>(null);
@@ -140,8 +142,8 @@ export default function AdminOrderDetail() {
     try {
       const res = await fetch(`/api/admin/orders/${id}`);
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
       if (res.status === 404) return void setError("주문을 찾을 수 없습니다.");
       if (!res.ok) return void setError("주문을 불러오지 못했습니다. 새로고침해 주세요.");
       const data: OrderDetail = await res.json();
@@ -152,10 +154,11 @@ export default function AdminOrderDetail() {
     } finally {
       if (gen === loadSeq.current) setLoading(false);
     }
-  }, [id]);
+  }, [id, router]);
 
+  // 초기 로드 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    load();
+    void (async () => { await load(); })();
   }, [load]);
 
   useEffect(() => () => {
@@ -216,8 +219,8 @@ export default function AdminOrderDetail() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (res.ok) {
         showNotice(successMsg);
         closeModal();
@@ -293,7 +296,7 @@ export default function AdminOrderDetail() {
         <h1 className="p_title">주문 상세</h1>
         <div className="p_head_actions">
           <button className="btn m_small m_ghost" type="button" onClick={() => load()}>새로고침</button>
-          <a className="btn m_small m_ghost" href="/admin/orders">← 주문 검색</a>
+          <Link className="btn m_small m_ghost" href="/admin/orders">← 주문 검색</Link>
           <LogoutButton />
         </div>
       </header>

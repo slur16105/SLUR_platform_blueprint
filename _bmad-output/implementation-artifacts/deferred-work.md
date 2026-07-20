@@ -78,3 +78,7 @@
 - **약관·개인정보처리방침 법률 검토** — 현재 초안 배너 명시 상태. 청약철회·환불 규정 확정 조항 포함
 - **웹 커스텀 도메인 → 앱 WEB_BASE_URL 주입 갱신**
 - (기존 게이트 항목: PG 연동·정산, 도서산간 목록 공식 대조, CONCURRENTLY 인덱스, 모니터링)
+
+## Deferred from: lint 베이스라인 정리 (2026-07-20, A-E456-5)
+
+- **`window.location.href` 리다이렉트 잔여 2파일** — `seller/products/new/page.tsx`·`apply/page.tsx` (각 2곳). lint 미적발이라 미변경. 리다이렉트 관례(router.replace) 전 화면 통일 시 함께 정리

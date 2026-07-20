@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import LogoutButton from "../../logout-button";
 import "./settings.css";
@@ -19,6 +20,7 @@ const READONLY_ROWS: { key: string; label: string; unit: string; fallbackDesc: s
 ];
 
 export default function AdminSettings() {
+  const router = useRouter();
   const [settings, setSettings] = useState<Record<string, Setting>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); // 로딩 실패 — 재시도 버튼과 함께 표시
@@ -45,8 +47,8 @@ export default function AdminSettings() {
     try {
       const res = await fetch("/api/admin/settings");
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
       if (!res.ok) return void setError("설정을 불러오지 못했습니다.");
       const data = await res.json();
       if (gen !== loadSeq.current) return;
@@ -58,10 +60,11 @@ export default function AdminSettings() {
     } finally {
       if (gen === loadSeq.current) setLoading(false);
     }
-  }, []);
+  }, [router]);
 
+  // 초기 로드 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    load();
+    void (async () => { await load(); })();
   }, [load]);
 
   useEffect(() => () => {
@@ -94,8 +97,8 @@ export default function AdminSettings() {
     setChecking(true);
     try {
       const res = await fetch("/api/admin/settings");
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (!res.ok) return void setSaveError("서버 확인에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       const data = await res.json();
       const map: Record<string, Setting> = {};
@@ -138,8 +141,8 @@ export default function AdminSettings() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: nextValue }),
       });
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (res.status === 204) {
         setSettings((prev) => ({
           ...prev,

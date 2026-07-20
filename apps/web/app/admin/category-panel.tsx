@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Category = { id: string; name: string; sort_order: number };
 
 export default function CategoryPanel() {
+  const router = useRouter();
   const [items, setItems] = useState<Category[]>([]);
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -15,15 +17,19 @@ export default function CategoryPanel() {
     setError(null);
     try {
       const res = await fetch("/api/admin/categories");
-      if (res.status === 401) return void (window.location.href = "/login");
+      if (res.status === 401) return void router.replace("/login");
       if (!res.ok) return void setError("목록을 불러오지 못했습니다.");
       setItems(await res.json());
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
     }
-  }, []);
+  }, [router]);
 
-  useEffect(() => { load(); }, [load]);
+  // 초기 로드 — 로더 호출을 effect 안에서 선언한 async 함수로 감싼다(React 데이터 페칭 관례).
+  // 호출 시점·인자는 그대로라 동작은 동일하다.
+  useEffect(() => {
+    void (async () => { await load(); })();
+  }, [load]);
 
   async function op(body: Record<string, unknown>): Promise<boolean> {
     setError(null);
@@ -34,7 +40,7 @@ export default function CategoryPanel() {
         body: JSON.stringify(body),
       });
       if (res.status === 403) {
-        window.location.href = "/no-role";
+        router.replace("/no-role");
         return false;
       }
       if (!res.ok && res.status !== 204) {

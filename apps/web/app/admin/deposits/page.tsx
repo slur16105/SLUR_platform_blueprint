@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import LogoutButton from "../../logout-button";
 import "./deposits.css";
@@ -27,6 +28,7 @@ function shortUuid(id: string) {
 }
 
 export default function AdminDeposits() {
+  const router = useRouter();
   const [items, setItems] = useState<PendingOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
@@ -56,8 +58,8 @@ export default function AdminDeposits() {
     try {
       const res = await fetch(`/api/admin/deposits?page=${p}`);
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
       if (!res.ok) return void setError("목록을 불러오지 못했습니다. 새로고침해 주세요.");
       const data = await res.json();
       if (gen !== loadSeq.current) return;
@@ -74,10 +76,11 @@ export default function AdminDeposits() {
     } catch {
       if (gen === loadSeq.current) setError("네트워크 연결을 확인해 주세요.");
     }
-  }, []);
+  }, [router]);
 
+  // 페이지 변경 시 재조회 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    load(page);
+    void (async () => { await load(page); })();
   }, [page, load]);
 
   useEffect(() => () => {
@@ -123,8 +126,8 @@ export default function AdminDeposits() {
           expected_grand_total: confirming.grand_total, // 모달에 표시된 금액 그대로 — stale 금액 과입금 확인 방지
         }),
       });
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (res.status === 204) {
         // 성공 — 해당 행만 제거하고 토스트
         setItems((prev) => prev.filter((o) => o.order_id !== confirming.order_id));

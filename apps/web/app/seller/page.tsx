@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import LogoutButton from "../logout-button";
 import "./seller.css";
@@ -35,6 +36,7 @@ const FEE_FIELDS = [
 ] as const;
 
 export default function SellerHome() {
+  const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fees, setFees] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<string | null>(null);
@@ -49,23 +51,24 @@ export default function SellerHome() {
     setDashboard(null);
     try {
       const res = await fetch("/api/seller/dashboard");
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (!res.ok) return void setDashError("대시보드를 불러오지 못했습니다.");
       setDashboard(await res.json());
     } catch {
       setDashError("네트워크 연결을 확인해 주세요.");
     }
-  }, []);
+  }, [router]);
 
+  // 초기 로드 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    loadDashboard();
+    void (async () => { await loadDashboard(); })();
   }, [loadDashboard]);
 
   useEffect(() => {
     fetch("/api/sellers/me").then(async (r) => {
-      if (r.status === 401) return void (window.location.href = "/login");
-      if (r.status === 403) return void (window.location.href = "/no-role");
+      if (r.status === 401) return void router.replace("/login");
+      if (r.status === 403) return void router.replace("/no-role");
       const p: Profile = await r.json();
       setProfile(p);
       setFees({
@@ -74,7 +77,7 @@ export default function SellerHome() {
         island_extra_fee: String(p.island_extra_fee),
       });
     }).catch(() => setError("네트워크 연결을 확인해 주세요."));
-  }, []);
+  }, [router]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();

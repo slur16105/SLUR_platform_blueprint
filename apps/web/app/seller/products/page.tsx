@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import "./list.css";
 
@@ -8,26 +9,29 @@ type Variant = { stock: number; is_active: boolean };
 type Product = { id: string; name: string; base_price: number; status: string; images: { path: string }[]; variants: Variant[] };
 
 const STATUS_LABEL: Record<string, string> = { active: "판매중", soldout: "품절", hidden: "숨김" };
-const NEXT_STATUS: Record<string, string> = { active: "hidden", hidden: "active", soldout: "active" };
 const IMG_BASE = "https://ytzjlgqeezsvjkypeebq.supabase.co/storage/v1/object/public/product-images/";
 
 export default function SellerProducts() {
+  const router = useRouter();
   const [items, setItems] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/sellers/products");
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (!res.ok) return void setError("목록을 불러오지 못했습니다.");
       setItems(await res.json());
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
     }
-  }, []);
+  }, [router]);
 
-  useEffect(() => { load(); }, [load]);
+  // 초기 로드 — 로더 호출을 effect 안에서 선언한 async 함수로 감싼다(React 데이터 페칭 관례).
+  useEffect(() => {
+    void (async () => { await load(); })();
+  }, [load]);
 
   async function setStatus(p: Product, status: string) {
     setError(null);
@@ -36,7 +40,7 @@ export default function SellerProducts() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ op: "patch", id: p.id, status }),
     }).catch(() => null);
-    if (res?.status === 401) return void (window.location.href = "/login");
+    if (res?.status === 401) return void router.replace("/login");
     if (!res || !res.ok) return void setError("상태 변경에 실패했습니다.");
     load();
   }

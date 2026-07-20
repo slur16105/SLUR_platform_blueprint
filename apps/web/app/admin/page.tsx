@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import LogoutButton from "../logout-button";
 import CategoryPanel from "./category-panel";
@@ -22,6 +24,7 @@ type Application = {
 };
 
 export default function AdminHome() {
+  const router = useRouter();
   const [tab, setTab] = useState<"applications" | "categories">("applications");
   const [items, setItems] = useState<Application[]>([]);
   const [status, setStatus] = useState("pending");
@@ -35,8 +38,8 @@ export default function AdminHome() {
     setError(null);
     try {
       const res = await fetch(`/api/admin/applications?status=${s}`);
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
       if (!res.ok) {
         setError("목록을 불러오지 못했습니다. 새로고침해 주세요.");
         return;
@@ -46,10 +49,11 @@ export default function AdminHome() {
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
     }
-  }, []);
+  }, [router]);
 
+  // 상태 탭 변경 시 재조회 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    load(status);
+    void (async () => { await load(status); })();
   }, [status, load]);
 
   async function act(id: string, action: "approve" | "reject") {
@@ -86,7 +90,7 @@ export default function AdminHome() {
         <button type="button" className={`btn m_small${tab === "categories" ? " m_primary" : " m_ghost"}`}
           onClick={() => setTab("categories")}>카테고리</button>
         <a className="btn m_small m_ghost" href="/admin/deposits">입금 확인</a>
-        <a className="btn m_small m_ghost" href="/admin/orders">주문 관리</a>
+        <Link className="btn m_small m_ghost" href="/admin/orders">주문 관리</Link>
         <a className="btn m_small m_ghost" href="/admin/lookup">조회</a>
         <a className="btn m_small m_ghost" href="/admin/settings">설정</a>
       </div>

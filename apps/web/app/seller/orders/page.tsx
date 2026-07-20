@@ -95,8 +95,8 @@ function SellerOrdersInner() {
     try {
       const res = await fetch(`/api/seller/orders?status=${t}&page=${p}`);
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role"); // 보안 판정은 항상 FastAPI
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role"); // 보안 판정은 항상 FastAPI
       if (!res.ok) return void setError("목록을 불러오지 못했습니다. 새로고침해 주세요.");
       const data = await res.json();
       if (gen !== loadSeq.current) return;
@@ -113,10 +113,11 @@ function SellerOrdersInner() {
     } catch {
       if (gen === loadSeq.current) setError("네트워크 연결을 확인해 주세요.");
     }
-  }, []);
+  }, [router]);
 
+  // 탭·페이지 변경 시 재조회 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    load(tab, page);
+    void (async () => { await load(tab, page); })();
   }, [tab, page, load]);
 
   useEffect(() => () => {
@@ -176,8 +177,8 @@ function SellerOrdersInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, sub_order_id: target.sub_order_id }),
       });
-      if (res.status === 401) return void (window.location.href = "/login");
-      if (res.status === 403) return void (window.location.href = "/no-role");
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
       if (res.status === 204) {
         // 성공 — 토스트 후 재조회 (마지막 행 처리 시 빈 뒷페이지 이동 로직 재사용)
         showNotice(successMsg);
