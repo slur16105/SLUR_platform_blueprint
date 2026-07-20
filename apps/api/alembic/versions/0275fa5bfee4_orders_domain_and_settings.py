@@ -76,7 +76,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('order_id', 'seller_id')
     )
-    op.create_index(op.f('ix_sub_orders_order_id'), 'sub_orders', ['order_id'], unique=False)
+    # ix_sub_orders_order_id는 생성하지 않음 — UNIQUE(order_id, seller_id)가 선행 컬럼 인덱스 역할
     op.create_index(op.f('ix_sub_orders_seller_id'), 'sub_orders', ['seller_id'], unique=False)
     op.create_table('order_items',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -101,8 +101,14 @@ def upgrade() -> None:
 
     # 시드 ① 도서산간 우편번호 — 번들 CSV (출처·보정 내역은 CSV 헤더 주석)
     csv_path = Path(__file__).resolve().parents[2] / "app" / "orders" / "data" / "remote_area_zips.csv"
-    with csv_path.open(encoding="utf-8") as f:
+    with csv_path.open(encoding="utf-8-sig") as f:  # BOM 유입 방어 — 재저장된 파일도 안전
         rows = [r for r in csv.DictReader(line for line in f if not line.startswith("#"))]
+    # 오염된 CSV로 조용히 성공하지 않도록 검증 후 실패 fast (앞자리 0 탈락·중복·헤더 붕괴 방어)
+    import re
+    assert rows and all(r.keys() == {"zip_code", "kind", "region_name"} for r in rows), "CSV 헤더 불일치"
+    assert all(re.fullmatch(r"\d{5}", r["zip_code"]) for r in rows), "5자리 아닌 zip_code 존재"
+    assert all(r["kind"] in ("jeju", "island") for r in rows), "kind 값 오류"
+    assert len(rows) == len({r["zip_code"] for r in rows}), "중복 zip_code 존재"
     op.bulk_insert(
         sa.table("remote_area_zips", sa.column("zip_code", sa.String), sa.column("kind", sa.String), sa.column("region_name", sa.String)),
         rows,
@@ -125,7 +131,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_order_items_sub_order_id'), table_name='order_items')
     op.drop_table('order_items')
     op.drop_index(op.f('ix_sub_orders_seller_id'), table_name='sub_orders')
-    op.drop_index(op.f('ix_sub_orders_order_id'), table_name='sub_orders')
     op.drop_table('sub_orders')
     op.drop_index(op.f('ix_orders_user_id'), table_name='orders')
     op.drop_table('orders')

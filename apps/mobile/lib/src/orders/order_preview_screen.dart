@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/client.dart';
+import '../carts/carts_api.dart';
 import '../format.dart';
 import 'orders_api.dart';
 
@@ -32,24 +33,38 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
       _loading = true;
       _error = null;
     });
+    // 응답 도착 시점에 입력값이 바뀌었으면 결과를 버린다 (이전 우편번호 금액 표시 방지)
+    bool stale() => _postalController.text != postal;
     try {
       final body = await ref.read(ordersApiProvider).preview(postal);
-      if (!mounted) return;
+      if (!mounted || stale()) return;
       setState(() => _preview = body);
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.code == 'empty_cart') {
-        // 담긴 상품이 사라진 경우 — 안내 후 장바구니로 복귀
+        // 담긴 상품이 사라진 경우 — 장바구니 갱신 후 안내하고 복귀
+        ref.invalidate(cartProvider);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
         Navigator.of(context).pop();
         return;
       }
+      if (stale()) return;
       setState(() {
         _preview = null;
         _error = e.message;
       });
+    } catch (_) {
+      // 캐스트 실패 등 예상 밖 오류도 무반응으로 끝내지 않는다
+      if (!mounted || stale()) return;
+      setState(() {
+        _preview = null;
+        _error = '오류가 발생했습니다. 다시 시도해 주세요.';
+      });
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        if (stale()) _fetchPreview(); // 입력이 바뀌었으면 현재 값으로 재조회 (5자리 아니면 내부에서 무시)
+      }
     }
   }
 
@@ -75,7 +90,7 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
               _sellerGroupCard(group),
               const SizedBox(height: 12),
             ],
-            if (preview['remote_area_kind'] != null)
+            if ((preview['remote_extra_total'] as int) > 0)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text('제주/도서산간 지역으로 추가 배송비가 포함되었습니다',
@@ -137,8 +152,8 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
 
   Widget _sellerGroupCard(Map<String, dynamic> group) {
     final items = (group['items'] as List).cast<Map<String, dynamic>>();
-    // 묶음 배송비 표시값 = shipping_fee + remote_extra_fee (서버가 준 두 값의 표기 합산일 뿐, 총액 계산은 서버 몫)
-    final groupShipping = (group['shipping_fee'] as int) + (group['remote_extra_fee'] as int);
+    // 묶음 배송비도 서버 계산 값 그대로 (AD-12) — shipping_total = shipping_fee + remote_extra_fee
+    final groupShipping = group['shipping_total'] as int;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(

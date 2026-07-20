@@ -29,9 +29,13 @@ async def test_seed_remote_area_zips_and_settings(client):
 
     async with async_session_factory() as session:
         assert await service.get_remote_area_kind(session, ZIP_JEJU) == "jeju"
+        assert await service.get_remote_area_kind(session, "63000") == "jeju"  # 범위 시작
         assert await service.get_remote_area_kind(session, "63644") == "jeju"  # 범위 끝
+        assert await service.get_remote_area_kind(session, "62999") is None  # 범위 직전 (경계 회귀 그물)
+        assert await service.get_remote_area_kind(session, "63645") is None  # 범위 직후
         assert await service.get_remote_area_kind(session, ZIP_ISLAND) == "island"
-        assert await service.get_remote_area_kind(session, ZIP_NORMAL) is None  # 목록 밖 = 일반
+        assert await service.get_remote_area_kind(session, ZIP_NORMAL) is None  # 목록 밖 = 일반 (앞자리 0 포함)
+        assert await service.get_remote_area_kind(session, "04985") is None  # 앞자리 0 일반 지역
         assert await service.get_setting(session, service.SETTING_UNPAID_CANCEL_DAYS) == "3"
         assert await service.get_setting(session, service.SETTING_LOW_STOCK_THRESHOLD) == "5"
         assert await service.get_setting(session, service.SETTING_DEPOSIT_ACCOUNT)  # 값 존재 (placeholder 허용)
@@ -53,6 +57,7 @@ async def test_preview_normal_area_single_seller(client, clean_products):
     assert len(body["seller_groups"]) == 1
     g = body["seller_groups"][0]
     assert g["item_total"] == line and g["shipping_fee"] == 3000 and g["remote_extra_fee"] == 0
+    assert g["shipping_total"] == 3000  # 그룹 표시용 합산도 서버 값 (AD-12)
     assert g["items"][0]["line_total"] == line and g["items"][0]["quantity"] == 2
     assert body["item_total"] == line and body["shipping_total"] == 3000
     assert body["remote_extra_total"] == 0
@@ -71,6 +76,7 @@ async def test_preview_jeju_and_island_extra(client, clean_products):
     jeju = (await client.post(PREVIEW, json={"postal_code": ZIP_JEJU}, headers=_auth(bt))).json()
     assert jeju["remote_area_kind"] == "jeju"
     assert jeju["remote_extra_total"] == 3000
+    assert jeju["seller_groups"][0]["shipping_total"] == 3000 + 3000  # 그룹 합산 서버 값
     assert jeju["grand_total"] == line + 3000 + 3000
 
     island = (await client.post(PREVIEW, json={"postal_code": ZIP_ISLAND}, headers=_auth(bt))).json()
@@ -116,8 +122,8 @@ async def test_preview_multi_seller_grouping(client, clean_products):
     t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
     from sqlalchemy import text
     from app.core.db import engine
-    async with engine.begin() as conn:
-        sid2 = str((await conn.execute(text("SELECT id FROM sellers ORDER BY created_at DESC LIMIT 1"))).scalar())
+    async with engine.begin() as conn:  # 최신 행 추정 대신 brand_name 정확 조회 (리뷰 반영)
+        sid2 = str((await conn.execute(text("SELECT id FROM sellers WHERE brand_name = '둘째굿즈'"))).scalar_one())
     pid2 = (await client.post("/api/v1/sellers/products", json=_product_body(sid2, cid), headers=_auth(t2))).json()["id"]
     vs2 = (await client.put(
         f"/api/v1/sellers/products/{pid2}/variants",

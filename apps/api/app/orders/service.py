@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.carts import service as carts_service
 from app.core.errors import AppError
 from app.orders.models import RemoteAreaZip, Setting
+from app.products import service as products_service
 from app.sellers import service as sellers_service
 
 CODE_EMPTY_CART = "empty_cart"
@@ -54,7 +55,7 @@ async def quote(session: AsyncSession, entries: list[dict], postal_code: str) ->
             "cart_item_id": item.id,
             "variant_id": variant.id,
             "product_name": product.name,
-            "option_text": _option_text(variant),
+            "option_text": products_service.variant_option_text(variant),
             "quantity": item.quantity,
             "final_price": product.base_price + variant.extra_price,
             "line_total": line_total,
@@ -63,10 +64,14 @@ async def quote(session: AsyncSession, entries: list[dict], postal_code: str) ->
     sellers = await sellers_service.get_sellers_by_ids(session, list(groups))
     seller_groups, item_total, shipping_total, remote_extra_total = [], 0, 0, 0
     for seller_id, g in groups.items():
-        base_fee, extra_fee = _seller_shipping_fee(sellers[seller_id], remote_kind)
+        seller = sellers.get(seller_id)
+        if seller is None:  # 조회 사이 판매자 삭제 레이스 — raw KeyError 500 대신 봉투로
+            raise AppError("internal_error", "판매자 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.", status_code=500)
+        base_fee, extra_fee = _seller_shipping_fee(seller, remote_kind)
         seller_groups.append({
             "seller_id": seller_id, "brand_name": g["brand_name"], "items": g["items"],
             "item_total": g["item_total"], "shipping_fee": base_fee, "remote_extra_fee": extra_fee,
+            "shipping_total": base_fee + extra_fee,  # 그룹 표시용 합산도 서버 소유 (AD-12)
         })
         item_total += g["item_total"]
         shipping_total += base_fee  # 기본 배송비 합 — 도서산간 추가비는 별도 필드 (요약 표시용 분리, AD-12)
@@ -79,15 +84,6 @@ async def quote(session: AsyncSession, entries: list[dict], postal_code: str) ->
         "grand_total": item_total + shipping_total + remote_extra_total,
         "remote_area_kind": remote_kind,
     }
-
-
-def _option_text(variant) -> str:
-    # carts.get_cart의 표시 포맷과 동일 — 4.4 스냅샷 option_text도 이 포맷을 쓴다
-    return " / ".join(
-        f"{name}: {value}"
-        for name, value in ((variant.option1_name, variant.option1_value), (variant.option2_name, variant.option2_value))
-        if value
-    )
 
 
 async def preview_order(session: AsyncSession, user_id: uuid.UUID, postal_code: str) -> dict:

@@ -326,3 +326,12 @@ async def get_public_product(session: AsyncSession, product_id: uuid.UUID) -> di
         } for v in variants],
         **_public_fields(product, variants),
     }
+
+
+def variant_option_text(variant: Variant) -> str:
+    """옵션 표시 문자열의 단일 소유 — 장바구니·주문서·주문 스냅샷(4.4)이 같은 포맷을 쓴다."""
+    return " / ".join(
+        f"{name}: {value}"
+        for name, value in ((variant.option1_name, variant.option1_value), (variant.option2_name, variant.option2_value))
+        if value
+    )

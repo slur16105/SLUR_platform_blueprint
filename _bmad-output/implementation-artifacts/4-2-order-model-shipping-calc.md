@@ -4,7 +4,7 @@ baseline_commit: 22483cc91de4ff16dd3ad71930cd9d5bbec10cf9
 
 # Story 4.2: 주문 데이터 모델과 배송비 계산 (주문서 미리보기)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -192,3 +192,27 @@ Claude Fable 5 (claude-fable-5) — Flutter 화면은 병렬 서브에이전트 
 - apps/mobile/lib/src/orders/orders_api.dart (신규)
 - apps/mobile/lib/src/orders/order_preview_screen.dart (신규)
 - apps/mobile/lib/src/carts/cart_screen.dart (수정 — 주문서 버튼 활성화)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind Hunter · Edge Case Hunter · Acceptance Auditor 병렬 리뷰. 0 decision-needed · 13 patch · 6 defer · 4 dismiss.**
+
+- [x] [Review][Patch] 묶음 배송비 클라이언트 합산 — AD-12 위반 소지: 그룹별 배송비 합계도 서버 필드로 [`order_preview_screen.dart`, `orders/schemas.py`]
+- [x] [Review][Patch] `empty_cart` pop 후 장바구니 stale — pop 전 cartProvider invalidate [`order_preview_screen.dart:38~41`]
+- [x] [Review][Patch] 시드 CSV 강건화 — BOM(utf-8-sig)·5자리 형식·중복·행 수 검증 후 실패 fast [`alembic/versions/0275fa5bfee4`]
+- [x] [Review][Patch] 테스트 seller2 id를 `ORDER BY created_at DESC LIMIT 1` 추정 대신 brand_name 정확 조회로 [`tests/test_orders_preview.py`]
+- [x] [Review][Patch] 조회 중 우편번호 재입력 시 드롭 — 응답 후 입력과 불일치면 재조회 [`order_preview_screen.dart:28`]
+- [x] [Review][Patch] `get_purchasable_entries` 정렬을 `get_cart`와 동일(desc)로 — 4.4 스냅샷 순서 대비 [`carts/service.py`]
+- [x] [Review][Patch] `_option_text` carts·orders 복붙 중복 — variant 소유자인 products로 승격 [`orders/service.py`, `carts/service.py`]
+- [x] [Review][Patch] `quote()` seller 누락 레이스 시 raw KeyError 500 — 명시적 internal_error 방어 [`orders/service.py:66`]
+- [x] [Review][Patch] `ix_sub_orders_order_id`가 UNIQUE(order_id, seller_id)와 중복 — 제거 [`orders/models.py`, 마이그레이션]
+- [x] [Review][Patch] `remote_area_kind`를 `Literal["jeju","island"] | None`으로 [`orders/schemas.py:35`]
+- [x] [Review][Patch] 도서산간 안내 문구가 추가비 0원에도 표시 — 조건을 `remote_extra_total > 0`으로 [`order_preview_screen.dart:78~83`]
+- [x] [Review][Patch] `ApiException` 외 예외 미포착 — 무반응 실패 방지 [`order_preview_screen.dart`, `orders_api.dart`]
+- [x] [Review][Patch] 경계 테스트 공백 — 62999·63645·앞자리 0 우편번호 보강 [`tests/test_orders_preview.py`]
+- [x] [Review][Defer] 마이그레이션이 app 트리 CSV를 런타임에 읽음 — 리비전 불변성 원칙 위배 소지. v1 단일 환경에선 무해(검증 patch로 완화), 블루프린트 추출 시 시드 분리 검토
+- [x] [Review][Defer] 시드 출처가 서드파티 재게시본 — 공식 우체국/CJ대한통운 목록과 표본 대조 후속. 오탈자 2건은 교차 보정됨
+- [x] [Review][Defer] remote_area_zips 갱신 운영 절차 부재 — 신규 우편번호 배정·목록 개정 시 과소청구 감지 장치 없음. 실서비스 오픈 게이트에서 점검 항목으로
+- [x] [Review][Defer] `deposit_account` placeholder 가드 없음 — **4.4 선행 조건: 주문 완료 화면 구현 전 실계좌 값 DB 갱신 확인 Task 필수**
+- [x] [Review][Defer] 우편번호 실존 여부 미검증 — 형식만 통과하면 일반 지역 계산. 4.4 카카오 우편번호 위젯 도입으로 해소 예정, 4.4 스토리에 명시 이월
+- [x] [Review][Defer] 장바구니 행 수 상한 없음 — 미리보기 IN 절·응답 크기 무상한. 읽기 전용이라 실해 낮음, 실사용 피드백 후

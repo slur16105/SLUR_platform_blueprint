@@ -69,11 +69,7 @@ async def get_cart(session: AsyncSession, user_id: uuid.UUID) -> dict:
         final_price = product.base_price + variant.extra_price
         if purchasable:
             total += final_price * item.quantity  # 구매 가능 항목만 합산 — 주문서 진입 대상 (FR-35)
-        option_text = " / ".join(
-            f"{name}: {value}"
-            for name, value in ((variant.option1_name, variant.option1_value), (variant.option2_name, variant.option2_value))
-            if value
-        )
+        option_text = products_service.variant_option_text(variant)
         out.append({
             "id": item.id, "variant_id": variant.id, "quantity": item.quantity,
             "product_id": product.id, "product_name": product.name, "brand_name": meta["brand_name"],
@@ -108,8 +104,8 @@ async def delete_item(session: AsyncSession, user_id: uuid.UUID, item_id: uuid.U
 
 async def get_purchasable_entries(session: AsyncSession, user_id: uuid.UUID) -> list[dict]:
     """구매 가능 항목만 {item, variant, product, brand_name} — 주문서 미리보기·주문 생성용 (AD-10, FR-35)."""
-    items = list(await session.scalars(
-        select(CartItem).where(CartItem.user_id == user_id).order_by(CartItem.created_at, CartItem.id)
+    items = list(await session.scalars(  # 정렬은 get_cart와 동일 — 장바구니 화면 순서 = 주문서·스냅샷 순서 (4.4)
+        select(CartItem).where(CartItem.user_id == user_id).order_by(CartItem.created_at.desc(), CartItem.id.desc())
     ))
     info = await products_service.get_variant_purchase_info(session, [i.variant_id for i in items if i.variant_id])
     out = []
