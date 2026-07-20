@@ -53,3 +53,8 @@
 - **브랜드명 라이브 조회 (스냅샷 아님)** — 의도된 결정: 판매자 프로필은 살아있는 정보, AD-7 스냅샷 대상은 상품명·옵션·금액. 리브랜딩 소급 표시 수용. 스냅샷 승격은 운영 피드백 후
 - **order_no(UUID 8자리) 충돌 대응 미정** — **5.2 관리자 입금 확인 설계에서 결정** (입금자 대조 흐름에 전체 UUID/주문일 병기 여부)
 - **offset 페이지네이션 커서 전환** — v1 규모 무해(클라 dedupe로 완화). 블루프린트 추출 시
+
+## Deferred from: code review of 5-2-admin-payment-confirm (2026-07-20)
+
+- **ix_orders_pending이 목록 ORDER BY(created_at) 미커버 + non-CONCURRENTLY 생성** — v1 무해(pending 행 소수). 실서비스 규모 재적용 시 CONCURRENTLY·정렬 포함 재설계 (오픈 게이트)
+- **웹 lint 베이스라인 (react-hooks/set-state-in-effect 등 6건)** — 전 목록 페이지 공통 load-on-mount 패턴. 일괄 리팩터 스토리 후보 (블루프린트 추출 전)

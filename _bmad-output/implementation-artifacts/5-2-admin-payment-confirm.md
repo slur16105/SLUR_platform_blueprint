@@ -4,7 +4,7 @@ baseline_commit: 122fb91d775b052b5123218cf5c60aa81edc9099
 
 # Story 5.2: 관리자 입금 확인
 
-Status: review
+Status: done
 
 ## Story
 
@@ -104,3 +104,20 @@ Claude Fable 5 (claude-fable-5) — Next.js 화면은 병렬 서브에이전트 
 - apps/web/app/api/admin/deposits/route.ts (신규 — BFF)
 - apps/web/app/styles/slur/components/table.css·modal.css (신규 — 디자인시스템 복사)
 - apps/web/app/layout.tsx·app/admin/page.tsx (수정 — import·진입 링크)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind+Edge 통합 · Acceptance Auditor 병렬. 0 decision-needed · 12 patch · 1 defer · 0 dismiss.**
+
+- [x] [Review][Patch] **AD-2 위반: orders→auth 신규 의존 엣지** — buyer enrich를 admin 라우터 층으로 이동 (admin→auth 합법 경로). orders는 user_id만 반환
+- [x] [Review][Patch] **소셜 전용 계정 email NULL → 목록 500** — `or ""` 방어 + 결측 사용자 "(알 수 없는 사용자)" 표기
+- [x] [Review][Patch] **stale 금액으로 입금 확인 → 과입금 확정** — confirm에 `expected_grand_total` 필수, 불일치 409 `price_changed` + 새 금액 (4.4 패턴). 부분 취소 시나리오 테스트 실검증
+- [x] [Review][Patch] 부분 취소 목록 금액 테스트 체크 과대표시 — 2판매자 부분 취소 테스트 신설로 실검증
+- [x] [Review][Patch] 404 분기 누락(자기 문서 표 위반) — message + 모달 닫기 + 재조회
+- [x] [Review][Patch] total 감소 후 빈 뒷페이지 갇힘 — 마지막 페이지 자동 이동
+- [x] [Review][Patch] PAGE_SIZE 이중 소스 — 응답 `size` 필드 추가, 클라 하드코딩 제거
+- [x] [Review][Patch] 페이지 연타 응답 역전 — 요청 세대 카운터
+- [x] [Review][Patch] 모달 ✕ submitting 가드·ESC 닫기·초기 포커스·토스트 자동 소멸 — 일괄 반영
+- [x] [Review][Patch] 클립보드 실패 무음 — prompt 폴백 (UUID 병기 목적 보전)
+- [x] [Review][Defer] partial index가 목록 ORDER BY(created_at)는 미커버 + non-CONCURRENTLY — v1 무해(pending 소수). 실서비스 규모에서 재적용 시 CONCURRENTLY (오픈 게이트 점검 항목)
+- 최종: 백엔드 134/134, tsc 오류 0, 신규 lint 이슈 0

@@ -11,13 +11,11 @@ type PendingOrder = {
   created_at: string;
   deposit_due_at: string;
   expired: boolean;
-  buyer_name: string;
+  buyer_name: string; // "(알 수 없는 사용자)"로 올 수 있음 — 일반 텍스트라 스타일 영향 없음
   buyer_email: string;
   grand_total: number;
   title: string;
 };
-
-const PAGE_SIZE = 20; // FastAPI settings.page_size와 동일
 
 function formatDateTime(s: string) {
   return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" });
@@ -30,6 +28,7 @@ function shortUuid(id: string) {
 export default function AdminDeposits() {
   const [items, setItems] = useState<PendingOrder[]>([]);
   const [total, setTotal] = useState(0);
+  const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
   const [page, setPage] = useState(1);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,19 +37,41 @@ export default function AdminDeposits() {
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadSeq = useRef(0); // 요청 세대 카운터 — 페이지 연타 시 늦은 응답 폐기
+  const noteRef = useRef<HTMLTextAreaElement | null>(null);
+
+  function showNotice(msg: string) {
+    setNotice(msg);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 5000); // 성공 토스트 5초 후 자동 소멸
+  }
 
   const load = useCallback(async (p: number) => {
+    const gen = ++loadSeq.current;
     setError(null);
+    setNotice(null); // 목록 재조회 시 토스트 초기화
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
     try {
       const res = await fetch(`/api/admin/deposits?page=${p}`);
+      if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
       if (res.status === 401) return void (window.location.href = "/login");
       if (res.status === 403) return void (window.location.href = "/no-role"); // R7: FastAPI 판정 결과를 따른다
       if (!res.ok) return void setError("목록을 불러오지 못했습니다. 새로고침해 주세요.");
       const data = await res.json();
-      setItems(data.items ?? []);
-      setTotal(data.total ?? 0);
+      if (gen !== loadSeq.current) return;
+      const list: PendingOrder[] = data.items ?? [];
+      const t: number = data.total ?? 0;
+      const s: number = data.size > 0 ? data.size : 20;
+      setSize(s);
+      // 빈 뒷페이지 갇힘 방지 — 처리로 페이지가 사라졌으면 마지막 페이지로 이동
+      if (list.length === 0 && t > 0 && p > 1) {
+        return void setPage(Math.min(Math.max(1, Math.ceil(t / s)), p - 1)); // 항상 앞 페이지로만 이동 — 루프 불가
+      }
+      setItems(list);
+      setTotal(t);
     } catch {
-      setError("네트워크 연결을 확인해 주세요.");
+      if (gen === loadSeq.current) setError("네트워크 연결을 확인해 주세요.");
     }
   }, []);
 
@@ -58,7 +79,21 @@ export default function AdminDeposits() {
     load(page);
   }, [page, load]);
 
-  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+  useEffect(() => () => {
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+  }, []);
+
+  // 모달 열림 — 메모 입력에 초기 포커스 + ESC 닫기(제출 중 제외)
+  useEffect(() => {
+    if (!confirming) return;
+    noteRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) setConfirming(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirming, submitting]);
 
   async function copyOrderId(id: string) {
     try {
@@ -67,7 +102,8 @@ export default function AdminDeposits() {
       if (copyTimer.current) clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(null), 1500);
     } catch {
-      // 클립보드 미지원 환경 — 무시
+      // 클립보드 미지원 환경 — 수동 복사 폴백
+      window.prompt("아래 주문 ID를 직접 복사해 주세요.", id);
     }
   }
 
@@ -80,7 +116,11 @@ export default function AdminDeposits() {
       const res = await fetch("/api/admin/deposits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: confirming.order_id, note: note.trim() || undefined }),
+        body: JSON.stringify({
+          order_id: confirming.order_id,
+          note: note.trim() || undefined,
+          expected_grand_total: confirming.grand_total, // 모달에 표시된 금액 그대로 — stale 금액 과입금 확인 방지
+        }),
       });
       if (res.status === 401) return void (window.location.href = "/login");
       if (res.status === 403) return void (window.location.href = "/no-role");
@@ -88,15 +128,28 @@ export default function AdminDeposits() {
         // 성공 — 해당 행만 제거하고 토스트
         setItems((prev) => prev.filter((o) => o.order_id !== confirming.order_id));
         setTotal((t) => Math.max(0, t - 1));
-        setNotice(`입금 확인 완료 — 주문 ${confirming.order_no} 이 결제완료로 전환되었습니다.`);
+        showNotice(`입금 확인 완료 — 주문 ${confirming.order_no} 이 결제완료로 전환되었습니다.`);
         setConfirming(null);
         setNote("");
         return;
       }
       const data = await res.json().catch(() => null);
+      if (res.status === 409 && data?.code === "price_changed") {
+        // 주문 금액 변경(부분 취소 등) — 새 금액 안내 후 목록 갱신
+        const next = data?.details?.[0]?.grand_total;
+        setError(
+          typeof next === "number"
+            ? `주문 금액이 변경되었습니다 (현재 ${next.toLocaleString()}원). 목록을 갱신합니다.`
+            : "주문 금액이 변경되었습니다. 목록을 갱신합니다.",
+        );
+        setConfirming(null);
+        setNote("");
+        load(page);
+        return;
+      }
       setError(data?.message ?? "처리에 실패했습니다.");
-      if (res.status === 422) {
-        // 이미 처리·취소된 주문 — 서버 메시지 표시 후 목록 재조회
+      if (res.status === 422 || res.status === 404) {
+        // 이미 처리·취소됨(422) 또는 존재하지 않는 주문(404) — 메시지 표시 후 목록 재조회
         setConfirming(null);
         setNote("");
         load(page);
@@ -108,7 +161,7 @@ export default function AdminDeposits() {
     }
   }
 
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const lastPage = Math.max(1, Math.ceil(total / size));
 
   return (
     <main className="page_admin_deposits">
@@ -187,7 +240,8 @@ export default function AdminDeposits() {
           <div className="i_wrap">
             <div className="i_head">
               <h2 className="i_title" id="deposit_confirm_title">입금 확인</h2>
-              <button className="i_close" type="button" aria-label="닫기" onClick={() => setConfirming(null)}>✕</button>
+              <button className="i_close" type="button" aria-label="닫기" disabled={submitting}
+                onClick={() => setConfirming(null)}>✕</button>
             </div>
             <div className="i_body">
               <p className="i_text">아래 주문의 입금을 확인 처리합니다. 처리 후에는 되돌릴 수 없습니다.</p>
@@ -198,7 +252,7 @@ export default function AdminDeposits() {
               </dl>
               <label className="field">
                 <span className="i_label">메모 (선택)</span>
-                <textarea className="input_text m_textarea" rows={3} maxLength={500}
+                <textarea className="input_text m_textarea" rows={3} maxLength={500} ref={noteRef}
                   placeholder="입금자명이 다르거나 특이사항이 있으면 남겨 두세요 (500자 이내)"
                   value={note} onChange={(e) => setNote(e.target.value)} />
               </label>

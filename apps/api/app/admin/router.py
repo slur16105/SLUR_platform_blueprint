@@ -122,6 +122,7 @@ async def delete_category(
 
 from datetime import datetime  # noqa: E402
 
+from app.auth import service as auth_service  # noqa: E402 — buyer 표시 정보 (AD-2: admin→auth 허용)
 from app.core.errors import AppError  # noqa: E402
 from app.orders import service as orders_service  # noqa: E402
 
@@ -142,10 +143,12 @@ class PendingOrderList(BaseModel):
     items: list[PendingOrderItem]
     total: int
     page: int
+    size: int  # 클라 페이지 수 계산용 — PAGE_SIZE 이중 소스 방지
 
 
 class ConfirmPaymentRequest(BaseModel):
     note: str = Field(default="", max_length=500)  # order_events 메모 (FR-29)
+    expected_grand_total: int = Field(ge=0)  # 화면에 표시된 금액 — 불일치 409 price_changed (stale 확인 방지)
 
 
 @router.get("/orders/pending", response_model=PendingOrderList)
@@ -157,16 +160,21 @@ async def list_pending_orders(
     """입금대기 목록 — 페이지 단 판정 포함 admin 전용 (R7)."""
     if page < 1 or page > 10000:
         raise AppError("validation_error", "올바르지 않은 페이지입니다.", status_code=422)
-    return await orders_service.list_pending_orders(session, page)
+    data = await orders_service.list_pending_orders(session, page)
+    buyers = await auth_service.get_users_by_ids(session, list({r["user_id"] for r in data["items"]}))
+    for row in data["items"]:  # buyer enrich — 결측·email NULL 방어 (탈퇴·소셜 전용 계정)
+        buyer = buyers.get(row.pop("user_id"))
+        row["buyer_name"] = (buyer.name if buyer else "") or "(알 수 없는 사용자)"
+        row["buyer_email"] = (buyer.email if buyer else "") or ""
+    return data
 
 
 @router.post("/orders/{order_id}/confirm-payment", status_code=204)
 async def confirm_payment(
     order_id: uuid.UUID,
-    body: ConfirmPaymentRequest | None = None,
+    body: ConfirmPaymentRequest,
     admin_id: uuid.UUID = Depends(require_role("admin")),
     session: AsyncSession = Depends(get_session),
 ):
     """입금 확인 — paid 전이 (엔진 경유, 연쇄 preparing 포함)."""
-    body = body or ConfirmPaymentRequest()
-    await orders_service.confirm_payment(session, admin_id, order_id, body.note)
+    await orders_service.confirm_payment(session, admin_id, order_id, body.note, body.expected_grand_total)

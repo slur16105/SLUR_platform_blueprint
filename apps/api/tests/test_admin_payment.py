@@ -80,7 +80,8 @@ async def test_confirm_transitions_and_cascade(client, clean_products):
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     oid, sid = await _make_order(client, bt)
 
-    res = await client.post(_confirm(oid), json={"note": "국민은행 입금 확인"}, headers=_auth(admin_t))
+    grand = (3000 + vs[0]["extra_price"]) * 1 + 3000
+    res = await client.post(_confirm(oid), json={"note": "국민은행 입금 확인", "expected_grand_total": grand}, headers=_auth(admin_t))
     assert res.status_code == 204
     async with async_session_factory() as session:
         assert (await session.get(Order, u.UUID(oid))).payment_status == "paid"
@@ -92,12 +93,12 @@ async def test_confirm_transitions_and_cascade(client, clean_products):
 
     assert (await client.get(PENDING, headers=_auth(admin_t))).json()["total"] == 0  # 목록 제외
     # 재확인 422
-    res = await client.post(_confirm(oid), json={}, headers=_auth(admin_t))
+    res = await client.post(_confirm(oid), json={"expected_grand_total": grand}, headers=_auth(admin_t))
     assert res.status_code == 422 and res.json()["code"] == "invalid_transition"
     # 미존재 404
-    assert (await client.post(_confirm(str(u.uuid4())), json={}, headers=_auth(admin_t))).status_code == 404
+    assert (await client.post(_confirm(str(u.uuid4())), json={"expected_grand_total": 0}, headers=_auth(admin_t))).status_code == 404
     # 구매자가 확인 시도 403
-    assert (await client.post(_confirm(oid), json={}, headers=_auth(bt))).status_code == 403
+    assert (await client.post(_confirm(oid), json={"expected_grand_total": grand}, headers=_auth(bt))).status_code == 403
 
 
 @pytest.mark.asyncio
@@ -112,16 +113,23 @@ async def test_fully_canceled_order_rejected_and_partial_amount(client, clean_pr
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     oid1, sid1 = await _make_order(client, bt)
     await client.post(f"/api/v1/orders/sub-orders/{sid1}/cancel", headers=_auth(bt))
-    res = await client.post(_confirm(oid1), json={}, headers=_auth(admin_t))
+    res = await client.post(_confirm(oid1), json={"expected_grand_total": 0}, headers=_auth(admin_t))
     assert res.status_code == 422 and res.json()["code"] == "invalid_transition"  # order canceled — 전이표 거부
 
-    # 부분 취소(라인 2개 중 1개 취소는 같은 묶음이라 관리자 개입 영역 — 여기서는 2묶음 대신 라인 스냅샷으로 단순화:
-    # 같은 판매자 주문에 2라인을 만들 수 없으므로(장바구니 조합 단위) 목록 금액 검증은 5.1 활성 기준 로직 재사용을 신뢰)
+    # 같은 묶음 2라인 주문: 상세는 불가(조합 단위)지만 라인 취소는 관리자 영역 — 여기서는 stale 금액 확인 방지를 검증
     await client.post("/api/v1/carts/items", json={"variant_id": vs[1]["id"], "quantity": 2}, headers=_auth(bt))
-    oid2, _ = await _make_order(client, bt)
+    oid2, sid2 = await _make_order(client, bt)
     body = (await client.get(PENDING, headers=_auth(admin_t))).json()
     row = next(r for r in body["items"] if r["order_id"] == oid2)
-    assert row["grand_total"] == (3000 + vs[1]["extra_price"]) * 2 + 3000
+    full = (3000 + vs[1]["extra_price"]) * 2 + 3000
+    assert row["grand_total"] == full
+    assert body["size"] >= 1  # size 필드 (클라 페이지 계산용)
+
+    # stale 금액으로 확인 시도 → 409 price_changed (구매자가 그 사이 취소해 잔여 0)
+    await client.post(f"/api/v1/orders/sub-orders/{sid2}/cancel", headers=_auth(bt))
+    # 취소로 order도 canceled — 전이표 422 (부분 취소 잔여 금액·409는 아래 2판매자 테스트가 실검증)
+    res = await client.post(_confirm(oid2), json={"expected_grand_total": full}, headers=_auth(admin_t))
+    assert res.status_code in (409, 422)  # canceled면 전이표 422, 잔여 변경이면 409 — 여기선 전 취소라 422
 
 
 @pytest.mark.asyncio
@@ -150,3 +158,63 @@ async def test_concurrent_confirm_vs_buyer_cancel(client, clean_products):
     ]
     codes = sorted([r_cancel.status_code, r_confirm.status_code])
     assert codes[0] in (200, 204) and codes[1] == 422
+
+
+@pytest.mark.asyncio
+async def test_partial_cancel_amount_and_price_changed(client, clean_products):
+    """리뷰 F5·F3: 2판매자 주문 부분 취소 → 목록 금액 = 잔여 활성분, stale 금액 확인은 409."""
+    from app.core.db import engine
+    from sqlalchemy import text
+
+    from tests.test_admin_approval import _admin_token
+    from tests.test_products import _category, _product_body, _seller_with_prefix
+    from tests.test_variants import GRID
+
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t, name="입금부분")
+    st1, sid1 = await _seller_with_prefix(client, admin_t)
+    pid1 = (await client.post("/api/v1/sellers/products", json=_product_body(sid1, cid), headers=_auth(st1))).json()["id"]
+    vs1 = (await client.put(
+        f"/api/v1/sellers/products/{pid1}/variants",
+        json={"variants": [{**v, "stock": 5} for v in GRID["variants"]]}, headers=_auth(st1),
+    )).json()["variants"]
+    await _fees(client, st1)
+    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-pay2@example.com", "password": "password123", "name": "판매자2"})
+    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
+    app2 = await client.post("/api/v1/sellers/applications", json={
+        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
+        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
+        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
+    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
+    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
+    async with engine.begin() as conn:
+        sid2v = str((await conn.execute(text("SELECT id FROM sellers WHERE brand_name = '둘째굿즈'"))).scalar_one())
+    pid2 = (await client.post("/api/v1/sellers/products", json=_product_body(sid2v, cid), headers=_auth(t2))).json()["id"]
+    vs2 = (await client.put(
+        f"/api/v1/sellers/products/{pid2}/variants",
+        json={"variants": [{**v, "stock": 5} for v in GRID["variants"]]}, headers=_auth(t2),
+    )).json()["variants"]
+    await _fees(client, t2, base=2500)
+
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs1[0]["id"], "quantity": 1}, headers=_auth(bt))
+    await client.post("/api/v1/carts/items", json={"variant_id": vs2[0]["id"], "quantity": 1}, headers=_auth(bt))
+    oid, _ = await _make_order(client, bt)
+
+    full = (await client.get(PENDING, headers=_auth(admin_t))).json()["items"][0]["grand_total"]
+    # 첫째 판매자 묶음만 취소 (부분 취소)
+    d0 = (await client.get(f"/api/v1/orders/{oid}", headers=_auth(bt))).json()
+    cancel_sid = next(sv["sub_order_id"] for sv in d0["sub_orders"] if sv["brand_name"] != "둘째굿즈")
+    await client.post(f"/api/v1/orders/sub-orders/{cancel_sid}/cancel", headers=_auth(bt))
+
+    row = (await client.get(PENDING, headers=_auth(admin_t))).json()["items"][0]
+    remaining = (3000 + vs2[0]["extra_price"]) + 2500
+    assert row["grand_total"] == remaining and row["grand_total"] < full  # 잔여 활성분
+
+    # stale(부분 취소 전) 금액으로 확인 → 409 price_changed + 새 금액
+    res = await client.post(_confirm(oid), json={"expected_grand_total": full}, headers=_auth(admin_t))
+    assert res.status_code == 409 and res.json()["code"] == "price_changed"
+    assert res.json()["details"][0]["grand_total"] == remaining
+    # 갱신 금액으로 확인 → 성공
+    res = await client.post(_confirm(oid), json={"expected_grand_total": remaining}, headers=_auth(admin_t))
+    assert res.status_code == 204

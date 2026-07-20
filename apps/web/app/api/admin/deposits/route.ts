@@ -9,15 +9,20 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // { order_id, note? } → 입금 확인 (FastAPI confirm-payment, 성공 시 204)
+  // { order_id, note?, expected_grand_total } → 입금 확인 (FastAPI confirm-payment, 성공 시 204)
+  // expected_grand_total: 모달에 표시된 금액 — 서버 잔여 활성 금액과 불일치하면 409 price_changed (과입금 확인 방지)
   const body = await req.json().catch(() => ({}));
-  if (typeof body.order_id !== "string" || !/^[0-9a-f-]{36}$/.test(body.order_id)) {
+  if (
+    typeof body.order_id !== "string" || !/^[0-9a-f-]{36}$/.test(body.order_id) ||
+    typeof body.expected_grand_total !== "number" || !Number.isFinite(body.expected_grand_total)
+  ) {
     return Response.json({ code: "validation_error", message: "입력값이 올바르지 않습니다.", details: [] }, { status: 422 });
   }
-  const note = typeof body.note === "string" && body.note.trim() ? { note: body.note.trim().slice(0, 500) } : {};
+  const payload: Record<string, unknown> = { expected_grand_total: body.expected_grand_total };
+  if (typeof body.note === "string" && body.note.trim()) payload.note = body.note.trim().slice(0, 500);
   return proxyWithRefresh(req, `/api/v1/admin/orders/${body.order_id}/confirm-payment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(note),
+    body: JSON.stringify(payload),
   });
 }

@@ -661,9 +661,6 @@ async def get_my_order(session: AsyncSession, user_id: uuid.UUID, order_id: uuid
 # 관리자 입금 확인 (Story 5.2) — 목록 파생 + 엔진 호출만
 # ---------------------------------------------------------------------------
 
-from app.auth import service as auth_service  # noqa: E402 — admin 화면용 buyer 정보 (AD-2 경유)
-
-
 async def list_pending_orders(session: AsyncSession, page: int) -> dict:
     """입금대기 목록 — 입금 대조용. 금액은 활성 기준(잔여 입금액), 전체 UUID·8자 병기 (order_no 충돌 대응)."""
     size = get_settings().page_size
@@ -673,7 +670,6 @@ async def list_pending_orders(session: AsyncSession, page: int) -> dict:
         base.order_by(Order.created_at.desc(), Order.id.desc()).offset((page - 1) * size).limit(size)
     ))
     subs_by_order, items_by_sub, _brand = await _order_view_rows(session, [o.id for o in orders])
-    buyers = await auth_service.get_users_by_ids(session, list({o.user_id for o in orders}))
     db_now = await session.scalar(select(func.now()))
     out = []
     for order in orders:
@@ -685,19 +681,34 @@ async def list_pending_orders(session: AsyncSession, page: int) -> dict:
         title = basis[0].product_name if basis else "주문 상품"
         if len(basis) > 1:
             title = f"{title} 외 {len(basis) - 1}건"
-        buyer = buyers.get(order.user_id)
         out.append({
             "order_id": order.id, "order_no": _order_no(order.id),
             "created_at": order.created_at, "deposit_due_at": order.deposit_due_at,
             "expired": order.deposit_due_at < db_now,
-            "buyer_name": buyer.name if buyer else "", "buyer_email": buyer.email if buyer else "",
+            "user_id": order.user_id,  # buyer 표시 정보는 admin 층이 붙인다 (AD-2: orders→auth 엣지 금지)
             "grand_total": active_grand, "title": title,
         })
-    return {"items": out, "total": total, "page": page}
+    return {"items": out, "total": total, "page": page, "size": size}
 
 
-async def confirm_payment(session: AsyncSession, admin_id: uuid.UUID, order_id: uuid.UUID, note: str) -> None:
-    """입금 확인 — paid 전이 한 줄. 연쇄 preparing·paid_at·이벤트는 엔진 소유 (AD-3)."""
+async def confirm_payment(
+    session: AsyncSession, admin_id: uuid.UUID, order_id: uuid.UUID, note: str, expected_grand_total: int
+) -> None:
+    """입금 확인 — 금액 대조 후 paid 전이. 연쇄 preparing·paid_at·이벤트는 엔진 소유 (AD-3).
+
+    expected_grand_total: 관리자가 화면에서 본 금액 — 부분 취소 등으로 잔여 활성 금액이 달라졌으면
+    409 price_changed로 재확인시킨다 (stale 금액으로 과입금 확정 방지, 4.4 패턴).
+    """
+    order = await session.scalar(select(Order).where(Order.id == order_id))
+    if order is None:
+        raise AppError("not_found", "주문을 찾을 수 없습니다.", status_code=404)
+    subs_by_order, items_by_sub, _ = await _order_view_rows(session, [order.id])
+    _, _, active_grand = _amounts(subs_by_order.get(order.id, []), items_by_sub)
+    if active_grand != expected_grand_total:
+        raise AppError(
+            CODE_PRICE_CHANGED, "주문 금액이 변경되었습니다. 목록을 확인해 주세요.",
+            status_code=409, details=[{"grand_total": active_grand}],
+        )
     await transition(
         session, layer=t.LAYER_ORDER, entity_id=order_id, to_status=t.ORDER_PAID,
         actor_role=t.ROLE_ADMIN, actor_user_id=admin_id, note=note,
