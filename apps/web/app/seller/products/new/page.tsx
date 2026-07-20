@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import "./new.css";
@@ -9,6 +10,7 @@ type Uploaded = { path: string; preview: string };
 type Row = { option1_value: string; option2_value: string; extra_price: string; stock: string; is_active: boolean };
 
 export default function NewProductPage() {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -50,7 +52,7 @@ export default function NewProductPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ op: "presign", content_type: file.type }),
         });
-        if (pre.status === 401) return void (window.location.href = "/login");
+        if (pre.status === 401) return void router.replace("/login");
         const data = await pre.json();
         if (!pre.ok) {
           setError(data.message ?? "이미지 업로드 준비에 실패했습니다.");
@@ -104,7 +106,7 @@ export default function NewProductPage() {
           }),
         });
         const data = await res.json();
-        if (res.status === 401) return void (window.location.href = "/login");
+        if (res.status === 401) return void router.replace("/login");
         if (!res.ok) {
           setError(data.details?.[0]?.reason ?? data.message ?? "등록에 실패했습니다.");
           return;

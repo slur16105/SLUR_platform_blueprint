@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import "./apply.css";
@@ -17,6 +18,7 @@ const FIELDS = [
 ] as const;
 
 export default function ApplyPage() {
+  const router = useRouter();
   const [existing, setExisting] = useState<AppStatus>(null);
   const [loaded, setLoaded] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -26,12 +28,12 @@ export default function ApplyPage() {
   useEffect(() => {
     fetch("/api/sellers/apply")
       .then(async (r) => {
-        if (r.status === 401) window.location.href = "/login";
+        if (r.status === 401) router.replace("/login");
         else if (r.ok) setExisting(await r.json());
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
-  }, []);
+  }, [router]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +47,7 @@ export default function ApplyPage() {
       });
       const data = await res.json();
       if (res.status === 401) {
-        window.location.href = "/login";
+        router.replace("/login");
         return;
       }
       if (!res.ok) {

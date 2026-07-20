@@ -1,5 +1,6 @@
 """장바구니 테스트 (Story 4.1)."""
 
+import asyncio
 import uuid as u
 
 import pytest
@@ -150,3 +151,74 @@ async def test_quantity_validation(client, clean_products):
     await client.post(f"{CARTS}/items", json={"variant_id": vid, "quantity": 999}, headers=_auth(bt))
     res = await client.post(f"{CARTS}/items", json={"variant_id": vid, "quantity": 999}, headers=_auth(bt))
     assert res.status_code == 201 and res.json()["quantity"] == 999  # 캡
+
+
+async def _row_count(user_email="buyer@example.com"):
+    """cart_items 실제 행 수 — API 응답이 아닌 DB 진실로 중복 행을 검증한다."""
+    from sqlalchemy import text
+
+    from app.core.db import engine
+
+    async with engine.begin() as conn:
+        return (await conn.execute(text(
+            "SELECT count(*) FROM cart_items c JOIN users u ON u.id = c.user_id WHERE u.email = :e"
+        ), {"e": user_email})).scalar()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_add_is_atomic(client, clean_products):
+    """동시 담기 레이스 회귀 봉인 — ON CONFLICT DO UPDATE + LEAST의 원자성 (4.1 defer 해소).
+
+    같은 (user, variant)로 병행 담기 → 행 중복 없음(1행)·수량 정확 합산.
+    """
+    _, pid, vs = await _shop(client, stock=2000)
+    bt = await _buyer(client)
+    vid = vs[0]["id"]
+
+    results = await asyncio.gather(*[
+        client.post(f"{CARTS}/items", json={"variant_id": vid, "quantity": 3}, headers=_auth(bt))
+        for _ in range(10)
+    ])
+    assert all(r.status_code == 201 for r in results)
+
+    assert await _row_count() == 1  # 행 중복 없음 (UNIQUE + upsert)
+    cart = (await client.get(CARTS, headers=_auth(bt))).json()
+    assert len(cart["items"]) == 1
+    assert cart["items"][0]["quantity"] == 30  # 3 × 10 정확 합산 — lost update 없음
+
+
+@pytest.mark.asyncio
+async def test_concurrent_add_respects_cap(client, clean_products):
+    """동시 담기로도 999 캡을 넘지 않는다 (LEAST가 upsert 안에서 평가되므로)."""
+    _, pid, vs = await _shop(client, stock=2000)
+    bt = await _buyer(client)
+    vid = vs[0]["id"]
+
+    results = await asyncio.gather(*[
+        client.post(f"{CARTS}/items", json={"variant_id": vid, "quantity": 200}, headers=_auth(bt))
+        for _ in range(10)
+    ])
+    assert all(r.status_code == 201 for r in results)
+
+    assert await _row_count() == 1
+    cart = (await client.get(CARTS, headers=_auth(bt))).json()
+    assert cart["items"][0]["quantity"] == 999  # 2000 요청 → 캡, 초과 없음
+
+
+@pytest.mark.asyncio
+async def test_patch_quantity_bounds(client, clean_products):
+    """PATCH 수량 상·하한(1~999) 계약 회귀 봉인 — 스테퍼가 아닌 API가 최종 방어선 (4.1 defer 해소)."""
+    _, pid, vs = await _shop(client, stock=2000)
+    bt = await _buyer(client)
+    item = (await client.post(
+        f"{CARTS}/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt)
+    )).json()
+
+    for bad in (1000, 0, -1):
+        res = await client.patch(f"{CARTS}/items/{item['id']}", json={"quantity": bad}, headers=_auth(bt))
+        assert res.status_code == 422, bad
+
+    # 경계값은 통과 — 상한 자체가 내려가지 않았음을 함께 봉인
+    for ok in (1, 999):
+        res = await client.patch(f"{CARTS}/items/{item['id']}", json={"quantity": ok}, headers=_auth(bt))
+        assert res.status_code == 200 and res.json()["quantity"] == ok

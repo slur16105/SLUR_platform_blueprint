@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-20  # Epic 4·5·6 합동 회고 done — 다음: 오픈 게이트(PG)
+last_updated: 2026-07-20  # 부채 정리·PG 초안 — Slur 견적/실기 대기
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -116,5 +116,7 @@ action_items:
   - { id: A-E456-1, epic: 4-6, status: open, owner: "Slur", action: "실기 검증 일괄 세션 — 앱·판매자·관리자 전 플로우 (각 스토리 실기 검증 Task 일괄 해소)" }
   - { id: A-E456-2, epic: 4-6, status: done, owner: "Claude", action: "테스트 헬퍼 conftest 승격 — tests/helpers.py 신설, 18파일 전환·인라인 제2판매자 6곳 통합 (149 통과)" }
   - { id: A-E456-3, epic: 4-6, status: in-progress, owner: "Claude+Slur", action: "PG 연동 — 방향 승인됨(포트원 1순위+토스 병행, 2026-07-20). 다음: Slur 견적 문의 2건·사업자 실정보 → 견적 후 에픽 작성" }
-  - { id: A-E456-4, epic: 4-6, status: open, owner: "Claude", action: "invalid_transition 코드 분리 검토 — 5.1 운영 피드백 후" }
+  - { id: A-E456-4, epic: 4-6, status: open, owner: "Claude", action: "invalid_transition 코드 분리 검토 — 5.1 운영 피드백(실기 검증) 후 판단. 현재는 message로 구분 가능해 보류" }
   - { id: A-E456-5, epic: 4-6, status: done, owner: "Claude", action: "웹 lint 베이스라인 정리 — 14 errors·2 warnings → 0 (effect IIFE 래핑·router.replace 전환·Link, 동작 보존 대조 완료)" }
+  - { id: A-E456-6, epic: 4-6, status: done, owner: "Claude", action: "deferred 백로그 안전 항목 5건 정리 — 제약명 판정·담기 race 테스트·수량 상한 테스트·RefreshIndicator·window.location (153 통과)" }
+  - { id: A-E456-7, epic: 7, status: open, owner: "Claude", action: "Epic 7 PG 초안 작성됨(벤더 중립 설계·스토리 7분해). 견적 후 epics.md 정식 이관 + AD-2 스파인 개정 승인 필요" }

@@ -80,7 +80,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   return const Center(child: Text('아직 등록된 상품이 없어요.'));
                 }
                 return RefreshIndicator(
-                  onRefresh: () async => ref.refresh(productListProvider(_categoryId).future),
+                  // Future를 그대로 반환 — RefreshIndicator가 await하므로 스피너가 조기 dismiss되지 않는다
+                  // (`() async => ...`는 refresh 결과를 버려 unused_result 경고도 난다)
+                  onRefresh: () => ref.refresh(productListProvider(_categoryId).future),
                   child: GridView.builder(
                     padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

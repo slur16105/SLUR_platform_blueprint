@@ -138,6 +138,27 @@ async def get_product_images(session: AsyncSession, product_ids: list[uuid.UUID]
 
 CODE_DUPLICATE_VARIANT = "duplicate_variant"
 
+# 3.3 variants의 무명 UNIQUE(product_id, option1_value, option2_value) → PG 자동 명명
+UQ_VARIANT_COMBINATION = "variants_product_id_option1_value_option2_value_key"
+
+
+def _constraint_name(exc: IntegrityError) -> str | None:
+    """위반한 제약 이름 — 드라이버별 경로를 모두 시도하고, 못 찾으면 None (호출자가 폴백).
+
+    asyncpg는 `exc.orig.__cause__.constraint_name`, psycopg2는 `exc.orig.diag.constraint_name`.
+    드라이버·SQLAlchemy 버전이 바뀌어도 예외를 던지지 않고 None으로 떨어진다.
+    """
+    orig = getattr(exc, "orig", None)
+    for candidate in (orig, getattr(orig, "__cause__", None)):
+        if candidate is None:
+            continue
+        name = getattr(candidate, "constraint_name", None) or getattr(
+            getattr(candidate, "diag", None), "constraint_name", None
+        )
+        if name:
+            return str(name)
+    return None
+
 
 async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_id: uuid.UUID, items) -> Product:
     product = await session.scalar(
@@ -176,7 +197,14 @@ async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
-        if "variants" in str(exc.orig) and "unique" in str(exc.orig).lower():
+        name = _constraint_name(exc)
+        # 제약 이름이 최우선. 이름을 못 얻는 드라이버·버전에서만 기존 메시지 매칭으로 폴백
+        duplicate = (
+            name == UQ_VARIANT_COMBINATION
+            if name is not None
+            else ("variants" in str(exc.orig) and "unique" in str(exc.orig).lower())
+        )
+        if duplicate:
             raise AppError(CODE_DUPLICATE_VARIANT, "중복된 옵션 조합이 있습니다.", status_code=422) from exc
         raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404) from exc  # 동시 상품 삭제 등
     return product

@@ -7,19 +7,19 @@
 - **합산 후 총량 재고 초과 담기 policy 유지** — `apps/api/app/carts/service.py:25~46` `add_item`은 요청 수량만 술어 검증. 스토리 Completion Notes에서 policy로 확정. 4.4 주문 생성이 조건부 UPDATE로 최종 진실 보장 (`AD-4`). 담기 → 즉시 구매 불가 UX 단절은 감수
 - **variants upsert flush 순서 임시 UNIQUE 위반 위험** — `apps/api/app/products/service.py:152~174`. 판매자가 조합 A ↔ B 옵션 값 스왑 시 auto-flush 임시 상태에서 UNIQUE 위반 가능. 현재 IntegrityError를 `duplicate_variant`로 잡아 낼 수 있음(원인 메시지는 실제와 다름). 완화 시 삭제 flush 선행 필요 → 4.1 범위 밖, 별도 스토리로 승격 후보
 - **Flutter cart_screen guard() finally 무조건 invalidate** — `apps/mobile/lib/src/carts/cart_screen.dart:96~98`. 성공·실패 무관 refresh로 실패 스낵바 직후 화면 튐. 정합성 편에 서 유지. 성공 시에만 invalidate로 전환 시 오히려 서버 상태 반영 지연 리스크
-- **IntegrityError 원인 판정 문자열 매칭 취약** — `apps/api/app/products/service.py:179` `replace_variants`가 `"variants" in str(exc.orig) and "unique" in ...`로 constraint를 판별. PG 오류 메시지 포맷 변경에 취약. `exc.orig.diag.constraint_name` 기반으로 승격 후보. 실용상 즉시 위험 없음
-- **담기 합산·캡의 race 테스트 부재** — `apps/api/tests/test_carts.py:159~172`. 순차 담기만 검증. `asyncio.gather()`로 병행 담기 시 원자적 upsert·999 캡 안전성 회귀 봉인 테스트 후속
+- **[해소 2026-07-20]** ~~**IntegrityError 원인 판정 문자열 매칭 취약**~~ — `products/service.py`에 `_constraint_name()` 헬퍼 추가. asyncpg(`exc.orig.__cause__.constraint_name`)·psycopg2(`exc.orig.diag.constraint_name`) 양쪽 경로를 시도하고 `UQ_VARIANT_COMBINATION` 상수와 대조. 이름을 못 얻으면 기존 문자열 매칭으로 안전 폴백. `test_variants.py::test_duplicate_combo_422`에 `code == "duplicate_variant"` 단언 추가로 봉인
+- **[해소 2026-07-20]** ~~**담기 합산·캡의 race 테스트 부재**~~ — `test_carts.py::test_concurrent_add_is_atomic`(gather×10, 3개씩 → 1행·수량 30)·`test_concurrent_add_respects_cap`(gather×10, 200개씩 → 999 캡) 추가. 행 수는 API 응답이 아닌 DB 직접 조회로 검증. 기존 구현(ON CONFLICT DO UPDATE + LEAST) 그대로 통과
 - **Alembic downgrade가 cart_items를 drop만 함** — `apps/api/alembic/versions/7fceea006abe_cart_items.py:41~46`. 프로덕션 롤백 시 카트 데이터 유실. 일반 alembic 관행이며 v1 완주엔 지장 없음
 - **AD-13: `999` 리터럴 4곳 확산** — `carts/service.py:16`, `carts/models.py:22`, `carts/schemas.py:8,12`, `cart_screen.dart:140,144`, `product_detail_screen.dart:116`. 스토리 스펙이 "1~999 서버·클라 양쪽 강제"로 고정했으므로 v1 지장 없음. 블루프린트 추출 시 `core/config`로 승격
-- **RefreshIndicator future await 형식** — `cart_screen.dart:27` `onRefresh: () async => ref.refresh(cartProvider.future)`가 arrow 함수라 반환된 Future를 자동 await하지 않아 스피너가 조기 dismiss 가능. `() async { await ref.refresh(cartProvider.future); }` 명시 형식으로 승격
+- **[해소 2026-07-20]** ~~**RefreshIndicator future await 형식**~~ — `cart_screen.dart`·`screens/home_screen.dart`(앱 전체 grep으로 동일 안티패턴 1건 추가 발견) 두 곳을 `onRefresh: () => ref.refresh(...)` 형태로 교체 — Future를 그대로 반환해 RefreshIndicator가 직접 await한다. 블록 형식(`() async { await ... }`)은 `ref.refresh`의 `@useResult` 때문에 `unused_result` 경고가 나서 채택하지 않음. `flutter analyze` 0 (기존 order_history/order_detail의 블록 형식은 자체 메서드 호출이라 무관·유지)
 - **사용자 이탈 후 API 실패 시 스낵바 유실** — `cart_screen.dart:92~95`. `context.mounted == false`면 오류 표시 없이 무음. 로깅·재시도 큐 후속
-- **PATCH `quantity=1000` 방어 테스트 부재** — 스테퍼가 강제하므로 실용 영향 없으나 API 계약 회귀 봉인 후보
+- **[해소 2026-07-20]** ~~**PATCH `quantity=1000` 방어 테스트 부재**~~ — `test_carts.py::test_patch_quantity_bounds` 추가. 1000·0·-1 → 422, 경계값 1·999 → 200으로 상한이 내려가지 않았음도 함께 봉인
 - **variants upsert exact 매칭 — 대소문자·strip 이후 남는 공백만 다르면 SET NULL 조용한 소멸** — `apps/api/app/products/service.py:158`. UX 가이드(대소문자 표기 통일) + 판매자 저장 시 정규화 후속
 
 ## Deferred from: code review of 4-2-order-model-shipping-calc (2026-07-20)
 
 - **마이그레이션의 CSV 런타임 의존** — `alembic/versions/0275fa5bfee4`가 `app/orders/data/remote_area_zips.csv`를 실행 시점에 읽음. CSV 갱신 시 신규 환경 시드가 프로덕션과 달라질 수 있음(리비전 불변성). v1 단일 환경에선 무해, 검증 로직으로 완화됨. 블루프린트 추출 시 시드를 마이그레이션 밖 멱등 스크립트로 분리 검토
-- **도서산간 시드 출처 격상** — 현재 택배사 공통 기준표의 서드파티 재게시본(campaignus/imweb, 오탈자 2건 교차 보정). 공식 우체국/CJ대한통운 목록과 표본 대조 후 기준일 갱신 후속
+- **[부분 해소 2026-07-20] 도서산간 시드 출처 격상** — **공식 단일 출처는 존재하지 않음이 확인됨**: CJ대한통운·우체국 모두 도서산간 우편번호 목록을 공개 배포하지 않으며(우체국은 우편번호 DB만 제공, 도서산간 플래그 없음), 각 택배사·플랫폼이 자체 기준표를 운영. → **독립 출처 교차 대조로 대체 검증 수행**(도매꾹 배송비 지역표, 2026-07-20): 표본 12개 중 11개 일치, 유일한 차이는 **15654(안산 대부도 — 연륙교 연결)** 미포함으로 우리 시드의 "연륙교 지역 제외(과청구 방지)" 원칙과 일치. 결론: 현 시드 신뢰 가능. **잔여**: 택배사 계약 확정 시 해당 사의 실제 기준표로 최종 정렬 (오픈 게이트)
 - **remote_area_zips 갱신 운영 절차 부재** — 신규 우편번호 배정·택배사 목록 개정 시 자동으로 일반 판정 → 판매자 과소청구를 감지할 주기 점검 절차 없음. 실서비스 오픈 게이트 점검 항목
 - **`deposit_account` placeholder 가드 없음** — 시드 값 "은행/계좌번호/예금주 미설정"이 그대로 노출될 수 있음. **4.4 주문 완료 화면 전 실계좌 DB 갱신 확인을 4.4 Task에 명시할 것.** 관리자 수정 화면은 Story 5.7로 승격됨 (2026-07-20 Slur 승인)
 - **우편번호 실존 검증 없음** — `^\d{5}$` 형식만 통과하면 미배정 번호도 일반 지역 계산. 4.4 카카오 우편번호 검색 위젯 도입으로 해소 예정 — 4.4 스토리에 명시 이월
@@ -81,4 +81,4 @@
 
 ## Deferred from: lint 베이스라인 정리 (2026-07-20, A-E456-5)
 
-- **`window.location.href` 리다이렉트 잔여 2파일** — `seller/products/new/page.tsx`·`apply/page.tsx` (각 2곳). lint 미적발이라 미변경. 리다이렉트 관례(router.replace) 전 화면 통일 시 함께 정리
+- **[해소 2026-07-20]** ~~**`window.location.href` 리다이렉트 잔여 2파일**~~ — `seller/products/new/page.tsx`·`apply/page.tsx` 4곳 전부 `router.replace()`(next/navigation)로 전환. 리다이렉트 목적지·조건 동일. apply의 useEffect 의존성에 `router` 추가(다른 화면 관례와 동일). `npm run lint`·`tsc --noEmit` 0. 앱 전체 `window.location` grep 잔여 0건

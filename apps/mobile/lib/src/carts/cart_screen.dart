@@ -26,7 +26,9 @@ class CartScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: () async => ref.refresh(cartProvider.future),
+                  // Future를 그대로 반환 — RefreshIndicator가 await하므로 스피너가 조기 dismiss되지 않는다
+                  // (`() async => ...`는 refresh 결과를 버려 unused_result 경고도 난다)
+                  onRefresh: () => ref.refresh(cartProvider.future),
                   child: ListView.separated(
                     padding: const EdgeInsets.all(12),
                     itemCount: items.length,

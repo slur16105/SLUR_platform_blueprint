@@ -1,5 +1,7 @@
 """옵션 조합 그리드·재고 테스트 (Story 3.3)."""
 
+import uuid as u
+
 import pytest
 
 from app.products.service import check_purchasable
@@ -42,7 +44,39 @@ async def test_duplicate_combo_422(client, clean_products):
     prod = await _product(client, admin_t, t, sid)
     dup = {"variants": [GRID["variants"][0], GRID["variants"][0]]}
     res = await client.put(f"/api/v1/sellers/products/{prod['id']}/variants", json=dup, headers=_auth(t))
-    assert res.status_code == 422
+    # 스키마 단계에서 먼저 걸린다 (DB 제약까지 가지 않음) — DB 제약 경로는 아래 duplicate_variant 테스트
+    assert res.status_code == 422 and res.json()["code"] == "validation_error"
+
+
+@pytest.mark.asyncio
+async def test_db_unique_violation_maps_to_duplicate_variant(client, clean_products):
+    """UNIQUE 제약 위반 → `duplicate_variant` 422 (제약 이름 기반 판정, deferred 해소 2026-07-20).
+
+    API는 스키마에서 중복을 먼저 거른다. DB 제약이 실제로 터지는 경로(조합 값 스왑 등 레이스)는
+    서비스를 직접 호출해 봉인한다 — 오분류되면 404 not_found로 새어 여기서 잡힌다.
+    """
+    from types import SimpleNamespace
+
+    from app.core.db import async_session_factory
+    from app.core.errors import AppError
+    from app.products import service as products_service
+
+    admin_t = await _admin_token(client)
+    t, sid = await _seller_with_prefix(client, admin_t)
+    prod = await _product(client, admin_t, t, sid)
+
+    def _item(v):
+        return SimpleNamespace(
+            option1_name="색상", option1_value=v, option2_name="", option2_value="",
+            extra_price=0, stock=1, is_active=True,
+        )
+
+    async with async_session_factory() as session:
+        with pytest.raises(AppError) as err:  # 같은 조합 2개 → commit 시 UNIQUE 위반
+            await products_service.replace_variants(
+                session, u.UUID(sid), u.UUID(prod["id"]), [_item("블랙"), _item("블랙")]
+            )
+    assert err.value.code == "duplicate_variant" and err.value.status_code == 422
 
 
 @pytest.mark.asyncio
