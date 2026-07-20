@@ -483,3 +483,154 @@ async def cancel_sub_order(session: AsyncSession, user_id: uuid.UUID, sub_order_
         order_canceled = True
     await session.commit()
     return {"canceled_items": len(item_ids), "order_canceled": order_canceled}
+
+
+# ---------------------------------------------------------------------------
+# 구매자 주문내역·상세 (Story 5.1) — 파생 값의 단일 소스 (AD-6·AD-12)
+# ---------------------------------------------------------------------------
+
+from app.core.config import get_settings  # noqa: E402
+
+# 표시 전용 파생 상태 — transitions.py 상수·DB CHECK에 추가 금지, transition() 입력 사용 금지
+DISPLAY_AWAITING_PAYMENT = "awaiting_payment"
+DISPLAY_CANCELED = "canceled"
+
+
+def derive_sub_status(order_payment: str, shipping_status: str | None, has_active_lines: bool) -> str:
+    """묶음 표시 상태 — 5.1 파생 표가 단일 소스. 클라이언트 파생 금지 (AD-12)."""
+    if not has_active_lines or order_payment == t.ORDER_CANCELED:
+        return DISPLAY_CANCELED
+    if order_payment == t.ORDER_PENDING_PAYMENT:
+        return DISPLAY_AWAITING_PAYMENT
+    if shipping_status is None:  # 구조상 불가 (4.3 paid 연쇄 보장) — canceled로 은폐하지 않는다
+        logger.warning("paid 주문에 NULL 배송층 + 활성 라인 — 파생 표 위반 데이터")
+        return t.SUB_PREPARING
+    return shipping_status
+
+
+def derive_order_status(order_payment: str, sub_statuses: list[str]) -> str:
+    """주문 대표 상태 — 카드 1줄. active = canceled 아닌 묶음 표시 상태."""
+    active = [s for s in sub_statuses if s != DISPLAY_CANCELED]
+    if order_payment == t.ORDER_CANCELED or not active:
+        return DISPLAY_CANCELED
+    if order_payment == t.ORDER_PENDING_PAYMENT:
+        return DISPLAY_AWAITING_PAYMENT
+    if all(s == t.SUB_DELIVERED for s in active):
+        return t.SUB_DELIVERED
+    if any(s == t.SUB_SHIPPING for s in active):
+        return t.SUB_SHIPPING
+    return t.SUB_PREPARING
+
+
+def _order_no(order_id: uuid.UUID) -> str:
+    return str(order_id).replace("-", "")[-8:].upper()  # 4.4 결정 — 컬럼 없는 표시용 파생
+
+
+async def _order_view_rows(session: AsyncSession, order_ids: list[uuid.UUID]) -> tuple[dict, dict, dict]:
+    """주문들의 (sub_orders by order, items by sub, 브랜드명 by seller) 배치 조회 — N+1 회피."""
+    subs = list(await session.scalars(
+        select(SubOrder).where(SubOrder.order_id.in_(order_ids)).order_by(SubOrder.created_at, SubOrder.id)
+    ))
+    items = list(await session.scalars(
+        select(OrderItem).where(OrderItem.sub_order_id.in_([s.id for s in subs])).order_by(OrderItem.created_at, OrderItem.id)
+    ))
+    sellers = await sellers_service.get_sellers_by_ids(session, list({s.seller_id for s in subs}))
+    subs_by_order: dict = {}
+    for s in subs:
+        subs_by_order.setdefault(s.order_id, []).append(s)
+    items_by_sub: dict = {}
+    for i in items:
+        items_by_sub.setdefault(i.sub_order_id, []).append(i)
+    brand_by_seller = {sid: sel.brand_name for sid, sel in sellers.items()}
+    return subs_by_order, items_by_sub, brand_by_seller
+
+
+def _amounts(subs: list, items_by_sub: dict) -> tuple[int, int, int]:
+    """활성(ordered) 라인만 합산 — 부분 취소 후 과입금 방지 (5.1 금액 파생 규칙)."""
+    item_total = shipping_total = 0
+    for sub in subs:
+        active = [i for i in items_by_sub.get(sub.id, []) if i.status == t.ITEM_ORDERED]
+        if not active:
+            continue  # 전-취소 묶음은 배송비도 제외
+        item_total += sum((i.unit_price + i.extra_price) * i.quantity for i in active)
+        shipping_total += sub.shipping_fee + sub.remote_extra_fee
+    return item_total, shipping_total, item_total + shipping_total
+
+
+async def list_my_orders(session: AsyncSession, user_id: uuid.UUID, page: int) -> dict:
+    size = get_settings().page_size
+    total = await session.scalar(select(func.count()).select_from(Order).where(Order.user_id == user_id)) or 0
+    orders = list(await session.scalars(
+        select(Order).where(Order.user_id == user_id)
+        .order_by(Order.created_at.desc(), Order.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    subs_by_order, items_by_sub, brand = await _order_view_rows(session, [o.id for o in orders])
+    out = []
+    for order in orders:
+        subs = subs_by_order.get(order.id, [])
+        sub_views = []
+        first_name, line_count = None, 0
+        for sub in subs:
+            lines = items_by_sub.get(sub.id, [])
+            active = [i for i in lines if i.status == t.ITEM_ORDERED]
+            shown = active or lines  # 전-취소 주문 카드에도 상품명은 보여준다
+            if shown and first_name is None:
+                first_name = shown[0].product_name
+            line_count += len(lines)
+            sub_views.append({
+                "brand_name": brand.get(sub.seller_id, ""),
+                "display_status": derive_sub_status(order.payment_status, sub.shipping_status, bool(active)),
+            })
+        _, _, grand = _amounts(subs, items_by_sub)
+        title = first_name or "주문 상품"
+        if line_count > 1:
+            title = f"{title} 외 {line_count - 1}건"
+        out.append({
+            "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
+            "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
+            "grand_total": grand, "title": title, "sub_orders": sub_views,
+        })
+    return {"items": out, "total": total, "page": page}
+
+
+async def get_my_order(session: AsyncSession, user_id: uuid.UUID, order_id: uuid.UUID) -> dict:
+    order = await session.scalar(select(Order).where(Order.id == order_id, Order.user_id == user_id))
+    if order is None:  # 타인·미존재 구분 없이 404
+        raise AppError("not_found", "주문을 찾을 수 없습니다.", status_code=404)
+    subs_by_order, items_by_sub, brand = await _order_view_rows(session, [order.id])
+    subs = subs_by_order.get(order.id, [])
+    sub_views = []
+    for sub in subs:
+        lines = items_by_sub.get(sub.id, [])
+        active = [i for i in lines if i.status == t.ITEM_ORDERED]
+        sub_views.append({
+            "sub_order_id": sub.id,
+            "brand_name": brand.get(sub.seller_id, ""),
+            "display_status": derive_sub_status(order.payment_status, sub.shipping_status, bool(active)),
+            "carrier": sub.carrier, "tracking_number": sub.tracking_number,
+            "shipping_fee": sub.shipping_fee, "remote_extra_fee": sub.remote_extra_fee,
+            "cancellable": bool(active) and sub.shipping_status is None,  # 4.6 가드와 동치 — 서버 파생 (AD-12)
+            "items": [{
+                "product_name": i.product_name, "option_text": i.option_text,
+                "unit_price": i.unit_price, "extra_price": i.extra_price, "quantity": i.quantity,
+                "line_total": (i.unit_price + i.extra_price) * i.quantity, "status": i.status,
+            } for i in lines],
+        })
+    item_total, shipping_total, grand = _amounts(subs, items_by_sub)
+    deposit_info = None
+    if order.payment_status == t.ORDER_PENDING_PAYMENT:
+        deposit_info = {
+            "grand_total": grand,  # 잔여 활성분 — 부분 취소 후 과입금 방지
+            "deposit_account": await get_setting(session, SETTING_DEPOSIT_ACCOUNT),
+            "deposit_due_at": order.deposit_due_at,
+        }
+    return {
+        "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
+        "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
+        "recipient_name": order.recipient_name, "recipient_phone": order.recipient_phone,
+        "postal_code": order.postal_code, "address1": order.address1, "address2": order.address2,
+        "order_note": order.order_note,
+        "sub_orders": sub_views,
+        "item_total": item_total, "shipping_total": shipping_total, "grand_total": grand,
+        "deposit_info": deposit_info,
+    }

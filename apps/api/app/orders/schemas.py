@@ -68,3 +68,70 @@ class SubOrderCancelRequest(BaseModel):
 class SubOrderCancelResponse(BaseModel):
     canceled_items: int  # 이번 호출에서 취소된 ordered 라인 수 (선취소분 제외 — 묶음 전체 라인 수 아님)
     order_canceled: bool  # 전 묶음 취소로 order 층까지 canceled 전이됐는지
+
+
+class OrderCardSub(BaseModel):
+    brand_name: str
+    display_status: str  # 표시 전용 파생 값 (AD-12) — 저장 상태 아님
+
+
+class OrderCard(BaseModel):
+    order_id: uuid.UUID
+    order_no: str  # UUID 뒤 8자리 표시용 — 클라 가공 금지
+    created_at: datetime
+    display_status: str
+    grand_total: int  # 활성 라인만 합산 (부분 취소 반영)
+    title: str
+    sub_orders: list[OrderCardSub]
+
+
+class OrderListResponse(BaseModel):
+    items: list[OrderCard]
+    total: int
+    page: int
+
+
+class OrderLineView(BaseModel):
+    product_name: str
+    option_text: str
+    unit_price: int
+    extra_price: int
+    quantity: int
+    line_total: int
+    status: str  # ordered | canceled
+
+
+class OrderSubView(BaseModel):
+    sub_order_id: uuid.UUID
+    brand_name: str
+    display_status: str
+    carrier: str | None
+    tracking_number: str | None  # FR-21 — 표시만, 추적 연동 없음
+    shipping_fee: int
+    remote_extra_fee: int
+    cancellable: bool  # 서버 파생 (AD-12) — 4.6 가드와 동치
+    items: list[OrderLineView]
+
+
+class DepositInfo(BaseModel):
+    grand_total: int  # 잔여 활성분 — 과입금 방지
+    deposit_account: str
+    deposit_due_at: datetime
+
+
+class OrderDetailResponse(BaseModel):
+    order_id: uuid.UUID
+    order_no: str
+    created_at: datetime
+    display_status: str
+    recipient_name: str
+    recipient_phone: str
+    postal_code: str
+    address1: str
+    address2: str
+    order_note: str
+    sub_orders: list[OrderSubView]
+    item_total: int
+    shipping_total: int
+    grand_total: int
+    deposit_info: DepositInfo | None  # pending_payment일 때만 — 클라는 존재 여부로만 분기

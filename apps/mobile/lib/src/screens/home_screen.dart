@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_provider.dart';
 import '../carts/cart_screen.dart';
 import '../format.dart';
+import '../orders/order_history_screen.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_api.dart';
 
@@ -27,6 +28,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('SLUR', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.shopping_bag_outlined),
             onPressed: () => Navigator.of(context).push(

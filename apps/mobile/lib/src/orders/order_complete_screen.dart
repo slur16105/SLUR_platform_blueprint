@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import 'order_history_screen.dart';
 
 /// 주문 완료 화면 — 표시 값 전부 주문 생성 응답(서버 계산 값) 그대로 (AD-12)
 class OrderCompleteScreen extends StatelessWidget {
@@ -139,7 +140,13 @@ class OrderCompleteScreen extends StatelessWidget {
                 child: const Text('쇼핑 계속하기'),
               ),
               TextButton(
-                onPressed: null, // 5.1 주문 내역 화면에서 연결
+                // 홈까지 pop 후 주문 내역 push — 내역에서 back 시 홈으로 (주문서 재진입 없음)
+                onPressed: () {
+                  final navigator = Navigator.of(context);
+                  navigator.popUntil((route) => route.isFirst);
+                  navigator.push(MaterialPageRoute(
+                      builder: (_) => const OrderHistoryScreen()));
+                },
                 child: const Text('주문 내역 보기'),
               ),
             ],

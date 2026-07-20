@@ -51,4 +51,39 @@ class OrdersApi {
       throw ApiException.from(e);
     }
   }
+
+  /// 주문 목록 (최신순 페이지네이션) — 응답: {items, total, page}
+  Future<Map<String, dynamic>> listOrders({int page = 1}) async {
+    try {
+      final res =
+          await _dio.get('/api/v1/orders', queryParameters: {'page': page});
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
+
+  /// 주문 상세 — 금액·상태·cancellable 전부 서버 값 표시만 (AD-12)
+  Future<Map<String, dynamic>> getOrder(String orderId) async {
+    try {
+      final res = await _dio.get('/api/v1/orders/$orderId');
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
+
+  /// 판매자 묶음(sub_order) 취소 — 응답: {canceled_items, order_canceled}
+  Future<Map<String, dynamic>> cancelSubOrder(String subOrderId,
+      {String? reason}) async {
+    try {
+      final res = await _dio.post(
+        '/api/v1/orders/sub-orders/$subOrderId/cancel',
+        data: (reason == null || reason.isEmpty) ? <String, dynamic>{} : {'reason': reason},
+      );
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
 }

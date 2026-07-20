@@ -85,8 +85,8 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: 주문 운영 — 세 역할의 주문 화면
-  epic-5: backlog
-  5-1-buyer-order-history: backlog         # 구매자 주문내역·상세
+  epic-5: in-progress
+  5-1-buyer-order-history: review     # 구매자 주문내역·상세
   5-2-admin-payment-confirm: backlog       # 관리자 입금 확인
   5-3-seller-order-shipping: backlog       # 판매자 주문관리와 배송 처리
   5-4-seller-dashboard: backlog            # 판매자 대시보드

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
+from app.core.errors import AppError
 from app.core.security import get_current_user_id
 from app.orders import service
 from app.orders.schemas import (
@@ -13,6 +14,8 @@ from app.orders.schemas import (
     OrderPreviewResponse,
     SubOrderCancelRequest,
     SubOrderCancelResponse,
+    OrderDetailResponse,
+    OrderListResponse,
 )
 
 router = APIRouter(prefix="/orders")
@@ -48,3 +51,25 @@ async def cancel_sub_order(
     """구매자 묶음 취소 — preparing 진입 전만 (가드는 전이 엔진 소유)."""
     body = body or SubOrderCancelRequest()
     return await service.cancel_sub_order(session, user_id, sub_order_id, body.reason)
+
+
+@router.get("", response_model=OrderListResponse)
+async def list_my_orders(
+    page: int = 1,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """주문내역 목록 (최신순, page 기반) — 대표 상태·금액은 서버 파생 (AD-12)."""
+    if page < 1:
+        raise AppError("validation_error", "페이지는 1 이상이어야 합니다.", status_code=422)
+    return await service.list_my_orders(session, user_id, page)
+
+
+@router.get("/{order_id}", response_model=OrderDetailResponse)
+async def get_my_order(
+    order_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """주문상세 — 스냅샷·파생 값·입금 안내 (FR-22·23)."""
+    return await service.get_my_order(session, user_id, order_id)
