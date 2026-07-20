@@ -92,6 +92,7 @@ development_status:
   5-4-seller-dashboard: backlog            # 판매자 대시보드
   5-5-admin-order-intervention: backlog    # 관리자 주문 개입
   5-6-admin-lookup: backlog                # 관리자 조회 (회원·판매자·상품)
+  5-7-admin-settings: backlog              # 관리자 설정 — 입금 계좌 (2026-07-20 Slur 승인 추가)
   epic-5-retrospective: optional
 
   # Epic 6: 법적 고지와 오픈 준비
