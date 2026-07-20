@@ -128,3 +128,94 @@ async def update_product(
     images = (await products_service.get_product_images(session, [product.id])).get(product.id, [])
     variants = (await products_service.get_variants(session, [product.id])).get(product.id, [])
     return _product_response(product, images, variants)
+
+
+# ---------------------------------------------------------------------------
+# 판매자 주문관리 (Story 5.3) — 라우터는 HTTP 조합 층: orders service 호출 관례 (5.2 선례)
+# ---------------------------------------------------------------------------
+
+from datetime import datetime  # noqa: E402
+
+from pydantic import BaseModel, Field  # noqa: E402
+
+from app.orders import service as orders_service  # noqa: E402
+
+
+class SellerOrderLine(BaseModel):
+    product_name: str
+    option_text: str
+    quantity: int
+    status: str  # ordered | canceled — 취소 라인 구분 표시
+
+
+class SellerSubOrderItem(BaseModel):
+    sub_order_id: uuid.UUID
+    order_id: uuid.UUID  # 전체 UUID 병기 (5.2 관례)
+    order_no: str
+    created_at: datetime
+    recipient_name: str
+    recipient_phone: str
+    postal_code: str
+    address1: str
+    address2: str
+    order_note: str
+    items: list[SellerOrderLine]
+    shipping_fee: int
+    remote_extra_fee: int
+    shipping_status: str
+    carrier: str | None
+    tracking_number: str | None
+
+
+class SellerOrderList(BaseModel):
+    items: list[SellerSubOrderItem]
+    total: int
+    page: int
+    size: int
+
+
+class ShipRequest(BaseModel):
+    carrier: str = Field(min_length=1, max_length=50)
+    tracking_number: str = Field(min_length=1, max_length=50)
+
+
+_ORDER_STATUSES = ("preparing", "shipping", "delivered")
+
+
+@router.get("/orders", response_model=SellerOrderList)
+async def list_seller_orders(
+    status: str = "preparing",
+    page: int = 1,
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+):
+    """판매자 주문 목록 — 자기 sub_orders만, 상태 필터 (paid 전 NULL은 자연 배제)."""
+    if status not in _ORDER_STATUSES:
+        raise AppError("validation_error", "올바르지 않은 상태입니다.", status_code=422)
+    if page < 1 or page > 10000:
+        raise AppError("validation_error", "올바르지 않은 페이지입니다.", status_code=422)
+    seller = await service.get_my_seller(session, user_id)
+    return await orders_service.list_seller_sub_orders(session, seller.id, status, page)
+
+
+@router.post("/sub-orders/{sub_order_id}/ship", status_code=204)
+async def ship_sub_order(
+    sub_order_id: uuid.UUID,
+    body: ShipRequest,
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+):
+    """배송 시작 — 송장 필수 (가드·기록은 전이 엔진 소유, FR-21)."""
+    seller = await service.get_my_seller(session, user_id)
+    await orders_service.ship_sub_order(session, seller.id, user_id, sub_order_id, body.carrier, body.tracking_number)
+
+
+@router.post("/sub-orders/{sub_order_id}/deliver", status_code=204)
+async def deliver_sub_order(
+    sub_order_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+):
+    """배송 완료."""
+    seller = await service.get_my_seller(session, user_id)
+    await orders_service.deliver_sub_order(session, seller.id, user_id, sub_order_id)

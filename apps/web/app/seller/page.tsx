@@ -95,7 +95,10 @@ export default function SellerHome() {
         ))}
         <button className="btn m_primary" type="submit" disabled={busy}>저장</button>
       </form>
-      <a className="btn m_primary" href="/seller/products">내 상품 관리</a>
+      <nav className="p_links">
+        <a className="btn m_primary" href="/seller/products">내 상품 관리</a>
+        <a className="btn m_primary" href="/seller/orders">주문 관리</a>
+      </nav>
     </main>
   );
 }

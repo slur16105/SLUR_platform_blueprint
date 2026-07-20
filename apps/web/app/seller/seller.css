@@ -4,4 +4,6 @@
 .page_seller .p_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_seller .p_panel { display: flex; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
 .page_seller .p_subtitle { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_seller .p_links { display: flex; gap: var(--space-8); }
+.page_seller .p_links .btn { flex: 1; }
 .page_seller .p_note { color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }

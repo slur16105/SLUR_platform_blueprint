@@ -1,0 +1,39 @@
+/* 판매자 주문 관리 — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
+.page_seller_orders { display: flex; max-width: 1280px; min-height: 100dvh; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+.page_seller_orders .p_head { display: flex; align-items: center; justify-content: space-between; }
+.page_seller_orders .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
+.page_seller_orders .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_seller_orders .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
+
+/* 상태 탭 */
+.page_seller_orders .p_tabs { display: flex; gap: var(--space-4); border-bottom: 1px solid var(--color-border-subtle); }
+.page_seller_orders .p_tabs .i_tab { display: inline-flex; height: 2.5rem; padding: 0 var(--space-16); border: none; border-bottom: 2px solid transparent; background: transparent; align-items: center; font-size: var(--text-sm); color: var(--color-text-secondary); cursor: pointer; }
+.page_seller_orders .p_tabs .i_tab:hover { color: var(--color-text-primary); }
+.page_seller_orders .p_tabs .i_tab[data-state="active"] { border-bottom-color: var(--color-brand); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+
+/* 테이블 셀 내부 요소 */
+.page_seller_orders .i_order_no { display: block; font-weight: var(--weight-bold); color: var(--color-text-primary); }
+.page_seller_orders .i_uuid { display: inline-block; padding: 0; border: none; background: transparent; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+.page_seller_orders .i_uuid:hover { color: var(--color-text-brand); text-decoration: underline; }
+.page_seller_orders .i_recipient { display: block; color: var(--color-text-primary); }
+.page_seller_orders .i_phone { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
+.page_seller_orders .i_address { max-width: 280px; }
+.page_seller_orders .i_addr_line { display: block; }
+.page_seller_orders .i_note { display: block; margin-top: var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); }
+.page_seller_orders .i_lines { display: flex; flex-direction: column; gap: var(--space-4); list-style: none; }
+.page_seller_orders .i_line { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.page_seller_orders .i_line[data-state="canceled"] .i_line_name,
+.page_seller_orders .i_line[data-state="canceled"] .i_line_option,
+.page_seller_orders .i_line[data-state="canceled"] .i_line_qty { color: var(--color-text-muted); text-decoration: line-through; }
+.page_seller_orders .i_line_option { font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_seller_orders .i_line_qty { font-variant-numeric: tabular-nums; }
+.page_seller_orders .i_fee { display: block; font-size: var(--text-xs); white-space: nowrap; }
+.page_seller_orders .i_carrier { display: block; }
+.page_seller_orders .i_tracking { display: block; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_seller_orders .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }
+
+/* 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
+.page_seller_orders .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
+.page_seller_orders .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+.page_seller_orders .modal_dialog .i_summary dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
+.page_seller_orders .modal_dialog .i_summary dd { display: inline; color: var(--color-text-primary); }

@@ -714,3 +714,74 @@ async def confirm_payment(
         actor_role=t.ROLE_ADMIN, actor_user_id=admin_id, note=note,
     )
     await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# 판매자 주문관리·배송 처리 (Story 5.3) — 소유 검증 + 엔진 호출
+# ---------------------------------------------------------------------------
+
+
+async def list_seller_sub_orders(session: AsyncSession, seller_id: uuid.UUID, status: str, page: int) -> dict:
+    """판매자 자신의 sub_orders 목록 — 상태 필터(NULL 미결제는 자연 배제), 배송지·전 라인(취소 구분) 포함."""
+    size = get_settings().page_size
+    base = select(SubOrder).where(SubOrder.seller_id == seller_id, SubOrder.shipping_status == status)
+    total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
+    subs = list(await session.scalars(
+        base.order_by(SubOrder.created_at.desc(), SubOrder.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    orders = {o.id: o for o in await session.scalars(select(Order).where(Order.id.in_({s.order_id for s in subs})))}
+    items = list(await session.scalars(
+        select(OrderItem).where(OrderItem.sub_order_id.in_([s.id for s in subs])).order_by(OrderItem.created_at, OrderItem.id)
+    ))
+    items_by_sub: dict = {}
+    for i in items:
+        items_by_sub.setdefault(i.sub_order_id, []).append(i)
+    out = []
+    for sub in subs:
+        order = orders[sub.order_id]
+        out.append({
+            "sub_order_id": sub.id, "order_id": order.id, "order_no": _order_no(order.id),
+            "created_at": order.created_at,
+            "recipient_name": order.recipient_name, "recipient_phone": order.recipient_phone,
+            "postal_code": order.postal_code, "address1": order.address1, "address2": order.address2,
+            "order_note": order.order_note,
+            "items": [{
+                "product_name": i.product_name, "option_text": i.option_text,
+                "quantity": i.quantity, "status": i.status,  # canceled는 취소 구분 표시 (전 라인 포함)
+            } for i in items_by_sub.get(sub.id, [])],
+            "shipping_fee": sub.shipping_fee, "remote_extra_fee": sub.remote_extra_fee,
+            "shipping_status": sub.shipping_status, "carrier": sub.carrier, "tracking_number": sub.tracking_number,
+        })
+    return {"items": out, "total": total, "page": page, "size": size}
+
+
+async def _owned_sub_order(session: AsyncSession, seller_id: uuid.UUID, sub_order_id: uuid.UUID) -> SubOrder:
+    sub = await session.scalar(select(SubOrder).where(SubOrder.id == sub_order_id))
+    if sub is None:
+        raise AppError("not_found", "주문 묶음을 찾을 수 없습니다.", status_code=404)
+    if sub.seller_id != seller_id:  # epics 5.3 명시 — seller 간에는 403 (404 관례의 문언 예외)
+        raise AppError("forbidden", "다른 판매자의 주문입니다.", status_code=403)
+    return sub
+
+
+async def ship_sub_order(
+    session: AsyncSession, seller_id: uuid.UUID, user_id: uuid.UUID,
+    sub_order_id: uuid.UUID, carrier: str, tracking_number: str,
+) -> None:
+    """배송 시작 — 송장 가드·기록·이벤트는 엔진 소유 (AD-3)."""
+    await _owned_sub_order(session, seller_id, sub_order_id)
+    await transition(
+        session, layer=t.LAYER_SUB_ORDER, entity_id=sub_order_id, to_status=t.SUB_SHIPPING,
+        actor_role=t.ROLE_SELLER, actor_user_id=user_id, carrier=carrier, tracking_number=tracking_number,
+    )
+    await session.commit()
+
+
+async def deliver_sub_order(session: AsyncSession, seller_id: uuid.UUID, user_id: uuid.UUID, sub_order_id: uuid.UUID) -> None:
+    """배송 완료 — shipping→delivered."""
+    await _owned_sub_order(session, seller_id, sub_order_id)
+    await transition(
+        session, layer=t.LAYER_SUB_ORDER, entity_id=sub_order_id, to_status=t.SUB_DELIVERED,
+        actor_role=t.ROLE_SELLER, actor_user_id=user_id,
+    )
+    await session.commit()
