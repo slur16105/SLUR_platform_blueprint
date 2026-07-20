@@ -401,3 +401,41 @@ async def admin_list_products(
         s = brands.get(row.pop("seller_id"))
         row["brand_name"] = s.brand_name if s else ""
     return data
+
+
+# ---------------------------------------------------------------------------
+# 설정 (Story 5.7 — 입금 계좌만 수정, 수치는 읽기 전용)
+# ---------------------------------------------------------------------------
+
+
+class SettingItem(BaseModel):
+    key: str
+    value: str
+    description: str
+
+
+class SettingsResponse(BaseModel):
+    items: list[SettingItem]
+
+
+class DepositAccountUpdate(BaseModel):
+    value: str = Field(min_length=1, max_length=200)
+
+
+@router.get("/settings", response_model=SettingsResponse)
+async def admin_list_settings(
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """설정 조회 — deposit_account만 수정 가능, 수치는 표시용 (Slur 승인 범위)."""
+    return {"items": await orders_service.list_settings(session)}
+
+
+@router.put("/settings/deposit-account", status_code=204)
+async def admin_update_deposit_account(
+    body: DepositAccountUpdate,
+    admin_id: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """입금 계좌 갱신 — 4.4 주문 완료·5.1 입금 안내가 즉시 새 값 표시."""
+    await orders_service.update_deposit_account(session, admin_id, body.value)

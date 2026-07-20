@@ -1,0 +1,33 @@
+/* 관리자 설정 — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
+.page_admin_settings { display: flex; max-width: 720px; min-height: 100dvh; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+.page_admin_settings .p_head { display: flex; align-items: center; justify-content: space-between; }
+.page_admin_settings .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin_settings .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_settings .p_tabs { display: flex; gap: var(--space-8); }
+.page_admin_settings .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
+.page_admin_settings .alert .btn { margin-left: var(--space-8); }
+.page_admin_settings .m_muted { color: var(--color-text-muted); }
+
+/* 설정 카드 */
+.page_admin_settings .p_card { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-20); }
+.page_admin_settings .p_card .i_title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_settings .p_card .i_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_admin_settings .p_card .i_current { display: flex; gap: var(--space-8); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+.page_admin_settings .p_card .i_current dt { color: var(--color-text-muted); }
+.page_admin_settings .p_card .i_current dd { color: var(--color-text-primary); }
+.page_admin_settings .p_card .i_form { display: flex; gap: var(--space-8); }
+.page_admin_settings .p_card .i_form .input_text { flex: 1; }
+
+/* 운영 수치 (읽기 전용) */
+.page_admin_settings .p_card .i_numbers { display: flex; flex-direction: column; gap: var(--space-12); }
+.page_admin_settings .p_card .i_row { display: flex; gap: var(--space-16); align-items: baseline; }
+.page_admin_settings .p_card .i_row dt { width: 160px; flex-shrink: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+.page_admin_settings .p_card .i_row dd { display: flex; flex-direction: column; gap: var(--space-4); color: var(--color-text-primary); }
+.page_admin_settings .p_card .i_note { font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_admin_settings .p_card .i_hint { padding-top: var(--space-8); border-top: 1px solid var(--color-border-subtle); font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* 확인 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
+.page_admin_settings .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
+.page_admin_settings .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+.page_admin_settings .modal_dialog .i_summary dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
+.page_admin_settings .modal_dialog .i_summary dd { display: inline; color: var(--color-text-primary); overflow-wrap: anywhere; }

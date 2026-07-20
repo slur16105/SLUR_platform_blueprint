@@ -1039,3 +1039,26 @@ async def mark_refunded(session: AsyncSession, cancellation_id: uuid.UUID) -> No
     if result.rowcount == 0:
         raise AppError("duplicate_request", "이미 환불 완료로 기록된 건입니다.", status_code=409)
     await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# 관리자 설정 (Story 5.7) — 입금 계좌만 수정 가능 (승인 범위)
+# ---------------------------------------------------------------------------
+
+
+async def list_settings(session: AsyncSession) -> list[dict]:
+    rows = await session.scalars(select(Setting).order_by(Setting.key))
+    return [{"key": r.key, "value": r.value, "description": r.description} for r in rows]
+
+
+async def update_deposit_account(session: AsyncSession, admin_id: uuid.UUID, value: str) -> None:
+    """입금 계좌 갱신 — 이전 값을 감사 로그로 남긴다 (설정 이력 테이블은 과설계 — 5.7 결정)."""
+    value = value.strip()
+    if not value or len(value) > 200:
+        raise AppError("validation_error", "계좌 정보는 1~200자입니다.", status_code=422)
+    setting = await session.scalar(select(Setting).where(Setting.key == SETTING_DEPOSIT_ACCOUNT))
+    if setting is None:  # 시드 누락 — 배포 오류
+        raise AppError("internal_error", "서버 설정 오류입니다.", status_code=500)
+    logger.info("deposit_account 변경 by admin=%s: %r -> %r", admin_id, setting.value, value)
+    setting.value = value
+    await session.commit()
