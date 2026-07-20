@@ -4,7 +4,7 @@ baseline_commit: ed425f82da80eaa38666a87f77c374922e2443c2
 
 # Story 5.6: 관리자 조회 (회원·판매자·상품)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -77,3 +77,17 @@ Claude Fable 5 (claude-fable-5) — Next.js는 병렬 서브에이전트
 - apps/web/app/admin/lookup/{page.tsx,lookup.css} (신규)
 - apps/web/app/admin/orders/page.tsx (수정 — ?q= 초기값+Suspense)
 - apps/web/app/admin/page.tsx (수정 — 조회 링크)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — 통합. Acceptance 위반 없음. 0 decision-needed · 6 patch · 1 defer · 4 dismiss.**
+
+- [x] [Review][Patch] 소셜 계정(email 빈값) "주문 이력" 링크 → 전체 목록 오인 — 링크 숨김 + "(소셜 계정)" 표기
+- [x] [Review][Patch] 구매자 역할 빈칸 — roles 빈 배열이면 "구매자" 기본 뱃지 (구매자는 role 행 없음 — 표기 결정 기록)
+- [x] [Review][Patch] 판매자 placeholder 과대(대표자·사업자번호 미검색) — 실범위로 정정
+- [x] [Review][Patch] 401·페이징 경계 테스트 부재(체크 과대) — 보강
+- [x] [Review][Patch] 빈 페이지에도 배치 쿼리 실행 — 가드
+- [x] [Review][Patch] product_count 기준 미명시 — hidden 포함 전 상태 집계임을 여기 기록 (구매자 노출 수와 다를 수 있음)
+- [x] [Review][Defer] 검색 선해결 LIMIT 200 절단 무신호 — v1 큐레이션 규모 무해. 대량화 시 "검색어를 좁혀주세요" 응답 신호 추가 (블루프린트)
+- [x] [Review][Dismiss] FastAPI 기본 422 이원화 주장 — 전역 RequestValidationError 핸들러가 봉투로 변환(1.1 검증). category stale·q 범위 밖 무시·N+1 정합은 실해 없음
+- 최종: 147/147, tsc 0

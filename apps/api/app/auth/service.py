@@ -230,7 +230,7 @@ async def list_users(session: AsyncSession, q: str | None, page: int, size: int)
     users = list(await session.scalars(
         base.order_by(User.created_at.desc(), User.id.desc()).offset((page - 1) * size).limit(size)
     ))
-    role_rows = (await session.execute(
+    role_rows = [] if not users else (await session.execute(
         select(UserRole.user_id, UserRole.role).where(UserRole.user_id.in_([u.id for u in users]))
     )).all()
     roles_by_user: dict = {}

@@ -418,7 +418,7 @@ async def list_products_admin(
     products = list(await session.scalars(
         base.order_by(Product.created_at.desc(), Product.id.desc()).offset((page - 1) * size).limit(size)
     ))
-    stock_rows = (await session.execute(
+    stock_rows = [] if not products else (await session.execute(
         select(Variant.product_id, func.coalesce(func.sum(Variant.stock), 0))
         .where(Variant.product_id.in_([p.id for p in products])).group_by(Variant.product_id)
     )).all()

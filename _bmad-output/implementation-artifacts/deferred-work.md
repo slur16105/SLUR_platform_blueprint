@@ -67,3 +67,7 @@
 ## Deferred from: code review of 5-4-seller-dashboard (2026-07-20)
 
 - **threshold=0 운영 시 "품절 임박" 카드 의미 붕괴 + 품절(0)/임박(1~n) 미구분 표기** — v1 시드 5 고정이라 무해. 5.7 설정 화면 또는 운영 피드백 시 정책 결정
+
+## Deferred from: code review of 5-6-admin-lookup (2026-07-20)
+
+- **검색 선해결(user/seller) LIMIT 200 절단 무신호** — v1 규모 무해. 대량화 시 절단 시 안내 응답 추가 (블루프린트)

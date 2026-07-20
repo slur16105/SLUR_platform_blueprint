@@ -65,7 +65,7 @@ const PRODUCT_STATUS_BADGE: Record<ProductStatus, string> = { active: "m_success
 
 const SEARCH_PLACEHOLDER: Record<Tab, string> = {
   users: "이메일·이름 (2자 이상)",
-  sellers: "브랜드·상호·대표자·사업자번호 (2자 이상)",
+  sellers: "브랜드·상호 (2자 이상)",
   products: "상품명·브랜드 (2자 이상)",
 };
 
@@ -226,10 +226,12 @@ export default function AdminLookup() {
               <tbody>
                 {(items as UserRow[]).map((u) => (
                   <tr key={u.id}>
-                    <td><span className="i_email">{u.email}</span></td>
+                    <td>{u.email ? <span className="i_email">{u.email}</span> : <span className="m_muted">(소셜 계정)</span>}</td>
                     <td>{u.name}</td>
                     <td>
                       <div className="i_roles">
+                        {/* 구매자는 별도 role 행이 없음 — 빈 배열이면 기본 뱃지로 표기 */}
+                        {u.roles.length === 0 && <span className="badge m_small">구매자</span>}
                         {u.roles.map((r) => (
                           <span key={r} className={`badge m_small ${ROLE_BADGE[r] ?? ""}`.trim()}>{ROLE_LABEL[r] ?? r}</span>
                         ))}
@@ -237,7 +239,8 @@ export default function AdminLookup() {
                     </td>
                     <td className="m_muted">{formatDateTime(u.created_at)}</td>
                     <td className="m_num">
-                      <a className="btn m_small m_ghost" href={`/admin/orders?q=${encodeURIComponent(u.email)}`}>주문 이력</a>
+                      {/* 이메일 없는 계정은 링크 숨김 — 빈 q가 전체 주문 목록으로 이어져 오인되는 것 방지 */}
+                      {u.email && <a className="btn m_small m_ghost" href={`/admin/orders?q=${encodeURIComponent(u.email)}`}>주문 이력</a>}
                     </td>
                   </tr>
                 ))}

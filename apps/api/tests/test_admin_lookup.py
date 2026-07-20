@@ -19,7 +19,12 @@ async def test_lookup_users(client, clean_products):
     bt = await _buyer(client)
     admin_t = await _admin_login(client)
 
+    assert (await client.get(USERS)).status_code == 401
     assert (await client.get(USERS, headers=_auth(bt))).status_code == 403
+    assert (await client.get(USERS, params={"page": 0}, headers=_auth(admin_t))).status_code == 422
+    assert (await client.get(USERS, params={"page": 10001}, headers=_auth(admin_t))).status_code == 422
+    body_all = (await client.get(USERS, headers=_auth(admin_t))).json()
+    assert body_all["size"] >= 1 and body_all["page"] == 1
     body = (await client.get(USERS, params={"q": "buyer@"}, headers=_auth(admin_t))).json()
     assert body["total"] == 1
     row = body["items"][0]
