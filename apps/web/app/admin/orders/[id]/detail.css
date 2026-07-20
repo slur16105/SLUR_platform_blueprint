@@ -1,0 +1,67 @@
+/* 관리자 주문 상세 (개입) — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
+.page_admin_order_detail { display: flex; max-width: 880px; min-height: 100dvh; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+.page_admin_order_detail .p_head { display: flex; align-items: center; justify-content: space-between; }
+.page_admin_order_detail .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin_order_detail .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_order_detail .p_loading { padding: var(--space-16); color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+
+/* 섹션 카드 공통 */
+.page_admin_order_detail .card { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
+.page_admin_order_detail .card > .i_title { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-secondary); }
+.page_admin_order_detail .i_meta { display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--text-sm); }
+.page_admin_order_detail .i_meta dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
+.page_admin_order_detail .i_meta dd { display: inline; color: var(--color-text-primary); }
+
+/* 헤더 카드 */
+.page_admin_order_detail .p_summary .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); }
+.page_admin_order_detail .i_order { display: flex; align-items: baseline; gap: var(--space-8); }
+.page_admin_order_detail .i_order_no { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--color-text-primary); }
+.page_admin_order_detail .i_uuid { display: inline-block; padding: 0; border: none; background: transparent; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+.page_admin_order_detail .i_uuid:hover { color: var(--color-text-brand); text-decoration: underline; }
+.page_admin_order_detail .p_summary .i_actions { display: flex; justify-content: flex-end; }
+
+/* 묶음 카드 */
+.page_admin_order_detail .p_sub .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; }
+.page_admin_order_detail .i_brand_wrap { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin_order_detail .i_brand { font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_order_detail .i_head_side { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin_order_detail .i_tracking { font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_admin_order_detail .i_lines { display: flex; flex-direction: column; gap: var(--space-8); list-style: none; }
+.page_admin_order_detail .i_line { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-8) 0; border-bottom: 1px solid var(--color-border-subtle); }
+.page_admin_order_detail .i_line:last-child { border-bottom: none; }
+.page_admin_order_detail .i_line_main { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; font-size: var(--text-sm); }
+.page_admin_order_detail .i_line[data-state="canceled"] .i_line_name,
+.page_admin_order_detail .i_line[data-state="canceled"] .i_line_option,
+.page_admin_order_detail .i_line[data-state="canceled"] .i_line_qty,
+.page_admin_order_detail .i_line[data-state="canceled"] .i_line_total { color: var(--color-text-muted); text-decoration: line-through; }
+.page_admin_order_detail .i_line_name { color: var(--color-text-primary); font-weight: var(--weight-medium); }
+.page_admin_order_detail .i_line_option { font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_admin_order_detail .i_line_qty { font-variant-numeric: tabular-nums; }
+.page_admin_order_detail .i_line_total { margin-left: auto; font-variant-numeric: tabular-nums; }
+.page_admin_order_detail .m_line_cancel { flex: none; }
+.page_admin_order_detail .i_cancel_info { display: flex; align-items: center; gap: var(--space-8); padding: var(--space-8) var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-xs); color: var(--color-text-secondary); flex-wrap: wrap; }
+.page_admin_order_detail .i_refunded { color: var(--color-success); font-weight: var(--weight-medium); }
+.page_admin_order_detail .i_fees { display: flex; gap: var(--space-8); justify-content: flex-end; font-size: var(--text-xs); color: var(--color-text-secondary); }
+
+/* 금액 요약 */
+.page_admin_order_detail .p_amounts .i_rows { display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--text-sm); }
+.page_admin_order_detail .p_amounts .i_rows > div { display: flex; justify-content: space-between; }
+.page_admin_order_detail .p_amounts dt { color: var(--color-text-muted); }
+.page_admin_order_detail .p_amounts dd { font-variant-numeric: tabular-nums; color: var(--color-text-primary); }
+.page_admin_order_detail .p_amounts .m_total { padding-top: var(--space-8); border-top: 1px solid var(--color-border-subtle); font-weight: var(--weight-semibold); }
+.page_admin_order_detail .p_amounts .m_total dt { color: var(--color-text-primary); }
+
+/* 타임라인 */
+.page_admin_order_detail .p_timeline .i_empty { font-size: var(--text-sm); color: var(--color-text-muted); }
+.page_admin_order_detail .i_events { display: flex; flex-direction: column; gap: var(--space-8); list-style: none; }
+.page_admin_order_detail .i_event { display: flex; align-items: center; gap: var(--space-8); font-size: var(--text-sm); flex-wrap: wrap; }
+.page_admin_order_detail .i_event_time { font-variant-numeric: tabular-nums; font-size: var(--text-xs); color: var(--color-text-muted); flex: none; }
+.page_admin_order_detail .i_event_move { color: var(--color-text-primary); }
+.page_admin_order_detail .i_event_actor { font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_admin_order_detail .i_event_note { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* 액션 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
+.page_admin_order_detail .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
+.page_admin_order_detail .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+.page_admin_order_detail .modal_dialog .i_summary dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
+.page_admin_order_detail .modal_dialog .i_summary dd { display: inline; color: var(--color-text-primary); }

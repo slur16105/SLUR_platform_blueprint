@@ -141,3 +141,9 @@ async def get_sellers_by_ids(session: AsyncSession, seller_ids: list[uuid.UUID])
         return {}
     rows = await session.scalars(select(Seller).where(Seller.id.in_(seller_ids)))
     return {s.id: s for s in rows}
+
+
+async def find_seller_ids_by_brand(session: AsyncSession, q: str) -> list[uuid.UUID]:
+    """브랜드명 부분 일치 seller id — admin 주문 검색 선해결용 (AD-2)."""
+    rows = await session.scalars(select(Seller.id).where(Seller.brand_name.ilike(f"%{q}%")))
+    return list(rows)

@@ -620,6 +620,11 @@ async def get_my_order(session: AsyncSession, user_id: uuid.UUID, order_id: uuid
     order = await session.scalar(select(Order).where(Order.id == order_id, Order.user_id == user_id))
     if order is None:  # 타인·미존재 구분 없이 404
         raise AppError("not_found", "주문을 찾을 수 없습니다.", status_code=404)
+    return await _order_detail_view(session, order)
+
+
+async def _order_detail_view(session: AsyncSession, order, *, admin: bool = False) -> dict:
+    """주문 상세 뷰 조립 — 5.1 구매자·5.5 관리자 공용. admin이면 라인 id·취소 기록 포함."""
     subs_by_order, items_by_sub, brand = await _order_view_rows(session, [order.id])
     subs = subs_by_order.get(order.id, [])
     sub_views = []
@@ -634,6 +639,7 @@ async def get_my_order(session: AsyncSession, user_id: uuid.UUID, order_id: uuid
             "shipping_fee": sub.shipping_fee, "remote_extra_fee": sub.remote_extra_fee,
             "cancellable": bool(active) and sub.shipping_status is None,  # 4.6 가드와 동치 — 서버 파생 (AD-12)
             "items": [{
+                **({"order_item_id": i.id} if admin else {}),
                 "product_name": i.product_name, "option_text": i.option_text,
                 "unit_price": i.unit_price, "extra_price": i.extra_price, "quantity": i.quantity,
                 "line_total": (i.unit_price + i.extra_price) * i.quantity, "status": i.status,
@@ -806,3 +812,219 @@ async def seller_shipping_counts(session: AsyncSession, seller_id: uuid.UUID) ->
     )).all()
     counts = dict(rows)
     return {"preparing_count": counts.get(t.SUB_PREPARING, 0), "shipping_count": counts.get(t.SUB_SHIPPING, 0)}
+
+
+# ---------------------------------------------------------------------------
+# 관리자 주문 개입 (Story 5.5) — 검색·상세·개입 전부 엔진 조합
+# ---------------------------------------------------------------------------
+
+_STATUS_KEYS = ("awaiting_payment", "preparing", "shipping", "delivered", "canceled")
+
+
+def _has_ordered_sq(order_col):
+    """주문 전체에 ordered 라인 존재 (5.5 매핑 표 has_ordered)."""
+    return exists().where(
+        SubOrder.order_id == order_col,
+        OrderItem.sub_order_id == SubOrder.id,
+        OrderItem.status == t.ITEM_ORDERED,
+    )
+
+
+def _active_sub_sq(order_col, *shipping_conds):
+    """활성 라인이 있는 sub 중 조건 일치 존재 (5.5 매핑 표 active_sub)."""
+    return exists().where(
+        SubOrder.order_id == order_col,
+        exists().where(OrderItem.sub_order_id == SubOrder.id, OrderItem.status == t.ITEM_ORDERED),
+        *shipping_conds,
+    )
+
+
+async def search_orders(
+    session: AsyncSession, *, q: str | None, status: str | None, page: int,
+    user_ids: list[uuid.UUID] | None, seller_ids: list[uuid.UUID] | None,
+) -> dict:
+    """관리자 전체 주문 검색 — 파생 status는 SQL 동치 매핑 (5.1 파생 표 대조 테스트로 봉인).
+
+    구매자(user_ids)·브랜드(seller_ids) 매칭은 admin 라우터가 auth·sellers service로 선해결 (AD-2 — 모델 직접 import 금지).
+    """
+    from sqlalchemy import String as SaString, cast, or_
+
+    size = get_settings().page_size
+    base = select(Order)
+    if q:
+        conds = []
+        try:
+            conds.append(Order.id == uuid.UUID(q))
+        except ValueError:
+            # 8자 suffix (무인덱스 캐스트 — v1 규모 seq scan 허용)
+            conds.append(func.upper(func.right(func.replace(cast(Order.id, SaString), "-", ""), 8)) == q.upper())
+        if user_ids:
+            conds.append(Order.user_id.in_(user_ids))
+        if seller_ids:
+            conds.append(exists().where(SubOrder.order_id == Order.id, SubOrder.seller_id.in_(seller_ids)))
+        base = base.where(or_(*conds))
+    if status:
+        has_ordered = _has_ordered_sq(Order.id)
+        if status == "canceled":
+            base = base.where(or_(Order.payment_status == t.ORDER_CANCELED, ~has_ordered))
+        elif status == "awaiting_payment":
+            base = base.where(Order.payment_status == t.ORDER_PENDING_PAYMENT, has_ordered)
+        elif status == "shipping":
+            base = base.where(
+                Order.payment_status == t.ORDER_PAID, has_ordered,
+                _active_sub_sq(Order.id, SubOrder.shipping_status == t.SUB_SHIPPING),
+            )
+        elif status == "delivered":
+            base = base.where(
+                Order.payment_status == t.ORDER_PAID, has_ordered,
+                ~_active_sub_sq(Order.id, SubOrder.shipping_status.notin_([t.SUB_DELIVERED, t.SUB_CONFIRMED])),
+            )
+        elif status == "preparing":
+            base = base.where(
+                Order.payment_status == t.ORDER_PAID, has_ordered,
+                ~_active_sub_sq(Order.id, SubOrder.shipping_status == t.SUB_SHIPPING),
+                _active_sub_sq(Order.id, SubOrder.shipping_status.notin_([t.SUB_DELIVERED, t.SUB_CONFIRMED])),
+            )
+    total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
+    orders = list(await session.scalars(
+        base.order_by(Order.created_at.desc(), Order.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    subs_by_order, items_by_sub, brand = await _order_view_rows(session, [o.id for o in orders])
+    out = []
+    for order in orders:
+        subs = subs_by_order.get(order.id, [])
+        sub_views = [{
+            "brand_name": brand.get(sub.seller_id, ""),
+            "display_status": derive_sub_status(
+                order.payment_status, sub.shipping_status,
+                any(i.status == t.ITEM_ORDERED for i in items_by_sub.get(sub.id, [])),
+            ),
+        } for sub in subs]
+        _, _, grand = _display_amounts(subs, items_by_sub)
+        out.append({
+            "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
+            "user_id": order.user_id,  # buyer enrich는 라우터 층
+            "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
+            "grand_total": grand, "sub_orders": sub_views,
+        })
+    return {"items": out, "total": total, "page": page, "size": size}
+
+
+async def admin_get_order(session: AsyncSession, order_id: uuid.UUID) -> dict:
+    """관리자 상세 — 소유 검증 없음 + 라인 id·취소 기록·이벤트 타임라인."""
+    order = await session.scalar(select(Order).where(Order.id == order_id))
+    if order is None:
+        raise AppError("not_found", "주문을 찾을 수 없습니다.", status_code=404)
+    view = await _order_detail_view(session, order, admin=True)
+    view["user_id"] = order.user_id  # buyer enrich는 라우터 층
+
+    item_ids = [i["order_item_id"] for sv in view["sub_orders"] for i in sv["items"]]
+    cans = {c.order_item_id: c for c in await session.scalars(
+        select(Cancellation).where(Cancellation.order_item_id.in_(item_ids))
+    )}
+    for sv in view["sub_orders"]:
+        for i in sv["items"]:
+            c = cans.get(i["order_item_id"])
+            i["cancellation"] = None if c is None else {
+                "cancellation_id": c.id, "reason": c.reason, "responsibility": c.responsibility,
+                "canceled_at": c.canceled_at, "refunded_at": c.refunded_at,
+            }
+    view["events"] = [{
+        "created_at": e.created_at, "entity_type": e.entity_type,
+        "from_status": e.from_status, "to_status": e.to_status,
+        "actor_role": e.actor_role, "note": e.note,
+    } for e in await session.scalars(
+        select(OrderEvent).where(OrderEvent.order_id == order_id).order_by(OrderEvent.created_at, OrderEvent.id)
+    )]
+    return view
+
+
+async def _cancel_order_lines_then_order(
+    session: AsyncSession, order_id: uuid.UUID, *, actor_role: str, actor_user_id: uuid.UUID | None,
+    reason: str, responsibility: str, note: str,
+) -> int:
+    """전 ordered 라인 취소 + (pending이면) order 전이 — 4.5 패턴의 admin 변형. commit은 호출자."""
+    order = await _locked(session, Order, order_id)
+    if order.payment_status != t.ORDER_PENDING_PAYMENT:
+        raise AppError("invalid_transition", "입금대기 주문만 전체 취소할 수 있습니다.", status_code=422)
+    rows = (await session.execute(
+        select(OrderItem.id, OrderItem.variant_id)
+        .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
+        .where(SubOrder.order_id == order_id, OrderItem.status == t.ITEM_ORDERED)
+    )).all()
+    if not rows:
+        raise AppError("invalid_transition", "이미 취소된 주문입니다.", status_code=422)
+    for item_id in [iid for iid, _v in sorted(rows, key=lambda r: str(r[1]))]:
+        await cancel_order_item(
+            session, order_item_id=item_id, actor_role=actor_role, actor_user_id=actor_user_id,
+            reason=reason, responsibility=responsibility, note=note,
+        )
+    await transition(
+        session, layer=t.LAYER_ORDER, entity_id=order_id, to_status=t.ORDER_CANCELED,
+        actor_role=actor_role, actor_user_id=actor_user_id, note=note,
+    )
+    return len(rows)
+
+
+async def admin_cancel_order(
+    session: AsyncSession, admin_id: uuid.UUID, order_id: uuid.UUID, reason: str, responsibility: str, note: str,
+) -> int:
+    n = await _cancel_order_lines_then_order(
+        session, order_id, actor_role=t.ROLE_ADMIN, actor_user_id=admin_id,
+        reason=reason, responsibility=responsibility, note=note,
+    )
+    await session.commit()
+    return n
+
+
+async def admin_cancel_item(
+    session: AsyncSession, admin_id: uuid.UUID, order_item_id: uuid.UUID,
+    reason: str, responsibility: str, note: str,
+) -> dict:
+    """라인 취소 (admin — 배송 후에도 가능) + 4.6 후속 정합: 전-취소 pending 주문은 order도 canceled."""
+    item = await cancel_order_item(
+        session, order_item_id=order_item_id, actor_role=t.ROLE_ADMIN, actor_user_id=admin_id,
+        reason=reason, responsibility=responsibility, note=note,
+    )
+    sub = await session.get(SubOrder, item.sub_order_id)
+    order = await session.get(Order, sub.order_id)
+    order_canceled = False
+    remaining = await session.scalar(select(_has_ordered_sq(order.id)))
+    if not remaining and order.payment_status == t.ORDER_PENDING_PAYMENT:  # 5.2 유령 방지
+        await transition(
+            session, layer=t.LAYER_ORDER, entity_id=order.id, to_status=t.ORDER_CANCELED,
+            actor_role=t.ROLE_ADMIN, actor_user_id=admin_id, note=note,
+        )
+        order_canceled = True
+    await session.commit()
+    return {"order_canceled": order_canceled}
+
+
+async def admin_transition_sub_order(
+    session: AsyncSession, admin_id: uuid.UUID, sub_order_id: uuid.UUID, to_status: str,
+    carrier: str | None, tracking_number: str | None, note: str,
+) -> None:
+    """관리자 강제 배송 전이 — 전이표 내에서만 (송장·전-취소 가드는 엔진, admin 예외 없음)."""
+    await transition(
+        session, layer=t.LAYER_SUB_ORDER, entity_id=sub_order_id, to_status=to_status,
+        actor_role=t.ROLE_ADMIN, actor_user_id=admin_id, note=note,
+        carrier=carrier, tracking_number=tracking_number,
+    )
+    await session.commit()
+
+
+async def mark_refunded(session: AsyncSession, cancellation_id: uuid.UUID) -> None:
+    """환불 완료 시각 기록 — 조건부 UPDATE (동시 중복 안전). AD-6 분리 기록의 이행."""
+    from sqlalchemy import update as sa_update
+
+    exists_row = await session.scalar(select(func.count()).select_from(Cancellation).where(Cancellation.id == cancellation_id))
+    if not exists_row:
+        raise AppError("not_found", "취소 기록을 찾을 수 없습니다.", status_code=404)
+    result = await session.execute(
+        sa_update(Cancellation)
+        .where(Cancellation.id == cancellation_id, Cancellation.refunded_at.is_(None))
+        .values(refunded_at=func.now())
+    )
+    if result.rowcount == 0:
+        raise AppError("duplicate_request", "이미 환불 완료로 기록된 건입니다.", status_code=409)
+    await session.commit()

@@ -205,3 +205,11 @@ async def get_users_by_ids(session: AsyncSession, user_ids: list[uuid.UUID]) -> 
         return {}
     rows = await session.scalars(select(User).where(User.id.in_(user_ids)))
     return {u.id: u for u in rows}
+
+
+async def find_user_ids_by_name_or_email(session: AsyncSession, q: str) -> list[uuid.UUID]:
+    """이름·이메일 부분 일치 user id — admin 주문 검색 선해결용 (AD-2)."""
+    rows = await session.scalars(
+        select(User.id).where((User.name.ilike(f"%{q}%")) | (User.email.ilike(f"%{q}%")))
+    )
+    return list(rows)

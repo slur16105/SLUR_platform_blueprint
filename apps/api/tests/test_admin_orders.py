@@ -1,0 +1,191 @@
+"""관리자 주문 개입 테스트 (Story 5.5)."""
+
+import uuid as u
+
+import pytest
+from sqlalchemy import select
+
+from app.orders.models import Cancellation, Order, OrderItem, SubOrder
+from tests.test_carts import _buyer, _shop
+from tests.test_order_creation import ADDRESS, _cart_ids, _expected, _fees
+from tests.test_products import clean_products  # noqa: F401
+from tests.test_seller_application import _auth
+from tests.test_seller_orders import _admin_login, _paid_order
+
+SEARCH = "/api/v1/admin/orders"
+
+
+async def _order(client, bt, vs, idx=0, qty=1) -> tuple[str, str, str]:
+    from app.core.db import async_session_factory
+
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[idx]["id"], "quantity": qty}, headers=_auth(bt))
+    ids = await _cart_ids(client, bt)
+    res = await client.post(
+        "/api/v1/orders",
+        json={"cart_item_ids": ids, "expected_grand_total": await _expected(client, bt), **ADDRESS}, headers=_auth(bt),
+    )
+    oid = res.json()["order_id"]
+    from sqlalchemy import select as sel
+
+    async with async_session_factory() as session:
+        sid = str(await session.scalar(sel(SubOrder.id).where(SubOrder.order_id == u.UUID(oid))))
+        item_id = str(await session.scalar(sel(OrderItem.id).where(OrderItem.sub_order_id == u.UUID(sid))))
+    return oid, sid, item_id
+
+
+@pytest.mark.asyncio
+async def test_search_and_status_filters(client, clean_products):
+    """AC 1: 주문번호 8자·이메일·브랜드 검색, status 필터가 display_status와 동치."""
+    st, pid, vs = await _shop(client, stock=19)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+
+    o_pending, _, _ = await _order(client, bt, vs, idx=0)
+    o_paid, s_paid = await _paid_order(client, bt, admin_t, vs)  # preparing
+    o_ship, s_ship = await _paid_order(client, bt, admin_t, vs)
+    await client.post(f"/api/v1/sellers/sub-orders/{s_ship}/ship",
+                      json={"carrier": "CJ", "tracking_number": "1"}, headers=_auth(st))
+    o_cancel, s_cancel, _ = await _order(client, bt, vs, idx=1)
+    await client.post(f"/api/v1/orders/sub-orders/{s_cancel}/cancel", headers=_auth(bt))
+
+    assert (await client.get(SEARCH, headers=_auth(bt))).status_code == 403
+
+    # 검색: 주문번호 8자
+    no8 = o_pending.replace("-", "")[-8:].upper()
+    body = (await client.get(SEARCH, params={"q": no8}, headers=_auth(admin_t))).json()
+    assert [r["order_id"] for r in body["items"]] == [o_pending]
+    # 전체 UUID
+    body = (await client.get(SEARCH, params={"q": o_paid}, headers=_auth(admin_t))).json()
+    assert [r["order_id"] for r in body["items"]] == [o_paid]
+    # 이메일 부분 일치
+    body = (await client.get(SEARCH, params={"q": "buyer@"}, headers=_auth(admin_t))).json()
+    assert body["total"] == 4
+    # 브랜드 부분 일치 (_shop 브랜드)
+    brand_q = body["items"][0]["sub_orders"][0]["brand_name"][:2]
+    assert (await client.get(SEARCH, params={"q": brand_q}, headers=_auth(admin_t))).json()["total"] >= 1
+    # q 1자 422
+    assert (await client.get(SEARCH, params={"q": "a"}, headers=_auth(admin_t))).status_code == 422
+
+    # status 필터 — 결과의 display_status가 전부 필터 값과 일치 + 기대 주문 포함
+    for status, expect_oid in [
+        ("awaiting_payment", o_pending), ("preparing", o_paid), ("shipping", o_ship), ("canceled", o_cancel),
+    ]:
+        body = (await client.get(SEARCH, params={"status": status}, headers=_auth(admin_t))).json()
+        assert all(r["display_status"] == status for r in body["items"]), status
+        assert expect_oid in [r["order_id"] for r in body["items"]], status
+
+
+@pytest.mark.asyncio
+async def test_paid_fully_canceled_maps_to_canceled_filter(client, clean_products):
+    """매핑 표 핵심 케이스: paid 후 전 라인 취소(admin) — canceled 필터·display 정합, delivered 오검색 없음."""
+    st, pid, vs = await _shop(client, stock=9)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+    oid, sid, item_id = await _order(client, bt, vs)
+    exp = (await client.get(f"/api/v1/orders/{oid}", headers=_auth(bt))).json()["grand_total"]
+    await client.post(f"/api/v1/admin/orders/{oid}/confirm-payment",
+                      json={"expected_grand_total": exp}, headers=_auth(admin_t))
+
+    r = await client.post(f"/api/v1/admin/order-items/{item_id}/cancel",
+                          json={"reason": "판매자 품절", "responsibility": "seller"}, headers=_auth(admin_t))
+    assert r.status_code == 200 and r.json()["order_canceled"] is False  # paid — order 층 전이 없음
+
+    body = (await client.get(SEARCH, params={"status": "canceled"}, headers=_auth(admin_t))).json()
+    assert oid in [x["order_id"] for x in body["items"]]
+    body = (await client.get(SEARCH, params={"status": "delivered"}, headers=_auth(admin_t))).json()
+    assert oid not in [x["order_id"] for x in body["items"]]  # 공진리 오검색 방지
+
+
+@pytest.mark.asyncio
+async def test_admin_detail_and_interventions(client, clean_products):
+    """AC 1~4: 상세(타임라인·취소기록) / pending 전체 취소 / delivered 후 라인 취소 / refunded 중복."""
+    from app.core.db import async_session_factory
+
+    st, pid, vs = await _shop(client, stock=19)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+
+    # pending 전체 취소 — 복원·order canceled·이벤트
+    oid, sid, item_id = await _order(client, bt, vs, qty=2)
+    r = await client.post(f"/api/v1/admin/orders/{oid}/cancel",
+                          json={"reason": "구매자 요청 대행", "responsibility": "buyer"}, headers=_auth(admin_t))
+    assert r.status_code == 200 and r.json()["canceled_items"] == 1
+    d = (await client.get(f"/api/v1/admin/orders/{oid}", headers=_auth(admin_t))).json()
+    assert d["display_status"] == "canceled" and d["buyer_email"] == "buyer@example.com"
+    line = d["sub_orders"][0]["items"][0]
+    assert line["cancellation"]["responsibility"] == "buyer" and line["cancellation"]["refunded_at"] is None
+    kinds = [(e["entity_type"], e["to_status"], e["actor_role"]) for e in d["events"]]
+    assert ("order", "canceled", "admin") in kinds and ("order_item", "canceled", "admin") in kinds
+    # 재취소 422
+    assert (await client.post(f"/api/v1/admin/orders/{oid}/cancel",
+                              json={"reason": "x", "responsibility": "admin"}, headers=_auth(admin_t))).status_code == 422
+
+    # delivered 후 라인 취소 (admin 타이밍 예외) + 재고 복원
+    oid2, sid2 = await _paid_order(client, bt, admin_t, vs)
+    await client.post(f"/api/v1/sellers/sub-orders/{sid2}/ship",
+                      json={"carrier": "CJ", "tracking_number": "9"}, headers=_auth(st))
+    await client.post(f"/api/v1/sellers/sub-orders/{sid2}/deliver", headers=_auth(st))
+    from sqlalchemy import text
+
+    from app.core.db import engine
+
+    async with engine.begin() as conn:
+        before = (await conn.execute(text("SELECT stock FROM variants WHERE id = :v"), {"v": vs[0]["id"]})).scalar_one()
+        item2_id = (await conn.execute(text(
+            "SELECT id FROM order_items WHERE sub_order_id = :s"), {"s": sid2})).scalar_one()
+    r = await client.post(f"/api/v1/admin/order-items/{item2_id}/cancel",
+                          json={"reason": "배송 후 환불", "responsibility": "admin"}, headers=_auth(admin_t))
+    assert r.status_code == 200
+    async with engine.begin() as conn:
+        after = (await conn.execute(text("SELECT stock FROM variants WHERE id = :v"), {"v": vs[0]["id"]})).scalar_one()
+    assert after == before + 1  # 복원
+
+    # refunded 기록 + 중복 409
+    async with async_session_factory() as session:
+        can_id = str(await session.scalar(select(Cancellation.id).where(Cancellation.order_item_id == item2_id)))
+    assert (await client.post(f"/api/v1/admin/cancellations/{can_id}/refunded", headers=_auth(admin_t))).status_code == 204
+    r = await client.post(f"/api/v1/admin/cancellations/{can_id}/refunded", headers=_auth(admin_t))
+    assert r.status_code == 409 and r.json()["code"] == "duplicate_request"
+    assert (await client.post(f"/api/v1/admin/cancellations/{u.uuid4()}/refunded", headers=_auth(admin_t))).status_code == 404
+    d2 = (await client.get(f"/api/v1/admin/orders/{oid2}", headers=_auth(admin_t))).json()
+    assert d2["sub_orders"][0]["items"][0]["cancellation"]["refunded_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_admin_sub_transition_and_guards(client, clean_products):
+    """강제 전이 — 송장 없이 422·전-취소 묶음 422(admin도 가드)·정의 밖 전이 422·pending 마지막 라인 취소 정합."""
+    st, pid, vs = await _shop(client, stock=19)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+    oid, sid = await _paid_order(client, bt, admin_t, vs)
+    from app.core.db import async_session_factory as _asf
+
+    async with _asf() as session:
+        item_id = str(await session.scalar(select(OrderItem.id).where(OrderItem.sub_order_id == u.UUID(sid))))
+
+    # 송장 없이 shipping 422
+    r = await client.post(f"/api/v1/admin/sub-orders/{sid}/transition",
+                          json={"to_status": "shipping"}, headers=_auth(admin_t))
+    assert r.status_code == 422
+    # 정의 밖 전이 (preparing→delivered) 422
+    r = await client.post(f"/api/v1/admin/sub-orders/{sid}/transition",
+                          json={"to_status": "delivered"}, headers=_auth(admin_t))
+    assert r.status_code == 422
+    # 전-취소 묶음 shipping 422 (admin도 가드)
+    await client.post(f"/api/v1/admin/order-items/{item_id}/cancel",
+                      json={"reason": "품절", "responsibility": "seller"}, headers=_auth(admin_t))
+    r = await client.post(f"/api/v1/admin/sub-orders/{sid}/transition",
+                          json={"to_status": "shipping", "carrier": "CJ", "tracking_number": "1"}, headers=_auth(admin_t))
+    assert r.status_code == 422 and "취소" in r.json()["message"]
+
+    # pending 마지막 라인 취소 → order 자동 canceled (5.2 유령 방지)
+    oid2, sid2, item2 = await _order(client, bt, vs, idx=1)
+    r = await client.post(f"/api/v1/admin/order-items/{item2}/cancel",
+                          json={"reason": "요청", "responsibility": "buyer"}, headers=_auth(admin_t))
+    assert r.status_code == 200 and r.json()["order_canceled"] is True
+    body = (await client.get("/api/v1/admin/orders/pending", headers=_auth(admin_t))).json()
+    assert oid2 not in [x["order_id"] for x in body["items"]]  # 입금대기 목록에서 사라짐
