@@ -335,3 +335,11 @@ def variant_option_text(variant: Variant) -> str:
         for name, value in ((variant.option1_name, variant.option1_value), (variant.option2_name, variant.option2_value))
         if value
     )
+
+
+async def restore_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -> None:
+    """취소 확정 트랜잭션 안에서 orders 전이 경로만 호출한다 (AD-4 — 재고 증감의 유일한 소유자).
+
+    복원은 증가라 조건절이 불필요한 원자적 UPDATE. 차감(주문 생성)은 stock >= n 조건부 UPDATE — 4.4.
+    """
+    await session.execute(update(Variant).where(Variant.id == variant_id).values(stock=Variant.stock + qty))

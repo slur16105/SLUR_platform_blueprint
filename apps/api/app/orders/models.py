@@ -120,3 +120,49 @@ class Setting(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
+
+
+class OrderEvent(Base):
+    """전이 감사 로그 (AD-3: 세 층 모든 전이 성공 기록). Slur 승인 2026-07-20."""
+
+    __tablename__ = "order_events"
+    __table_args__ = (
+        CheckConstraint("entity_type IN ('order', 'sub_order', 'order_item')", name="ck_order_events_entity_type"),
+        CheckConstraint("actor_role IN ('buyer', 'seller', 'admin', 'system')", name="ck_order_events_actor_role"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True  # 주문 타임라인 조회
+    )
+    entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)  # 3층 폴리모픽 — 층별 FK 분리는 과설계
+    from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # sub_order NULL→preparing 진입 표현
+    to_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    actor_role: Mapped[str] = mapped_column(String(10), nullable=False)
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True  # system은 NULL, 탈퇴 이력 보존
+    )
+    note: Mapped[str] = mapped_column(String(500), nullable=False, default="")  # 관리자 메모 (FR-29)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class Cancellation(Base):
+    """취소 기록 (AD-6: 사유·귀책·취소 시각·환불 완료 시각 분리). 라인당 1회는 UNIQUE가 강제 — 재고 복원 중복의 DB 방어."""
+
+    __tablename__ = "cancellations"
+    __table_args__ = (
+        CheckConstraint("responsibility IN ('buyer', 'seller', 'admin', 'system')", name="ck_cancellations_responsibility"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    order_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("order_items.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    responsibility: Mapped[str] = mapped_column(String(10), nullable=False)  # 귀책
+    canceled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 환불 완료는 5.5 기록
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
