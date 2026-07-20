@@ -32,10 +32,13 @@ class OrdersApi {
     required String address1,
     required String address2,
     required String orderNote,
+    required int expectedGrandTotal,
   }) async {
     try {
       final res = await _dio.post('/api/v1/orders', data: {
         'cart_item_ids': cartItemIds,
+        // 미리보기의 grand_total 그대로 — 서버가 불일치 시 409 price_changed로 거부
+        'expected_grand_total': expectedGrandTotal,
         'postal_code': postalCode,
         'recipient_name': recipientName,
         'recipient_phone': recipientPhone,

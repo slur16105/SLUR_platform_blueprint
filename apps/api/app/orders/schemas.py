@@ -40,6 +40,7 @@ class OrderPreviewResponse(BaseModel):
 
 class OrderCreateRequest(BaseModel):
     cart_item_ids: list[uuid.UUID] = Field(min_length=1, max_length=100)  # 주문서에 표시된 항목만 — 부분 주문 방지
+    expected_grand_total: int = Field(ge=0)  # 미리보기에서 본 총액 — 불일치 시 409 price_changed (조용한 금액 변경 방지)
     postal_code: str = Field(pattern=r"^\d{5}$")
     recipient_name: str = Field(min_length=1, max_length=50)
     recipient_phone: str = Field(pattern=r"^\d{9,11}$")

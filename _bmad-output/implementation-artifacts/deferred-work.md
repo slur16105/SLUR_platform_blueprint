@@ -32,3 +32,9 @@
 - **paid 주문의 전-취소 묶음은 shipping_status NULL 잔류** — **5.1 대표 상태 파생 계약: (order paid + sub NULL) = 취소된 묶음으로 해석해야 함. 5.1 스토리 작성 시 Dev Notes에 명시할 것**
 - **order_events.actor_user_id·cancellations.created_by 인덱스 부재** — 회원 탈퇴(users DELETE) 시 풀스캔. v1 탈퇴 기능 없음, 블루프린트 추출 시 추가
 - **테스트 헬퍼 3모듈 결합** — `_shop`·`_buyer`·`_auth`를 conftest 공용 픽스처로 승격 후보
+
+## Deferred from: code review of 4-4-order-creation (2026-07-20)
+
+- **커밋 직후 응답 유실 시 주문 확인 경로 부재** — 타임아웃이면 주문은 생성됐는데 클라이언트는 실패 안내. **5.1 주문 내역 조회가 해소 경로 — 5.1 스토리에 명시 이월** (재시도는 cart 소실로 404라 중복 생성은 없음)
+- **주문 생성 잠금 구간 추가 최적화** — 차감 후 INSERT·flush 왕복이 variants 행 잠금 구간에 포함. v1 트래픽 무관, 블루프린트 추출 시 검토
+- **테스트 헬퍼 결합·제2 판매자 시나리오 인라인 중복** — conftest 공용 픽스처 승격 후보 (4.3 defer 누적)

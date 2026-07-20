@@ -27,6 +27,13 @@ async def _fees(client, st, base=3000, jeju=3000, island=5000):
     assert res.status_code == 200
 
 
+async def _expected(client, bt, postal="06236") -> int:
+    """미리보기 총액 — 주문 body의 expected_grand_total 소스 (price_changed 방지 계약)."""
+    res = await client.post("/api/v1/orders/preview", json={"postal_code": postal}, headers=_auth(bt))
+    assert res.status_code == 200
+    return res.json()["grand_total"]
+
+
 async def _cart_ids(client, bt) -> list[str]:
     cart = (await client.get("/api/v1/carts", headers=_auth(bt))).json()
     return [i["id"] for i in cart["items"] if i["purchasable"]]
@@ -49,8 +56,9 @@ async def test_create_order_snapshots_and_cart_cleanup(client, clean_products):
     bt = await _buyer(client)
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 2}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
+    exp = await _expected(client, bt)
 
-    res = await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS}, headers=_auth(bt))
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))
     assert res.status_code == 201
     body = res.json()
     line = (3000 + vs[0]["extra_price"]) * 2
@@ -89,7 +97,8 @@ async def test_create_order_jeju_snapshot(client, clean_products):
     bt = await _buyer(client)
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
-    res = await client.post(ORDERS, json={"cart_item_ids": ids, **{**ADDRESS, "postal_code": "63001"}}, headers=_auth(bt))
+    exp = await _expected(client, bt, postal="63001")
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **{**ADDRESS, "postal_code": "63001"}}, headers=_auth(bt))
     assert res.status_code == 201
     async with async_session_factory() as session:
         sub = await session.scalar(select(SubOrder).where(SubOrder.order_id == u.UUID(res.json()["order_id"])))
@@ -135,7 +144,8 @@ async def test_multi_seller_sub_orders(client, clean_products):
     await client.post("/api/v1/carts/items", json={"variant_id": vs1[0]["id"], "quantity": 1}, headers=_auth(bt))
     await client.post("/api/v1/carts/items", json={"variant_id": vs2[0]["id"], "quantity": 2}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
-    res = await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS}, headers=_auth(bt))
+    exp = await _expected(client, bt)
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))
     assert res.status_code == 201
 
     async with async_session_factory() as session:
@@ -156,6 +166,7 @@ async def test_out_of_stock_rolls_back_everything(client, clean_products):
     await client.post("/api/v1/carts/items", json={"variant_id": vs[1]["id"], "quantity": 2}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
     assert len(ids) == 2
+    exp = await _expected(client, bt)  # 재고 하락 전 미리보기 총액
 
     # 두 조합 모두 주문 직전 재고 하락 (비-레이스 조성) → 술어 재검증이 복수 details로 잡는다
     from sqlalchemy import update as sa_update
@@ -166,14 +177,14 @@ async def test_out_of_stock_rolls_back_everything(client, clean_products):
         await session.execute(sa_update(Variant).where(Variant.id.in_([u.UUID(vs[0]["id"]), u.UUID(vs[1]["id"])])).values(stock=1))
         await session.commit()
 
-    res = await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS}, headers=_auth(bt))
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))
     assert res.status_code == 422 and res.json()["code"] == "out_of_stock"
     assert len(res.json()["details"]) == 2  # 복수 특정
 
     async with async_session_factory() as session:
         assert (await session.scalar(select(Order))) is None  # 전체 미생성
     assert await _stock(vs[0]["id"]) == 1 and await _stock(vs[1]["id"]) == 1  # 원복(차감 안 됨)
-    assert len(await _cart_ids(client, bt)) == 0 or len((await client.get("/api/v1/carts", headers=_auth(bt))).json()["items"]) == 2  # 장바구니 보존
+    assert len((await client.get("/api/v1/carts", headers=_auth(bt))).json()["items"]) == 2  # 장바구니 보존 (항진 아님)
 
 
 @pytest.mark.asyncio
@@ -187,10 +198,11 @@ async def test_concurrent_orders_stock_one(client, clean_products):
     await client.post("/api/v1/carts/items", json={"variant_id": vid, "quantity": 1}, headers=_auth(b1))
     await client.post("/api/v1/carts/items", json={"variant_id": vid, "quantity": 1}, headers=_auth(b2))
     ids1, ids2 = await _cart_ids(client, b1), await _cart_ids(client, b2)
+    e1, e2 = await _expected(client, b1), await _expected(client, b2)
 
     r1, r2 = await asyncio.gather(
-        client.post(ORDERS, json={"cart_item_ids": ids1, **ADDRESS}, headers=_auth(b1)),
-        client.post(ORDERS, json={"cart_item_ids": ids2, **ADDRESS}, headers=_auth(b2)),
+        client.post(ORDERS, json={"cart_item_ids": ids1, "expected_grand_total": e1, **ADDRESS}, headers=_auth(b1)),
+        client.post(ORDERS, json={"cart_item_ids": ids2, "expected_grand_total": e2, **ADDRESS}, headers=_auth(b2)),
     )
     codes = sorted([r1.status_code, r2.status_code])
     assert codes == [201, 422]  # 정확히 1명
@@ -209,7 +221,8 @@ async def test_snapshot_immutable_after_seller_changes(client, clean_products):
     bt = await _buyer(client)
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
-    order_id = (await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS}, headers=_auth(bt))).json()["order_id"]
+    exp = await _expected(client, bt)
+    order_id = (await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))).json()["order_id"]
 
     # 판매자 변경: 이름·가격 수정 + 전 조합 교체(기존 조합 삭제 → order_items.variant_id SET NULL)
     await client.patch(f"/api/v1/sellers/products/{pid}", json={"name": "바뀐 이름", "base_price": 9900}, headers=_auth(st))
@@ -235,18 +248,100 @@ async def test_validation_and_auth(client, clean_products):
     other = await _buyer(client, email="other-order@example.com")
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
+    exp = await _expected(client, bt)
+    base = {"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}
 
-    assert (await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS})).status_code == 401
+    assert (await client.post(ORDERS, json=base)).status_code == 401
     # 타인의 장바구니 항목 id → 404 (존재 노출 방지)
-    res = await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS}, headers=_auth(other))
+    res = await client.post(ORDERS, json=base, headers=_auth(other))
     assert res.status_code == 404
     # 없는 id 혼입 → 404
-    res = await client.post(ORDERS, json={"cart_item_ids": ids + [str(u.uuid4())], **ADDRESS}, headers=_auth(bt))
+    res = await client.post(ORDERS, json={**base, "cart_item_ids": ids + [str(u.uuid4())]}, headers=_auth(bt))
     assert res.status_code == 404
     # 형식 위반 422
     for bad in ({"cart_item_ids": []}, {"postal_code": "123"}, {"recipient_phone": "abc"}, {"recipient_name": ""}):
-        res = await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS, **bad}, headers=_auth(bt))
+        res = await client.post(ORDERS, json={**base, **bad}, headers=_auth(bt))
         assert res.status_code == 422 and res.json()["code"] == "validation_error"
+
+
+@pytest.mark.asyncio
+async def test_price_changed_409(client, clean_products):
+    """리뷰 반영: 미리보기~주문 사이 가격 변경 — 조용한 흡수 대신 409 price_changed + 새 총액."""
+    st, pid, vs = await _shop(client, stock=5)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    ids = await _cart_ids(client, bt)
+    exp = await _expected(client, bt)
+
+    await client.patch(f"/api/v1/sellers/products/{pid}", json={"base_price": 9900}, headers=_auth(st))  # 가격 인상
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))
+    assert res.status_code == 409 and res.json()["code"] == "price_changed"
+    new_total = res.json()["details"][0]["grand_total"]
+    assert new_total == 9900 + vs[0]["extra_price"] + 3000
+    assert await _stock(vs[0]["id"]) == 5  # 차감 없음
+
+    # 새 총액으로 재시도 → 성공
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": new_total, **ADDRESS}, headers=_auth(bt))
+    assert res.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_duplicate_concurrent_submit_creates_one_order(client, clean_products):
+    """리뷰 반영: 같은 유저 동시 이중 제출 — 재고가 넉넉해도 주문은 1건 (cart 삭제 rowcount 가드)."""
+    from app.core.db import async_session_factory
+
+    st, pid, vs = await _shop(client, stock=10)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    ids = await _cart_ids(client, bt)
+    exp = await _expected(client, bt)
+    body = {"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}
+
+    r1, r2 = await asyncio.gather(
+        client.post(ORDERS, json=body, headers=_auth(bt)),
+        client.post(ORDERS, json=body, headers=_auth(bt)),
+    )
+    codes = sorted([r1.status_code, r2.status_code])
+    assert codes[0] == 201 and codes[1] in (404, 409)  # 후발은 항목 소실(404) 또는 삭제 가드(409)
+    async with async_session_factory() as session:
+        orders = list(await session.scalars(select(Order)))
+        assert len(orders) == 1  # 중복 주문 없음
+    assert await _stock(vs[0]["id"]) == 9  # 차감 1회만
+
+
+@pytest.mark.asyncio
+async def test_partial_deduct_rollback(client, clean_products, monkeypatch):
+    """리뷰 반영: 차감 도중 실패 — 먼저 차감된 항목까지 rollback으로 원복 (AD-4 경로 실검증)."""
+    from app.core.db import async_session_factory
+    from app.products import service as products_service
+
+    st, pid, vs = await _shop(client, stock=5)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[1]["id"], "quantity": 2}, headers=_auth(bt))
+    ids = await _cart_ids(client, bt)
+    exp = await _expected(client, bt)
+
+    # 술어를 우회시켜 차감 단계까지 도달시키고, 한 조합만 재고를 바닥냄 → 부분 차감 후 실패
+    monkeypatch.setattr(products_service, "check_purchasable", lambda p, v, q: True)
+    from sqlalchemy import update as sa_update
+
+    from app.products.models import Variant
+
+    async with async_session_factory() as session:
+        await session.execute(sa_update(Variant).where(Variant.id == u.UUID(vs[1]["id"])).values(stock=0))
+        await session.commit()
+
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))
+    assert res.status_code == 422 and res.json()["code"] == "out_of_stock"
+    assert len(res.json()["details"]) == 1
+    assert await _stock(vs[0]["id"]) == 5  # 먼저 차감된 항목 원복 (부분 차감 rollback)
+    assert await _stock(vs[1]["id"]) == 0
+    async with async_session_factory() as session:
+        assert (await session.scalar(select(Order))) is None
 
 
 @pytest.mark.asyncio
@@ -257,9 +352,10 @@ async def test_unpurchasable_requested_item_fails_whole_order(client, clean_prod
     bt = await _buyer(client)
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
+    exp = await _expected(client, bt)
     await client.patch(f"/api/v1/sellers/products/{pid}", json={"status": "hidden"}, headers=_auth(st))
 
-    res = await client.post(ORDERS, json={"cart_item_ids": ids, **ADDRESS}, headers=_auth(bt))
+    res = await client.post(ORDERS, json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt))
     assert res.status_code == 422 and res.json()["code"] == "out_of_stock"
     assert res.json()["details"][0]["cart_item_id"] == ids[0]
     from app.core.db import async_session_factory

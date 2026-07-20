@@ -249,6 +249,20 @@ async def cancel_order_item(
 from datetime import datetime, timedelta, timezone  # noqa: E402
 
 CODE_OUT_OF_STOCK = "out_of_stock"
+CODE_PRICE_CHANGED = "price_changed"
+CODE_DUPLICATE_REQUEST = "duplicate_request"
+
+
+async def get_int_setting(session: AsyncSession, key: str, minimum: int = 1) -> int:
+    """정수 설정 조회 — 오염된 값(비숫자·하한 미만)은 raw 500 대신 봉투로 (운영 오타 방어)."""
+    raw = await get_setting(session, key)
+    try:
+        value = int(raw)
+    except ValueError:
+        raise AppError("internal_error", "서버 설정 오류입니다.", status_code=500) from None
+    if value < minimum:
+        raise AppError("internal_error", "서버 설정 오류입니다.", status_code=500)
+    return value
 
 
 def _fail_detail(entry: dict) -> dict:
@@ -283,10 +297,19 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
         )
 
     q = await quote(session, entries, data.postal_code)
+    if q["grand_total"] != data.expected_grand_total:  # 미리보기 후 가격·배송비 변경 — 조용한 금액 변경 방지
+        raise AppError(
+            CODE_PRICE_CHANGED, "주문 금액이 변경되었습니다. 다시 확인해 주세요.",
+            status_code=409, details=[{"grand_total": q["grand_total"]}],
+        )
 
-    # 조건부 차감 — rowcount가 최종 진실. 전 항목 시도 후 실패 수집 (details 복수 가능)
+    # settings는 차감(행 잠금) 전에 읽는다 — 잠금 유지 구간 최소화
+    days = await get_int_setting(session, SETTING_UNPAID_CANCEL_DAYS)
+    deposit_account = await get_setting(session, SETTING_DEPOSIT_ACCOUNT)
+
+    # 조건부 차감 — rowcount가 최종 진실. variant_id 정렬로 잠금 획득 순서 고정 (교차 주문 교착 방지)
     deduct_failed = []
-    for e in entries:
+    for e in sorted(entries, key=lambda e: str(e["variant"].id)):
         ok = await products_service.deduct_stock(session, e["variant"].id, e["item"].quantity)
         if not ok:
             deduct_failed.append(e)
@@ -295,8 +318,6 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
             CODE_OUT_OF_STOCK, "재고가 부족한 상품이 있습니다.",
             status_code=422, details=[_fail_detail(e) for e in deduct_failed],
         )
-
-    days = int(await get_setting(session, SETTING_UNPAID_CANCEL_DAYS))
     order = Order(
         user_id=user_id,
         recipient_name=data.recipient_name, recipient_phone=data.recipient_phone,
@@ -327,13 +348,14 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
                 quantity=e["item"].quantity,
             ))
 
-    await carts_service.delete_items(session, user_id, [e["item"].id for e in entries])  # AD-10
+    deleted = await carts_service.delete_items(session, user_id, [e["item"].id for e in entries])  # AD-10
+    if deleted != len(entries):  # 동시 이중 제출 — 먼저 커밋된 트랜잭션이 이미 삭제함
+        raise AppError(CODE_DUPLICATE_REQUEST, "이미 처리된 주문 요청입니다.", status_code=409)
     session.add(OrderEvent(  # 창생 기록 — from NULL = 주문 생성 (entity_type으로 구분)
         order_id=order.id, entity_type=t.LAYER_ORDER, entity_id=order.id,
         from_status=None, to_status=t.ORDER_PENDING_PAYMENT,
         actor_role=t.ROLE_BUYER, actor_user_id=user_id,
     ))
-    deposit_account = await get_setting(session, SETTING_DEPOSIT_ACCOUNT)
     await session.commit()
     return {
         "order_id": order.id,

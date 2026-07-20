@@ -4,7 +4,7 @@ baseline_commit: c51f46106baa51f21885214d8e65aaa31ac0be5a
 
 # Story 4.4: 주문 생성
 
-Status: review
+Status: done
 
 ## Story
 
@@ -113,7 +113,7 @@ Claude Fable 5 (claude-fable-5) — Flutter는 병렬 서브에이전트 구현
 - empty_cart는 사실상 도달 불가 경로가 됨(cart_item_ids min 1 + 소유 검증 404) — 코드에는 방어로 유지, 클라이언트 분기는 out_of_stock·not_found 중심
 - **의도적 보류**: ① 주문 내역 링크 자리만(5.1) ② 자동취소는 deposit_due_at만 심음(4.5) ③ 주문번호 사람 친화 채번(UUID 8자리 표시로 대체) ④ deposit_account 실계좌(5.7 또는 오픈 전 DB)
 - R2 셀프체크: 외부 호출 없음 / 동시성 조건부 UPDATE+레이스 테스트 / 입력 상한 Pydantic 전 필드 / 이형·토큰 해당 없음
-- 테스트 8종 신설(다중 판매자·스냅샷 불변·검증·레이스 포함), 전체 108/108 통과. flutter analyze 오류 0
+- 테스트 11종 신설(다중 판매자·스냅샷 불변·검증·레이스·price_changed·이중 제출·부분 차감 원복), 전체 111/111 통과. flutter analyze 오류 0
 
 ### File List
 
@@ -129,3 +129,22 @@ Claude Fable 5 (claude-fable-5) — Flutter는 병렬 서브에이전트 구현
 - apps/mobile/lib/src/orders/orders_api.dart (수정 — createOrder)
 - apps/mobile/lib/src/orders/order_preview_screen.dart (수정 — 배송지 폼·kpostal·주문하기)
 - apps/mobile/lib/src/orders/order_complete_screen.dart (신규)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind Hunter · Edge Case Hunter · Acceptance Auditor 병렬. 0 decision-needed · 11 patch · 3 defer · 2 dismiss.**
+
+- [x] [Review][Patch] **variant 차감 순서 미정렬 — 교차 주문 데드락 가능** — variant_id 정렬로 잠금 획득 순서 고정 [`orders/service.py`]
+- [x] [Review][Patch] **미리보기~주문 사이 가격·배송비 인상 조용히 흡수** — `expected_grand_total` 필수화, 불일치 409 `price_changed` + details에 새 총액. Flutter는 다이얼로그 후 미리보기 재조회
+- [x] [Review][Patch] **동일 유저 동시 이중 제출 → 중복 주문** — `delete_items` rowcount 가드(409 `duplicate_request`), 동시 제출 테스트로 주문 1건·차감 1회 봉인
+- [x] [Review][Patch] 부분 차감 rollback 경로 무검증 — monkeypatch로 차감 단계 도달시켜 부분 차감 원복 실검증 테스트 추가
+- [x] [Review][Patch] 장바구니 보존 assertion 항진 — `or` 제거, items==2 직접 단언
+- [x] [Review][Patch] settings int() ValueError 500 + 하한 미검증 — `get_int_setting`(봉투 변환·minimum 가드)
+- [x] [Review][Patch] 잠금 구간 축소 — settings 조회를 차감 전으로 이동, `delete_items` 재SELECT를 bulk delete로
+- [x] [Review][Patch] Flutter `not_found`/`duplicate_request` 미분기 — invalidate + 장바구니 복귀
+- [x] [Review][Patch] 완료 화면 raw 캐스트 — 형 불일치에도 크래시 없는 안전 접근 (주문 성공 직후 화면)
+- [x] [Review][Patch] 완료 화면 시스템 back 무차단 — PopScope + 입금 안내 확인 다이얼로그
+- [x] [Review][Patch] empty_cart 죽은 경로 문구 — Completion Notes에 도달 불가(방어 유지) 기록
+- [x] [Review][Defer] 커밋 직후 응답 유실 시 주문 확인 경로 부재 — 5.1 주문 내역이 확인 경로. 5.1 스토리에 이월
+- [x] [Review][Defer] 잠금 유지 구간 추가 최적화(차감 후 INSERT·flush 왕복) — v1 트래픽 무관, 블루프린트 시
+- [x] [Review][Defer] 테스트 헬퍼 모듈 결합·제2 판매자 인라인 중복 — conftest 승격 후보 (4.3 defer와 동일)

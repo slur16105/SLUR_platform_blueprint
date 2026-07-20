@@ -137,8 +137,14 @@ async def get_entries_for_order(session: AsyncSession, user_id: uuid.UUID, item_
     return out
 
 
-async def delete_items(session: AsyncSession, user_id: uuid.UUID, item_ids: list[uuid.UUID]) -> None:
-    """주문 성공 항목 삭제 — 트랜잭션·commit은 orders가 소유 (AD-10), 여기서는 delete만."""
-    items = await session.scalars(select(CartItem).where(CartItem.user_id == user_id, CartItem.id.in_(item_ids)))
-    for item in items:
-        await session.delete(item)
+async def delete_items(session: AsyncSession, user_id: uuid.UUID, item_ids: list[uuid.UUID]) -> int:
+    """주문 성공 항목 삭제 — 트랜잭션·commit은 orders가 소유 (AD-10). 삭제 행 수 반환.
+
+    rowcount가 요청 수와 다르면 동시 트랜잭션이 이미 지운 것 — 호출자(orders)가 이중 제출로 판정한다.
+    """
+    from sqlalchemy import delete as sa_delete
+
+    result = await session.execute(
+        sa_delete(CartItem).where(CartItem.user_id == user_id, CartItem.id.in_(item_ids))
+    )
+    return result.rowcount

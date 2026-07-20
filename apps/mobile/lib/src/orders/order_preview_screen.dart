@@ -124,6 +124,8 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
             address1: _address1Controller.text.trim(),
             address2: _address2Controller.text.trim(),
             orderNote: _noteController.text.trim(),
+            // 미리보기 grand_total 그대로 전송 — 가격 변동 시 서버가 409 price_changed로 거부 (AD-12)
+            expectedGrandTotal: preview['grand_total'] as int,
           );
       if (!mounted) return;
       ref.invalidate(cartProvider); // 주문된 항목이 장바구니에서 빠졌으므로 갱신
@@ -137,6 +139,18 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
         await _showOutOfStockDialog(e);
         return;
       }
+      if (e.code == 'price_changed') {
+        // 판매자가 가격·배송비를 변경한 경우 — 안내 후 미리보기 재조회로 새 금액 표시
+        await _showPriceChangedDialog();
+        return;
+      }
+      if (e.code == 'not_found' || e.code == 'duplicate_request') {
+        // 다른 기기에서 장바구니 변경 / 이중 제출(이미 주문됨) — 장바구니 갱신 후 복귀
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+        ref.invalidate(cartProvider);
+        Navigator.of(context).pop();
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
@@ -145,6 +159,25 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  /// 금액 변경 안내 — 확인 시 미리보기 재조회로 주문서 금액 갱신
+  Future<void> _showPriceChangedDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('금액 변경 안내'),
+        content: const Text('주문 금액이 변경되었습니다. 다시 확인해 주세요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    _fetchPreview(); // 새 금액으로 주문서 갱신
   }
 
   /// 품절 안내 — details의 상품명을 보여주고 확인 시 장바구니로 복귀
