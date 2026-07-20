@@ -133,3 +133,11 @@ async def update_shipping_fees(session: AsyncSession, user_id: uuid.UUID, base: 
     await session.commit()
     logger.info("shipping fees updated for seller %s", seller.id)
     return seller
+
+
+async def get_sellers_by_ids(session: AsyncSession, seller_ids: list[uuid.UUID]) -> dict[uuid.UUID, Seller]:
+    """seller id별 배치 조회 — orders의 배송비 계산이 쓴다 (AD-2: 모델 직접 import 금지)."""
+    if not seller_ids:
+        return {}
+    rows = await session.scalars(select(Seller).where(Seller.id.in_(seller_ids)))
+    return {s.id: s for s in rows}

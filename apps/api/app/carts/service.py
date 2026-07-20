@@ -104,3 +104,18 @@ async def delete_item(session: AsyncSession, user_id: uuid.UUID, item_id: uuid.U
     item = await _own_item(session, user_id, item_id)
     await session.delete(item)
     await session.commit()
+
+
+async def get_purchasable_entries(session: AsyncSession, user_id: uuid.UUID) -> list[dict]:
+    """구매 가능 항목만 {item, variant, product, brand_name} — 주문서 미리보기·주문 생성용 (AD-10, FR-35)."""
+    items = list(await session.scalars(
+        select(CartItem).where(CartItem.user_id == user_id).order_by(CartItem.created_at, CartItem.id)
+    ))
+    info = await products_service.get_variant_purchase_info(session, [i.variant_id for i in items if i.variant_id])
+    out = []
+    for item in items:
+        meta = info.get(item.variant_id)
+        if meta is None or not products_service.check_purchasable(meta["product"], meta["variant"], item.quantity):
+            continue  # 구매 불가는 미리보기·주문 대상에서 제외 — 표시는 get_cart 몫
+        out.append({"item": item, "variant": meta["variant"], "product": meta["product"], "brand_name": meta["brand_name"]})
+    return out

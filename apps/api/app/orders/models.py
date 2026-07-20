@@ -1,0 +1,122 @@
+import uuid
+from datetime import datetime
+
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.auth.models import uuid7
+from app.core.db import Base
+
+
+class Order(Base):
+    """결제 상태 층 (AD-3). 대표 상태·총액 컬럼 없음 — 라인·배송비 스냅샷에서 파생 (AD-12)."""
+
+    __tablename__ = "orders"
+    __table_args__ = (
+        CheckConstraint("payment_status IN ('pending_payment', 'paid', 'canceled')", name="ck_orders_payment_status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True  # 주문 이력은 법정 보존
+    )
+    payment_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending_payment")
+    # 배송지 스냅샷 — 4.4가 채운다 (스키마만 선행)
+    recipient_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    recipient_phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    postal_code: Mapped[str] = mapped_column(String(5), nullable=False)
+    address1: Mapped[str] = mapped_column(String(255), nullable=False)
+    address2: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    order_note: Mapped[str] = mapped_column(String(500), nullable=False, default="")  # 배송 요청사항
+    deposit_due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)  # 생성 시각 + settings 기한
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class SubOrder(Base):
+    """판매자별 배송 상태 층 (AD-3) + 배송비 스냅샷 (AD-11). 결제 전 shipping_status는 NULL (Slur 승인 2026-07-20)."""
+
+    __tablename__ = "sub_orders"
+    __table_args__ = (
+        CheckConstraint(
+            "shipping_status IS NULL OR shipping_status IN ('preparing', 'shipping', 'delivered')",
+            name="ck_sub_orders_shipping_status",
+        ),
+        CheckConstraint("shipping_fee >= 0", name="ck_sub_orders_shipping_fee"),
+        CheckConstraint("remote_extra_fee >= 0", name="ck_sub_orders_remote_extra_fee"),
+        UniqueConstraint("order_id", "seller_id"),  # 주문 내 판매자 묶음 1개
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    seller_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("sellers.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    shipping_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # paid 전이 시 preparing 진입 (4.3)
+    shipping_fee: Mapped[int] = mapped_column(nullable=False)  # 기본 배송비 스냅샷
+    remote_extra_fee: Mapped[int] = mapped_column(nullable=False, default=0)  # 도서산간 추가비 스냅샷
+    carrier: Mapped[str | None] = mapped_column(String(50), nullable=True)  # 5.3 배송 처리용 선행 확보
+    tracking_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class OrderItem(Base):
+    """주문 시점 스냅샷 (AD-7) + 라인 취소 상태 (AD-6). variant_id SET NULL — 조합 삭제 시 복원만 no-op."""
+
+    __tablename__ = "order_items"
+    __table_args__ = (
+        CheckConstraint("status IN ('ordered', 'canceled')", name="ck_order_items_status"),
+        CheckConstraint("unit_price >= 0", name="ck_order_items_unit_price"),
+        CheckConstraint("quantity >= 1 AND quantity <= 999", name="ck_order_items_quantity"),  # carts 대칭
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    sub_order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("sub_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    variant_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("variants.id", ondelete="SET NULL"), nullable=True  # 재고 복원·연결용
+    )
+    product_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    option_text: Mapped[str] = mapped_column(String(120), nullable=False, default="")  # carts 표시 포맷과 동일
+    unit_price: Mapped[int] = mapped_column(nullable=False)  # base_price 스냅샷
+    extra_price: Mapped[int] = mapped_column(nullable=False, default=0)  # 조합 추가금액 스냅샷 (음수 허용)
+    quantity: Mapped[int] = mapped_column(nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ordered")  # 취소 전이는 4.3
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class RemoteAreaZip(Base):
+    """도서산간 판정 참조 테이블 — 우체국/택배사 공개 목록 시드. 없는 우편번호 = 일반 지역."""
+
+    __tablename__ = "remote_area_zips"
+    __table_args__ = (CheckConstraint("kind IN ('jeju', 'island')", name="ck_remote_area_zips_kind"),)
+
+    zip_code: Mapped[str] = mapped_column(String(5), primary_key=True)  # 우편번호 자체가 자연키
+    kind: Mapped[str] = mapped_column(String(10), nullable=False)  # sellers의 제주/도서 이원 추가비와 1:1
+    region_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class Setting(Base):
+    """key-value 설정 (AD-13) — v1 값 변경은 DB로, 관리자 화면은 v1 제외."""
+
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(50), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, nullable=False)  # 타입 해석은 읽는 쪽 몫
+    description: Mapped[str] = mapped_column(String(200), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )

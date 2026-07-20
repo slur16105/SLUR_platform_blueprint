@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/client.dart';
 import '../format.dart';
+import '../orders/order_preview_screen.dart';
 import 'carts_api.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -45,6 +46,9 @@ class CartScreen extends ConsumerWidget {
   Widget _summaryBar(BuildContext context, Map<String, dynamic> body) {
     // 합계는 서버 계산 값만 표시 (AD-12) — 구매 불가 항목 제외 금액
     final total = body['purchasable_total'] as int;
+    final hasPurchasable = (body['items'] as List)
+        .cast<Map<String, dynamic>>()
+        .any((item) => item['purchasable'] == true);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -65,8 +69,13 @@ class CartScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             const SizedBox(height: 12),
             FilledButton(
-              onPressed: null, // 주문서는 4.2·4.4
-              child: Text(total > 0 ? '주문하기 (준비 중)' : '구매 가능한 상품이 없습니다'),
+              // 구매 가능 항목이 있을 때만 주문서 진입 (주문 생성은 4.4)
+              onPressed: hasPurchasable
+                  ? () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const OrderPreviewScreen()),
+                      )
+                  : null,
+              child: Text(hasPurchasable ? '주문하기' : '구매 가능한 상품이 없습니다'),
             ),
           ],
         ),
