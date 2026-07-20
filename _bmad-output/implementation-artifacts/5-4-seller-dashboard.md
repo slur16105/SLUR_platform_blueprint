@@ -4,7 +4,7 @@ baseline_commit: 33c4bd050a2837cf0549da3973febfd32b70dc09
 
 # Story 5.4: 판매자 대시보드
 
-Status: review
+Status: done
 
 ## Story
 
@@ -76,3 +76,15 @@ Claude Fable 5 (claude-fable-5) — Next.js는 병렬 서브에이전트
 - apps/web/app/api/seller/dashboard/route.ts (신규 — BFF)
 - apps/web/app/seller/page.tsx·seller.css (수정 — 대시보드 섹션)
 - apps/web/app/seller/orders/page.tsx (수정 — ?status= 초기 탭 + Suspense)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — 통합 리뷰. Acceptance: 테스트 체크 과대 주장 3건 발견 → 전부 실테스트로 보강. 0 decision-needed · 8 patch · 2 defer · 0 dismiss.**
+
+- [x] [Review][Patch] 타 판매자 분리·limit 절단·미결제 제외 테스트 부재(체크 과대) — 3종 실증 테스트 추가 (141/141)
+- [x] [Review][Patch] 전-취소 preparing 묶음이 신규 주문 카운트 포함(유령 할 일) — EXISTS 활성 라인 조건 추가 (5.3 all_canceled 정합)
+- [x] [Review][Patch] epics 편차 미기록 — epics 5.4에 구현 구체화 각주 (일자 명기)
+- [x] [Review][Patch] 탭-URL 비동기화 — router.replace 동기화 / Suspense fallback p_loading
+- [x] [Review][Patch] 경계 assert 동어반복·threshold 하드코딩 — 포맷 그물·시드 대조로 교체 / limit 상수화(LOW_STOCK_LIMIT)
+- [x] [Review][Defer] threshold=0 운영 시 "품절 임박" 의미 붕괴·품절/임박 미구분 표기 — v1 시드 5 고정, 5.7(설정 화면) 또는 운영 피드백 시 정책 결정
+- 최종: 141/141, tsc 0

@@ -63,3 +63,7 @@
 
 - **자기 소유 NULL(미결제) sub_order ship 422의 존재 누설** — 실해 미미(자기 주문). invalid_transition 코드 분리와 묶어 후속
 - **웹 모달 풀 포커스 트랩 부재 (5.2·5.3 공통)** — ESC·초기 포커스·submitting 가드는 구현됨. 공통 모달 컴포넌트 승격 시 일괄 (블루프린트 추출)
+
+## Deferred from: code review of 5-4-seller-dashboard (2026-07-20)
+
+- **threshold=0 운영 시 "품절 임박" 카드 의미 붕괴 + 품절(0)/임박(1~n) 미구분 표기** — v1 시드 5 고정이라 무해. 5.7 설정 화면 또는 운영 피드백 시 정책 결정

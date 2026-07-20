@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import LogoutButton from "../../logout-button";
 import "./orders.css";
@@ -56,6 +56,7 @@ function isTab(v: string | null): v is Tab {
 function SellerOrdersInner() {
   // 대시보드 카드에서 ?status=shipping 으로 진입 시 해당 탭으로 시작 (미지정·오타는 preparing)
   const initialStatus = useSearchParams().get("status");
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>(isTab(initialStatus) ? initialStatus : "preparing");
   const [items, setItems] = useState<SubOrder[]>([]);
   const [total, setTotal] = useState(0);
@@ -147,6 +148,8 @@ function SellerOrdersInner() {
     if (t === tab) return;
     setTab(t);
     setPage(1);
+    // URL 쿼리를 현재 탭과 동기화 — 새로고침·공유 시 탭 유지 (히스토리 미적재)
+    router.replace(`/seller/orders?status=${t}`, { scroll: false });
   }
 
   async function copyOrderId(id: string) {
@@ -406,7 +409,7 @@ function SellerOrdersInner() {
 export default function SellerOrders() {
   // useSearchParams는 프리렌더 시 Suspense 경계가 필요 (Next 16 규약)
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<main className="page_seller_orders"><p className="p_loading" role="status">불러오는 중…</p></main>}>
       <SellerOrdersInner />
     </Suspense>
   );

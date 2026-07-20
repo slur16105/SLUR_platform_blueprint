@@ -362,7 +362,10 @@ async def deduct_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -
     return result.rowcount == 1
 
 
-async def low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, threshold: int, limit: int = 20) -> list[dict]:
+LOW_STOCK_LIMIT = 20  # 대시보드 표시 상한 — 전체 목록은 상품 관리로
+
+
+async def low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, threshold: int, limit: int = LOW_STOCK_LIMIT) -> list[dict]:
     """품절 임박 — 활성 상품·활성 조합만, 재고 오름차순 (5.4 대시보드. 판매 종료·숨김은 대상 아님)."""
     rows = (await session.execute(
         select(Variant, Product)

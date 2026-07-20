@@ -794,10 +794,14 @@ async def deliver_sub_order(session: AsyncSession, seller_id: uuid.UUID, user_id
 
 
 async def seller_shipping_counts(session: AsyncSession, seller_id: uuid.UUID) -> dict:
-    """판매자 대시보드 카운트 — preparing(신규·배송 대기)·shipping (5.4, AD-12 서버 계산)."""
+    """판매자 대시보드 카운트 — preparing(신규·배송 대기)·shipping (5.4, AD-12 서버 계산).
+
+    전 라인 취소된 묶음은 제외 — 5.3 all_canceled(발송 버튼 억제)와 정합: 처리할 일이 아닌 유령 카운트 방지.
+    """
+    active_line = exists().where(OrderItem.sub_order_id == SubOrder.id, OrderItem.status == t.ITEM_ORDERED)
     rows = (await session.execute(
         select(SubOrder.shipping_status, func.count())
-        .where(SubOrder.seller_id == seller_id, SubOrder.shipping_status.in_([t.SUB_PREPARING, t.SUB_SHIPPING]))
+        .where(SubOrder.seller_id == seller_id, SubOrder.shipping_status.in_([t.SUB_PREPARING, t.SUB_SHIPPING]), active_line)
         .group_by(SubOrder.shipping_status)
     )).all()
     counts = dict(rows)
