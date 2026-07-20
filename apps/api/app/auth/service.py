@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -209,8 +209,37 @@ async def get_users_by_ids(session: AsyncSession, user_ids: list[uuid.UUID]) -> 
 
 async def find_user_ids_by_name_or_email(session: AsyncSession, q: str) -> list[uuid.UUID]:
     """이름·이메일 부분 일치 user id — admin 주문 검색 선해결용 (AD-2)."""
-    pat = f"%{q.replace(chr(92), chr(92)*2).replace('%', chr(92)+'%').replace('_', chr(92)+'_')}%"
+    from app.core.search import ESCAPE, ilike_pattern
+
+    pat = ilike_pattern(q)
     rows = await session.scalars(
-        select(User.id).where((User.name.ilike(pat, escape=chr(92))) | (User.email.ilike(pat, escape=chr(92)))).limit(200)
-    )  # 이스케이프: %·_ 패턴 주입 방지 / LIMIT: IN 폭발 상한 (초과 매칭은 검색어를 좁히도록)
+        select(User.id).where((User.name.ilike(pat, escape=ESCAPE)) | (User.email.ilike(pat, escape=ESCAPE))).limit(200)
+    )  # LIMIT: IN 폭발 상한 (초과 매칭은 검색어를 좁히도록)
     return list(rows)
+
+
+async def list_users(session: AsyncSession, q: str | None, page: int, size: int) -> dict:
+    """관리자 회원 조회 (5.6, FR-30 읽기 전용) — 이메일·이름 검색, 역할 포함."""
+    from app.core.search import ESCAPE, ilike_pattern
+
+    base = select(User)
+    if q:
+        pat = ilike_pattern(q)
+        base = base.where((User.name.ilike(pat, escape=ESCAPE)) | (User.email.ilike(pat, escape=ESCAPE)))
+    total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
+    users = list(await session.scalars(
+        base.order_by(User.created_at.desc(), User.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    role_rows = (await session.execute(
+        select(UserRole.user_id, UserRole.role).where(UserRole.user_id.in_([u.id for u in users]))
+    )).all()
+    roles_by_user: dict = {}
+    for uid, role in role_rows:
+        roles_by_user.setdefault(uid, []).append(role)
+    return {
+        "items": [{
+            "id": u.id, "email": u.email or "", "name": u.name,
+            "roles": sorted(roles_by_user.get(u.id, [])), "created_at": u.created_at,
+        } for u in users],
+        "total": total, "page": page, "size": size,
+    }

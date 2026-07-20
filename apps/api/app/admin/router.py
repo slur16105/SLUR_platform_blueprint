@@ -324,3 +324,80 @@ async def admin_mark_refunded(
 ):
     """환불 완료 시각 기록 (AD-6 분리) — 중복 409."""
     await orders_service.mark_refunded(session, cancellation_id)
+
+
+# ---------------------------------------------------------------------------
+# 관리자 조회 (Story 5.6, FR-30 — 읽기 전용)
+# ---------------------------------------------------------------------------
+
+
+def _lookup_params(q: str | None, page: int) -> str | None:
+    if page < 1 or page > 10000:
+        raise AppError("validation_error", "올바르지 않은 페이지입니다.", status_code=422)
+    if q is not None:
+        q = q.strip()
+        if q and (len(q) < 2 or len(q) > 100):
+            raise AppError("validation_error", "검색어는 2~100자입니다.", status_code=422)
+        q = q or None
+    return q
+
+
+@router.get("/users")
+async def admin_list_users(
+    q: str | None = None,
+    page: int = 1,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """회원 조회 — 이메일·이름·역할·가입일 (AC 1). 주문 이력은 /admin/orders?q=이메일 링크로."""
+    from app.core.config import get_settings as _gs
+
+    q = _lookup_params(q, page)
+    return await auth_service.list_users(session, q, page, _gs().page_size)
+
+
+@router.get("/sellers")
+async def admin_list_sellers(
+    q: str | None = None,
+    page: int = 1,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """판매자 조회 — 법정 신원·배송비·상품 수 (AC 2)."""
+    from app.core.config import get_settings as _gs
+    from app.products import service as products_service2
+
+    q = _lookup_params(q, page)
+    data = await sellers_service.list_sellers_admin(session, q, page, _gs().page_size)
+    counts = await products_service2.count_products_by_sellers(session, [r["id"] for r in data["items"]])
+    for row in data["items"]:
+        row["product_count"] = counts.get(row["id"], 0)
+    return data
+
+
+@router.get("/products")
+async def admin_list_products(
+    q: str | None = None,
+    category_id: uuid.UUID | None = None,
+    status: str | None = None,
+    page: int = 1,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """상품 조회 — 이름·브랜드 검색, 카테고리·상태 필터, 재고 합계 (AC 3)."""
+    from app.core.config import get_settings as _gs
+    from app.products import service as products_service2
+    from app.sellers import service as sellers_service2
+
+    q = _lookup_params(q, page)
+    if status is not None and status not in ("active", "soldout", "hidden"):
+        raise AppError("validation_error", "올바르지 않은 상태입니다.", status_code=422)
+    seller_ids = await sellers_service2.find_seller_ids_by_brand(session, q) if q else None
+    data = await products_service2.list_products_admin(
+        session, q=q, seller_ids=seller_ids, category_id=category_id, status=status, page=page, size=_gs().page_size
+    )
+    brands = await sellers_service2.get_sellers_by_ids(session, list({r["seller_id"] for r in data["items"]}))
+    for row in data["items"]:
+        s = brands.get(row.pop("seller_id"))
+        row["brand_name"] = s.brand_name if s else ""
+    return data

@@ -1,0 +1,24 @@
+/* 관리자 조회 (회원·판매자·상품) — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
+.page_admin_lookup { display: flex; max-width: 1280px; min-height: 100dvh; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+.page_admin_lookup .p_head { display: flex; align-items: center; justify-content: space-between; }
+.page_admin_lookup .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin_lookup .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_lookup .p_tabs { display: flex; gap: var(--space-8); }
+.page_admin_lookup .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
+
+/* 검색 폼 */
+.page_admin_lookup .p_search { display: flex; gap: var(--space-8); }
+.page_admin_lookup .p_search .input_text[type="search"] { flex: 1; max-width: 420px; }
+.page_admin_lookup .p_search .m_select { width: 160px; }
+
+/* 테이블 셀 내부 요소 */
+.page_admin_lookup .i_email { color: var(--color-text-primary); }
+.page_admin_lookup .i_roles { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.page_admin_lookup .i_brand { font-weight: var(--weight-bold); color: var(--color-text-primary); }
+.page_admin_lookup .i_name { font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_lookup .i_address { max-width: 240px; font-size: var(--text-xs); color: var(--color-text-secondary); }
+/* 판매자 탭 — 열이 많아 가로 스크롤 허용 (푸터는 sticky로 화면에 고정) */
+.page_admin_lookup .table_wrap.m_scroll { overflow-x: auto; }
+.page_admin_lookup .table_wrap.m_scroll .i_foot { position: sticky; left: 0; }
+.page_admin_lookup .table_data.m_wide { min-width: 1080px; }
+.page_admin_lookup .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }

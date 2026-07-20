@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import LogoutButton from "../../logout-button";
 import { statusBadgeClass, statusLabel } from "./status";
@@ -42,10 +42,13 @@ function shortUuid(id: string) {
   return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
 
-export default function AdminOrders() {
+function AdminOrdersInner() {
+  // 조회 화면 "주문 이력" 링크에서 ?q=이메일 로 진입 시 초기 검색어로 자동 조회 (2~100자 아니면 무시)
+  const rawQ = (useSearchParams().get("q") ?? "").trim();
+  const initialQ = rawQ.length >= 2 && rawQ.length <= 100 ? rawQ : "";
   const router = useRouter();
-  const [q, setQ] = useState(""); // 입력 중 값
-  const [appliedQ, setAppliedQ] = useState(""); // 실제 조회에 쓰인 값
+  const [q, setQ] = useState(initialQ); // 입력 중 값
+  const [appliedQ, setAppliedQ] = useState(initialQ); // 실제 조회에 쓰인 값
   const [status, setStatus] = useState<StatusFilter>("");
   const [items, setItems] = useState<OrderCard[]>([]);
   const [total, setTotal] = useState(0);
@@ -206,5 +209,14 @@ export default function AdminOrders() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function AdminOrders() {
+  // useSearchParams는 프리렌더 시 Suspense 경계가 필요 (Next 16 규약)
+  return (
+    <Suspense fallback={<main className="page_admin_orders"><p className="p_empty" role="status">불러오는 중…</p></main>}>
+      <AdminOrdersInner />
+    </Suspense>
   );
 }

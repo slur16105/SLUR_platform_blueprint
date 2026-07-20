@@ -87,6 +87,7 @@ export default function AdminHome() {
           onClick={() => setTab("categories")}>카테고리</button>
         <a className="btn m_small m_ghost" href="/admin/deposits">입금 확인</a>
         <a className="btn m_small m_ghost" href="/admin/orders">주문 관리</a>
+        <a className="btn m_small m_ghost" href="/admin/lookup">조회</a>
       </div>
       {tab === "categories" ? <CategoryPanel /> : <>
       <div className="p_tabs">

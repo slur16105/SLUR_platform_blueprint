@@ -381,3 +381,52 @@ async def low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, thresh
         "product_id": p.id, "product_name": p.name,
         "option_text": variant_option_text(v), "stock": v.stock,
     } for v, p in rows]
+
+
+async def count_products_by_sellers(session: AsyncSession, seller_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
+    """판매자별 상품 수 — 5.6 관리자 조회."""
+    if not seller_ids:
+        return {}
+    rows = (await session.execute(
+        select(Product.seller_id, func.count()).where(Product.seller_id.in_(seller_ids)).group_by(Product.seller_id)
+    )).all()
+    return dict(rows)
+
+
+async def list_products_admin(
+    session: AsyncSession, *, q: str | None, seller_ids: list[uuid.UUID] | None,
+    category_id: uuid.UUID | None, status: str | None, page: int, size: int,
+) -> dict:
+    """관리자 상품 조회 (5.6, 읽기 전용) — 이름 검색·브랜드(선해결 seller_ids)·카테고리·상태 필터, 재고 합계 포함."""
+    from sqlalchemy import or_
+
+    from app.core.search import ESCAPE, ilike_pattern
+
+    base = select(Product)
+    if q or seller_ids:
+        conds = []
+        if q:
+            conds.append(Product.name.ilike(ilike_pattern(q), escape=ESCAPE))
+        if seller_ids:
+            conds.append(Product.seller_id.in_(seller_ids))
+        base = base.where(or_(*conds))
+    if category_id is not None:
+        base = base.where(Product.category_id == category_id)
+    if status is not None:
+        base = base.where(Product.status == status)
+    total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
+    products = list(await session.scalars(
+        base.order_by(Product.created_at.desc(), Product.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    stock_rows = (await session.execute(
+        select(Variant.product_id, func.coalesce(func.sum(Variant.stock), 0))
+        .where(Variant.product_id.in_([p.id for p in products])).group_by(Variant.product_id)
+    )).all()
+    stock_by_product = dict(stock_rows)
+    return {
+        "items": [{
+            "id": p.id, "name": p.name, "seller_id": p.seller_id, "base_price": p.base_price,
+            "status": p.status, "stock_sum": int(stock_by_product.get(p.id, 0)), "created_at": p.created_at,
+        } for p in products],
+        "total": total, "page": page, "size": size,
+    }

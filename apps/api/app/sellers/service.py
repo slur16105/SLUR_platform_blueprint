@@ -145,6 +145,33 @@ async def get_sellers_by_ids(session: AsyncSession, seller_ids: list[uuid.UUID])
 
 async def find_seller_ids_by_brand(session: AsyncSession, q: str) -> list[uuid.UUID]:
     """브랜드명 부분 일치 seller id — admin 주문 검색 선해결용 (AD-2)."""
-    pat = f"%{q.replace(chr(92), chr(92)*2).replace('%', chr(92)+'%').replace('_', chr(92)+'_')}%"
-    rows = await session.scalars(select(Seller.id).where(Seller.brand_name.ilike(pat, escape=chr(92))).limit(200))
+    from app.core.search import ESCAPE, ilike_pattern
+
+    rows = await session.scalars(select(Seller.id).where(Seller.brand_name.ilike(ilike_pattern(q), escape=ESCAPE)).limit(200))
     return list(rows)
+
+
+async def list_sellers_admin(session: AsyncSession, q: str | None, page: int, size: int) -> dict:
+    """관리자 판매자 조회 (5.6) — 브랜드·상호 검색, 법정 신원·배송비 포함. product_count는 라우터가 붙인다."""
+    from sqlalchemy import func
+
+    from app.core.search import ESCAPE, ilike_pattern
+
+    base = select(Seller)
+    if q:
+        pat = ilike_pattern(q)
+        base = base.where((Seller.brand_name.ilike(pat, escape=ESCAPE)) | (Seller.company_name.ilike(pat, escape=ESCAPE)))
+    total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
+    sellers = list(await session.scalars(
+        base.order_by(Seller.created_at.desc(), Seller.id.desc()).offset((page - 1) * size).limit(size)
+    ))
+    return {
+        "items": [{
+            "id": s.id, "brand_name": s.brand_name, "company_name": s.company_name,
+            "representative_name": s.representative_name, "business_registration_number": s.business_registration_number,
+            "mail_order_number": s.mail_order_number, "business_address": s.business_address, "contact_phone": s.contact_phone,
+            "base_shipping_fee": s.base_shipping_fee, "jeju_extra_fee": s.jeju_extra_fee, "island_extra_fee": s.island_extra_fee,
+            "created_at": s.created_at,
+        } for s in sellers],
+        "total": total, "page": page, "size": size,
+    }
