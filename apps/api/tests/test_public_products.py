@@ -69,7 +69,9 @@ async def test_pagination_and_all_categories(client, clean_products):
 @pytest.mark.asyncio
 async def test_detail_seller_info_disclosure(client, clean_products):
     """6.2 (FR-32): 공개 상세에 법정 판매자 신원정보 — 인증 불요."""
-    st, pid, vs = await __import__("tests.test_carts", fromlist=["_shop"])._shop(client, stock=5)
+    from tests.test_carts import _shop
+
+    st, pid, vs = await _shop(client, stock=5)
     d = (await client.get(f"/api/v1/products/{pid}")).json()  # 미인증
     info = d["seller_info"]
     assert info["company_name"] and info["representative_name"]

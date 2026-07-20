@@ -10,5 +10,6 @@ export const COMPANY = {
   email: "contact@slur.example",
 } as const;
 
+// COMPANY.name에서 파생 — 실값 교체 시 단일 지점(COMPANY.name)만 수정하면 된다.
 export const BROKER_NOTICE =
-  "(주)슬러는 통신판매중개자이며 통신판매의 당사자가 아닙니다. 상품, 상품정보, 거래에 관한 의무와 책임은 판매자에게 있습니다.";
+  `${COMPANY.name}는 통신판매중개자이며 통신판매의 당사자가 아닙니다. 상품, 상품정보, 거래에 관한 의무와 책임은 판매자에게 있습니다.`;

@@ -122,8 +122,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     const SizedBox(height: 8),
                     Text(p['description'] as String, style: const TextStyle(height: 1.6)),
                     const SizedBox(height: 16),
-                    // 판매자 정보 (Story 6.2) — 구버전 API(seller_info 없음)에서는 숨김
-                    if (p['seller_info'] is Map) ...[
+                    // 판매자 정보 (Story 6.2) — 구버전 API(seller_info 없음)·
+                    // company_name 미입력 판매자(빈 6행 노출 방지)에서는 숨김
+                    if (p['seller_info'] is Map &&
+                        ((p['seller_info'] as Map)['company_name'] as String?)
+                                ?.isNotEmpty ==
+                            true) ...[
                       _sellerInfoTile((p['seller_info'] as Map).cast<String, dynamic>()),
                       const SizedBox(height: 8),
                     ],

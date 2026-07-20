@@ -1,4 +1,4 @@
-.page_apply { display: flex; min-height: 100dvh; justify-content: center; padding: var(--space-24); background: var(--color-surface-sunken); }
+.page_apply { display: flex; flex: 1; justify-content: center; padding: var(--space-24); background: var(--color-surface-sunken); }
 .page_apply .p_panel { display: flex; width: 100%; max-width: 480px; height: fit-content; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
 .page_apply .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 .page_apply .p_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }

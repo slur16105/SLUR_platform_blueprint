@@ -1,5 +1,5 @@
 /* 판매자 주문 관리 — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
-.page_seller_orders { display: flex; max-width: 1280px; min-height: 100dvh; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+.page_seller_orders { display: flex; max-width: 1280px; flex: 1; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
 .page_seller_orders .p_head { display: flex; align-items: center; justify-content: space-between; }
 .page_seller_orders .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
 .page_seller_orders .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }

@@ -4,7 +4,7 @@ baseline_commit: ac69b07ccc078616be535ffdcabb42d37fd1a360
 
 # Story 6.2: 중개자 지위·판매자 신원정보 노출
 
-Status: review
+Status: done
 
 ## Story
 
@@ -51,3 +51,10 @@ Claude Fable 5 (claude-fable-5) — 웹·Flutter 병렬 서브에이전트
 - apps/api/app/products/schemas.py·service.py (수정 — SellerInfo·seller_info)
 - apps/api/tests/test_public_products.py (수정 — 1 테스트)
 - apps/mobile/lib/src/products/product_detail_screen.dart·orders/order_preview_screen.dart (수정)
+
+### Review Findings
+
+(6.1과 합동 리뷰 — 6.1 스토리 Review Findings 참조)
+
+- [x] [Review][Patch] 판매자 부재 시 빈 6행 타일 노출 — company_name 빈 값이면 타일 숨김
+- 과노출 없음 확인(법정 필드+브랜드만), 주문서 고지 위치 충족

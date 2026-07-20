@@ -30,11 +30,16 @@ export default function PrivacyPage() {
             {COMPANY.name}(이하 &ldquo;회사&rdquo;)는 서비스 제공에 필요한 최소한의 개인정보만을 수집합니다.
           </p>
           <ul>
-            <li><strong>회원가입 시 (필수)</strong>: 이메일 주소, 이름</li>
+            <li><strong>회원가입 시 (필수)</strong>: 이메일 주소, 이름, 비밀번호 (비밀번호는 복호화할 수 없는 해시 형태로만 저장합니다)</li>
             <li><strong>회원가입 시 (선택)</strong>: 휴대폰 번호</li>
             <li><strong>주문 시 (필수)</strong>: 수령인 이름, 수령인 연락처, 배송지 주소</li>
+            <li><strong>판매자 입점 신청 시 (필수)</strong>: 상호, 대표자명, 사업자등록번호, 통신판매업 신고번호, 사업장 주소, 연락처, 브랜드명·브랜드 소개</li>
           </ul>
           <p>서비스 이용 과정에서 접속 기록 등 서비스 이용 기록이 자동으로 생성되어 수집될 수 있습니다.</p>
+          <p>
+            판매자 입점 신청이 반려된 경우에도 재신청 심사와 부정 신청 방지를 위해 신청 내역과 반려 사유가
+            보존될 수 있습니다.
+          </p>
         </section>
 
         <section className="p_section">

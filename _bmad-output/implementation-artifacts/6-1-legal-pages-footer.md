@@ -4,7 +4,7 @@ baseline_commit: ac69b07ccc078616be535ffdcabb42d37fd1a360
 
 # Story 6.1: 약관·개인정보처리방침과 푸터
 
-Status: review
+Status: done
 
 ## Story
 
@@ -51,3 +51,17 @@ Claude Fable 5 (claude-fable-5) — 웹·Flutter 병렬 서브에이전트
 
 - apps/web/app/config/company.ts·terms/page.tsx·privacy/page.tsx·styles/policy.css·site-footer.tsx·site-footer.css (신규), layout.tsx (수정)
 - apps/mobile/lib/src/config/company.dart·screens/service_info_screen.dart (신규), home_screen.dart (수정)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — 통합, 6.1·6.2 합동. Acceptance: 6.1 AC1 앱 측 위반 발견 → 해소. 0 decision-needed · 10 patch · 0 defer · 0 dismiss.**
+
+- [x] [Review][Patch] **[AC 위반] 앱 약관·방침 미표시(URL 안내뿐)** — 인앱 PolicyScreen(전문+초안 배너) 구현으로 해소
+- [x] [Review][Patch] 약관 "3일" 수치 고정(settings 변경 시 거짓) — 일반화
+- [x] [Review][Patch] 고지문 회사명 하드코딩 4곳 — COMPANY.name 파생 단일 지점
+- [x] [Review][Patch] 방침 누락(비밀번호 해시·판매자 입점 수집·반려 보존) — 보강
+- [x] [Review][Patch] 청약철회·환불 조항 공백 — 자리표시 조항(오픈 전 확정) 신설
+- [x] [Review][Patch] 100dvh 페이지 푸터 첫 화면 밖 — flex:1 전환(13개 CSS)
+- [x] [Review][Patch] 앱 웹 URL 하드코딩 — WEB_BASE_URL dart-define 주입 + TODO
+- [x] [Review][Patch] 테스트 동적 import 곡예 — 표준 import
+- 최종: 149/149, tsc 0, analyze 0

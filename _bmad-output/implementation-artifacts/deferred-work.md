@@ -71,3 +71,10 @@
 ## Deferred from: code review of 5-6-admin-lookup (2026-07-20)
 
 - **검색 선해결(user/seller) LIMIT 200 절단 무신호** — v1 규모 무해. 대량화 시 절단 시 안내 응답 추가 (블루프린트)
+
+## Deferred from: Epic 6 (2026-07-20) — 실서비스 오픈 게이트 항목
+
+- **사업자 실정보 교체** — 웹 `app/config/company.ts`·앱 `lib/src/config/company.dart` placeholder → 실값 (상호·대표·사업자번호·통판신고·주소·연락처·이메일)
+- **약관·개인정보처리방침 법률 검토** — 현재 초안 배너 명시 상태. 청약철회·환불 규정 확정 조항 포함
+- **웹 커스텀 도메인 → 앱 WEB_BASE_URL 주입 갱신**
+- (기존 게이트 항목: PG 연동·정산, 도서산간 목록 공식 대조, CONCURRENTLY 인덱스, 모니터링)
