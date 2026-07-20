@@ -112,8 +112,14 @@ _LAYER_STATUS_ATTR = {t.LAYER_ORDER: "payment_status", t.LAYER_SUB_ORDER: "shipp
 
 
 async def _locked(session: AsyncSession, model, entity_id: uuid.UUID):
-    """FOR UPDATE 행 잠금 재조회 — 동시 전이의 check-then-act 레이스 방어 (이 엔진에서만 쓰는 신규 패턴)."""
-    row = await session.scalar(select(model).where(model.id == entity_id).with_for_update())
+    """FOR UPDATE 행 잠금 재조회 — 동시 전이의 check-then-act 레이스 방어 (이 엔진에서만 쓰는 신규 패턴).
+
+    populate_existing: 같은 세션이 잠금 전에 로드한 엔티티가 identity map에 있어도
+    잠금 시점의 DB 값으로 속성을 강제 갱신 — stale 스냅샷 판정(4.6 리뷰 F1) 방지.
+    """
+    row = await session.scalar(
+        select(model).where(model.id == entity_id).with_for_update().execution_options(populate_existing=True)
+    )
     if row is None:
         raise AppError("not_found", "대상을 찾을 수 없습니다.", status_code=404)
     return row
@@ -408,11 +414,12 @@ async def _auto_cancel_order(session: AsyncSession, order_id: uuid.UUID) -> bool
     db_now = await session.scalar(select(func.now()))
     if order.payment_status != t.ORDER_PENDING_PAYMENT or order.deposit_due_at >= db_now:
         return False  # 입금확인됨 또는 기한 연장(DB 직접 수정)됨
-    item_ids = list(await session.scalars(  # 잠금 후 재확정 — 4.6·5.5 경로가 먼저 취소한 라인 제외
-        select(OrderItem.id)
+    rows = (await session.execute(  # 잠금 후 재확정 — 4.6·5.5 경로가 먼저 취소한 라인 제외
+        select(OrderItem.id, OrderItem.variant_id)
         .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
         .where(SubOrder.order_id == order_id, OrderItem.status == t.ITEM_ORDERED)
-    ))
+    )).all()
+    item_ids = [iid for iid, _vid in sorted(rows, key=lambda r: str(r[1]))]  # variant 순 — 복원 잠금 순서 고정
     for item_id in item_ids:  # 재고 복원·cancellations는 엔진 경로가 소유
         await cancel_order_item(
             session, order_item_id=item_id, actor_role=t.ROLE_SYSTEM, actor_user_id=None,
@@ -437,19 +444,23 @@ async def cancel_sub_order(session: AsyncSession, user_id: uuid.UUID, sub_order_
     타이밍 가드(preparing 진입 전)·재고 복원·cancellations는 엔진 소유.
     """
     reason = (reason or "").strip() or "구매자 취소"
-    row = await session.execute(
-        select(SubOrder, Order).join(Order, SubOrder.order_id == Order.id).where(SubOrder.id == sub_order_id)
-    )
-    pair = row.first()
-    if pair is None or pair[1].user_id != user_id:  # 미소유·미존재 구분 없이 404 (존재 노출 방지)
+    # 소유 검증은 컬럼만 비잠금 조회 — 엔티티를 미리 로드하면 잠금 후 판정이 stale해진다 (리뷰 F1)
+    owner_row = (await session.execute(
+        select(SubOrder.order_id, Order.user_id).join(Order, SubOrder.order_id == Order.id).where(SubOrder.id == sub_order_id)
+    )).first()
+    if owner_row is None or owner_row[1] != user_id:  # 미소유·미존재 구분 없이 404 (존재 노출 방지)
         raise AppError("not_found", "주문을 찾을 수 없습니다.", status_code=404)
-    sub_order, order = pair
 
-    item_ids = list(await session.scalars(
-        select(OrderItem.id).where(OrderItem.sub_order_id == sub_order_id, OrderItem.status == t.ITEM_ORDERED)
-    ))
-    if not item_ids:
+    # 부모 우선 잠금을 먼저 걸고(order→sub) 그 아래에서 라인을 확정 — 스냅샷~잠금 사이 경합 제거 (F1·F5)
+    order = await _locked(session, Order, owner_row[0])
+    await _locked(session, SubOrder, sub_order_id)
+    items = (await session.execute(
+        select(OrderItem.id, OrderItem.variant_id)
+        .where(OrderItem.sub_order_id == sub_order_id, OrderItem.status == t.ITEM_ORDERED)
+    )).all()
+    if not items:
         raise AppError("invalid_transition", "이미 취소된 주문 묶음입니다.", status_code=422)
+    item_ids = [iid for iid, _vid in sorted(items, key=lambda r: str(r[1]))]  # variant 순 — 복원 잠금 순서 고정 (F2)
     for item_id in item_ids:  # 타이밍 가드·복원·기록은 엔진이 강제 (첫 라인에서 거부되면 전체 rollback)
         await cancel_order_item(
             session, order_item_id=item_id, actor_role=t.ROLE_BUYER, actor_user_id=user_id,

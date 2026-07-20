@@ -4,7 +4,7 @@ baseline_commit: cfa5762951d74599228a42176c1a9475c2c5a22e
 
 # Story 4.6: 구매자 취소
 
-Status: review
+Status: done
 
 ## Story
 
@@ -30,7 +30,7 @@ So that 마음이 바뀌어도 안심하고 주문할 수 있다.
   - [x] pending_payment 묶음 취소: 전 라인 canceled·재고 복원·cancellations(buyer·사유)·order도 canceled(단일 묶음 주문) + order_events에 (order_item, canceled, buyer)·(order, canceled, buyer) 기록 — AC 1·3
   - [x] 다중 판매자: 한 묶음만 취소 → order는 pending_payment 유지, 남은 묶음 무변화. 남은 묶음도 취소 → order canceled
   - [x] preparing 진입 후(입금확인 조성) 취소 → 422 invalid_transition, 무변화 — AC 2
-  - [x] paid 주문의 **전-취소 잔여 NULL 묶음**은 재취소 422 (ordered 라인 0)
+  - [x] 전-취소 묶음 재취소 422 — order 상태 무관하게 ordered 라인 0 거부로 paid+NULL 케이스까지 구조 커버 (리뷰 F3 반영: 테스트명·조성 정직화)
   - [x] 타인 묶음·없는 id → 404 / 미인증 401 / reason 501자 422
   - [x] 재고 복원 정확히 1회: 같은 묶음 재취소 422·재고 불변
 - [ ] Task 4: 배포 + 검증 — 프로덕션 E2E curl (R8): 주문 생성 → 묶음 취소 → 재고 복원·order canceled 확인 → 데이터 정리
@@ -80,7 +80,7 @@ Claude Fable 5 (claude-fable-5)
 - order 층 판정은 엔진이 잠근 이후의 order 행 + EXISTS 재조회 기준 (_auto_cancel_order 패턴)
 - reason: 스키마 max 500, None·공백은 서비스가 "구매자 취소" 대체 (테스트로 확인)
 - UI(취소 버튼·안내 표시)는 5.1 주문내역 화면으로 승인된 편차 이월 — code별 반응 표 포함
-- paid+NULL 잔여 묶음 케이스는 "전-취소 묶음 재취소 422" 경로로 구조 커버 (order 상태 무관하게 ordered 라인 0 거부) — 테스트명 기준 시나리오는 canceled order 재취소로 조성
+- paid+NULL 잔여 묶음 케이스는 "전-취소 묶음 재취소 422" 경로로 구조 커버 — 리뷰 F3 반영으로 테스트명·docstring 정직화
 - **의도적 보류**: ① 취소 UI(5.1) ② 라인 부분 취소(5.5 관리자) ③ 환불 기록(5.5) ④ 알림(v1 제외)
 - R2 셀프체크: 외부 호출 없음 / 동시성 엔진 잠금 / reason 500 상한 / 이형·토큰 해당 없음
 - 테스트 5종, 전체 122/122 통과
@@ -91,3 +91,17 @@ Claude Fable 5 (claude-fable-5)
 - apps/api/app/orders/schemas.py (수정 — SubOrderCancelRequest/Response)
 - apps/api/app/orders/router.py (수정 — POST /orders/sub-orders/{id}/cancel)
 - apps/api/tests/test_buyer_cancel.py (신규 — 5 테스트)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind+Edge 통합 · Acceptance Auditor 병렬. Acceptance 위반 없음. 0 decision-needed · 7 patch · 1 defer · 0 dismiss.**
+
+- [x] [Review][Patch] **F1(High): 잠금 전 엔티티 스냅샷이 identity map에 남아 엔진 잠금 후에도 stale 판정 — paid 주문이 buyer 취소될 수 있는 레이스** — ① `_locked`에 `populate_existing` (엔진 전역 재발 방지) ② 소유 검증을 컬럼만 비잠금 조회로 ③ 부모 우선 잠금 후 라인 확정 구조로 재작성
+- [x] [Review][Patch] F2: 복원 variant 잠금 순서 미정렬(교착 가능) — 취소·자동취소 모두 variant_id 정렬 (4.4 차감과 대칭)
+- [x] [Review][Patch] F3: paid+NULL 테스트가 명시 시나리오 미조성 — 테스트명·docstring·스토리 문구 정직화
+- [x] [Review][Patch] F4: 취소 vs 입금확인 동시성 테스트 부재 — gather 교차 테스트 추가 (정합 종착 상태 2종 봉인)
+- [x] [Review][Patch] F6: `canceled_items` 의미 미정의 — 스키마 주석 명시 (이번 호출 취소분, 선취소 제외)
+- [x] [Review][Patch] F7: 전 필드 optional인데 body 필수 — body 생략 POST 허용 + 테스트
+- [x] [Review][Patch] F8: reason 길이 검증이 strip 전 — before-validator로 strip 후 검증
+- [x] [Review][Defer] F5: 잠금 직전 극소 윈도에서 타 경로 선취소 라인의 generic 422 message — 데이터 안전(rollback·재시도 성공), 구조 수정(잠금 후 확정)으로 윈도 최소화됨. invalid_transition 코드 분리(4.3 defer)와 함께 후속
+- 테스트 6종, 전체 123/123 통과

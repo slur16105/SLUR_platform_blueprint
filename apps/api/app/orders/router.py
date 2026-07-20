@@ -41,9 +41,10 @@ async def create_order(
 @router.post("/sub-orders/{sub_order_id}/cancel", response_model=SubOrderCancelResponse)
 async def cancel_sub_order(
     sub_order_id: uuid.UUID,
-    body: SubOrderCancelRequest,
+    body: SubOrderCancelRequest | None = None,  # 전 필드 optional — body 없는 POST 허용
     user_id: uuid.UUID = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_session),
 ):
     """구매자 묶음 취소 — preparing 진입 전만 (가드는 전이 엔진 소유)."""
+    body = body or SubOrderCancelRequest()
     return await service.cancel_sub_order(session, user_id, sub_order_id, body.reason)

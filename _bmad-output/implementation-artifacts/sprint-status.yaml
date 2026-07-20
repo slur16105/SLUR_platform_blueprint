@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-20  # 4-5 리뷰 반영 → done
+last_updated: 2026-07-20  # 4-6 done — Epic 4 완료 (6/6)
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -75,13 +75,13 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: 구매 — 장바구니부터 주문·취소까지
-  epic-4: in-progress
+  epic-4: done
   4-1-cart: done                                   # 장바구니
   4-2-order-model-shipping-calc: done   # 주문 데이터 모델과 배송비 계산 (주문서 미리보기)
   4-3-order-state-engine: done    # 주문 상태 전이 엔진
   4-4-order-creation: done          # 주문 생성
   4-5-auto-cancel: done               # 미입금 자동취소
-  4-6-buyer-cancel: review            # 구매자 취소
+  4-6-buyer-cancel: done            # 구매자 취소
   epic-4-retrospective: optional
 
   # Epic 5: 주문 운영 — 세 역할의 주문 화면

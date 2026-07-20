@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class OrderPreviewRequest(BaseModel):
@@ -59,7 +59,12 @@ class OrderCreateResponse(BaseModel):
 class SubOrderCancelRequest(BaseModel):
     reason: str | None = Field(default=None, max_length=500)  # 공백·None은 서비스가 "구매자 취소"로 대체
 
+    @field_validator("reason", mode="before")
+    @classmethod
+    def strip_reason(cls, v):  # 앞뒤 공백은 길이 검증 전에 제거 — 공백 포함 501자 오탐 방지
+        return v.strip() if isinstance(v, str) else v
+
 
 class SubOrderCancelResponse(BaseModel):
-    canceled_items: int
+    canceled_items: int  # 이번 호출에서 취소된 ordered 라인 수 (선취소분 제외 — 묶음 전체 라인 수 아님)
     order_canceled: bool  # 전 묶음 취소로 order 층까지 canceled 전이됐는지

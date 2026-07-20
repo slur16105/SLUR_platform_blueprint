@@ -187,18 +187,62 @@ async def test_recancel_and_ownership(client, clean_products):
 
 
 @pytest.mark.asyncio
-async def test_paid_null_bundle_recancel_rejected(client, clean_products):
-    """paid 주문의 전-취소 잔여 NULL 묶음 — 재취소 422 (ordered 라인 0)."""
-    from app.core.db import async_session_factory
-
+async def test_canceled_bundle_recancel_rejected_no_body(client, clean_products):
+    """전-취소 묶음 재취소 422 (order 상태 무관 — ordered 라인 0 거부) + body 없는 POST 허용."""
     st, pid, vs = await _shop(client, stock=9)
     await _fees(client, st)
     bt = await _buyer(client)
-    # 같은 판매자 상품 2회 주문 → 주문 2건: 하나는 취소, 하나는 paid로
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     oid1, sid1 = await _make_order(client, bt)
-    assert (await client.post(CANCEL.format(sid1), json={}, headers=_auth(bt))).status_code == 200
+    assert (await client.post(CANCEL.format(sid1), headers=_auth(bt))).status_code == 200  # body 생략 (F7)
 
-    # 취소된 묶음 재시도 — order 자체가 canceled라 라인 0
-    res = await client.post(CANCEL.format(sid1), json={}, headers=_auth(bt))
+    res = await client.post(CANCEL.format(sid1), headers=_auth(bt))
     assert res.status_code == 422 and res.json()["code"] == "invalid_transition"
+
+
+@pytest.mark.asyncio
+async def test_concurrent_cancel_vs_paid_consistent(client, clean_products):
+    """리뷰 F1·F4: 취소 vs 입금확인 동시 실행 — stale 스냅샷 없이 정합한 종착 상태 (populate_existing 봉인)."""
+    import asyncio
+
+    from app.core.db import async_session_factory
+    from app.core.errors import AppError
+
+    st, pid, vs = await _shop(client, stock=5)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 2}, headers=_auth(bt))
+    oid, sid = await _make_order(client, bt)
+
+    async def do_paid():
+        async with async_session_factory() as session:
+            try:
+                await service.transition(
+                    session, layer=t.LAYER_ORDER, entity_id=u.UUID(oid), to_status=t.ORDER_PAID,
+                    actor_role=t.ROLE_ADMIN, actor_user_id=None,
+                )
+                await session.commit()
+                return "paid"
+            except AppError as e:
+                await session.rollback()
+                return e.code
+
+    cancel_res, paid_res = await asyncio.wait_for(asyncio.gather(
+        client.post(CANCEL.format(sid), json={"reason": "변심"}, headers=_auth(bt)),
+        do_paid(),
+    ), timeout=10)
+
+    from app.core.db import async_session_factory as asf
+
+    async with asf() as session:
+        order = await session.get(Order, u.UUID(oid))
+        item = await session.scalar(select(OrderItem).where(OrderItem.sub_order_id == u.UUID(sid)))
+    # 정합한 두 종착 상태만 허용: (취소 선행) canceled+canceled / (입금 선행) paid+ordered — paid 주문의 buyer 취소는 불가
+    assert (order.payment_status, item.status, cancel_res.status_code) in [
+        ("canceled", "canceled", 200),
+        ("paid", "ordered", 422),
+    ]
+    if order.payment_status == "paid":
+        assert await _stock(vs[0]["id"]) == 3  # 복원 없음
+    else:
+        assert await _stock(vs[0]["id"]) == 5 and paid_res == "invalid_transition"

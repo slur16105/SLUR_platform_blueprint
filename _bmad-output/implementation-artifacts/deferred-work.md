@@ -43,3 +43,7 @@
 
 - **orders `(payment_status)` partial index 부재** — 자동취소 배치(10분 주기)·5.2 입금대기 목록이 같은 조회 패턴. v1 규모 무해. **5.2 스토리에서 AD-9 초안과 함께 검토** (스키마 변경 게이트)
 - **배치 rollback 실패(DB 다운) 시 처리 건수 로그 유실** — 데이터는 개별 commit으로 안전, 로그 관측성만 저하. 모니터링 정비(오픈 게이트)에서
+
+## Deferred from: code review of 4-6-buyer-cancel (2026-07-20)
+
+- **잠금 직전 극소 윈도의 선취소 라인 → generic invalid_transition message** — 데이터 안전(전체 rollback·재시도 성공), UX 계약만 저하. invalid_transition 코드 분리(4.3 defer)와 묶어 후속
