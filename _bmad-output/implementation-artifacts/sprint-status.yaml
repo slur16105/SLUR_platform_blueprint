@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-20  # Epic 6 완료 — 전 스토리 done (v1 코드 완주)
+last_updated: 2026-07-20  # Epic 4·5·6 합동 회고 done — 다음: 오픈 게이트(PG)
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -82,7 +82,7 @@ development_status:
   4-4-order-creation: done          # 주문 생성
   4-5-auto-cancel: done               # 미입금 자동취소
   4-6-buyer-cancel: done            # 구매자 취소
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   # Epic 5: 주문 운영 — 세 역할의 주문 화면
   epic-5: done
@@ -93,21 +93,28 @@ development_status:
   5-5-admin-order-intervention: done # 관리자 주문 개입
   5-6-admin-lookup: done            # 관리자 조회 (회원·판매자·상품)
   5-7-admin-settings: done          # 관리자 설정 — 입금 계좌 (2026-07-20 Slur 승인 추가)
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 
   # Epic 6: 법적 고지와 오픈 준비
   epic-6: done
   6-1-legal-pages-footer: done      # 약관·개인정보처리방침과 푸터
   6-2-seller-info-disclosure: done  # 중개자 지위·판매자 신원정보 노출
-  epic-6-retrospective: optional
+  epic-6-retrospective: done
 
 # Epic 1 회고 (2026-07-16) — Epic 2부터 적용. 스토리 작성·구현 시 이 목록을 먼저 읽는다.
 action_items:
   - { id: R1, status: open, text: "Railway 변수는 CLI --set으로만 + 즉시 확인. config apply의 변수 반영 신뢰 금지. 신규 변수는 railway.ts preserve() 동시 선언" }
-  - { id: R2, status: open, text: "구현 셀프체크 6종 후 리뷰行: 외부호출 타임아웃 / 실패 로깅 / 동시성 레이스 / 입력 길이 상한 / 외부 응답 이형 방어 / 외부 토큰 즉시 파기" }
+  - { id: R2, status: done, text: "구현 셀프체크 6종 후 리뷰行: 외부호출 타임아웃 / 실패 로깅 / 동시성 레이스 / 입력 길이 상한 / 외부 응답 이형 방어 / 외부 토큰 즉시 파기" }
   - { id: R3, status: open, text: "쿠키·Origin·CORS 미들웨어는 프로덕션(프록시 뒤) 실요청 검증 후에만 done" }
-  - { id: R4, status: open, text: "스키마 제약은 보류-왕복 대신 그 자리에서 결정·기록 (AD-9 초안 표 방식 유지)" }
-  - { id: R5, status: open, text: "스토리마다 '의도적 보류' + 해소 예정 스토리 명시, 새 스토리는 이전 보류 목록 스캔부터" }
-  - { id: R6, status: open, text: "에러 code는 Dev Notes에 사전 시드 선언, 화면 스토리는 code별 클라이언트 반응 표" }
-  - { id: R7, status: open, text: "Epic 2 첫 관리자 데이터 스토리에 페이지 단 FastAPI 판정 필수 Task (slur_role 쿠키는 UX 힌트일 뿐)" }
-  - { id: R8, status: open, text: "프로덕션 E2E curl 시나리오를 Task에 사전 명시, 테스트 데이터 즉시 정리 (1.2 패턴 표준화)" }
+  - { id: R4, status: done, text: "스키마 제약은 보류-왕복 대신 그 자리에서 결정·기록 (AD-9 초안 표 방식 유지)" }
+  - { id: R5, status: done, text: "스토리마다 '의도적 보류' + 해소 예정 스토리 명시, 새 스토리는 이전 보류 목록 스캔부터" }
+  - { id: R6, status: done, text: "에러 code는 Dev Notes에 사전 시드 선언, 화면 스토리는 code별 클라이언트 반응 표" }
+  - { id: R7, status: done, text: "Epic 2 첫 관리자 데이터 스토리에 페이지 단 FastAPI 판정 필수 Task (slur_role 쿠키는 UX 힌트일 뿐)" }
+  - { id: R8, status: in-progress, text: "프로덕션 E2E curl 시나리오를 Task에 사전 명시, 테스트 데이터 즉시 정리 (1.2 패턴 표준화)" }
+
+# Epic 4·5·6 합동 회고 (2026-07-20) — epic-4-5-6-retro-2026-07-20.md
+  - { id: A-E456-1, epic: 4-6, status: open, owner: "Slur", action: "실기 검증 일괄 세션 — 앱·판매자·관리자 전 플로우 (각 스토리 실기 검증 Task 일괄 해소)" }
+  - { id: A-E456-2, epic: 4-6, status: open, owner: "Claude", action: "테스트 헬퍼 conftest 승격 — _shop·_buyer·_admin_login·제2판매자 생성기 공용화" }
+  - { id: A-E456-3, epic: 4-6, status: open, owner: "Claude+Slur", action: "오픈 게이트 착수 — PG 연동 기획 (research-pg.md 기반 비교→Slur 결정→에픽 작성)" }
+  - { id: A-E456-4, epic: 4-6, status: open, owner: "Claude", action: "invalid_transition 코드 분리 검토 — 5.1 운영 피드백 후" }
+  - { id: A-E456-5, epic: 4-6, status: open, owner: "Claude", action: "웹 lint 베이스라인(react-hooks 6건) 일괄 리팩터 — 블루프린트 전" }
