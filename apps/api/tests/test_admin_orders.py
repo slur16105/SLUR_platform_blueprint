@@ -66,6 +66,12 @@ async def test_search_and_status_filters(client, clean_products):
     assert (await client.get(SEARCH, params={"q": brand_q}, headers=_auth(admin_t))).json()["total"] >= 1
     # q 1자 422
     assert (await client.get(SEARCH, params={"q": "a"}, headers=_auth(admin_t))).status_code == 422
+    # 와일드카드 이스케이프 — "%%"가 전 주문 매칭이 되면 안 됨
+    assert (await client.get(SEARCH, params={"q": "%%"}, headers=_auth(admin_t))).json()["total"] == 0
+    # 페이징 (리뷰 반영): 상한 422 + 빈 2페이지
+    assert (await client.get(SEARCH, params={"page": 10001}, headers=_auth(admin_t))).status_code == 422
+    p2 = (await client.get(SEARCH, params={"page": 2}, headers=_auth(admin_t))).json()
+    assert p2["items"] == [] and p2["total"] == 4 and p2["size"] >= 1
 
     # status 필터 — 결과의 display_status가 전부 필터 값과 일치 + 기대 주문 포함
     for status, expect_oid in [

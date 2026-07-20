@@ -4,7 +4,7 @@ baseline_commit: 4c8b719180b75847c4d83bcd32fe07125efb84f2
 
 # Story 5.5: 관리자 주문 개입
 
-Status: review
+Status: done
 
 ## Story
 
@@ -108,3 +108,20 @@ Claude Fable 5 (claude-fable-5) — Next.js는 병렬 서브에이전트 (slur �
 - apps/web/app/api/admin/orders/{route.ts,[id]/route.ts,actions/route.ts} (신규 — BFF)
 - apps/web/app/admin/orders/{page.tsx,orders.css,[id]/page.tsx,detail.css,status.ts} (신규)
 - apps/web/app/admin/page.tsx (수정 — 주문 관리 링크)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — 통합. Acceptance 위반 없음. 0 decision-needed · 10 patch · 0 defer · 1 dismiss.**
+
+- [x] [Review][Patch] ILIKE 와일드카드 미이스케이프(%·_ 패턴 주입) — escape 처리 + `%%` 전체 매칭 회귀 테스트
+- [x] [Review][Patch] user/seller 매칭 IN 무상한 — LIMIT 200
+- [x] [Review][Patch] 매칭 0건 시 빈 or_() 무필터 — 명시적 공집합 반환
+- [x] [Review][Patch] 8자 suffix 캐스트가 모든 비UUID 검색에 부착 — 8자 hex일 때만
+- [x] [Review][Patch] preparing/delivered 필터 NULL 3치 논리 방어 누락 — is_(None) OR 조건
+- [x] [Review][Patch] 배송중 모달 "송장 선택" 문구(엔진 필수 가드와 상충) — 필수 표기·클라 검증
+- [x] [Review][Patch] BFF cancel_item responsibility 조용한 기본값 — 누락 422 (귀책은 분쟁 근거 필드)
+- [x] [Review][Patch] UUID_RE 과소·과잉 검증 — 표준 정규식·소문자 정규화
+- [x] [Review][Patch] BFF page 미검증 봉투 이탈 — 1~10000 검증
+- [x] [Review][Patch] 페이징 테스트 부재(체크 과대)·placeholder 주문번호 누락 — 테스트·문구 보강
+- [x] [Review][Dismiss] 타임라인 동일 시각 정렬 비결정 주장 — `OrderEvent.id`는 UUIDv7(단조)라 (created_at, id) 정렬이 인과 순서 보존. 기각 근거 기록
+- 최종: 145/145, tsc 0

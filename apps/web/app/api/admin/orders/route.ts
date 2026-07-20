@@ -16,6 +16,9 @@ export async function GET(req: NextRequest) {
   if (status && !STATUSES.has(status)) {
     return Response.json({ code: "validation_error", message: "지원하지 않는 상태입니다.", details: [] }, { status: 422 });
   }
+  if (!/^\d+$/.test(page) || Number(page) < 1 || Number(page) > 10000) {
+    return Response.json({ code: "validation_error", message: "올바르지 않은 페이지입니다.", details: [] }, { status: 422 });
+  }
   const query = new URLSearchParams({ page });
   if (q) query.set("q", q);
   if (status) query.set("status", status);

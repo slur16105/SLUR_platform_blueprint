@@ -856,12 +856,16 @@ async def search_orders(
         try:
             conds.append(Order.id == uuid.UUID(q))
         except ValueError:
-            # 8자 suffix (무인덱스 캐스트 — v1 규모 seq scan 허용)
-            conds.append(func.upper(func.right(func.replace(cast(Order.id, SaString), "-", ""), 8)) == q.upper())
+            import re as _re
+
+            if _re.fullmatch(r"[0-9A-Fa-f]{8}", q):  # 8자 hex일 때만 suffix 캐스트 (무분별 seq scan 방지)
+                conds.append(func.upper(func.right(func.replace(cast(Order.id, SaString), "-", ""), 8)) == q.upper())
         if user_ids:
             conds.append(Order.user_id.in_(user_ids))
         if seller_ids:
             conds.append(exists().where(SubOrder.order_id == Order.id, SubOrder.seller_id.in_(seller_ids)))
+        if not conds:  # 어떤 축에도 매칭 없음 — 빈 or_()는 무필터가 되므로 명시적 공집합
+            return {"items": [], "total": 0, "page": page, "size": get_settings().page_size}
         base = base.where(or_(*conds))
     if status:
         has_ordered = _has_ordered_sq(Order.id)
@@ -877,13 +881,20 @@ async def search_orders(
         elif status == "delivered":
             base = base.where(
                 Order.payment_status == t.ORDER_PAID, has_ordered,
-                ~_active_sub_sq(Order.id, SubOrder.shipping_status.notin_([t.SUB_DELIVERED, t.SUB_CONFIRMED])),
+                ~_active_sub_sq(Order.id, or_(
+                    SubOrder.shipping_status.is_(None),
+                    SubOrder.shipping_status.notin_([t.SUB_DELIVERED, t.SUB_CONFIRMED]),
+                )),
             )
         elif status == "preparing":
+            not_done = or_(  # NULL 방어 — 3치 논리에서 NULL notin은 매칭 안 됨 (매핑 표 명시)
+                SubOrder.shipping_status.is_(None),
+                SubOrder.shipping_status.notin_([t.SUB_DELIVERED, t.SUB_CONFIRMED, t.SUB_SHIPPING]),
+            )
             base = base.where(
                 Order.payment_status == t.ORDER_PAID, has_ordered,
                 ~_active_sub_sq(Order.id, SubOrder.shipping_status == t.SUB_SHIPPING),
-                _active_sub_sq(Order.id, SubOrder.shipping_status.notin_([t.SUB_DELIVERED, t.SUB_CONFIRMED])),
+                _active_sub_sq(Order.id, not_done),
             )
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     orders = list(await session.scalars(

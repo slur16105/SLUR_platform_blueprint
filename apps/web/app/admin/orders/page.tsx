@@ -137,7 +137,7 @@ export default function AdminOrders() {
       </header>
       <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input className="input_text" type="search" maxLength={100} value={q}
-          placeholder="주문자 이름·이메일 또는 브랜드 (2자 이상)"
+          placeholder="주문번호(8자/전체)·주문자 이름·이메일·브랜드 (2자 이상)"
           onChange={(e) => setQ(e.target.value)} />
         <select className="input_text m_select" aria-label="주문 상태" value={status}
           onChange={(e) => changeStatus(e.target.value as StatusFilter)}>

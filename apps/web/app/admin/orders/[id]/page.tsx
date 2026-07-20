@@ -79,7 +79,8 @@ const ROLE_LABEL: Record<string, string> = { buyer: "구매자", seller: "판매
 const ENTITY_LABEL: Record<string, string> = { order: "주문", sub_order: "묶음", order_item: "라인" };
 // 타임라인은 표시 상태 외에 내부 상태(pending_payment 등)도 지나간다 — 표기만 보강
 const EVENT_STATUS: Record<string, string> = { ...STATUS_LABEL, pending_payment: "입금대기", paid: "결제완료", ordered: "주문" };
-const UUID_RE = /^[0-9a-f-]{36}$/;
+// 표준 UUID — 하이픈 위치·hex 검증, 대소문자 허용 (소문자 정규화는 BFF가 담당)
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 function eventStatusLabel(s: string | null) {
   if (s === null) return "생성";
@@ -256,11 +257,14 @@ export default function AdminOrderDetail() {
     if (action.kind === "ship") {
       const c = carrier.trim();
       const t = tracking.trim();
-      if (c.length > 50 || t.length > 50) return void setFormError("택배사와 송장번호는 각각 50자 이내입니다.");
+      // 송장 필수 가드(서버 전이표)와 동일 — 빈 값 제출은 422만 유도하므로 클라에서 차단
+      if (!c || c.length > 50 || !t || t.length > 50) {
+        return void setFormError("택배사와 송장번호를 각각 1~50자로 입력해 주세요.");
+      }
       setFormError(null);
       submitAction({
         action: "sub_transition", sub_order_id: action.sub.sub_order_id, to_status: "shipping",
-        carrier: c || undefined, tracking_number: t || undefined, note: note.trim() || undefined,
+        carrier: c, tracking_number: t, note: note.trim() || undefined,
       }, `${action.sub.brand_name} 묶음을 배송중 처리했습니다.`);
       return;
     }
@@ -437,7 +441,7 @@ export default function AdminOrderDetail() {
                 <p className="i_text">아래 라인을 취소합니다. 배송 상태와 무관하게 처리되며, 되돌릴 수 없습니다.</p>
               )}
               {action.kind === "ship" && (
-                <p className="i_text">이 묶음을 배송중으로 강제 전환합니다. 송장 정보는 선택 입력입니다.</p>
+                <p className="i_text">이 묶음을 배송중으로 강제 전환합니다. 택배사와 송장번호는 필수입니다.</p>
               )}
               {action.kind === "deliver" && (
                 <p className="i_text">이 묶음을 배송완료로 강제 전환합니다. 처리 후에는 되돌릴 수 없습니다.</p>
@@ -483,14 +487,14 @@ export default function AdminOrderDetail() {
               {action.kind === "ship" && (
                 <>
                   <label className="field">
-                    <span className="i_label">택배사 (선택)</span>
+                    <span className="i_label">택배사 (필수)</span>
                     <input className="input_text" type="text" maxLength={50} ref={carrierRef}
                       placeholder="예: CJ대한통운" value={carrier} onChange={(e) => setCarrier(e.target.value)} />
                   </label>
                   <label className="field">
-                    <span className="i_label">송장번호 (선택)</span>
+                    <span className="i_label">송장번호 (필수)</span>
                     <input className="input_text" type="text" maxLength={50}
-                      placeholder="숫자·문자 그대로 입력 (50자 이내)" value={tracking}
+                      placeholder="숫자·문자 그대로 입력 (1~50자)" value={tracking}
                       onChange={(e) => setTracking(e.target.value)} />
                   </label>
                 </>
@@ -509,6 +513,7 @@ export default function AdminOrderDetail() {
               <button
                 className={`btn ${action.kind === "cancel_order" || action.kind === "cancel_item" ? "m_danger" : "m_primary"}`}
                 type="button" ref={confirmBtnRef} data-state={submitting ? "loading" : undefined}
+                disabled={action.kind === "ship" && (!carrier.trim() || !tracking.trim())}
                 onClick={submitModal}>{modalTitle}</button>
             </div>
           </div>

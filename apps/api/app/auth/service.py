@@ -209,7 +209,8 @@ async def get_users_by_ids(session: AsyncSession, user_ids: list[uuid.UUID]) -> 
 
 async def find_user_ids_by_name_or_email(session: AsyncSession, q: str) -> list[uuid.UUID]:
     """이름·이메일 부분 일치 user id — admin 주문 검색 선해결용 (AD-2)."""
+    pat = f"%{q.replace(chr(92), chr(92)*2).replace('%', chr(92)+'%').replace('_', chr(92)+'_')}%"
     rows = await session.scalars(
-        select(User.id).where((User.name.ilike(f"%{q}%")) | (User.email.ilike(f"%{q}%")))
-    )
+        select(User.id).where((User.name.ilike(pat, escape=chr(92))) | (User.email.ilike(pat, escape=chr(92)))).limit(200)
+    )  # 이스케이프: %·_ 패턴 주입 방지 / LIMIT: IN 폭발 상한 (초과 매칭은 검색어를 좁히도록)
     return list(rows)
