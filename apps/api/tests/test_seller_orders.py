@@ -7,38 +7,9 @@ from sqlalchemy import select
 
 from app.orders import service, transitions as t
 from app.orders.models import OrderEvent, SubOrder
-from tests.test_admin_approval import ADMIN
-from tests.test_carts import _buyer, _shop
-from tests.test_order_creation import ADDRESS, _cart_ids, _expected, _fees
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
+from tests.helpers import ADDRESS, _admin_login, _auth, _buyer, _cart_ids, _expected, _fees, _paid_order, _shop, second_seller
 
 ORDERS_URL = "/api/v1/sellers/orders"
-
-
-async def _admin_login(client) -> str:
-    res = await client.post("/api/v1/auth/login", json={"email": ADMIN["email"], "password": ADMIN["password"]})
-    return res.json()["access_token"]
-
-
-async def _paid_order(client, bt, admin_t, vs, qty=1) -> tuple[str, str]:
-    """주문 생성 + 입금 확인 → (order_id, sub_order_id) — preparing 상태 조성."""
-    from app.core.db import async_session_factory
-
-    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": qty}, headers=_auth(bt))
-    ids = await _cart_ids(client, bt)
-    exp = await _expected(client, bt)
-    res = await client.post(
-        "/api/v1/orders", json={"cart_item_ids": ids, "expected_grand_total": exp, **ADDRESS}, headers=_auth(bt)
-    )
-    oid = res.json()["order_id"]
-    r = await client.post(
-        f"/api/v1/admin/orders/{oid}/confirm-payment", json={"expected_grand_total": exp}, headers=_auth(admin_t)
-    )
-    assert r.status_code == 204
-    async with async_session_factory() as session:
-        sid = await session.scalar(select(SubOrder.id).where(SubOrder.order_id == u.UUID(oid)))
-    return oid, str(sid)
 
 
 @pytest.mark.asyncio
@@ -125,9 +96,6 @@ async def test_ship_and_deliver_flow(client, clean_products):
 @pytest.mark.asyncio
 async def test_other_seller_403(client, clean_products):
     """AC 2: 타 판매자 처리 403 (epics 명시 — 404 아님)."""
-    from app.core.db import engine
-    from sqlalchemy import text
-
     st, pid, vs = await _shop(client, stock=9)
     await _fees(client, st)
     bt = await _buyer(client)
@@ -135,14 +103,7 @@ async def test_other_seller_403(client, clean_products):
     oid, sid = await _paid_order(client, bt, admin_t, vs)
 
     # 제2 판매자 생성 (승인만 — 상품 불요)
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-ship2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
+    t2, _sid2 = await second_seller(client, admin_t, email="seller-ship2@example.com")
 
     res = await client.post(
         f"/api/v1/sellers/sub-orders/{sid}/ship", json={"carrier": "CJ", "tracking_number": "1"}, headers=_auth(t2)

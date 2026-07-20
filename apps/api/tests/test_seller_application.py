@@ -2,26 +2,14 @@
 
 import pytest
 
+from tests.helpers import VALID_APP, _auth
+
 SIGNUP = {"email": "brand@example.com", "password": "password123", "name": "브랜드"}
-VALID_APP = {
-    "company_name": "슬러상회",
-    "representative_name": "김슬러",
-    "business_registration_number": "220-81-62517",  # 체크섬 유효 (테스트용 공개 번호)
-    "mail_order_number": "제2026-서울-0001호",
-    "business_address": "서울시 어딘가 1-2",
-    "contact_phone": "01012345678",
-    "brand_name": "슬러굿즈",
-    "brand_intro": "결이 맞는 디자인 소품을 만듭니다.",
-}
 
 
 async def _token(client):
     res = await client.post("/api/v1/auth/signup", json=SIGNUP)
     return res.json()["access_token"]
-
-
-def _auth(t):
-    return {"Authorization": f"Bearer {t}"}
 
 
 @pytest.fixture

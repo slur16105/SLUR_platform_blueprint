@@ -8,35 +8,9 @@ import pytest
 from sqlalchemy import select, text
 
 from app.orders.models import Order, OrderEvent, OrderItem, SubOrder
-from tests.test_carts import _buyer, _shop
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
+from tests.helpers import ADDRESS, _auth, _buyer, _cart_ids, _expected, _fees, _shop, second_seller
 
 ORDERS = "/api/v1/orders"
-ADDRESS = {
-    "postal_code": "06236", "recipient_name": "김수령", "recipient_phone": "01012345678",
-    "address1": "서울시 강남구 테헤란로 1", "address2": "101호", "order_note": "문 앞에 놓아주세요",
-}
-
-
-async def _fees(client, st, base=3000, jeju=3000, island=5000):
-    res = await client.put(
-        "/api/v1/sellers/me/shipping-fees",
-        json={"base_shipping_fee": base, "jeju_extra_fee": jeju, "island_extra_fee": island}, headers=_auth(st),
-    )
-    assert res.status_code == 200
-
-
-async def _expected(client, bt, postal="06236") -> int:
-    """미리보기 총액 — 주문 body의 expected_grand_total 소스 (price_changed 방지 계약)."""
-    res = await client.post("/api/v1/orders/preview", json={"postal_code": postal}, headers=_auth(bt))
-    assert res.status_code == 200
-    return res.json()["grand_total"]
-
-
-async def _cart_ids(client, bt) -> list[str]:
-    cart = (await client.get("/api/v1/carts", headers=_auth(bt))).json()
-    return [i["id"] for i in cart["items"] if i["purchasable"]]
 
 
 async def _stock(variant_id: str) -> int:
@@ -108,10 +82,8 @@ async def test_create_order_jeju_snapshot(client, clean_products):
 @pytest.mark.asyncio
 async def test_multi_seller_sub_orders(client, clean_products):
     """AC 1 (FR-15): 판매자 2명 → sub_orders 2행, 배송비 각각 스냅샷."""
-    from app.core.db import async_session_factory, engine
-    from tests.test_admin_approval import _admin_token
-    from tests.test_products import _category, _product_body, _seller_with_prefix
-    from tests.test_variants import GRID
+    from app.core.db import async_session_factory
+    from tests.helpers import GRID, _admin_token, _category, _product_body, _seller_with_prefix
 
     admin_t = await _admin_token(client)
     cid = await _category(client, admin_t, name="주문다중")
@@ -123,16 +95,7 @@ async def test_multi_seller_sub_orders(client, clean_products):
     )).json()["variants"]
     await _fees(client, st1, base=3000)
     # 제2 판매자 (preview 테스트 관례)
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-order2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
-    async with engine.begin() as conn:
-        sid2 = str((await conn.execute(text("SELECT id FROM sellers WHERE brand_name = '둘째굿즈'"))).scalar_one())
+    t2, sid2 = await second_seller(client, admin_t, email="seller-order2@example.com")
     pid2 = (await client.post("/api/v1/sellers/products", json=_product_body(sid2, cid), headers=_auth(t2))).json()["id"]
     vs2 = (await client.put(
         f"/api/v1/sellers/products/{pid2}/variants",

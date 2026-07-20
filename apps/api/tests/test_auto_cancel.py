@@ -8,10 +8,7 @@ from sqlalchemy import select, text, update as sa_update
 
 from app.orders import service
 from app.orders.models import Cancellation, Order, OrderEvent, OrderItem, SubOrder
-from tests.test_carts import _buyer, _shop
-from tests.test_order_creation import ADDRESS, _cart_ids, _expected, _fees
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
+from tests.helpers import ADDRESS, _auth, _buyer, _cart_ids, _expected, _fees, _shop
 
 
 async def _make_order(client, bt, ids, exp) -> str:
@@ -149,7 +146,7 @@ async def test_idempotent_and_isolated_failure(client, clean_products, monkeypat
 async def test_deleted_variant_line_cancels_with_noop_restore(client, clean_products):
     """variant SET NULL 라인 포함 주문 — 복원 no-op으로 정상 취소 (4.2 결정 ②)."""
     from app.core.db import async_session_factory
-    from tests.test_variants import GRID
+    from tests.helpers import GRID
 
     st, pid, vs = await _shop(client, stock=5)
     await _fees(client, st)

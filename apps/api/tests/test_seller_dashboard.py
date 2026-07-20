@@ -2,10 +2,7 @@
 
 import pytest
 
-from tests.test_carts import _buyer, _shop
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
-from tests.test_seller_orders import _admin_login, _paid_order
+from tests.helpers import _admin_login, _auth, _buyer, _paid_order, _shop, second_seller
 
 DASH = "/api/v1/sellers/dashboard"
 
@@ -32,7 +29,7 @@ async def test_dashboard_counts_and_low_stock(client, clean_products):
     assert d0["low_stock_threshold"] == seeded
 
     # 미결제 주문 존재 상태 — 카운트 제외 실증
-    from tests.test_order_creation import ADDRESS, _cart_ids, _expected
+    from tests.helpers import ADDRESS, _cart_ids, _expected
 
     await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
     ids = await _cart_ids(client, bt)
@@ -74,7 +71,7 @@ async def test_dashboard_counts_and_low_stock(client, clean_products):
 
 async def _fees_and_grid(client, st, pid):
     """배송비 + 임박 경계 그리드: stock 5(경계)·6(제외)·0(비활성 — 제외)."""
-    from tests.test_variants import GRID
+    from tests.helpers import GRID
 
     await client.put(
         "/api/v1/sellers/me/shipping-fees",
@@ -114,7 +111,6 @@ async def test_seller_isolation_and_limit(client, clean_products):
     from app.orders import service as orders_service, transitions as t
     from app.orders.models import OrderItem, SubOrder
     from app.products import service as products_service
-    from tests.test_admin_approval import ADMIN
 
     st, pid, vs = await _shop(client, stock=2)  # 전 조합 임박
     await client.put(
@@ -132,14 +128,7 @@ async def test_seller_isolation_and_limit(client, clean_products):
         assert len(rows) == 2  # 전 조합 임박(6개) 중 2개로 절단
 
     # 제2 판매자 (상품·주문 없음) — 완전 분리: 전부 0
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-dash2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
+    t2, _sid2 = await second_seller(client, admin_t, email="seller-dash2@example.com")
     d2 = (await client.get(DASH, headers=_auth(t2))).json()
     assert d2["preparing_count"] == 0 and d2["shipping_count"] == 0 and d2["low_stock"] == []  # seller1 데이터 미노출
 

@@ -2,26 +2,7 @@
 
 import pytest
 
-from app.auth.bootstrap import grant_admin
-from tests.test_seller_application import VALID_APP, _auth
-
-ADMIN = {"email": "admin@example.com", "password": "password123", "name": "관리자"}
-BRAND = {"email": "brand2@example.com", "password": "password123", "name": "브랜드2"}
-
-
-async def _admin_token(client):
-    signup = await client.post("/api/v1/auth/signup", json=ADMIN)
-    refresh = signup.json()["refresh_token"]
-    await grant_admin(ADMIN["email"])
-    res = await client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
-    return res.json()["access_token"]
-
-
-async def _submit_application(client):
-    signup = await client.post("/api/v1/auth/signup", json=BRAND)
-    t = signup.json()["access_token"]
-    res = await client.post("/api/v1/sellers/applications", json=VALID_APP, headers=_auth(t))
-    return res.json()["id"], signup.json()["refresh_token"]
+from tests.helpers import BRAND, VALID_APP, _admin_token, _auth, _submit_application
 
 
 @pytest.mark.asyncio

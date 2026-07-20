@@ -15,9 +15,7 @@ from sqlalchemy import select, text
 from app.core.errors import AppError
 from app.orders import service, transitions as t
 from app.orders.models import Cancellation, Order, OrderEvent, OrderItem, SubOrder
-from tests.test_carts import _buyer, _shop
-from tests.test_seller_application import _auth  # noqa: F401 — _shop 의존
-from tests.test_products import clean_products  # noqa: F401
+from tests.helpers import _auth, _buyer, _shop  # noqa: F401
 
 
 async def _user_id(client, email: str) -> u.UUID:

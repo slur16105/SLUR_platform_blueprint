@@ -4,29 +4,9 @@ import uuid as u
 
 import pytest
 
-from tests.test_admin_approval import _admin_token
-from tests.test_products import _category, _product_body, _seller_with_prefix, clean_products  # noqa: F401
-from tests.test_seller_application import _auth
-from tests.test_variants import GRID
+from tests.helpers import GRID, _auth, _buyer, _shop
 
 CARTS = "/api/v1/carts"
-
-
-async def _buyer(client, email="buyer@example.com"):
-    res = await client.post("/api/v1/auth/signup", json={"email": email, "password": "password123", "name": "구매자"})
-    return res.json()["access_token"]
-
-
-async def _shop(client, stock=5):
-    """판매자·상품·2×3 옵션 그리드 준비 → (seller_token, product_id, variants)."""
-    admin_t = await _admin_token(client)
-    t, sid = await _seller_with_prefix(client, admin_t)
-    cid = await _category(client, admin_t, name="장바구니용")
-    res = await client.post("/api/v1/sellers/products", json=_product_body(sid, cid), headers=_auth(t))
-    pid = res.json()["id"]
-    grid = {"variants": [{**v, "stock": stock} for v in GRID["variants"]]}
-    res = await client.put(f"/api/v1/sellers/products/{pid}/variants", json=grid, headers=_auth(t))
-    return t, pid, res.json()["variants"]
 
 
 @pytest.mark.asyncio

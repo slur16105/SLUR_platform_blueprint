@@ -49,3 +49,14 @@ async def clean_auth_tables():
     await _truncate_auth()
     yield
     await _truncate_auth()
+
+
+@pytest.fixture
+async def clean_products(clean_auth_tables):
+    """상품 도메인 격리 (Story 3.2 — tests/helpers.py 승격과 함께 conftest로 이동)."""
+    yield
+    from sqlalchemy import text
+    from app.core.db import engine
+
+    async with engine.begin() as conn:
+        await conn.execute(text("TRUNCATE products, categories CASCADE"))

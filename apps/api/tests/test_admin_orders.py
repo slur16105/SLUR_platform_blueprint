@@ -6,11 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from app.orders.models import Cancellation, Order, OrderItem, SubOrder
-from tests.test_carts import _buyer, _shop
-from tests.test_order_creation import ADDRESS, _cart_ids, _expected, _fees
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
-from tests.test_seller_orders import _admin_login, _paid_order
+from tests.helpers import ADDRESS, _admin_login, _auth, _buyer, _cart_ids, _expected, _fees, _paid_order, _shop
 
 SEARCH = "/api/v1/admin/orders"
 

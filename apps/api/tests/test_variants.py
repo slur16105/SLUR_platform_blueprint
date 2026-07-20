@@ -3,17 +3,7 @@
 import pytest
 
 from app.products.service import check_purchasable
-from tests.test_admin_approval import _admin_token
-from tests.test_products import _category, _product_body, _seller_with_prefix, clean_products  # noqa: F401
-from tests.test_seller_application import _auth
-
-GRID = {
-    "variants": [
-        {"option1_name": "색상", "option1_value": c, "option2_name": "사이즈", "option2_value": s,
-         "extra_price": 1000 if s == "L" else 0, "stock": 5, "is_active": True}
-        for c in ["블랙", "화이트"] for s in ["S", "M", "L"]
-    ]
-}
+from tests.helpers import GRID, _admin_token, _auth, _category, _product_body, _seller_with_prefix
 
 
 async def _product(client, admin_t, t, sid, stock=0):

@@ -2,49 +2,7 @@
 
 import pytest
 
-from tests.test_admin_approval import _admin_token, _submit_application
-from tests.test_seller_application import _auth
-
-
-@pytest.fixture
-async def clean_products(clean_auth_tables):
-    yield
-    from sqlalchemy import text
-    from app.core.db import engine
-
-    async with engine.begin() as conn:
-        await conn.execute(text("TRUNCATE products, categories CASCADE"))
-
-
-async def _category(client, admin_t, name="문구"):
-    res = await client.post("/api/v1/admin/categories", json={"name": name}, headers=_auth(admin_t))
-    return res.json()["id"]
-
-
-def _product_body(seller_prefix, category_id, n_images=2):
-    import uuid as _u
-
-    return {
-        "name": "결 좋은 엽서",
-        "base_price": 3000,
-        "description": "손으로 그린 엽서입니다.",
-        "category_id": category_id,
-        "image_paths": [f"{seller_prefix}/{_u.uuid7()}.jpg" for i in range(n_images)],
-    }
-
-
-async def _seller_with_prefix(client, admin_t):
-    # admin 토큰 재사용 (중복 admin 가입 방지)
-    app_id, brand_refresh = await _submit_application(client)
-    await client.post(f"/api/v1/admin/seller-applications/{app_id}/approve", headers=_auth(admin_t))
-    r = await client.post("/api/v1/auth/refresh", json={"refresh_token": brand_refresh})
-    t = r.json()["access_token"]
-    from sqlalchemy import text
-    from app.core.db import engine
-
-    async with engine.begin() as conn:
-        sid = (await conn.execute(text("SELECT id FROM sellers LIMIT 1"))).scalar()
-    return t, str(sid)
+from tests.helpers import _admin_token, _auth, _category, _product_body, _seller_with_prefix, second_seller
 
 
 @pytest.mark.asyncio
@@ -151,14 +109,7 @@ async def test_other_seller_cannot_patch(client, clean_products):
     pid = (await client.post("/api/v1/sellers/products", json=_product_body(sid1, cid), headers=_auth(t1))).json()["id"]
 
     # 제2 판매자 생성
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={**{
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "220-81-62517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "второй"}}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
+    t2, _sid2 = await second_seller(client, admin_t, email="seller2@example.com")
 
     res = await client.patch(f"/api/v1/sellers/products/{pid}", json={"base_price": 1}, headers=_auth(t2))
     assert res.status_code == 404  # 타인 상품 — 존재 비노출

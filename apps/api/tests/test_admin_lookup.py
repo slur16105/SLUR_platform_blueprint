@@ -2,10 +2,7 @@
 
 import pytest
 
-from tests.test_carts import _buyer, _shop
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
-from tests.test_seller_orders import _admin_login
+from tests.helpers import _admin_login, _auth, _buyer, _shop
 
 USERS = "/api/v1/admin/users"
 SELLERS = "/api/v1/admin/sellers"

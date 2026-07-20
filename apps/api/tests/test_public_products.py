@@ -2,9 +2,7 @@
 
 import pytest
 
-from tests.test_admin_approval import _admin_token
-from tests.test_products import _category, _product_body, _seller_with_prefix, clean_products  # noqa: F401
-from tests.test_seller_application import _auth
+from tests.helpers import _admin_token, _auth, _category, _product_body, _seller_with_prefix
 
 
 async def _setup(client):
@@ -69,7 +67,7 @@ async def test_pagination_and_all_categories(client, clean_products):
 @pytest.mark.asyncio
 async def test_detail_seller_info_disclosure(client, clean_products):
     """6.2 (FR-32): 공개 상세에 법정 판매자 신원정보 — 인증 불요."""
-    from tests.test_carts import _shop
+    from tests.helpers import _shop
 
     st, pid, vs = await _shop(client, stock=5)
     d = (await client.get(f"/api/v1/products/{pid}")).json()  # 미인증

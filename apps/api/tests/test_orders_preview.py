@@ -2,11 +2,17 @@
 
 import pytest
 
-from tests.test_admin_approval import _admin_token
-from tests.test_carts import _buyer, _shop
-from tests.test_products import _category, _product_body, _seller_with_prefix, clean_products  # noqa: F401
-from tests.test_seller_application import _auth
-from tests.test_variants import GRID
+from tests.helpers import (
+    GRID,
+    _admin_token,
+    _auth,
+    _buyer,
+    _category,
+    _product_body,
+    _seller_with_prefix,
+    _shop,
+    second_seller,
+)
 
 PREVIEW = "/api/v1/orders/preview"
 FEES = {"base_shipping_fee": 3000, "jeju_extra_fee": 3000, "island_extra_fee": 5000}
@@ -111,19 +117,8 @@ async def test_preview_multi_seller_grouping(client, clean_products):
         json={"variants": [{**v, "stock": 5} for v in GRID["variants"]]}, headers=_auth(st1),
     )).json()["variants"]
     await _set_fees(client, st1)  # 3000
-    # 제2 판매자 — _seller_with_prefix는 고정 이메일·단일 seller 전제라 인라인 구성 (test_products 관례)
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-preview2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
-    from sqlalchemy import text
-    from app.core.db import engine
-    async with engine.begin() as conn:  # 최신 행 추정 대신 brand_name 정확 조회 (리뷰 반영)
-        sid2 = str((await conn.execute(text("SELECT id FROM sellers WHERE brand_name = '둘째굿즈'"))).scalar_one())
+    # 제2 판매자 — _seller_with_prefix는 고정 이메일·단일 seller 전제라 second_seller 사용
+    t2, sid2 = await second_seller(client, admin_t, email="seller-preview2@example.com")
     pid2 = (await client.post("/api/v1/sellers/products", json=_product_body(sid2, cid), headers=_auth(t2))).json()["id"]
     vs2 = (await client.put(
         f"/api/v1/sellers/products/{pid2}/variants",

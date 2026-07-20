@@ -7,40 +7,13 @@ import pytest
 from sqlalchemy import select
 
 from app.orders.models import Order, OrderEvent, SubOrder
-from tests.test_admin_approval import ADMIN
-from tests.test_carts import _buyer, _shop
-from tests.test_order_creation import ADDRESS, _cart_ids, _expected, _fees
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
+from tests.helpers import _admin_login, _auth, _buyer, _fees, _shop, make_order as _make_order, second_seller
 
 PENDING = "/api/v1/admin/orders/pending"
 
 
 def _confirm(oid: str) -> str:
     return f"/api/v1/admin/orders/{oid}/confirm-payment"
-
-
-async def _admin_login(client) -> str:
-    """_shop이 admin 가입을 이미 수행하므로 로그인으로 토큰만 받는다."""
-    res = await client.post("/api/v1/auth/login", json={"email": ADMIN["email"], "password": ADMIN["password"]})
-    assert res.status_code == 200
-    return res.json()["access_token"]
-
-
-async def _make_order(client, bt) -> tuple[str, str]:
-    from app.core.db import async_session_factory
-
-    ids = await _cart_ids(client, bt)
-    res = await client.post(
-        "/api/v1/orders",
-        json={"cart_item_ids": ids, "expected_grand_total": await _expected(client, bt), **ADDRESS},
-        headers=_auth(bt),
-    )
-    assert res.status_code == 201
-    oid = res.json()["order_id"]
-    async with async_session_factory() as session:
-        sid = await session.scalar(select(SubOrder.id).where(SubOrder.order_id == u.UUID(oid)))
-    return oid, str(sid)
 
 
 @pytest.mark.asyncio
@@ -163,12 +136,7 @@ async def test_concurrent_confirm_vs_buyer_cancel(client, clean_products):
 @pytest.mark.asyncio
 async def test_partial_cancel_amount_and_price_changed(client, clean_products):
     """리뷰 F5·F3: 2판매자 주문 부분 취소 → 목록 금액 = 잔여 활성분, stale 금액 확인은 409."""
-    from app.core.db import engine
-    from sqlalchemy import text
-
-    from tests.test_admin_approval import _admin_token
-    from tests.test_products import _category, _product_body, _seller_with_prefix
-    from tests.test_variants import GRID
+    from tests.helpers import GRID, _admin_token, _category, _product_body, _seller_with_prefix
 
     admin_t = await _admin_token(client)
     cid = await _category(client, admin_t, name="입금부분")
@@ -179,16 +147,7 @@ async def test_partial_cancel_amount_and_price_changed(client, clean_products):
         json={"variants": [{**v, "stock": 5} for v in GRID["variants"]]}, headers=_auth(st1),
     )).json()["variants"]
     await _fees(client, st1)
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-pay2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
-    async with engine.begin() as conn:
-        sid2v = str((await conn.execute(text("SELECT id FROM sellers WHERE brand_name = '둘째굿즈'"))).scalar_one())
+    t2, sid2v = await second_seller(client, admin_t, email="seller-pay2@example.com")
     pid2 = (await client.post("/api/v1/sellers/products", json=_product_body(sid2v, cid), headers=_auth(t2))).json()["id"]
     vs2 = (await client.put(
         f"/api/v1/sellers/products/{pid2}/variants",

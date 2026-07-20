@@ -7,29 +7,9 @@ from sqlalchemy import select
 
 from app.orders import service, transitions as t
 from app.orders.models import Cancellation, Order, OrderEvent, OrderItem, SubOrder
-from tests.test_carts import _buyer, _shop
-from tests.test_order_creation import ADDRESS, _cart_ids, _expected, _fees
-from tests.test_products import clean_products  # noqa: F401
-from tests.test_seller_application import _auth
+from tests.helpers import ADDRESS, _auth, _buyer, _cart_ids, _expected, _fees, _shop, make_order as _make_order, second_seller
 
 CANCEL = "/api/v1/orders/sub-orders/{}/cancel"
-
-
-async def _make_order(client, bt) -> tuple[str, str]:
-    """단일 묶음 주문 생성 → (order_id, sub_order_id)."""
-    from app.core.db import async_session_factory
-
-    ids = await _cart_ids(client, bt)
-    res = await client.post(
-        "/api/v1/orders",
-        json={"cart_item_ids": ids, "expected_grand_total": await _expected(client, bt), **ADDRESS},
-        headers=_auth(bt),
-    )
-    assert res.status_code == 201
-    oid = res.json()["order_id"]
-    async with async_session_factory() as session:
-        sid = await session.scalar(select(SubOrder.id).where(SubOrder.order_id == u.UUID(oid)))
-    return oid, str(sid)
 
 
 async def _stock(variant_id: str) -> int:
@@ -77,12 +57,9 @@ async def test_cancel_bundle_full_flow(client, clean_products):
 @pytest.mark.asyncio
 async def test_partial_bundle_cancel_keeps_order(client, clean_products):
     """다중 판매자: 한 묶음 취소 → order 유지·타 묶음 무변화, 남은 묶음 취소 → order canceled."""
-    from app.core.db import async_session_factory, engine
-    from sqlalchemy import text
+    from app.core.db import async_session_factory
 
-    from tests.test_admin_approval import _admin_token
-    from tests.test_products import _category, _product_body, _seller_with_prefix
-    from tests.test_variants import GRID
+    from tests.helpers import GRID, _admin_token, _category, _product_body, _seller_with_prefix
 
     admin_t = await _admin_token(client)
     cid = await _category(client, admin_t, name="구매취소")
@@ -93,16 +70,7 @@ async def test_partial_bundle_cancel_keeps_order(client, clean_products):
         json={"variants": [{**v, "stock": 5} for v in GRID["variants"]]}, headers=_auth(st1),
     )).json()["variants"]
     await _fees(client, st1)
-    s2 = await client.post("/api/v1/auth/signup", json={"email": "seller-bc2@example.com", "password": "password123", "name": "판매자2"})
-    t2raw, r2 = s2.json()["access_token"], s2.json()["refresh_token"]
-    app2 = await client.post("/api/v1/sellers/applications", json={
-        "company_name": "둘째상회", "representative_name": "김둘", "business_registration_number": "2208162517",
-        "mail_order_number": "제2026-서울-0009호", "business_address": "서울", "contact_phone": "01099998888",
-        "brand_name": "둘째굿즈", "brand_intro": "두 번째 브랜드"}, headers=_auth(t2raw))
-    await client.post(f"/api/v1/admin/seller-applications/{app2.json()['id']}/approve", headers=_auth(admin_t))
-    t2 = (await client.post("/api/v1/auth/refresh", json={"refresh_token": r2})).json()["access_token"]
-    async with engine.begin() as conn:
-        sid2 = str((await conn.execute(text("SELECT id FROM sellers WHERE brand_name = '둘째굿즈'"))).scalar_one())
+    t2, sid2 = await second_seller(client, admin_t, email="seller-bc2@example.com")
     pid2 = (await client.post("/api/v1/sellers/products", json=_product_body(sid2, cid), headers=_auth(t2))).json()["id"]
     vs2 = (await client.put(
         f"/api/v1/sellers/products/{pid2}/variants",

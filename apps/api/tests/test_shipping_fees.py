@@ -2,8 +2,7 @@
 
 import pytest
 
-from tests.test_admin_approval import _admin_token, _submit_application
-from tests.test_seller_application import _auth
+from tests.helpers import _admin_token, _auth, _submit_application
 
 FEES = {"base_shipping_fee": 3000, "jeju_extra_fee": 3000, "island_extra_fee": 5000}
 

@@ -2,8 +2,7 @@
 
 import pytest
 
-from tests.test_admin_approval import _admin_token
-from tests.test_seller_application import _auth
+from tests.helpers import _admin_token, _auth
 
 
 @pytest.fixture
