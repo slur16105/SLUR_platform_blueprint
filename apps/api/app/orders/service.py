@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from sqlalchemy import func, select
@@ -8,6 +9,8 @@ from app.core.errors import AppError
 from app.orders.models import RemoteAreaZip, Setting
 from app.products import service as products_service
 from app.sellers import service as sellers_service
+
+logger = logging.getLogger("slur.orders")
 
 CODE_EMPTY_CART = "empty_cart"
 
@@ -369,11 +372,6 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
 # 미입금 자동취소 (Story 4.5) — 엔진 조합 + 대상 선별만, 로직 재구현 금지 (AD-3·AD-4)
 # ---------------------------------------------------------------------------
 
-import logging  # noqa: E402
-
-logger = logging.getLogger("slur.orders")
-
-
 async def auto_cancel_expired_orders(session: AsyncSession) -> int:
     """기한 경과 pending_payment 주문을 system 역할로 자동취소. 취소한 주문 수 반환.
 
@@ -389,23 +387,39 @@ async def auto_cancel_expired_orders(session: AsyncSession) -> int:
     canceled = 0
     for order_id in target_ids:
         try:
-            item_ids = list(await session.scalars(
-                select(OrderItem.id)
-                .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
-                .where(SubOrder.order_id == order_id, OrderItem.status == t.ITEM_ORDERED)
-            ))
-            for item_id in item_ids:  # 재고 복원·cancellations는 엔진 경로가 소유
-                await cancel_order_item(
-                    session, order_item_id=item_id, actor_role=t.ROLE_SYSTEM, actor_user_id=None,
-                    reason="미입금 자동취소", responsibility=t.ROLE_SYSTEM,
-                )
-            await transition(
-                session, layer=t.LAYER_ORDER, entity_id=order_id, to_status=t.ORDER_CANCELED,
-                actor_role=t.ROLE_SYSTEM, actor_user_id=None,
-            )
-            await session.commit()
-            canceled += 1
+            if await _auto_cancel_order(session, order_id):
+                await session.commit()
+                canceled += 1
+            else:  # 대상 확정 후 입금확인·기한 연장 경합 — 정상 스킵 (장애 아님)
+                await session.rollback()
+                logger.info("auto-cancel 스킵 order=%s (상태·기한 변경 경합)", order_id)
+        except AppError as exc:  # 전이표·가드 거부 등 예상된 거부 — warning으로 격하
+            logger.warning("auto-cancel 스킵 order=%s code=%s", order_id, exc.code)
+            await session.rollback()
         except Exception:  # 개별 격리 — 오염된 주문 하나가 배치를 막지 않는다 (다음 주기 재시도)
             logger.exception("auto-cancel 실패 order=%s", order_id)
             await session.rollback()
     return canceled
+
+
+async def _auto_cancel_order(session: AsyncSession, order_id: uuid.UUID) -> bool:
+    """주문 1건 자동취소 시도 — 잠금 후 상태·기한 재검증, 라인도 잠금 후 재확정 (경합 레이스 봉인)."""
+    order = await _locked(session, Order, order_id)
+    db_now = await session.scalar(select(func.now()))
+    if order.payment_status != t.ORDER_PENDING_PAYMENT or order.deposit_due_at >= db_now:
+        return False  # 입금확인됨 또는 기한 연장(DB 직접 수정)됨
+    item_ids = list(await session.scalars(  # 잠금 후 재확정 — 4.6·5.5 경로가 먼저 취소한 라인 제외
+        select(OrderItem.id)
+        .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
+        .where(SubOrder.order_id == order_id, OrderItem.status == t.ITEM_ORDERED)
+    ))
+    for item_id in item_ids:  # 재고 복원·cancellations는 엔진 경로가 소유
+        await cancel_order_item(
+            session, order_item_id=item_id, actor_role=t.ROLE_SYSTEM, actor_user_id=None,
+            reason="미입금 자동취소", responsibility=t.ROLE_SYSTEM,
+        )
+    await transition(
+        session, layer=t.LAYER_ORDER, entity_id=order_id, to_status=t.ORDER_CANCELED,
+        actor_role=t.ROLE_SYSTEM, actor_user_id=None,
+    )
+    return True

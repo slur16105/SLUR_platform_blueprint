@@ -166,6 +166,33 @@ async def test_deleted_variant_line_cancels_with_noop_restore(client, clean_prod
         assert (await session.get(Order, u.UUID(oid))).payment_status == "canceled"
 
 
+@pytest.mark.asyncio
+async def test_paid_race_skipped_after_targeting(client, clean_products):
+    """리뷰 반영: 대상 확정 후 입금확인 경합 — 잠금 후 재검증이 스킵 (취소·복원 없음, 장애 아님)."""
+    from app.core.db import async_session_factory
+    from app.orders import transitions as t
+
+    st, pid, vs = await _shop(client, stock=5)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 2}, headers=_auth(bt))
+    oid = await _make_order(client, bt, await _cart_ids(client, bt), await _expected(client, bt))
+    await _expire(oid)
+    # 대상 확정 후 시점을 재현: paid로 전이해 두고 per-order 경로 직접 호출
+    async with async_session_factory() as session:
+        await service.transition(
+            session, layer=t.LAYER_ORDER, entity_id=u.UUID(oid), to_status=t.ORDER_PAID,
+            actor_role=t.ROLE_ADMIN, actor_user_id=None,
+        )
+        await session.commit()
+
+    async with async_session_factory() as session:
+        assert await service._auto_cancel_order(session, u.UUID(oid)) is False  # 스킵
+        await session.rollback()
+        assert (await session.get(Order, u.UUID(oid))).payment_status == "paid"  # 무변화
+    assert await _stock(vs[0]["id"]) == 3  # 복원 없음 (차감 유지)
+
+
 def test_scheduler_wiring():
     """배선 검증: interval이 config 값이고 job이 등록된다 (기동은 lifespan 몫)."""
     from app.core.config import get_settings

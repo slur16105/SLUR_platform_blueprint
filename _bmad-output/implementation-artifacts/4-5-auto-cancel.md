@@ -4,7 +4,7 @@ baseline_commit: 3ea09f8b8f6d76ca141bf496e21848cd0c52b721
 
 # Story 4.5: 미입금 자동취소
 
-Status: review
+Status: done
 
 ## Story
 
@@ -14,7 +14,7 @@ So that 재고가 유령 주문에 잠기지 않는다.
 
 ## Acceptance Criteria
 
-1. **Given** pending_payment 상태로 기한(4.4가 스탬프한 `deposit_due_at` 기준 — 원천은 settings `unpaid_cancel_days` 기본 3일) 경과한 주문 **When** APScheduler 주기 작업 실행 **Then** `system` 역할로 전이 함수를 통해 자동취소되고, 전 라인 취소·재고 복원·`cancellations` 기록이 **한 트랜잭션**에서 일어난다
+1. **Given** pending_payment 상태로 기한(4.4가 스탬프한 `deposit_due_at` 기준 — 원천은 settings `unpaid_cancel_days` 기본 3일) 경과한 주문 **When** APScheduler 주기 작업 실행 **Then** `system` 역할로 전이 함수를 통해 자동취소되고, 전 라인 취소·재고 복원·`cancellations` 기록이 **주문 1건당 한 트랜잭션**에서 일어난다 (주문 간 개별 커밋 — 승인된 구체화, 설계 결정 절 참조)
 2. **Given** 기한 이내의 주문 **When** 같은 작업 실행 **Then** 아무 변화가 없다
 
 ## Tasks / Subtasks
@@ -93,3 +93,20 @@ Claude Fable 5 (claude-fable-5)
 - apps/api/app/main.py (수정 — lifespan)
 - apps/api/app/orders/service.py (수정 — auto_cancel_expired_orders)
 - apps/api/tests/test_auto_cancel.py (신규 — 5 테스트)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind+Edge 통합 · Acceptance Auditor 병렬. Acceptance 위반 없음. 0 decision-needed · 10 patch · 1 defer · 2 dismiss.**
+
+- [x] [Review][Patch] 정상 경합(입금확인)이 error 스택트레이스로 승격 — AppError는 warning 스킵으로 격하, 경합 스킵은 info
+- [x] [Review][Patch] 대상 확정 후 기한 연장(DB 직접 수정) 레이스 — `_auto_cancel_order`가 잠금 후 상태·기한 재검증
+- [x] [Review][Patch] 라인 목록 확정~처리 사이 취소 경합 — 잠금 후 ordered 라인 재확정
+- [x] [Review][Patch] 스케줄러 기동 실패 = 앱 부팅 실패 — try/except로 API 가용성 분리 + 종료 시 engine.dispose()
+- [x] [Review][Patch] interval 하한 미검증 — `Field(ge=1)` (0 오타 시 1초 폭주 방지)
+- [x] [Review][Patch] job_defaults 암묵 의존 — max_instances=1·coalesce·misfire_grace_time=60 명시
+- [x] [Review][Patch] 기동 직후 미실행(재배포 기아) — next_run_time으로 기동 시 1회 즉시 실행
+- [x] [Review][Patch] paid 경합 스킵 경로 무테스트 — `_auto_cancel_order` 직접 호출 테스트 추가
+- [x] [Review][Patch] AC 문언 "한 트랜잭션" 편차 — AC 원문에 승인된 구체화 각주
+- [x] [Review][Patch] logging import 파일 중간 — 상단 승격
+- [x] [Review][Defer] `(payment_status)` partial index — 스키마 변경은 AD-9 게이트 사안. v1 규모 무해, 5.2 입금확인 목록 스토리(같은 조회 패턴)에서 초안 승인과 함께 검토
+- 테스트 6종, 전체 117/117 통과

@@ -22,15 +22,21 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # 스케줄러는 러닝 루프가 있는 여기서만 start (테스트 ASGITransport는 lifespan 미실행 → 자연 미기동)
-    from app.core.scheduler import create_scheduler
+    scheduler = None
+    try:
+        from app.core.scheduler import create_scheduler
 
-    scheduler = create_scheduler()
-    scheduler.start()
-    logging.getLogger("slur.scheduler").info(
-        "scheduler started (auto-cancel every %d min)", get_settings().auto_cancel_interval_minutes
-    )
+        scheduler = create_scheduler()
+        scheduler.start()
+        logging.getLogger("slur.scheduler").info(
+            "scheduler started (auto-cancel every %d min)", get_settings().auto_cancel_interval_minutes
+        )
+    except Exception:  # 배치 배선 실패가 핵심 API 가용성을 물고 가지 않게 — 앱은 기동한다
+        logging.getLogger("slur.scheduler").exception("scheduler 기동 실패 — API는 계속 서비스")
     yield
-    scheduler.shutdown(wait=False)
+    if scheduler is not None:
+        scheduler.shutdown(wait=False)
+    await engine.dispose()  # 커넥션 풀 정상 정리
 
 
 app = FastAPI(title=get_settings().app_name, lifespan=lifespan)
