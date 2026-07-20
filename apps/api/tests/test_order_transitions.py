@@ -103,12 +103,13 @@ async def test_paid_cascade_and_events(client, clean_products):
         ("order", "pending_payment", "paid"),
         ("sub_order", None, "preparing"),
     ]
-    assert all(e.actor_role == "admin" and e.note == "입금 확인" for e in events)
+    assert all(e.actor_role == "admin" for e in events)
+    assert events[0].note == "입금 확인" and events[1].note == ""  # 메모는 해당 전이에만 — 연쇄 복제 금지
 
 
 @pytest.mark.asyncio
-async def test_paid_cascade_skips_fully_canceled_sub_order(client, clean_products):
-    """전 라인 canceled인 묶음은 preparing 연쇄에서 제외 — 판매자 유령 주문 방지."""
+async def test_paid_rejected_when_all_lines_canceled(client, clean_products):
+    """전 라인 취소된 주문의 입금 확인은 거부 — 유령 paid 고착 방지 (리뷰 반영)."""
     from app.core.db import async_session_factory
 
     fx = await _order_fixture(client)
@@ -119,13 +120,96 @@ async def test_paid_cascade_skips_fully_canceled_sub_order(client, clean_product
         )
         await session.commit()
     async with async_session_factory() as session:
+        with pytest.raises(AppError) as exc:
+            await service.transition(
+                session, layer=t.LAYER_ORDER, entity_id=fx["order_id"], to_status=t.ORDER_PAID,
+                actor_role=t.ROLE_ADMIN, actor_user_id=None,
+            )
+        assert exc.value.code == "invalid_transition"
+        await session.rollback()
+    async with async_session_factory() as session:
+        assert (await session.get(Order, fx["order_id"])).payment_status == "pending_payment"
+        assert (await session.get(SubOrder, fx["sub_order_id"])).shipping_status is None
+
+
+@pytest.mark.asyncio
+async def test_paid_cascade_skips_fully_canceled_sub_order(client, clean_products):
+    """부분 취소: 같은 묶음에 활성 라인이 남으면 연쇄 진행 — 취소 라인은 canceled 유지."""
+    from app.core.db import async_session_factory
+
+    fx = await _order_fixture(client)
+    # 같은 sub_order에 두 번째 라인 추가 (variant 없는 판매 종료 스냅샷도 유효)
+    async with async_session_factory() as session:
+        extra = OrderItem(
+            sub_order_id=fx["sub_order_id"], variant_id=None, product_name="두 번째 상품",
+            option_text="", unit_price=1000, extra_price=0, quantity=1,
+        )
+        session.add(extra)
+        await session.commit()
+        extra_id = extra.id
+    async with async_session_factory() as session:
+        await service.cancel_order_item(
+            session, order_item_id=extra_id, actor_role=t.ROLE_BUYER, actor_user_id=fx["buyer_id"],
+            reason="변심", responsibility="buyer",
+        )
+        await session.commit()
+    async with async_session_factory() as session:
         await service.transition(
             session, layer=t.LAYER_ORDER, entity_id=fx["order_id"], to_status=t.ORDER_PAID,
             actor_role=t.ROLE_ADMIN, actor_user_id=None,
         )
         await session.commit()
+        assert (await session.get(SubOrder, fx["sub_order_id"])).shipping_status == "preparing"  # 활성 라인 존재 → 진행
+        assert (await session.get(OrderItem, extra_id)).status == "canceled"
+
+
+@pytest.mark.asyncio
+async def test_concurrent_cancel_vs_paid_no_deadlock(client, clean_products):
+    """동시성: 라인 취소 vs 입금 확인 동시 실행 — 부모 우선 잠금으로 교착 없이 한쪽 정합 결과 (리뷰 반영)."""
+    import asyncio
+
+    from app.core.db import async_session_factory
+
+    fx = await _order_fixture(client)
+
+    async def do_cancel():
+        async with async_session_factory() as session:
+            try:
+                await service.cancel_order_item(
+                    session, order_item_id=fx["item_id"], actor_role=t.ROLE_BUYER, actor_user_id=fx["buyer_id"],
+                    reason="변심", responsibility="buyer",
+                )
+                await session.commit()
+                return "ok"
+            except AppError as e:
+                await session.rollback()
+                return e.code
+
+    async def do_paid():
+        async with async_session_factory() as session:
+            try:
+                await service.transition(
+                    session, layer=t.LAYER_ORDER, entity_id=fx["order_id"], to_status=t.ORDER_PAID,
+                    actor_role=t.ROLE_ADMIN, actor_user_id=None,
+                )
+                await session.commit()
+                return "ok"
+            except AppError as e:
+                await session.rollback()
+                return e.code
+
+    results = await asyncio.wait_for(asyncio.gather(do_cancel(), do_paid()), timeout=10)  # 교착이면 timeout
+    assert all(r in ("ok", "invalid_transition") for r in results)  # DB 예외·500 없음
+
+    async with async_session_factory() as session:
+        order = await session.get(Order, fx["order_id"])
         sub = await session.get(SubOrder, fx["sub_order_id"])
-        assert sub.shipping_status is None  # 연쇄 제외
+        item = await session.get(OrderItem, fx["item_id"])
+    # 정합한 두 종착 상태 중 하나: (취소 선행) pending+NULL+canceled / (입금 선행) paid+preparing+ordered
+    assert (order.payment_status, sub.shipping_status, item.status) in [
+        ("pending_payment", None, "canceled"),
+        ("paid", "preparing", "ordered"),
+    ]
 
 
 @pytest.mark.asyncio
@@ -313,37 +397,67 @@ async def test_system_events_have_null_actor(client, clean_products):
     assert events[0].actor_role == "system" and events[0].actor_user_id is None
 
 
-def test_no_status_writes_outside_engine():
-    """AC 3: 상태 컬럼 대입/UPDATE가 전이 엔진 경로 밖에 없다 — AST 검사.
+@pytest.mark.asyncio
+async def test_direct_item_cancel_via_transition_blocked(client, clean_products):
+    """transition() 직접 호출로는 라인 취소 불가 — 재고 복원·cancellations 없는 반쪽 취소 방지 (리뷰 반영)."""
+    from app.core.db import async_session_factory
 
-    검사 대상: payment_status·shipping_status 속성 대입(모든 파일), OrderItem류 .status 대입(app/orders 밖 포함
-    핵심 상태 필드명), update(Order|SubOrder|OrderItem) 구문. 허용: orders/service.py·transitions.py·models.py(컬럼 정의).
+    fx = await _order_fixture(client)
+    async with async_session_factory() as session:
+        with pytest.raises(AppError) as exc:
+            await service.transition(
+                session, layer=t.LAYER_ORDER_ITEM, entity_id=fx["item_id"], to_status=t.ITEM_CANCELED,
+                actor_role=t.ROLE_ADMIN, actor_user_id=None,
+            )
+        assert exc.value.code == "invalid_transition"
+        await session.rollback()
+
+
+def test_no_status_writes_outside_engine():
+    """AC 3: 상태 컬럼 변경이 전이 엔진 경로 밖에 없다 — AST 검사 (리뷰 반영 강화판).
+
+    잡는 것: Assign/AnnAssign/AugAssign(튜플 언패킹 포함)의 payment_status·shipping_status·(orders 모델 사용 파일의)
+    status 속성 대입, update(Order|SubOrder|OrderItem)(sa.update 등 Attribute 호출 포함), setattr(x, "status류", ...),
+    모델 생성자의 status류 kwarg, text() raw SQL의 상태 UPDATE. 허용: orders/service.py·transitions.py·models.py.
     """
     app_dir = Path(__file__).resolve().parents[1] / "app"
     allowed = {app_dir / "orders" / "service.py", app_dir / "orders" / "transitions.py", app_dir / "orders" / "models.py"}
     order_models = {"Order", "SubOrder", "OrderItem"}
+    status_attrs = {"payment_status", "shipping_status", "status"}
     violations = []
     for py in app_dir.rglob("*.py"):
         if py in allowed:
             continue
-        tree = ast.parse(py.read_text(encoding="utf-8"))
-        imports_order_models = any(
-            isinstance(n, ast.ImportFrom) and n.module == "app.orders.models"
-            and any(a.name in order_models for a in n.names)
-            for n in ast.walk(tree)
-        )
+        src = py.read_text(encoding="utf-8")
+        tree = ast.parse(src)
+        uses_orders_models = "app.orders.models" in src or "from app.orders import models" in src
         for node in ast.walk(tree):
-            # obj.payment_status = ... / obj.shipping_status = ... / (orders 모델 import 파일의) obj.status = ...
+            targets = []
             if isinstance(node, ast.Assign):
-                for tgt in node.targets:
-                    if isinstance(tgt, ast.Attribute):
-                        if tgt.attr in ("payment_status", "shipping_status"):
-                            violations.append(f"{py}:{node.lineno} {tgt.attr} 대입")
-                        if tgt.attr == "status" and imports_order_models:
+                targets = node.targets
+            elif isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+                targets = [node.target]
+            for tgt in targets:
+                for leaf in ast.walk(tgt):  # 튜플 언패킹 안쪽까지
+                    if isinstance(leaf, ast.Attribute):
+                        if leaf.attr in ("payment_status", "shipping_status"):
+                            violations.append(f"{py}:{node.lineno} {leaf.attr} 대입")
+                        elif leaf.attr == "status" and uses_orders_models:
                             violations.append(f"{py}:{node.lineno} .status 대입 (orders 모델 사용 파일)")
-            # update(Order/SubOrder/OrderItem)
-            if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "update":
-                for arg in node.args:
-                    if getattr(arg, "id", "") in order_models:
-                        violations.append(f"{py}:{node.lineno} update({arg.id})")
+            if isinstance(node, ast.Call):
+                fname = node.func.id if isinstance(node.func, ast.Name) else getattr(node.func, "attr", "")
+                if fname == "update":  # update(...)·sa.update(...) 모두
+                    if any(isinstance(a, ast.Name) and a.id in order_models for a in ast.walk(node)):
+                        violations.append(f"{py}:{node.lineno} update(주문 모델)")
+                elif fname == "setattr" and len(node.args) >= 2:
+                    key = node.args[1]
+                    if isinstance(key, ast.Constant) and key.value in status_attrs:
+                        violations.append(f"{py}:{node.lineno} setattr {key.value}")
+                elif fname in order_models:
+                    if any(kw.arg in status_attrs for kw in node.keywords if kw.arg):
+                        violations.append(f"{py}:{node.lineno} {fname}(status류 kwarg)")
+                elif fname == "text" and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                    sql = node.args[0].value.lower()
+                    if "update" in sql and any(k in sql for k in ("payment_status", "shipping_status", "order_items", "sub_orders", "orders set")):
+                        violations.append(f"{py}:{node.lineno} raw SQL 상태 UPDATE 의심")
     assert not violations, f"전이 함수 밖 상태 변경 발견: {violations}"

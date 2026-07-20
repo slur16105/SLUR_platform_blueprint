@@ -342,4 +342,8 @@ async def restore_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) 
 
     복원은 증가라 조건절이 불필요한 원자적 UPDATE. 차감(주문 생성)은 stock >= n 조건부 UPDATE — 4.4.
     """
-    await session.execute(update(Variant).where(Variant.id == variant_id).values(stock=Variant.stock + qty))
+    if qty <= 0:  # 음수 복원 = 차감 — 호출 버그를 무음 통과시키지 않는다
+        raise AppError("internal_error", "재고 복원 수량 오류입니다.", status_code=500)
+    result = await session.execute(update(Variant).where(Variant.id == variant_id).values(stock=Variant.stock + qty))
+    if result.rowcount == 0:  # variant_id 확인과 UPDATE 사이 조합 삭제 레이스 — 복원 소실 흔적을 남긴다
+        logger.warning("restore_stock: variant %s 없음 — 취소 복원 %d개 소실 (조합 삭제 레이스)", variant_id, qty)

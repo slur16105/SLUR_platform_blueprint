@@ -4,7 +4,7 @@ baseline_commit: 1e4604b2457f8a7689bb7c82f6e4c06738f295b7
 
 # Story 4.3: 주문 상태 전이 엔진
 
-Status: review
+Status: done
 
 ## Story
 
@@ -152,4 +152,26 @@ Claude Fable 5 (claude-fable-5)
 - apps/api/app/orders/service.py (수정 — transition·cancel_order_item·_locked)
 - apps/api/app/products/service.py (수정 — restore_stock 신설)
 - apps/api/alembic/versions/7ef2fee3ff3e_order_events_and_cancellations.py (신규)
-- apps/api/tests/test_order_transitions.py (신규 — 10 테스트, AC 3 AST 검사 포함)
+- apps/api/tests/test_order_transitions.py (신규 — 13 테스트, AC 3 AST 검사·동시성 테스트 포함)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — Blind Hunter · Edge Case Hunter · Acceptance Auditor 병렬. Acceptance 위반 없음. 0 decision-needed · 12 patch · 5 defer · 4 dismiss.**
+
+- [x] [Review][Patch] **잠금 순서 역전 — 라인 취소(item→sub→order) vs paid 연쇄(order→sub) 교착 가능** — 전 경로 부모 우선(order→sub_order→item)으로 통일, 부모 id는 불변 FK라 잠금 전 probe 읽기 [`orders/service.py`]
+- [x] [Review][Patch] 동시성 테스트 0건 — 취소 vs 입금확인 동시 실행 테스트 추가 (교착 시 timeout, 정합 종착 상태 2종 검증)
+- [x] [Review][Patch] AC 3 AST 검사 우회 구멍(AnnAssign/AugAssign·튜플 언패킹·setattr·sa.update·생성자 kwarg·raw SQL) — 전부 잡도록 강화
+- [x] [Review][Patch] transition() 직접 호출로 라인 취소 시 복원·기록 우회 — `_allow_item_cancel` 내부 플래그로 cancel_order_item 경로만 허용 + 차단 테스트
+- [x] [Review][Patch] 전 라인 취소된 주문의 paid 허용 → 유령 paid 고착 — 활성 라인 0이면 입금 확인 거부
+- [x] [Review][Patch] restore_stock 무방어 — qty<=0 거부, rowcount 0(조합 삭제 레이스) 경고 로그로 복원 소실 흔적
+- [x] [Review][Patch] note·reason 500자 초과 시 DB 예외 500 — 앱 레벨 422 `validation_error` 선검증
+- [x] [Review][Patch] cancellations UNIQUE 발동 시 IntegrityError 500 — 422 봉투로 변환
+- [x] [Review][Patch] 미지 layer KeyError 500 — 422 봉투로 변환
+- [x] [Review][Patch] paid 연쇄가 관리자 메모를 sub 이벤트에 복제 — 연쇄 이벤트는 note 빈 값
+- [x] [Review][Patch] TRANSITIONS 런타임 변조 가능 — MappingProxyType 읽기 전용화
+- [x] [Review][Patch] 소유권 검사 부재가 계약 미명시 — docstring에 "호출자 책임" 명문화
+- [x] [Review][Defer] seller의 라인 취소 전이 없음 — **의도된 결정**: epics상 판매자 취소 플로우 부재, 판매자 품절은 5.5 관리자 개입(귀책 seller)으로 처리. 운영 부하 확인 시 전이표 행 추가(코드 데이터)
+- [x] [Review][Defer] 가드 실패·미정의 전이 코드 통합(`invalid_transition`) — 후속 화면 스토리에서 클라 분기 필요 확인 시 분리
+- [x] [Review][Defer] paid 주문의 전-취소 묶음 shipping_status NULL 잔류 — **5.1 대표 상태 파생 구현 계약: NULL+paid = 취소된 묶음** (5.1 스토리에 명시 이월)
+- [x] [Review][Defer] order_events.actor_user_id·cancellations.created_by FK 인덱스 부재 — v1 회원 탈퇴 기능 없음, 블루프린트 추출 시
+- [x] [Review][Defer] 테스트 헬퍼 3모듈 결합(_shop·_buyer·_auth) — conftest 공용 픽스처 승격 후보

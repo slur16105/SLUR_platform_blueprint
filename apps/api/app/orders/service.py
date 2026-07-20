@@ -99,6 +99,7 @@ async def preview_order(session: AsyncSession, user_id: uuid.UUID, postal_code: 
 # ---------------------------------------------------------------------------
 
 from sqlalchemy import exists  # noqa: E402 — 엔진 절 전용
+from sqlalchemy.exc import IntegrityError  # noqa: E402
 
 from app.orders import transitions as t  # noqa: E402
 from app.orders.models import Cancellation, Order, OrderEvent, OrderItem, SubOrder  # noqa: E402
@@ -126,15 +127,37 @@ async def transition(
     note: str = "",
     carrier: str | None = None,
     tracking_number: str | None = None,
+    _allow_item_cancel: bool = False,
 ):
     """3층 공통 전이 함수 — 전이표 검사, 가드, 상태 변경, order_events 기록까지. commit은 호출자 소유.
 
     모든 코드 경로(구매자 취소·관리자 입금확인·강제 변경·판매자 배송 처리·자동취소 배치)는 이 함수만 호출한다.
     shipping 전이의 carrier·tracking_number 기록도 여기가 소유한다 — 상태와 송장이 따로 노는 반쪽 전이 방지.
+    라인 취소는 cancel_order_item()만 허용(_allow_item_cancel) — 재고 복원·cancellations 없는 반쪽 취소 방지.
+
+    소유권(이 엔티티가 누구의 것인가) 검사는 하지 않는다 — actor_user_id는 감사 기록용이며,
+    본인 확인·판매자 소유 확인은 호출자(각 스토리의 엔드포인트 서비스 함수) 책임이다.
+    잠금 순서는 모든 경로에서 부모 우선(order → sub_order → item) — 역순 획득이 만드는 교착 방지.
     """
-    model = _LAYER_MODEL[layer]
+    if layer not in _LAYER_MODEL:
+        raise AppError("invalid_transition", "허용되지 않은 상태 변경입니다.", status_code=422)
+    if len(note) > 500:
+        raise AppError("validation_error", "메모는 500자를 넘을 수 없습니다.", status_code=422)
     attr = _LAYER_STATUS_ATTR[layer]
-    entity = await _locked(session, model, entity_id)
+
+    # 부모 우선 잠금 — 라인 취소도 order→sub_order→item 순 (paid 연쇄와 동일 순서, 교착 방지).
+    # 부모 id는 불변 FK라 잠금 전 미리 읽어도 안전하다.
+    order = sub_order = None
+    if layer == t.LAYER_ORDER_ITEM:
+        if to_status == t.ITEM_CANCELED and not _allow_item_cancel:
+            raise AppError("invalid_transition", "라인 취소는 cancel_order_item 경로만 허용됩니다.", status_code=422)
+        sub_order_id = await session.scalar(select(OrderItem.sub_order_id).where(OrderItem.id == entity_id))
+        if sub_order_id is None:
+            raise AppError("not_found", "대상을 찾을 수 없습니다.", status_code=404)
+        order_id_probe = await session.scalar(select(SubOrder.order_id).where(SubOrder.id == sub_order_id))
+        order = await _locked(session, Order, order_id_probe)
+        sub_order = await _locked(session, SubOrder, sub_order_id)
+    entity = await _locked(session, _LAYER_MODEL[layer], entity_id)
     from_status = getattr(entity, attr)
 
     allowed = t.TRANSITIONS.get((layer, from_status, to_status))
@@ -145,8 +168,6 @@ async def transition(
 
     # 층 넘는 가드 + 층별 부가 기록
     if layer == t.LAYER_ORDER_ITEM:
-        sub_order = await _locked(session, SubOrder, entity.sub_order_id)  # paid 연쇄와 직렬화
-        order = await _locked(session, Order, sub_order.order_id)
         t.guard_item_cancel(actor_role, sub_order.shipping_status, order.payment_status)
         order_id = order.id
     elif layer == t.LAYER_SUB_ORDER:
@@ -171,15 +192,19 @@ async def transition(
         sub_ids = list(await session.scalars(
             select(SubOrder.id).where(SubOrder.order_id == entity.id).order_by(SubOrder.created_at, SubOrder.id)
         ))
+        active_flags = []
         for sid in sub_ids:
-            has_active = await session.scalar(
+            active_flags.append(await session.scalar(
                 select(exists().where(OrderItem.sub_order_id == sid, OrderItem.status == t.ITEM_ORDERED))
-            )
+            ))
+        if not any(active_flags):  # 전 라인 취소된 주문 — 유령 paid 고착 방지 (order canceled 전이는 4.5·4.6 조합 몫)
+            raise AppError("invalid_transition", "모든 상품이 취소된 주문은 입금 확인할 수 없습니다.", status_code=422)
+        for sid, has_active in zip(sub_ids, active_flags):
             if not has_active:  # 전 라인 취소된 묶음 — 판매자에게 유령 '배송준비' 노출 방지
                 continue
             await transition(
                 session, layer=t.LAYER_SUB_ORDER, entity_id=sid, to_status=t.SUB_PREPARING,
-                actor_role=actor_role, actor_user_id=actor_user_id, note=note,
+                actor_role=actor_role, actor_user_id=actor_user_id,  # note는 order 이벤트의 것 — 연쇄에 복제하지 않음
             )
 
     await session.flush()
@@ -201,12 +226,17 @@ async def cancel_order_item(
     4.5(자동취소)·4.6(구매자 취소)·5.5(관리자 개입)는 이 함수만 호출한다. 재취소는 전이표가
     거부(canceled→canceled 미정의)하고, cancellations UNIQUE(order_item_id)가 DB 수준 이중 방어.
     """
+    if len(reason) > 500:
+        raise AppError("validation_error", "취소 사유는 500자를 넘을 수 없습니다.", status_code=422)
     item = await transition(
         session, layer=t.LAYER_ORDER_ITEM, entity_id=order_item_id, to_status=t.ITEM_CANCELED,
-        actor_role=actor_role, actor_user_id=actor_user_id, note=note,
+        actor_role=actor_role, actor_user_id=actor_user_id, note=note, _allow_item_cancel=True,
     )
     if item.variant_id is not None:  # 조합 삭제(SET NULL)면 복원 no-op — 4.2 결정 ②
         await products_service.restore_stock(session, item.variant_id, item.quantity)
     session.add(Cancellation(order_item_id=item.id, reason=reason, responsibility=responsibility, created_by=actor_user_id))
-    await session.flush()
+    try:
+        await session.flush()
+    except IntegrityError as exc:  # UNIQUE 이중 방어 발동 — 500 대신 봉투 (호출자가 rollback)
+        raise AppError("invalid_transition", "이미 취소 처리된 상품입니다.", status_code=422) from exc
     return item

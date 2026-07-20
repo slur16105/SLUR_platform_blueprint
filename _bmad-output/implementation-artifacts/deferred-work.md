@@ -24,3 +24,11 @@
 - **`deposit_account` placeholder 가드 없음** — 시드 값 "은행/계좌번호/예금주 미설정"이 그대로 노출될 수 있음. **4.4 주문 완료 화면 전 실계좌 DB 갱신 확인을 4.4 Task에 명시할 것.** 관리자 수정 화면은 Story 5.7로 승격됨 (2026-07-20 Slur 승인)
 - **우편번호 실존 검증 없음** — `^\d{5}$` 형식만 통과하면 미배정 번호도 일반 지역 계산. 4.4 카카오 우편번호 검색 위젯 도입으로 해소 예정 — 4.4 스토리에 명시 이월
 - **장바구니 행 수 상한 없음** — `get_purchasable_entries` IN 절·미리보기 응답 크기 무상한 (수량 999 캡만 존재). 읽기 전용이라 실해 낮음, 실사용 피드백 후
+
+## Deferred from: code review of 4-3-order-state-engine (2026-07-20)
+
+- **seller의 라인 취소 전이 없음 (의도된 결정)** — 판매자 품절 취소는 5.5 관리자 개입(귀책 seller)으로 처리. 운영 부하가 확인되면 전이표에 행 추가 (코드 데이터, AD-9 불요)
+- **가드 실패·미정의 전이가 같은 `invalid_transition` 코드** — 후속 화면 스토리에서 클라이언트 분기 필요 확인 시 코드 분리
+- **paid 주문의 전-취소 묶음은 shipping_status NULL 잔류** — **5.1 대표 상태 파생 계약: (order paid + sub NULL) = 취소된 묶음으로 해석해야 함. 5.1 스토리 작성 시 Dev Notes에 명시할 것**
+- **order_events.actor_user_id·cancellations.created_by 인덱스 부재** — 회원 탈퇴(users DELETE) 시 풀스캔. v1 탈퇴 기능 없음, 블루프린트 추출 시 추가
+- **테스트 헬퍼 3모듈 결합** — `_shop`·`_buyer`·`_auth`를 conftest 공용 픽스처로 승격 후보

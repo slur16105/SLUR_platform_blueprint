@@ -4,6 +4,8 @@
 층 넘는 가드 함수만 갖는다 — DB 접근 없음.
 """
 
+from types import MappingProxyType
+
 from app.core.errors import AppError
 
 # 층
@@ -31,14 +33,15 @@ ITEM_ORDERED = "ordered"
 ITEM_CANCELED = "canceled"
 
 # 전이표: (층, from, to) → 허용 역할. 여기 없는 조합은 어떤 코드 경로에서도 불가 (FR-19)
-TRANSITIONS: dict[tuple[str, str | None, str], frozenset[str]] = {
+# MappingProxyType — 런타임 변조로 전이표가 확장되는 것을 차단 (읽기 전용 뷰)
+TRANSITIONS: MappingProxyType = MappingProxyType({
     (LAYER_ORDER, ORDER_PENDING_PAYMENT, ORDER_PAID): frozenset({ROLE_ADMIN, ROLE_SYSTEM}),  # system은 PG 자동 승인 대비
     (LAYER_ORDER, ORDER_PENDING_PAYMENT, ORDER_CANCELED): frozenset({ROLE_BUYER, ROLE_ADMIN, ROLE_SYSTEM}),
     (LAYER_SUB_ORDER, None, SUB_PREPARING): frozenset({ROLE_ADMIN, ROLE_SYSTEM}),  # paid 연쇄 전용
     (LAYER_SUB_ORDER, SUB_PREPARING, SUB_SHIPPING): frozenset({ROLE_SELLER, ROLE_ADMIN}),  # 송장 필수 가드
     (LAYER_SUB_ORDER, SUB_SHIPPING, SUB_DELIVERED): frozenset({ROLE_SELLER, ROLE_ADMIN}),
     (LAYER_ORDER_ITEM, ITEM_ORDERED, ITEM_CANCELED): frozenset({ROLE_BUYER, ROLE_ADMIN, ROLE_SYSTEM}),
-}
+})
 
 
 def guard_shipping_info(carrier: str | None, tracking_number: str | None) -> None:
