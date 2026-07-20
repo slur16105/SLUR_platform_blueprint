@@ -96,9 +96,9 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: 법적 고지와 오픈 준비
-  epic-6: backlog
-  6-1-legal-pages-footer: backlog          # 약관·개인정보처리방침과 푸터
-  6-2-seller-info-disclosure: backlog      # 중개자 지위·판매자 신원정보 노출
+  epic-6: in-progress
+  6-1-legal-pages-footer: review      # 약관·개인정보처리방침과 푸터
+  6-2-seller-info-disclosure: review  # 중개자 지위·판매자 신원정보 노출
   epic-6-retrospective: optional
 
 # Epic 1 회고 (2026-07-16) — Epic 2부터 적용. 스토리 작성·구현 시 이 목록을 먼저 읽는다.

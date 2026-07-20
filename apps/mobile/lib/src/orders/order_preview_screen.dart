@@ -5,6 +5,7 @@ import 'package:kpostal/kpostal.dart';
 
 import '../api/client.dart';
 import '../carts/carts_api.dart';
+import '../config/company.dart';
 import '../format.dart';
 import 'order_complete_screen.dart';
 import 'orders_api.dart';
@@ -247,15 +248,35 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            onPressed: canSubmit ? _submitOrder : null,
-            child: _submitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('주문하기'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 통신판매중개자 고지 (Story 6.2)
+              Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  Company.brokerNotice,
+                  style: TextStyle(
+                      fontSize: 11, height: 1.4, color: Colors.grey.shade600),
+                ),
+              ),
+              FilledButton(
+                onPressed: canSubmit ? _submitOrder : null,
+                child: _submitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('주문하기'),
+              ),
+            ],
           ),
         ),
       ),

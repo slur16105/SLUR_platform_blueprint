@@ -64,3 +64,15 @@ async def test_pagination_and_all_categories(client, clean_products):
     assert res.json()["total"] == 25 and len(res.json()["items"]) == 20
     res = await client.get("/api/v1/products?page=2")
     assert len(res.json()["items"]) == 5
+
+
+@pytest.mark.asyncio
+async def test_detail_seller_info_disclosure(client, clean_products):
+    """6.2 (FR-32): 공개 상세에 법정 판매자 신원정보 — 인증 불요."""
+    st, pid, vs = await __import__("tests.test_carts", fromlist=["_shop"])._shop(client, stock=5)
+    d = (await client.get(f"/api/v1/products/{pid}")).json()  # 미인증
+    info = d["seller_info"]
+    assert info["company_name"] and info["representative_name"]
+    assert info["business_registration_number"] and info["mail_order_number"]
+    assert info["business_address"] and info["contact_phone"]
+    assert info["brand_name"] == d["brand_name"]

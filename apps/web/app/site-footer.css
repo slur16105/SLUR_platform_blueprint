@@ -1,0 +1,12 @@
+/* ─────────────────────────────────────────────
+   LAYOUT FOOTER — 전 페이지 공통 (layout.tsx)
+   사업자 정보 + 중개자 고지 + 정책 링크
+   ───────────────────────────────────────────── */
+
+.layout_footer { display: block; width: 100%; margin-top: auto; border-top: 1px solid var(--color-border-subtle); background: var(--color-surface-sunken); }
+.layout_footer .l_inner { display: flex; max-width: 960px; margin: 0 auto; padding: var(--space-24) var(--space-24); flex-direction: column; gap: var(--space-4); }
+.layout_footer .l_company { font-size: var(--text-xs); line-height: var(--leading-normal); color: var(--color-text-muted); }
+.layout_footer .l_notice { margin-top: var(--space-8); font-size: var(--text-xs); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.layout_footer .l_links { display: flex; margin-top: var(--space-12); gap: var(--space-16); }
+.layout_footer .l_links a { font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--color-text-secondary); text-decoration: none; transition: color var(--duration-fast) var(--ease-standard); }
+.layout_footer .l_links a:hover { color: var(--color-text-primary); text-decoration: underline; }

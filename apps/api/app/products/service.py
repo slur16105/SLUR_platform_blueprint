@@ -317,6 +317,15 @@ async def get_public_product(session: AsyncSession, product_id: uuid.UUID) -> di
         "description": product.description,
         "main_image_url": _image_url(images[0].path) if images else None,
         "image_urls": [_image_url(i.path) for i in images],
+        "seller_info": {  # 법정 신원정보 (FR-32) — 판매자 부재는 비정상 데이터, 빈 값 방어
+            "brand_name": seller.brand_name if seller else "",
+            "company_name": seller.company_name if seller else "",
+            "representative_name": seller.representative_name if seller else "",
+            "business_registration_number": seller.business_registration_number if seller else "",
+            "mail_order_number": seller.mail_order_number if seller else "",
+            "business_address": seller.business_address if seller else "",
+            "contact_phone": seller.contact_phone if seller else "",
+        },
         "variants": [{
             "id": v.id,
             "option1_name": v.option1_name, "option1_value": v.option1_value,

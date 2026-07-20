@@ -7,6 +7,7 @@ import '../format.dart';
 import '../orders/order_history_screen.dart';
 import '../products/product_detail_screen.dart';
 import '../products/products_api.dart';
+import 'service_info_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key, required this.user});
@@ -28,6 +29,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('SLUR', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ServiceInfoScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
             onPressed: () => Navigator.of(context).push(

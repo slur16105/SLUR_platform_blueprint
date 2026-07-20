@@ -164,7 +164,20 @@ class PublicProductList(BaseModel):
     page: int
 
 
+class SellerInfo(BaseModel):
+    """법정 판매자 신원정보 (FR-32 — 전자상거래법 공개 의무, 인증 불요)."""
+
+    brand_name: str
+    company_name: str
+    representative_name: str
+    business_registration_number: str
+    mail_order_number: str
+    business_address: str
+    contact_phone: str
+
+
 class PublicProductDetail(PublicProductItem):
     description: str
     image_urls: list[str]
     variants: list[PublicVariant]
+    seller_info: SellerInfo  # 판매자 정보 접이식 영역 (6.2)

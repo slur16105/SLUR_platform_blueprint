@@ -17,6 +17,7 @@ import "./styles/slur/components/alert.css";
 import "./styles/slur/components/badge.css";
 import "./styles/slur/components/table.css";
 import "./styles/slur/components/modal.css";
+import SiteFooter from "./site-footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +44,10 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

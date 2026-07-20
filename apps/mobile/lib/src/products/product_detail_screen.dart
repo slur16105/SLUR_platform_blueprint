@@ -121,7 +121,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     const Divider(),
                     const SizedBox(height: 8),
                     Text(p['description'] as String, style: const TextStyle(height: 1.6)),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    // 판매자 정보 (Story 6.2) — 구버전 API(seller_info 없음)에서는 숨김
+                    if (p['seller_info'] is Map) ...[
+                      _sellerInfoTile((p['seller_info'] as Map).cast<String, dynamic>()),
+                      const SizedBox(height: 8),
+                    ],
+                    const SizedBox(height: 8),
                     FilledButton(
                       // 옵션 미선택·품절·요청 중에는 비활성
                       onPressed: p['sold_out'] == true || selected == null || _adding
@@ -140,6 +146,40 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// 판매자 정보 (통신판매중개자 고지 대응) — 기본 접힘
+  Widget _sellerInfoTile(Map<String, dynamic> s) {
+    Widget row(String label, String? value) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 110,
+                child: Text(label,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ),
+              Expanded(
+                child: Text(value ?? '-', style: const TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+        );
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: 12),
+      title: const Text('판매자 정보',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+      children: [
+        row('상호', s['company_name'] as String?),
+        row('대표자', s['representative_name'] as String?),
+        row('사업자등록번호', s['business_registration_number'] as String?),
+        row('통신판매업신고', s['mail_order_number'] as String?),
+        row('사업장 주소', s['business_address'] as String?),
+        row('연락처', s['contact_phone'] as String?),
+      ],
     );
   }
 
