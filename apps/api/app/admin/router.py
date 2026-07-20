@@ -412,6 +412,7 @@ class SettingItem(BaseModel):
     key: str
     value: str
     description: str
+    updated_at: datetime  # 마지막 변경 시각 — 감사 표시용
 
 
 class SettingsResponse(BaseModel):

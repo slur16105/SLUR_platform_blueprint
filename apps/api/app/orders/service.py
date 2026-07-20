@@ -1048,7 +1048,7 @@ async def mark_refunded(session: AsyncSession, cancellation_id: uuid.UUID) -> No
 
 async def list_settings(session: AsyncSession) -> list[dict]:
     rows = await session.scalars(select(Setting).order_by(Setting.key))
-    return [{"key": r.key, "value": r.value, "description": r.description} for r in rows]
+    return [{"key": r.key, "value": r.value, "description": r.description, "updated_at": r.updated_at} for r in rows]
 
 
 async def update_deposit_account(session: AsyncSession, admin_id: uuid.UUID, value: str) -> None:
@@ -1056,9 +1056,19 @@ async def update_deposit_account(session: AsyncSession, admin_id: uuid.UUID, val
     value = value.strip()
     if not value or len(value) > 200:
         raise AppError("validation_error", "계좌 정보는 1~200자입니다.", status_code=422)
-    setting = await session.scalar(select(Setting).where(Setting.key == SETTING_DEPOSIT_ACCOUNT))
+    import re as _re
+
+    if _re.search(r"[\x00-\x1f\x7f\u200b-\u200f\u202a-\u202e]", value):  # 제어·개행·bidi·zero-width 차단
+        raise AppError("validation_error", "계좌 정보에 사용할 수 없는 문자가 있습니다.", status_code=422)
+    # FOR UPDATE 직렬화 — 동시 갱신에도 감사 로그 체인(A→B→C)이 실제 전이와 일치
+    setting = await session.scalar(
+        select(Setting).where(Setting.key == SETTING_DEPOSIT_ACCOUNT).with_for_update()
+    )
     if setting is None:  # 시드 누락 — 배포 오류
         raise AppError("internal_error", "서버 설정 오류입니다.", status_code=500)
+    if setting.value == value:  # 무변경 — 감사 노이즈 방지
+        await session.rollback()
+        return
     logger.info("deposit_account 변경 by admin=%s: %r -> %r", admin_id, setting.value, value)
     setting.value = value
     await session.commit()

@@ -14,7 +14,8 @@
 .page_admin_settings .p_card .i_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_admin_settings .p_card .i_current { display: flex; gap: var(--space-8); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
 .page_admin_settings .p_card .i_current dt { color: var(--color-text-muted); }
-.page_admin_settings .p_card .i_current dd { color: var(--color-text-primary); }
+.page_admin_settings .p_card .i_current dd { display: flex; flex-direction: column; gap: var(--space-4); color: var(--color-text-primary); }
+.page_admin_settings .p_card .i_updated { font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_settings .p_card .i_form { display: flex; gap: var(--space-8); }
 .page_admin_settings .p_card .i_form .input_text { flex: 1; }
 

@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-20  # 5-6 리뷰 반영 → done
+last_updated: 2026-07-20  # 5-7 done — Epic 5 완료 (7/7)
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -85,14 +85,14 @@ development_status:
   epic-4-retrospective: optional
 
   # Epic 5: 주문 운영 — 세 역할의 주문 화면
-  epic-5: in-progress
+  epic-5: done
   5-1-buyer-order-history: done     # 구매자 주문내역·상세
   5-2-admin-payment-confirm: done   # 관리자 입금 확인
   5-3-seller-order-shipping: done   # 판매자 주문관리와 배송 처리
   5-4-seller-dashboard: done        # 판매자 대시보드
   5-5-admin-order-intervention: done # 관리자 주문 개입
   5-6-admin-lookup: done            # 관리자 조회 (회원·판매자·상품)
-  5-7-admin-settings: review          # 관리자 설정 — 입금 계좌 (2026-07-20 Slur 승인 추가)
+  5-7-admin-settings: done          # 관리자 설정 — 입금 계좌 (2026-07-20 Slur 승인 추가)
   epic-5-retrospective: optional
 
   # Epic 6: 법적 고지와 오픈 준비

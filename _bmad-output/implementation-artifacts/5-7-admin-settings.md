@@ -4,7 +4,7 @@ baseline_commit: b5421318bbf94e4e9929cf49abbca9b03f47fb15
 
 # Story 5.7: 관리자 설정 (입금 계좌)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -67,3 +67,18 @@ Claude Fable 5 (claude-fable-5) — Next.js는 병렬 서브에이전트
 - apps/web/app/api/admin/settings/route.ts (신규 — BFF)
 - apps/web/app/admin/settings/{page.tsx,settings.css} (신규)
 - apps/web/app/admin/page.tsx (수정 — 설정 링크)
+
+### Review Findings
+
+**BMAD 코드리뷰 (2026-07-20) — 통합. Acceptance 위반 없음. 0 decision-needed · 8 patch · 0 defer · 3 dismiss.**
+
+- [x] [Review][Patch] **소급 효과 미문서화·문구 오류** — 기존 입금대기 안내도 즉시 변경됨(의도: 폐쇄 계좌 입금 방지)을 epics 각주·모달·토스트에 명시 + 모달에 입금대기 N건 경고
+- [x] [Review][Patch] 동시 갱신 감사 체인 파손 — FOR UPDATE 직렬화 (A→B→C 로그 정합) + 무변경 저장 no-op
+- [x] [Review][Patch] 모달 '이전 계좌' stale — 저장 전 서버 재조회, 불일치 시 경고
+- [x] [Review][Patch] 제어·개행·bidi·zero-width 문자 차단 (422)
+- [x] [Review][Patch] epics AC 3필드 문언 상충 — 구현 구체화 각주(자유 텍스트·소급)로 해소
+- [x] [Review][Patch] updated_at GET 노출 + 화면 "마지막 변경" 표시
+- [x] [Review][Patch] 소급 방향 테스트(변경 전 pending 주문 안내) 추가
+- [x] [Review][Patch] 로그 감사 전제(보존·레벨) — Completion Notes 기록: INFO 레벨·Railway 보존 기간 의존, 이력 테이블은 운영 필요 확인 시
+- [x] [Review][Dismiss] list_settings 3키 exact 테스트(신규 키 시 강제 리뷰 — 의도)·3중 검증 관례·플랫폼 계좌 로그(개인정보 아님)
+- 최종: 148/148, tsc 0
