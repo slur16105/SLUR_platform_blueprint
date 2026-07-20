@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kpostal/kpostal.dart';
 
 import '../api/client.dart';
 import '../carts/carts_api.dart';
 import '../format.dart';
+import 'order_complete_screen.dart';
 import 'orders_api.dart';
 
 class OrderPreviewScreen extends ConsumerStatefulWidget {
@@ -16,13 +18,24 @@ class OrderPreviewScreen extends ConsumerStatefulWidget {
 
 class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
   final _postalController = TextEditingController();
+  final _address1Controller = TextEditingController();
+  final _address2Controller = TextEditingController();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _noteController = TextEditingController();
   Map<String, dynamic>? _preview; // 서버 응답 그대로 보관 — 클라이언트 재계산 금지 (AD-12)
   bool _loading = false;
+  bool _submitting = false;
   String? _error;
 
   @override
   void dispose() {
     _postalController.dispose();
+    _address1Controller.dispose();
+    _address2Controller.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -68,15 +81,107 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
     }
   }
 
+  /// 우편번호 검색 (kpostal) — 선택 결과로 우편번호·기본주소를 채우고 미리보기 재조회
+  Future<void> _searchPostal() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => KpostalView(
+        title: '우편번호 검색',
+        callback: (Kpostal result) {
+          if (!mounted) return;
+          setState(() {
+            _postalController.text = result.postCode;
+            _address1Controller.text = result.address;
+          });
+          _fetchPreview(); // 프로그래밍 방식 입력은 onChanged가 안 불리므로 직접 조회
+        },
+      ),
+    ));
+  }
+
+  // 필수 필드: 우편번호 5자리·기본주소·수령인·연락처(숫자 9~11자)
+  bool get _fieldsValid =>
+      _postalController.text.length == 5 &&
+      _address1Controller.text.trim().isNotEmpty &&
+      _nameController.text.trim().isNotEmpty &&
+      RegExp(r'^\d{9,11}$').hasMatch(_phoneController.text);
+
+  Future<void> _submitOrder() async {
+    final preview = _preview;
+    if (preview == null || _submitting) return;
+    // 미리보기에 담긴 장바구니 항목 전부를 주문 대상으로 전송
+    final cartItemIds = [
+      for (final group in (preview['seller_groups'] as List).cast<Map<String, dynamic>>())
+        for (final item in (group['items'] as List).cast<Map<String, dynamic>>())
+          item['cart_item_id'] as String,
+    ];
+    setState(() => _submitting = true);
+    try {
+      final result = await ref.read(ordersApiProvider).createOrder(
+            cartItemIds: cartItemIds,
+            postalCode: _postalController.text,
+            recipientName: _nameController.text.trim(),
+            recipientPhone: _phoneController.text,
+            address1: _address1Controller.text.trim(),
+            address2: _address2Controller.text.trim(),
+            orderNote: _noteController.text.trim(),
+          );
+      if (!mounted) return;
+      ref.invalidate(cartProvider); // 주문된 항목이 장바구니에서 빠졌으므로 갱신
+      // 뒤로가기로 주문서에 재진입하지 못하도록 교체 (완료 화면에서 홈까지 popUntil)
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => OrderCompleteScreen(result: result)),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.code == 'out_of_stock') {
+        await _showOutOfStockDialog(e);
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('오류가 발생했습니다. 다시 시도해 주세요.')));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  /// 품절 안내 — details의 상품명을 보여주고 확인 시 장바구니로 복귀
+  Future<void> _showOutOfStockDialog(ApiException e) async {
+    final names = [
+      for (final d in e.details)
+        if (d is Map && d['product_name'] is String) d['product_name'] as String,
+    ];
+    final body = names.isEmpty ? e.message : '품절된 상품이 있습니다: ${names.join(', ')}';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('품절 안내'),
+        content: Text(body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    ref.invalidate(cartProvider); // 품절 반영된 장바구니로 갱신
+    Navigator.of(context).pop(); // 장바구니 복귀
+  }
+
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
+    final canSubmit = preview != null && !_loading && !_submitting && _fieldsValid;
     return Scaffold(
       appBar: AppBar(title: const Text('주문서')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _postalField(),
+          _shippingSection(),
           if (_loading) ...[
             const SizedBox(height: 48),
             const Center(child: CircularProgressIndicator()),
@@ -110,41 +215,89 @@ class _OrderPreviewScreenState extends ConsumerState<OrderPreviewScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: FilledButton(
-            onPressed: null, // 주문 생성은 4.4
-            child: const Text('주문하기 (준비 중)'),
+            onPressed: canSubmit ? _submitOrder : null,
+            child: _submitting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('주문하기'),
           ),
         ),
       ),
     );
   }
 
-  Widget _postalField() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+  /// 배송지 입력 섹션 — 우편번호(검색/직접 입력)·주소·수령인·연락처·요청사항
+  Widget _shippingSection() {
+    InputDecoration deco(String label, {String? hint}) => InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: const OutlineInputBorder(),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: TextField(
-            controller: _postalController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(5),
-            ],
-            decoration: const InputDecoration(
-              labelText: '우편번호',
-              hintText: '5자리 숫자',
-              border: OutlineInputBorder(),
+        const Text('배송지', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _postalController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(5),
+                ],
+                decoration: deco('우편번호', hint: '5자리 숫자'),
+                onChanged: (v) {
+                  setState(() {}); // 버튼 활성 상태 갱신
+                  if (v.length == 5) _fetchPreview(); // 5자리 완성 즉시 조회
+                },
+              ),
             ),
-            onChanged: (v) {
-              setState(() {}); // 조회 버튼 활성 상태 갱신
-              if (v.length == 5) _fetchPreview(); // 5자리 완성 즉시 조회
-            },
-          ),
+            const SizedBox(width: 12),
+            OutlinedButton(
+              onPressed: _submitting ? null : _searchPostal,
+              child: const Text('우편번호 검색'),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        OutlinedButton(
-          onPressed: _postalController.text.length == 5 && !_loading ? _fetchPreview : null,
-          child: const Text('배송비 조회'),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _address1Controller,
+          decoration: deco('주소', hint: '우편번호 검색 시 자동 입력'),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _address2Controller,
+          decoration: deco('상세 주소', hint: '동/호수 등 (선택)'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _nameController,
+          decoration: deco('수령인'),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(11),
+          ],
+          decoration: deco('연락처', hint: '숫자만 입력 (예: 01012345678)'),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _noteController,
+          decoration: deco('배송 요청사항 (선택)', hint: '예: 문 앞에 놓아주세요'),
         ),
       ],
     );

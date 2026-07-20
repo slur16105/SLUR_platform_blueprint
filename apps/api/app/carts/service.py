@@ -115,3 +115,30 @@ async def get_purchasable_entries(session: AsyncSession, user_id: uuid.UUID) -> 
             continue  # 구매 불가는 미리보기·주문 대상에서 제외 — 표시는 get_cart 몫
         out.append({"item": item, "variant": meta["variant"], "product": meta["product"], "brand_name": meta["brand_name"]})
     return out
+
+
+async def get_entries_for_order(session: AsyncSession, user_id: uuid.UUID, item_ids: list[uuid.UUID]) -> list[dict]:
+    """주문 요청 항목 전부 로드 — {item, variant|None, product|None, brand_name}. 판정은 호출자(orders) 몫.
+
+    요청 id 중 본인 장바구니에 없는 것이 있으면 404 — 부분 주문 서프라이즈 방지의 첫 관문.
+    """
+    unique_ids = list(dict.fromkeys(item_ids))
+    items = list(await session.scalars(
+        select(CartItem).where(CartItem.user_id == user_id, CartItem.id.in_(unique_ids))
+        .order_by(CartItem.created_at.desc(), CartItem.id.desc())
+    ))
+    if len(items) != len(unique_ids):
+        raise AppError("not_found", "장바구니 항목을 찾을 수 없습니다.", status_code=404)
+    info = await products_service.get_variant_purchase_info(session, [i.variant_id for i in items if i.variant_id])
+    out = []
+    for item in items:
+        meta = info.get(item.variant_id) or {"variant": None, "product": None, "brand_name": ""}
+        out.append({"item": item, **meta})
+    return out
+
+
+async def delete_items(session: AsyncSession, user_id: uuid.UUID, item_ids: list[uuid.UUID]) -> None:
+    """주문 성공 항목 삭제 — 트랜잭션·commit은 orders가 소유 (AD-10), 여기서는 delete만."""
+    items = await session.scalars(select(CartItem).where(CartItem.user_id == user_id, CartItem.id.in_(item_ids)))
+    for item in items:
+        await session.delete(item)

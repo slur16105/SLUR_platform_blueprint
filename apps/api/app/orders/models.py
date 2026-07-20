@@ -137,7 +137,7 @@ class OrderEvent(Base):
     )
     entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)  # 3층 폴리모픽 — 층별 FK 분리는 과설계
-    from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # sub_order NULL→preparing 진입 표현
+    from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # NULL = sub_order 배송 진입 또는 주문 창생 (entity_type으로 구분)
     to_status: Mapped[str] = mapped_column(String(20), nullable=False)
     actor_role: Mapped[str] = mapped_column(String(10), nullable=False)
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(

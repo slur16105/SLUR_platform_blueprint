@@ -35,14 +35,19 @@ class TokenStorage {
 
 /// 에러 봉투 {code, message, details} — 클라이언트는 code로 분기, message는 그대로 표시
 class ApiException implements Exception {
-  ApiException(this.code, this.message);
+  ApiException(this.code, this.message, {this.details = const []});
   final String code;
   final String message;
+  final List<dynamic> details; // 서버 봉투의 details 배열 (예: out_of_stock → [{"product_name": ...}])
 
   static ApiException from(DioException e) {
     final data = e.response?.data;
     if (data is Map && data['code'] is String) {
-      return ApiException(data['code'] as String, data['message'] as String? ?? '오류가 발생했습니다.');
+      return ApiException(
+        data['code'] as String,
+        data['message'] as String? ?? '오류가 발생했습니다.',
+        details: data['details'] is List ? data['details'] as List : const [],
+      );
     }
     return ApiException('network_error', '네트워크 연결을 확인해 주세요.');
   }

@@ -347,3 +347,16 @@ async def restore_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) 
     result = await session.execute(update(Variant).where(Variant.id == variant_id).values(stock=Variant.stock + qty))
     if result.rowcount == 0:  # variant_id 확인과 UPDATE 사이 조합 삭제 레이스 — 복원 소실 흔적을 남긴다
         logger.warning("restore_stock: variant %s 없음 — 취소 복원 %d개 소실 (조합 삭제 레이스)", variant_id, qty)
+
+
+async def deduct_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -> bool:
+    """주문 생성 트랜잭션 전용 조건부 차감 (AD-4) — `stock >= n`일 때만 원자적으로 빼고 성공 여부를 돌려준다.
+
+    읽고-계산하고-쓰기 금지: 이 UPDATE의 rowcount가 재고의 최종 진실이다. 복원은 restore_stock.
+    """
+    if qty <= 0:
+        raise AppError("internal_error", "재고 차감 수량 오류입니다.", status_code=500)
+    result = await session.execute(
+        update(Variant).where(Variant.id == variant_id, Variant.stock >= qty).values(stock=Variant.stock - qty)
+    )
+    return result.rowcount == 1

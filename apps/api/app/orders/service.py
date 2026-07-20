@@ -240,3 +240,104 @@ async def cancel_order_item(
     except IntegrityError as exc:  # UNIQUE 이중 방어 발동 — 500 대신 봉투 (호출자가 rollback)
         raise AppError("invalid_transition", "이미 취소 처리된 상품입니다.", status_code=422) from exc
     return item
+
+
+# ---------------------------------------------------------------------------
+# 주문 생성 (Story 4.4) — 스냅샷 + 조건부 차감 한 트랜잭션
+# ---------------------------------------------------------------------------
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+CODE_OUT_OF_STOCK = "out_of_stock"
+
+
+def _fail_detail(entry: dict) -> dict:
+    item, product, variant = entry["item"], entry["product"], entry["variant"]
+    return {
+        "cart_item_id": str(item.id),
+        "product_name": product.name if product is not None else "판매 종료된 상품",
+        "option_text": products_service.variant_option_text(variant) if variant is not None else "",
+    }
+
+
+async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
+    """주문 생성 — 주문 대상은 클라이언트가 명시한 cart_item_ids (부분 주문 서프라이즈 방지).
+
+    한 트랜잭션: 재검증 → quote 재계산(AD-11) → 전 항목 조건부 차감(AD-4, 최종 진실) → 스냅샷 INSERT →
+    장바구니 삭제(AD-10) → 창생 이벤트. 실패 시 전체 rollback — 부분 차감분도 원자성으로 원복.
+    주문 창생은 전이가 아니라 초기 상태다 (epics의 "전이 함수 경유" 문언은 4.3 확정 설계로 대체된 승인된 편차).
+    """
+    entries = await carts_service.get_entries_for_order(session, user_id, data.cart_item_ids)
+    if not entries:
+        raise AppError(CODE_EMPTY_CART, "주문할 수 있는 상품이 없습니다.", status_code=422)
+
+    # 술어 재검증 — 미리보기~주문 사이 불가로 바뀐 항목 전부 수집, 1건이라도 있으면 전체 실패 (FR-35)
+    bad = [
+        e for e in entries
+        if e["variant"] is None or not products_service.check_purchasable(e["product"], e["variant"], e["item"].quantity)
+    ]
+    if bad:
+        raise AppError(
+            CODE_OUT_OF_STOCK, "품절되었거나 구매할 수 없는 상품이 있습니다.",
+            status_code=422, details=[_fail_detail(e) for e in bad],
+        )
+
+    q = await quote(session, entries, data.postal_code)
+
+    # 조건부 차감 — rowcount가 최종 진실. 전 항목 시도 후 실패 수집 (details 복수 가능)
+    deduct_failed = []
+    for e in entries:
+        ok = await products_service.deduct_stock(session, e["variant"].id, e["item"].quantity)
+        if not ok:
+            deduct_failed.append(e)
+    if deduct_failed:  # 예외 → 호출자 rollback — 이미 차감된 항목도 원복
+        raise AppError(
+            CODE_OUT_OF_STOCK, "재고가 부족한 상품이 있습니다.",
+            status_code=422, details=[_fail_detail(e) for e in deduct_failed],
+        )
+
+    days = int(await get_setting(session, SETTING_UNPAID_CANCEL_DAYS))
+    order = Order(
+        user_id=user_id,
+        recipient_name=data.recipient_name, recipient_phone=data.recipient_phone,
+        postal_code=data.postal_code, address1=data.address1, address2=data.address2,
+        order_note=data.order_note,
+        deposit_due_at=datetime.now(timezone.utc) + timedelta(days=days),
+    )
+    session.add(order)
+    await session.flush()
+
+    by_seller: dict[uuid.UUID, list[dict]] = {}
+    for e in entries:
+        by_seller.setdefault(e["product"].seller_id, []).append(e)
+    for group in q["seller_groups"]:  # quote와 같은 그룹 구조 — 배송비 스냅샷 (AD-11)
+        sub = SubOrder(
+            order_id=order.id, seller_id=group["seller_id"],
+            shipping_fee=group["shipping_fee"], remote_extra_fee=group["remote_extra_fee"],
+        )
+        session.add(sub)
+        await session.flush()
+        for e in by_seller[group["seller_id"]]:
+            session.add(OrderItem(
+                sub_order_id=sub.id, variant_id=e["variant"].id,
+                product_name=e["product"].name,
+                option_text=products_service.variant_option_text(e["variant"]),
+                unit_price=e["product"].base_price,  # 분리 스냅샷 — quote의 final_price는 합산값
+                extra_price=e["variant"].extra_price,
+                quantity=e["item"].quantity,
+            ))
+
+    await carts_service.delete_items(session, user_id, [e["item"].id for e in entries])  # AD-10
+    session.add(OrderEvent(  # 창생 기록 — from NULL = 주문 생성 (entity_type으로 구분)
+        order_id=order.id, entity_type=t.LAYER_ORDER, entity_id=order.id,
+        from_status=None, to_status=t.ORDER_PENDING_PAYMENT,
+        actor_role=t.ROLE_BUYER, actor_user_id=user_id,
+    ))
+    deposit_account = await get_setting(session, SETTING_DEPOSIT_ACCOUNT)
+    await session.commit()
+    return {
+        "order_id": order.id,
+        "grand_total": q["grand_total"],
+        "deposit_account": deposit_account,
+        "deposit_due_at": order.deposit_due_at,
+    }

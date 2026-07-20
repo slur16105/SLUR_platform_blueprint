@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -35,3 +36,20 @@ class OrderPreviewResponse(BaseModel):
     remote_extra_total: int  # 도서산간 추가비 합 — 요약 행 분리 표시용 (AD-12)
     grand_total: int  # item + shipping + remote
     remote_area_kind: Literal["jeju", "island"] | None  # None = 일반
+
+
+class OrderCreateRequest(BaseModel):
+    cart_item_ids: list[uuid.UUID] = Field(min_length=1, max_length=100)  # 주문서에 표시된 항목만 — 부분 주문 방지
+    postal_code: str = Field(pattern=r"^\d{5}$")
+    recipient_name: str = Field(min_length=1, max_length=50)
+    recipient_phone: str = Field(pattern=r"^\d{9,11}$")
+    address1: str = Field(min_length=1, max_length=255)
+    address2: str = Field(default="", max_length=255)
+    order_note: str = Field(default="", max_length=500)
+
+
+class OrderCreateResponse(BaseModel):
+    order_id: uuid.UUID
+    grand_total: int
+    deposit_account: str  # settings 값 (AD-13)
+    deposit_due_at: datetime

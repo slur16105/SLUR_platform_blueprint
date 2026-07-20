@@ -21,4 +21,31 @@ class OrdersApi {
       throw ApiException.from(e);
     }
   }
+
+  /// 주문 생성 — 201 응답 {order_id, grand_total, deposit_account, deposit_due_at}
+  /// 금액·입금 정보 전부 서버 계산 값 (AD-12)
+  Future<Map<String, dynamic>> createOrder({
+    required List<String> cartItemIds,
+    required String postalCode,
+    required String recipientName,
+    required String recipientPhone,
+    required String address1,
+    required String address2,
+    required String orderNote,
+  }) async {
+    try {
+      final res = await _dio.post('/api/v1/orders', data: {
+        'cart_item_ids': cartItemIds,
+        'postal_code': postalCode,
+        'recipient_name': recipientName,
+        'recipient_phone': recipientPhone,
+        'address1': address1,
+        'address2': address2,
+        'order_note': orderNote,
+      });
+      return res.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw ApiException.from(e);
+    }
+  }
 }
