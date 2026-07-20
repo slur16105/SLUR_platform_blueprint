@@ -6,7 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SLUR 커머스 플랫폼 1호 — 운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍 마켓플레이스(통신판매중개자 모델). 1차 목표는 매출이 아니라 **실서비스 완주**, 2차 목표는 완성 후 범용 커머스 블루프린트 추출. 기능 추가 판단 기준은 "완주에 기여하는가".
 
-현재 **기획 단계** — 코드 없음. 빌드·테스트 명령은 구현 시작 후 이 파일에 추가할 것.
+**구현 상태 (2026-07-20): v1 전 스토리(Epic 1~6) 완주 — 코드·테스트·프로덕션 배포 완료.** 잔여는 실서비스 오픈 게이트 항목(`_bmad-output/implementation-artifacts/deferred-work.md` 참조): PG 연동, 사업자 실정보·법률 검토, 도서산간 공식 대조 등.
+
+## 명령어
+
+```bash
+# API (apps/api) — 로컬 Postgres는 docker compose up
+cd apps/api && uv run pytest -q          # 전체 테스트 (149)
+uv run alembic upgrade head              # 마이그레이션
+# 웹 (apps/web)
+cd apps/web && npx tsc --noEmit && npm run lint
+# 앱 (apps/mobile)
+cd apps/mobile && flutter analyze && flutter run
+# 배포: main push → Railway 자동 (pre-deploy alembic)
+```
 
 ## 확정 문서 (여기서 시작)
 
