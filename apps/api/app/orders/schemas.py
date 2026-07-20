@@ -54,3 +54,12 @@ class OrderCreateResponse(BaseModel):
     grand_total: int
     deposit_account: str  # settings 값 (AD-13)
     deposit_due_at: datetime
+
+
+class SubOrderCancelRequest(BaseModel):
+    reason: str | None = Field(default=None, max_length=500)  # 공백·None은 서비스가 "구매자 취소"로 대체
+
+
+class SubOrderCancelResponse(BaseModel):
+    canceled_items: int
+    order_canceled: bool  # 전 묶음 취소로 order 층까지 canceled 전이됐는지

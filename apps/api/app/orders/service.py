@@ -423,3 +423,52 @@ async def _auto_cancel_order(session: AsyncSession, order_id: uuid.UUID) -> bool
         actor_role=t.ROLE_SYSTEM, actor_user_id=None,
     )
     return True
+
+
+# ---------------------------------------------------------------------------
+# 구매자 취소 (Story 4.6) — 묶음 단위, 엔진 조합만 (AD-6)
+# ---------------------------------------------------------------------------
+
+
+async def cancel_sub_order(session: AsyncSession, user_id: uuid.UUID, sub_order_id: uuid.UUID, reason: str | None) -> dict:
+    """구매자의 판매자 묶음 취소 — 전 라인 취소 + (전 라인 canceled·pending_payment면) order 층 전이까지 한 트랜잭션.
+
+    소유 검증(IDOR 방지)은 여기가 소유 — 엔진은 검사하지 않는다 (4.3 docstring 계약).
+    타이밍 가드(preparing 진입 전)·재고 복원·cancellations는 엔진 소유.
+    """
+    reason = (reason or "").strip() or "구매자 취소"
+    row = await session.execute(
+        select(SubOrder, Order).join(Order, SubOrder.order_id == Order.id).where(SubOrder.id == sub_order_id)
+    )
+    pair = row.first()
+    if pair is None or pair[1].user_id != user_id:  # 미소유·미존재 구분 없이 404 (존재 노출 방지)
+        raise AppError("not_found", "주문을 찾을 수 없습니다.", status_code=404)
+    sub_order, order = pair
+
+    item_ids = list(await session.scalars(
+        select(OrderItem.id).where(OrderItem.sub_order_id == sub_order_id, OrderItem.status == t.ITEM_ORDERED)
+    ))
+    if not item_ids:
+        raise AppError("invalid_transition", "이미 취소된 주문 묶음입니다.", status_code=422)
+    for item_id in item_ids:  # 타이밍 가드·복원·기록은 엔진이 강제 (첫 라인에서 거부되면 전체 rollback)
+        await cancel_order_item(
+            session, order_item_id=item_id, actor_role=t.ROLE_BUYER, actor_user_id=user_id,
+            reason=reason, responsibility=t.ROLE_BUYER,
+        )
+
+    # 잠금 이후의 order 행 기준으로 재확인 (_auto_cancel_order 패턴) — 전 라인 canceled + 미결제면 order도 취소
+    order_canceled = False
+    remaining = await session.scalar(
+        select(exists().where(
+            OrderItem.sub_order_id.in_(select(SubOrder.id).where(SubOrder.order_id == order.id)),
+            OrderItem.status == t.ITEM_ORDERED,
+        ))
+    )
+    if not remaining and order.payment_status == t.ORDER_PENDING_PAYMENT:
+        await transition(
+            session, layer=t.LAYER_ORDER, entity_id=order.id, to_status=t.ORDER_CANCELED,
+            actor_role=t.ROLE_BUYER, actor_user_id=user_id,
+        )
+        order_canceled = True
+    await session.commit()
+    return {"canceled_items": len(item_ids), "order_canceled": order_canceled}
