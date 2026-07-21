@@ -87,3 +87,13 @@
 ## Deferred from: lint 베이스라인 정리 (2026-07-20, A-E456-5)
 
 - **[해소 2026-07-20]** ~~**`window.location.href` 리다이렉트 잔여 2파일**~~ — `seller/products/new/page.tsx`·`apply/page.tsx` 4곳 전부 `router.replace()`(next/navigation)로 전환. 리다이렉트 목적지·조건 동일. apply의 useEffect 의존성에 `router` 추가(다른 화면 관례와 동일). `npm run lint`·`tsc --noEmit` 0. 앱 전체 `window.location` grep 잔여 0건
+
+## Deferred from: Epic 8 구매자 반응형 웹 (2026-07-22)
+
+- **[오픈 게이트] 약관 동의 이력이 서버에 남지 않는다** — `SignupRequest`·`users` 어디에도 동의 필드가 없다. Story 8.2가 회원가입 화면에서 필수 동의를 강제하지만 **기록은 남지 않는다.** ERD 변경이 필요해 Epic 8(프론트 전용) 경계 밖이다. PRD §8의 오픈 게이트 항목 "약관·개인정보처리방침 법률 검토(FR-33)"에 **"동의 이력 보관이 법적으로 요구되는지"** 를 함께 올려 판단한다. 요구되면 스키마 변경(AD-9 승인 게이트) + 백엔드 스토리가 따로 필요하다
+- **`KAKAO_REDIRECT_URIS`가 Railway에 선언돼 있지 않다** — `.railway/railway.ts`의 web 서비스에 `KAKAO_REST_API_KEY`·`KAKAO_CLIENT_SECRET`·`KAKAO_APP_ID`는 `preserve()`로 있으나 리다이렉트 URI allowlist가 없어 백엔드가 기본값(`http://localhost:3000/...`)만 쓴다. **이 상태로는 프로덕션 카카오 로그인이 100% 실패한다.** Story 8.2의 선행 작업이며 카카오 개발자 콘솔 등록(로컬·프로덕션 두 값)과 Railway 변수 추가가 함께 필요하다 — 회고 R1대로 `railway ... --set`으로 넣고 즉시 확인, `railway.ts`에도 동시 선언
+- **`middleware.ts`는 Next 16에서 deprecated** — `proxy.ts`로의 rename이 예고돼 있고 빌드 출력도 `ƒ Proxy (Middleware)`로 나온다. Story 8.1·8.2가 "기존 코드 문자 그대로 보존"을 회귀 증거로 쓰기 때문에 의도적으로 옮기지 않았다. **Epic 8 완료 후** 별도로 rename한다 — 그때는 diff가 순수 이동이라 검증이 쉽다
+- **`/terms`·`/privacy`가 구매자 톤이 아니다** — 슬러 파랑 문서인데 구매자 회원가입 화면의 약관 `보기`가 이것을 연다. 알고 남기는 어긋남이며, 필요가 확인되면 구매자 톤 사본이 아니라 **양쪽에서 읽히는 중립 톤**으로 다듬는 쪽을 검토한다
+- **[오픈 게이트] 중개자 고지 문구의 최종 확정** — 프로덕션 가동 중인 `BROKER_NOTICE`(`상품, 상품정보, 거래에 관한 의무와 책임은 판매자에게 있습니다`)와 UX 스파인이 적어둔 축약형(`상품 정보와 거래에 관한 책임은…`)이 달랐다. 2026-07-22에 **스파인을 코드에 맞춰 정정**하고 정본을 `apps/web/app/config/company.ts`의 상수로 못 박았다(화면은 문자열을 복사하지 않고 임포트한다). 다만 **문구 자체가 법적으로 적정한지는 검토되지 않았다** — PRD §8 오픈 게이트의 약관 법률 검토에 실사업자 정보 교체와 한 묶음으로 올린다
+- **`바로 구매`의 목적지가 백엔드에 없다** — 주문 생성은 `cart_item_ids` 기반이고 미리보기(`POST /orders/preview`)도 장바구니를 전제한다. 상품상세의 `바로 구매`는 결국 담기를 거쳐야 한다. Story 8.3이 버튼 자리만 잡고, **8.4·8.5가 이 제약을 알고 설계해야 한다**(즉시 담기 후 `/checkout` 이동 등). 백엔드에 단품 주문 경로를 추가하는 것은 Epic 8 경계 밖
+
