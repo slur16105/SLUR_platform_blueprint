@@ -41,11 +41,14 @@ export default function BuyerTopbar({
             <Link href="/" className="b_logo i_brand">
               SLUR
             </Link>
-          ) : (
+          ) : title ? (
+            /* 제목이 없으면 제목 노드를 렌더하지 않는다 — 상품상세의 상단바는
+               뒤로가기 + 장바구니이며 제목이 없다 (8.3 D14-1). */
             <span className="b_topbar_title i_heading">{title}</span>
-          )}
+          ) : null}
 
-          {variant === "back-title" ? (
+          {/* 광학 중앙 정렬용 빈 자리는 우측에 아무것도 없을 때만 필요하다 */}
+          {variant === "back-title" && !showCart ? (
             <span className="i_spacer" aria-hidden="true" />
           ) : null}
 

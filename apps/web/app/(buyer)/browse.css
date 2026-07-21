@@ -1,0 +1,354 @@
+/* ─────────────────────────────────────────────
+   BROWSE — 상품목록 · 상품상세 전용 스타일 (8.3)
+
+   🚨 값을 새로 만들지 않는다 (UX-DR1). 색은 전부 --b-* 토큰, 활자는 type.css의
+      .b_* 역할 클래스, 컨테이너·그리드·행은 buyer.css의 .b_container/.b_grid/.b_row다.
+   🚨 .b_grid의 열 수·간격을 여기서 다시 선언하지 않는다 — 8.1의 반응형 계약이
+      두 곳으로 갈라지면 안 된다. 이 파일은 정렬(align-items)만 얹는다.
+   🚨 box-shadow 0건. 깊이는 8px 종이 접기 띠 · 1px hairline · 테두리 상자 셋뿐이다.
+   🚨 스코프 없는 태그 셀렉터(img·button·a)를 쓰지 않는다 — 전부 .b_* 클래스에 건다.
+   브레이크포인트는 슬러 시스템 값(sm 640 / md 768)을 px 리터럴로 적는다.
+   ───────────────────────────────────────────── */
+
+/* ══════════ 상품목록 ══════════ */
+
+/* ── 카테고리 칩 행 ─────────────────────────────
+   가로 스크롤, 단일 선택, 999px 라운드. full 라운드는 이 칩과 개수 배지 둘에만 (UX-DR12). */
+.b_chips {
+  position: relative;
+  border-bottom: 1px solid var(--b-hairline);
+  background: var(--b-paper);
+}
+.b_chips .i_scroll {
+  display: flex;
+  gap: 7px;
+  padding-block: 12px 13px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.b_chips .i_scroll::-webkit-scrollbar { display: none; }
+/* 우측 34px 종이색 페이드 — 더 있음을 알린다. ≥768에서는 한 줄에 들어오므로 사라진다. */
+.b_chips::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 34px;
+  background: linear-gradient(90deg, transparent, var(--b-paper) 72%);
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .b_chips::after { display: none; }
+}
+
+.b_chip {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 6px 13px;
+  border: 1px solid var(--b-field-border);
+  border-radius: var(--b-rounded-full);
+  background: none;
+  color: var(--b-ink-secondary);
+  cursor: pointer;
+}
+/* 시각 크기는 목업대로 두고 히트 영역만 44px로 넓힌다 (UX-DR7) */
+.b_chip::before { content: ""; position: absolute; inset: -6px 0; }
+.b_chip[aria-pressed="true"] {
+  border-color: var(--b-ink);
+  background: var(--b-ink);
+  color: var(--b-paper);
+  font-weight: 700;
+}
+
+/* ── 카드 그리드 ────────────────────────────────
+   열 수·간격은 .b_grid(8.1)가 소유한다. 여기서는 정렬만 얹는다 —
+   카드 높이가 서로 다르므로 stretch가 아니라 start여야 리듬이 산다. */
+.b_products { align-items: start; }
+
+.b_card { display: block; }
+.b_card .i_thumb {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--b-rounded);
+  background: var(--b-paper-shade); /* main_image_url이 null이어도 같은 높이로 자리를 지킨다 */
+}
+.b_card .i_img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 카드 폭이 커져도 이미지 높이는 아래 리듬 값을 따른다 */
+}
+.b_card .i_soldout {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  padding: 3px 7px;
+  border-radius: var(--b-rounded-xs);
+  background: var(--b-ink);
+  color: var(--b-paper);
+}
+.b_card .i_brand { display: block; margin-top: 11px; }
+.b_card .i_name { display: block; margin-top: 7px; }
+.b_card .i_price { display: block; margin-top: 7px; }
+
+/* 품절 카드 — 숨기지 않는다. 색 + 텍스트를 항상 함께 쓴다 (UX-DR8). */
+.b_card[data-soldout="true"] .i_img { filter: saturate(.45) brightness(1.04); }
+.b_card[data-soldout="true"] .i_brand { color: var(--b-ink-quiet); }
+.b_card[data-soldout="true"] .i_name { color: var(--b-ink-muted); }
+.b_card[data-soldout="true"] .i_price {
+  color: var(--b-ink-muted);
+  font-weight: 600;
+  text-decoration: line-through;
+  text-decoration-color: var(--b-strike-line);
+}
+
+/* 카드 이미지 높이 리듬 — 품목마다 다르게 두어 두 열이 어긋나며 흐른다.
+   균일한 격자는 상점이고, 어긋난 격자가 지면이다.
+   < 768 : 160~216px · ≥ 768 : 200~260px (DESIGN.md 반응형이 정본 —
+   목업 responsive-768-1280.html의 279·411px은 결함으로 폐기된 값이다). */
+.b_products > .b_card:nth-child(6n + 1) .i_thumb { height: 212px; }
+.b_products > .b_card:nth-child(6n + 2) .i_thumb { height: 168px; }
+.b_products > .b_card:nth-child(6n + 3) .i_thumb { height: 200px; }
+.b_products > .b_card:nth-child(6n + 4) .i_thumb { height: 176px; }
+.b_products > .b_card:nth-child(6n + 5) .i_thumb { height: 216px; }
+.b_products > .b_card:nth-child(6n) .i_thumb { height: 160px; }
+@media (min-width: 768px) {
+  .b_products > .b_card:nth-child(6n + 1) .i_thumb { height: 250px; }
+  .b_products > .b_card:nth-child(6n + 2) .i_thumb { height: 208px; }
+  .b_products > .b_card:nth-child(6n + 3) .i_thumb { height: 238px; }
+  .b_products > .b_card:nth-child(6n + 4) .i_thumb { height: 220px; }
+  .b_products > .b_card:nth-child(6n + 5) .i_thumb { height: 260px; }
+  .b_products > .b_card:nth-child(6n) .i_thumb { height: 200px; }
+}
+
+/* ── `더 보기` ──────────────────────────────────
+   스크롤 관찰자·자동 로드를 만들지 않는다 (UX-DR16).
+   누적 길이 >= total이면 컴포넌트가 아예 렌더하지 않는다 — 페이지 크기를 가정하지 않는다. */
+.b_more { display: flex; justify-content: center; margin-top: var(--b-space-6); }
+.b_more .b_btn { min-width: 160px; }
+
+/* ══════════ 상품상세 ══════════ */
+
+/* D8 — grid 영역 하나로 세 요구를 동시에 만족시킨다.
+   DOM 순서는 이미지 → 정보 → 법적 고지로 고정이며 폭에 따라 노드를 옮기지 않는다.
+   < 768 : 한 칼럼 흐름 + 하단 고정 CTA 바
+   ≥ 768 : "media info" / "legal legal" — 고지는 2단 아래 전체 폭, 좌측(짧은 쪽) sticky */
+.b_detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  /* 하단 고정 CTA 바(13 + 46 + 20)에 가려지지 않게 */
+  padding-bottom: calc(79px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .b_detail {
+    grid-template-areas:
+      "media info"
+      "legal legal";
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--b-space-7);
+    align-items: start;
+    padding-bottom: var(--b-space-7);
+  }
+  .b_detail .i_media {
+    grid-area: media;
+    position: sticky;
+    /* 54px 상단바를 피한다 */
+    top: calc(var(--b-topbar-h) + var(--b-space-5));
+  }
+  .b_detail .i_info { grid-area: info; padding-top: 0; }
+  .b_detail .i_legal { grid-area: legal; margin-top: var(--b-space-7); }
+}
+
+/* ── 갤러리 ─────────────────────────────────── */
+.b_hero {
+  height: 330px;
+  overflow: hidden;
+  background: var(--b-paper-shade);
+  /* < 768에서는 상단바 바로 아래 전체 폭으로 붙는다 */
+  margin-inline: calc(var(--b-gutter) * -1);
+}
+.b_hero .i_img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 768px) {
+  .b_hero {
+    height: 440px;
+    margin-inline: 0;
+    border-radius: var(--b-rounded);
+  }
+}
+
+.b_thumbs { display: flex; gap: 7px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+.b_thumbs::-webkit-scrollbar { display: none; }
+.b_thumbs .i_thumb {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--b-hairline);
+  border-radius: var(--b-rounded);
+  background: var(--b-paper-shade);
+  cursor: pointer;
+}
+.b_thumbs .i_thumb[data-selected="true"] { border: 1.6px solid var(--b-accent); }
+.b_thumbs .i_img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ── 정보 칼럼 ─────────────────────────────────── */
+.b_detail .i_info { padding-top: var(--b-section-y); }
+.b_detail .i_brand { display: block; margin-bottom: 9px; }
+.b_detail .i_price { display: block; margin-top: 12px; color: var(--b-accent); }
+.b_detail .i_desc { margin-top: 16px; }
+
+/* ── 옵션 축 ──────────────────────────────────── */
+.b_options {
+  margin-top: var(--b-space-6);
+  padding-top: var(--b-section-y);
+  border-top: 1px solid var(--b-hairline);
+}
+.b_options .i_head { display: block; margin-bottom: 13px; }
+.b_axis { margin-bottom: 16px; }
+.b_axis .i_chips { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.b_opt {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border: 1px solid var(--b-field-border);
+  border-radius: var(--b-rounded);
+  background: var(--b-field-surface);
+  color: var(--b-ink-body);
+  cursor: pointer;
+}
+/* 시각 크기는 목업대로, 히트 영역만 44px로 (UX-DR7) */
+.b_opt::before { content: ""; position: absolute; inset: -4px 0; }
+/* 비활성(조합 품절) — 숨기지 않고 표기한다. disabled 속성이 아니라 aria-disabled다. */
+.b_opt[aria-disabled="true"] {
+  border-color: var(--b-disabled-border);
+  background: var(--b-disabled-surface);
+  color: var(--b-disabled-ink);
+  cursor: default;
+}
+/* 선택 표시가 비활성 표기보다 우선한다 (D6) — 취소선과 `품절`은 그대로 함께 붙는다 */
+.b_opt[data-selected="true"] {
+  border-color: var(--b-ink);
+  background: var(--b-ink);
+  color: var(--b-paper);
+  font-weight: 700;
+}
+.b_opt[aria-disabled="true"] .i_value {
+  text-decoration: line-through;
+  text-decoration-color: var(--b-strike-line);
+}
+/* 서브라벨 — `일부 품절`(액센트 글자) / `품절`(흐린 알약) */
+.b_opt .i_sub { color: var(--b-accent); }
+.b_opt[data-selected="true"] .i_sub { color: var(--b-accent-soft); }
+.b_opt[aria-disabled="true"] .i_sub {
+  padding: 2px 5px;
+  border-radius: var(--b-rounded-xs);
+  background: var(--b-ink-muted);
+  color: var(--b-paper);
+  text-decoration: none;
+}
+
+/* ── 선택 결과 한 줄 ─────────────────────────────
+   조합 목록을 따로 나열하지 않는다 — 이 한 줄이 옵션 상태에 답한다. */
+.b_pick {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 2px;
+  padding: 11px 13px;
+  border: 1px solid var(--b-hairline);
+  border-left: 2px solid var(--b-accent);
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-surface-inset);
+}
+.b_pick .i_state { margin-left: auto; }
+.b_pick .i_msg { color: var(--b-ink-secondary); }
+
+/* ── 배송비 줄 (D11) ───────────────────────────
+   공개 상품 API에 배송비가 없다. 응답에 없는 금액을 화면이 만들어내지 않는다 (AD-12). */
+.b_ship {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: var(--b-section-y);
+  padding-top: var(--b-section-y);
+  border-top: 1px solid var(--b-hairline);
+}
+.b_ship .i_key { flex: 0 0 112px; color: var(--b-ink-label); }
+.b_ship .i_value { flex: 1; color: var(--b-ink-secondary); }
+
+/* ── 판매자 신원정보 · 중개자 고지 ─────────────────
+   접이식이되 기본 펼침. 청약 버튼보다 위, 모달·별도 페이지·`더보기` 뒤에 숨기지 않는다. */
+.b_legal { margin-top: var(--b-section-y); padding-top: var(--b-section-y); border-top: 1px solid var(--b-hairline); }
+.b_seller_info .i_summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+.b_seller_info .i_summary::-webkit-details-marker { display: none; }
+.b_seller_info .i_caret { position: relative; width: 11px; height: 11px; }
+.b_seller_info .i_caret::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-top: 1.5px solid var(--b-ink-secondary);
+  border-left: 1.5px solid var(--b-ink-secondary);
+  transform: rotate(225deg);
+}
+.b_seller_info[open] .i_caret::before { top: 1px; transform: rotate(45deg); }
+.b_seller_info .i_box {
+  /* 행이 560px 안에 서므로(.b_row) 상자도 거기에 맞춰 붙인다 —
+     1000px 칼럼에 좌측 560px만 채워진 빈 상자가 남지 않게 */
+  max-width: calc(var(--b-row-max) + 26px);
+  margin-top: 13px;
+  padding: 14px 13px;
+  border: 1px solid var(--b-hairline);
+  border-radius: var(--b-rounded);
+  background: var(--b-surface-inset);
+}
+/* 라벨-값 행은 칼럼이 아무리 넓어도 560px 안에서 (.b_row가 max-width를 준다) */
+.b_seller_info .i_row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.b_seller_info .i_key { flex: 0 0 112px; }
+.b_seller_info .i_value { flex: 1; text-align: right; color: var(--b-ink-strong); }
+.b_broker { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--b-hairline); }
+
+/* ── CTA 두 자리 (D9) ──────────────────────────
+   같은 버튼 쌍을 정보 칼럼 안과 하단 고정 바 두 곳에 렌더하고 CSS display로 전환한다.
+   matchMedia로 조건부 렌더하면 폭이 바뀔 때 언마운트되어 선택 상태가 날아간다.
+   display:none인 쪽은 접근성 트리에서도 빠지므로 두 번 낭독되지 않는다. */
+.b_cta_pair { display: flex; gap: 9px; }
+.b_cta_pair .b_btn { flex: 1; }
+/* ghost는 1.4px 먹색 테두리 (DESIGN button-ghost). 비활성은 .b_btn:disabled가 받는다. */
+.b_cta_pair .i_ghost:not(:disabled) {
+  border-width: 1.4px;
+  border-color: var(--b-ink);
+  background: none;
+  color: var(--b-ink);
+}
+.b_cta_bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-sticky);
+  padding: var(--b-cta-bar-y) var(--b-gutter) var(--b-cta-bar-bottom);
+  border-top: 1px solid var(--b-hairline);
+  background: var(--b-paper);
+}
+.b_cta_pair.m_inline { display: none; margin-top: var(--b-section-y); }
+@media (min-width: 768px) {
+  .b_cta_bar { display: none; }
+  .b_cta_pair.m_inline { display: flex; }
+}

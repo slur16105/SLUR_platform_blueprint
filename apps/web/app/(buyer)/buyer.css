@@ -289,27 +289,62 @@
 .b_or .i_line { flex: 1; height: 1px; background: var(--b-hairline); }
 .b_or .i_text { font-size: 11.5px; letter-spacing: .02em; color: var(--b-ink-muted); }
 
-/* ── 자리표시 (8.3·8.4·8.6·8.7이 통째로 대체한다) ──── */
+/* ── 섹션 · 자리표시 ─────────────────────────────
+   8.3이 `/`를 대체하면서 고아가 된 .b_ph·.b_placeholder 계열을 제거했다.
+   .b_stub은 /cart·/orders·/me가 아직 쓰므로 남긴다 (8.4·8.6·8.7이 대체한다). */
 .b_section { padding-block: var(--b-section-y); }
 .b_section .i_eyebrow { margin-bottom: 9px; }
 .b_section .i_display { margin-bottom: var(--b-section-y); }
-.b_placeholder {
-  border: 1px solid var(--b-hairline);
-  border-radius: var(--b-rounded);
-  background: var(--b-paper-shade);
-}
-.b_ph .b_brand_label { display: block; margin-top: 11px; }
-.b_ph .b_product_name_card { margin-top: 7px; }
-.b_ph .b_price_card { margin-top: 7px; }
-/* 카드 이미지 높이를 품목마다 다르게 두어 두 열이 어긋나며 흐르게 한다 */
-.b_ph:nth-child(6n + 1) .b_placeholder { height: 200px; }
-.b_ph:nth-child(6n + 2) .b_placeholder { height: 168px; }
-.b_ph:nth-child(6n + 3) .b_placeholder { height: 176px; }
-.b_ph:nth-child(6n + 4) .b_placeholder { height: 212px; }
-.b_ph:nth-child(6n + 5) .b_placeholder { height: 188px; }
-.b_ph:nth-child(6n) .b_placeholder { height: 160px; }
 .b_stub { padding-block: var(--b-section-y); }
 .b_stub .i_note { margin-top: 10px; }
+
+/* ─────────────────────────────────────────────
+   피드백 — 로딩(골격) · 빈 상태 · 오류 (UX-DR9, 8.3 신설)
+   목업에 없는 화면이며 8.4~8.7이 함께 쓴다. 그래서 browse.css가 아니라 여기 있다.
+   ───────────────────────────────────────────── */
+
+/* 골격 — 화면 중앙 스피너를 쓰지 않는다. 애니메이션은 최소로 두고
+   prefers-reduced-motion에서 끈다 (UX-DR16). */
+.b_skeleton,
+.b_block_skeleton {
+  display: block;
+  border-radius: var(--b-rounded);
+  background: var(--b-paper-shade);
+  animation: b_skeleton_pulse 1.6s ease-in-out infinite;
+}
+@keyframes b_skeleton_pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .b_skeleton,
+  .b_block_skeleton { animation: none; }
+}
+
+.b_card_skeleton .i_thumb { height: 190px; }
+.b_card_skeleton .i_line { height: 11px; margin-top: 11px; }
+.b_card_skeleton .i_line.m_short { width: 45%; }
+@media (min-width: 768px) {
+  .b_card_skeleton .i_thumb { height: 230px; }
+}
+.b_block_skeleton.m_hero { height: 330px; }
+.b_block_skeleton.m_title { height: 26px; margin-top: 12px; width: 70%; }
+.b_block_skeleton.m_line { height: 13px; margin-top: 12px; }
+@media (min-width: 768px) {
+  .b_block_skeleton.m_hero { height: 440px; }
+}
+
+/* 빈 상태 · 오류 — 문장 + (필요하면) 수단 하나.
+   🚨 HTTP 상태 코드와 code 문자열을 여기에 렌더하지 않는다 (UX-DR9·15). */
+.b_feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding-block: var(--b-space-7);
+}
+.b_feedback .i_msg { color: var(--b-ink-secondary); }
+.b_feedback .i_action .b_btn { min-width: 120px; }
 
 /* ─────────────────────────────────────────────
    공유 컴포넌트 (UX-DR13) — 자리만 잡는다.

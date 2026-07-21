@@ -4,7 +4,7 @@ baseline_commit: 5d60203dfdf672162e547ffc042f5d52fafaa6fd
 
 # Story 8.3: 상품목록·상품상세 (구매자 반응형 웹)
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -309,105 +309,105 @@ CSS를 라우트 옆에 두고 컴포넌트가 임포트하는 것은 이 저장
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — BFF Route Handler 3개와 공개 프록시 헬퍼** (AC: 1, 7, 14)
-  - [ ] `lib/public-api.ts` 신설 — `API_BASE`를 `@/lib/auth`에서 import. 토큰 미첨부·refresh 미회전·쿠키 미변경. `cache: "no-store"` + 응답 헤더 `Cache-Control: no-store`
-  - [ ] 상류 응답이 JSON이 아니면 `{code:"service_unavailable", message:"일시적인 오류입니다.", details:[]}`로 감싼다 (`proxyWithRefresh`의 폴백과 같은 봉투)
-  - [ ] `app/api/products/route.ts` — `category`·`page`만 화이트리스트로 전달. 그 외 쿼리는 버린다
-  - [ ] `app/api/products/categories/route.ts`
-  - [ ] `app/api/products/[id]/route.ts` — `ctx.params`는 **Promise다**(`await`). 36자 UUID 형식이 아니면 상류를 부르지 않고 404 `not_found` 봉투
-  - [ ] `lib/auth.ts`를 **수정하지 않는다** (import만 한다)
+- [x] **Task 1 — BFF Route Handler 3개와 공개 프록시 헬퍼** (AC: 1, 7, 14)
+  - [x] `lib/public-api.ts` 신설 — `API_BASE`를 `@/lib/auth`에서 import. 토큰 미첨부·refresh 미회전·쿠키 미변경. `cache: "no-store"` + 응답 헤더 `Cache-Control: no-store`
+  - [x] 상류 응답이 JSON이 아니면 `{code:"service_unavailable", message:"일시적인 오류입니다.", details:[]}`로 감싼다 (`proxyWithRefresh`의 폴백과 같은 봉투)
+  - [x] `app/api/products/route.ts` — `category`·`page`만 화이트리스트로 전달. 그 외 쿼리는 버린다
+  - [x] `app/api/products/categories/route.ts`
+  - [x] `app/api/products/[id]/route.ts` — `ctx.params`는 **Promise다**(`await`). 36자 UUID 형식이 아니면 상류를 부르지 않고 404 `not_found` 봉투
+  - [x] `lib/auth.ts`를 **수정하지 않는다** (import만 한다)
 
-- [ ] **Task 2 — 공용 표현 컴포넌트와 포맷 함수** (AC: 5, 13)
-  - [ ] `(buyer)/format.ts` — `formatWon(n)` = `n.toLocaleString("ko-KR") + "원"`. 로케일을 생략하지 않는다
-  - [ ] `(buyer)/buyer-feedback.tsx` — `CardSkeleton`(그리드용) · `EmptyState`(문구 + 선택적 액션) · `ErrorState`(문구 + `다시 시도`)
-    - [ ] **HTTP 코드·`code` 문자열을 렌더하지 않는다.** 표시는 봉투의 `message`, 분기만 `code`
-    - [ ] 봉투가 없는 실패(fetch throw)는 `연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.`
-    - [ ] skeleton은 애니메이션을 최소로 두고 `prefers-reduced-motion`에서 끈다 (UX-DR16)
-  - [ ] 세 컴포넌트의 CSS는 `buyer.css`에 추가한다(8.4~8.7이 함께 쓴다). 목록·상세 전용 스타일만 `browse.css`
+- [x] **Task 2 — 공용 표현 컴포넌트와 포맷 함수** (AC: 5, 13)
+  - [x] `(buyer)/format.ts` — `formatWon(n)` = `n.toLocaleString("ko-KR") + "원"`. 로케일을 생략하지 않는다
+  - [x] `(buyer)/buyer-feedback.tsx` — `CardSkeleton`(그리드용) · `EmptyState`(문구 + 선택적 액션) · `ErrorState`(문구 + `다시 시도`)
+    - [x] **HTTP 코드·`code` 문자열을 렌더하지 않는다.** 표시는 봉투의 `message`, 분기만 `code`
+    - [x] 봉투가 없는 실패(fetch throw)는 `연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.`
+    - [x] skeleton은 애니메이션을 최소로 두고 `prefers-reduced-motion`에서 끈다 (UX-DR16)
+  - [x] 세 컴포넌트의 CSS는 `buyer.css`에 추가한다(8.4~8.7이 함께 쓴다). 목록·상세 전용 스타일만 `browse.css`
 
-- [ ] **Task 3 — 상품목록 `/`** (AC: 1, 2, 3, 5, 6)
-  - [ ] `(buyer)/page.tsx` — 8.1 자리표시를 **통째로 대체**. `BuyerShell tab="home" showTabbar topbar={{variant:"logo", showCart:true}}` 유지, 본문을 `<Suspense fallback={<목록 skeleton/>}>`로 감싼다
-  - [ ] `category-chips.tsx` — `GET /api/products/categories` 응답 순서 그대로 + 맨 앞 `전체`. `<button aria-pressed>`, 999px 라운드, 가로 스크롤, <768에서만 우측 34px 페이드
-    - [ ] 이름·순서·개수 하드코딩 0건. 조회 실패 시 칩 행만 감추고 목록은 계속 보여준다
-    - [ ] 응답에 없는 `?category` 값은 무시하고 `전체`로 되돌리며 쿼리를 정리한다
-  - [ ] `product-card.tsx` — 사진 → 브랜드 라벨(`<BrandLabel size="card">`) → 상품명 → 가격. 카드 전체가 `<Link href={/products/${id}}>`
-    - [ ] `sold_out`이면 `saturate(.45) brightness(1.04)` + 좌상단 `품절` 태그 + 이름·가격 `--b-ink-muted` + 가격 취소선. **숨기지 않는다**
-    - [ ] `main_image_url`이 null이면 같은 높이의 종이 그늘 면
-    - [ ] `<img>` 위에 `/* eslint-disable-next-line @next/next/no-img-element */`
-  - [ ] `product-list.tsx` — 카테고리 상태(URL 쿼리) · 누적 items · `total` · 로딩/오류. `더 보기` 버튼(누적 길이 >= total이면 감춤). 카테고리 변경 시 page=1·누적 초기화
-    - [ ] 스크롤 관찰자·자동 로드를 만들지 않는다 (UX-DR16)
-    - [ ] 큐레이션 머리글(eyebrow + display 문장)은 8.1이 쓴 문구를 그대로 이어받는다. `[ASSUMPTION]` 이 문장은 운영자가 바꿀 수단이 없다(하드코딩) — FR-34가 금지한 것은 카테고리 이름이므로 v1에서 수용한다
-  - [ ] `browse.css` — 카드 이미지 높이 리듬 두 세트: <768 `160~216px` 6단계, ≥768 `200~260px` 6단계. `nth-child(6n+k)` 문법은 8.1 `.b_ph` 선례를 따른다
+- [x] **Task 3 — 상품목록 `/`** (AC: 1, 2, 3, 5, 6)
+  - [x] `(buyer)/page.tsx` — 8.1 자리표시를 **통째로 대체**. `BuyerShell tab="home" showTabbar topbar={{variant:"logo", showCart:true}}` 유지, 본문을 `<Suspense fallback={<목록 skeleton/>}>`로 감싼다
+  - [x] `category-chips.tsx` — `GET /api/products/categories` 응답 순서 그대로 + 맨 앞 `전체`. `<button aria-pressed>`, 999px 라운드, 가로 스크롤, <768에서만 우측 34px 페이드
+    - [x] 이름·순서·개수 하드코딩 0건. 조회 실패 시 칩 행만 감추고 목록은 계속 보여준다
+    - [x] 응답에 없는 `?category` 값은 무시하고 `전체`로 되돌리며 쿼리를 정리한다
+  - [x] `product-card.tsx` — 사진 → 브랜드 라벨(`<BrandLabel size="card">`) → 상품명 → 가격. 카드 전체가 `<Link href={/products/${id}}>`
+    - [x] `sold_out`이면 `saturate(.45) brightness(1.04)` + 좌상단 `품절` 태그 + 이름·가격 `--b-ink-muted` + 가격 취소선. **숨기지 않는다**
+    - [x] `main_image_url`이 null이면 같은 높이의 종이 그늘 면
+    - [x] `<img>` 위에 `/* eslint-disable-next-line @next/next/no-img-element */`
+  - [x] `product-list.tsx` — 카테고리 상태(URL 쿼리) · 누적 items · `total` · 로딩/오류. `더 보기` 버튼(누적 길이 >= total이면 감춤). 카테고리 변경 시 page=1·누적 초기화
+    - [x] 스크롤 관찰자·자동 로드를 만들지 않는다 (UX-DR16)
+    - [x] 큐레이션 머리글(eyebrow + display 문장)은 8.1이 쓴 문구를 그대로 이어받는다. `[ASSUMPTION]` 이 문장은 운영자가 바꿀 수단이 없다(하드코딩) — FR-34가 금지한 것은 카테고리 이름이므로 v1에서 수용한다
+  - [x] `browse.css` — 카드 이미지 높이 리듬 두 세트: <768 `160~216px` 6단계, ≥768 `200~260px` 6단계. `nth-child(6n+k)` 문법은 8.1 `.b_ph` 선례를 따른다
 
-- [ ] **Task 4 — 상품상세 `/products/[id]` 골격과 갤러리** (AC: 7, 11, 13)
-  - [ ] `(buyer)/products/[id]/page.tsx` — `BuyerShell tab="home"`(≥768에서 `홈`이 활성), `showTabbar` **없음**, `topbar={{variant:"back-title", showCart:true}}`
-  - [ ] `product-detail.tsx` — `useParams<{id:string}>()`로 id를 읽고 `GET /api/products/{id}` 호출. 404·422는 `상품을 찾을 수 없습니다.` + `상품목록으로`(셸 유지, `notFound()`를 쓰지 않는다)
-  - [ ] 갤러리 — hero(현재 인덱스) + 썸네일 행(52px, 선택 1.6px 액센트 테두리). 이미지 1장이면 썸네일 행 미표시
-    - [ ] `[ASSUMPTION]` **좌우 스와이프 제스처를 만들지 않는다.** UX-DR16의 기본은 "스와이프를 만들지 않는다"이고 상품상세는 *허용*이지 의무가 아니다. 썸네일 탭으로 전 이미지에 닿는다
-  - [ ] 정보 칼럼 — 브랜드 라벨(`size="detail"`) · 상품명(`b_title`) · 가격(`b_price_hero`, 액센트) · 설명(`b_body`)
-  - [ ] D8의 grid 배치 — <768 한 칼럼 / ≥768 `"media info" / "legal legal"`, 좌측 sticky(`top: calc(54px + 20px)`)
-  - [ ] **폭에 따라 컴포넌트를 조건부 렌더하지 않는다** — `matchMedia`·`innerWidth`·`resize` 사용 0건
+- [x] **Task 4 — 상품상세 `/products/[id]` 골격과 갤러리** (AC: 7, 11, 13)
+  - [x] `(buyer)/products/[id]/page.tsx` — `BuyerShell tab="home"`(≥768에서 `홈`이 활성), `showTabbar` **없음**, `topbar={{variant:"back-title", showCart:true}}`
+  - [x] `product-detail.tsx` — `useParams<{id:string}>()`로 id를 읽고 `GET /api/products/{id}` 호출. 404·422는 `상품을 찾을 수 없습니다.` + `상품목록으로`(셸 유지, `notFound()`를 쓰지 않는다)
+  - [x] 갤러리 — hero(현재 인덱스) + 썸네일 행(52px, 선택 1.6px 액센트 테두리). 이미지 1장이면 썸네일 행 미표시
+    - [x] `[ASSUMPTION]` **좌우 스와이프 제스처를 만들지 않는다.** UX-DR16의 기본은 "스와이프를 만들지 않는다"이고 상품상세는 *허용*이지 의무가 아니다. 썸네일 탭으로 전 이미지에 닿는다
+  - [x] 정보 칼럼 — 브랜드 라벨(`size="detail"`) · 상품명(`b_title`) · 가격(`b_price_hero`, 액센트) · 설명(`b_body`)
+  - [x] D8의 grid 배치 — <768 한 칼럼 / ≥768 `"media info" / "legal legal"`, 좌측 sticky(`top: calc(54px + 20px)`)
+  - [x] **폭에 따라 컴포넌트를 조건부 렌더하지 않는다** — `matchMedia`·`innerWidth`·`resize` 사용 0건
 
-- [ ] **Task 5 — 옵션 축 칩과 선택 결과 줄** (AC: 8, 9)
-  - [ ] `option-axes.tsx` — `variants`에서 축 이름 2개와 값 목록(등장 순서, 중복 제거)을 파생. 이름이 빈 문자열이면 그 축은 없다
-  - [ ] D6의 판정 구현 — 기준축(마지막으로 만진 축)은 전역 판정, 상대축은 기준축 선택과 짝지은 조합 판정
-  - [ ] 칩 상태 3종: 선택(먹색 면 + 종이색 글자 + 700) / `일부 품절`(10px 액센트 서브라벨) / 비활성(`--b-disabled-surface` 면 + `--b-disabled-ink` 글자 + 취소선 + `품절` 서브라벨)
-  - [ ] 비활성 칩은 `aria-disabled="true"` — `disabled` 속성으로 포커스에서 빼지 않는다(품절 사실이 낭독돼야 한다)
-  - [ ] 선택 결과 줄 — 좌측 2px 액센트 세로선 + `--b-surface-inset` 면, `선택` 라벨 · `살구 / 240ml` · 우측 끝 상태. **조합 목록을 나열하지 않는다**
-  - [ ] 축이 0개면 축 UI 없이 유일 조합 자동 선택. 모든 조합 품절이면 `현재 구매할 수 있는 옵션이 없습니다.`
-  - [ ] 선택 조합을 `?variant=<uuid>`에 `replace`로 반영하고, 진입 시 쿼리에서 복원한다(응답에 없는 값은 무시)
-  - [ ] 가격은 D7 규칙 — **클라이언트가 `base + extra`를 계산하지 않는다.** 재고 수량을 화면에 쓰지 않는다
+- [x] **Task 5 — 옵션 축 칩과 선택 결과 줄** (AC: 8, 9)
+  - [x] `option-axes.tsx` — `variants`에서 축 이름 2개와 값 목록(등장 순서, 중복 제거)을 파생. 이름이 빈 문자열이면 그 축은 없다
+  - [x] D6의 판정 구현 — 기준축(마지막으로 만진 축)은 전역 판정, 상대축은 기준축 선택과 짝지은 조합 판정
+  - [x] 칩 상태 3종: 선택(먹색 면 + 종이색 글자 + 700) / `일부 품절`(10px 액센트 서브라벨) / 비활성(`--b-disabled-surface` 면 + `--b-disabled-ink` 글자 + 취소선 + `품절` 서브라벨)
+  - [x] 비활성 칩은 `aria-disabled="true"` — `disabled` 속성으로 포커스에서 빼지 않는다(품절 사실이 낭독돼야 한다)
+  - [x] 선택 결과 줄 — 좌측 2px 액센트 세로선 + `--b-surface-inset` 면, `선택` 라벨 · `살구 / 240ml` · 우측 끝 상태. **조합 목록을 나열하지 않는다**
+  - [x] 축이 0개면 축 UI 없이 유일 조합 자동 선택. 모든 조합 품절이면 `현재 구매할 수 있는 옵션이 없습니다.`
+  - [x] 선택 조합을 `?variant=<uuid>`에 `replace`로 반영하고, 진입 시 쿼리에서 복원한다(응답에 없는 값은 무시)
+  - [x] 가격은 D7 규칙 — **클라이언트가 `base + extra`를 계산하지 않는다.** 재고 수량을 화면에 쓰지 않는다
 
-- [ ] **Task 6 — 판매자 신원정보와 중개자 고지** (AC: 10)
-  - [ ] `seller-info.tsx` — `<details open>` 기반 접이식(기본 펼침). 6항목을 라벨-값 행(`b_row`, 최대 560px)으로. 상자는 `--b-surface-inset` 면 + 1px hairline + 4px 라운드
-  - [ ] 중개자 고지는 `BROKER_NOTICE`(`@/app/config/company`) 상수 그대로. `b_notice` 클래스, 위에 1px hairline. 문장을 화면 코드에 다시 쓰지 않는다
-  - [ ] `company_name`이 빈 값이면 6항목 상자를 렌더하지 않고 고지만 남긴다 (6.2 리뷰 패치와 같은 규칙)
-  - [ ] **위치 검증** — <768: 하단 고정 CTA **위**의 본문 마지막. ≥768: 2단 **아래 전체 폭**. 두 폭 모두에서 청약 버튼보다 위에 보이는지 눈으로 확인
-  - [ ] `임시 정보` 태그를 두지 않는다 (플랫폼 사업자 정보는 8.7 소관)
+- [x] **Task 6 — 판매자 신원정보와 중개자 고지** (AC: 10)
+  - [x] `seller-info.tsx` — `<details open>` 기반 접이식(기본 펼침). 6항목을 라벨-값 행(`b_row`, 최대 560px)으로. 상자는 `--b-surface-inset` 면 + 1px hairline + 4px 라운드
+  - [x] 중개자 고지는 `BROKER_NOTICE`(`@/app/config/company`) 상수 그대로. `b_notice` 클래스, 위에 1px hairline. 문장을 화면 코드에 다시 쓰지 않는다
+  - [x] `company_name`이 빈 값이면 6항목 상자를 렌더하지 않고 고지만 남긴다 (6.2 리뷰 패치와 같은 규칙)
+  - [x] **위치 검증** — <768: 하단 고정 CTA **위**의 본문 마지막. ≥768: 2단 **아래 전체 폭**. 두 폭 모두에서 청약 버튼보다 위에 보이는지 눈으로 확인
+  - [x] `임시 정보` 태그를 두지 않는다 (플랫폼 사업자 정보는 8.7 소관)
 
-- [ ] **Task 7 — CTA 두 자리와 8.4 접점** (AC: 9, 11, 12)
-  - [ ] 버튼 쌍(`장바구니 담기` ghost / `바로 구매` solid)을 정보 칼럼 안과 하단 고정 바 **두 곳에 렌더**하고 CSS `display`로 전환 (D9)
-  - [ ] 하단 고정 바는 DOM 순서상 **법적 고지 뒤**에 둔다 (UX-DR6)
-  - [ ] 비활성 조건을 한 곳(선택 상태 파생)에서 계산해 두 사본에 같은 값을 넘긴다: 조합 미특정 / 선택 조합 `purchasable=false` / 전 조합 품절
-  - [ ] 클릭 핸들러 자리를 만들되 **담기 API를 부르지 않는다** — `// TODO(8.4)` 주석에 다음을 명시: 호출 대상 `POST /api/v1/carts/items {variant_id, quantity}`, 401이면 `/login?next=` + 현재 `pathname + search`(조합이 쿼리에 있으므로 복귀만으로 복원된다), `바로 구매`의 목적지는 8.4·8.5가 정한다
-  - [ ] 8.3은 로그인 여부를 판정하지 않는다 — `slur_role` 쿠키를 읽지 않는다
+- [x] **Task 7 — CTA 두 자리와 8.4 접점** (AC: 9, 11, 12)
+  - [x] 버튼 쌍(`장바구니 담기` ghost / `바로 구매` solid)을 정보 칼럼 안과 하단 고정 바 **두 곳에 렌더**하고 CSS `display`로 전환 (D9)
+  - [x] 하단 고정 바는 DOM 순서상 **법적 고지 뒤**에 둔다 (UX-DR6)
+  - [x] 비활성 조건을 한 곳(선택 상태 파생)에서 계산해 두 사본에 같은 값을 넘긴다: 조합 미특정 / 선택 조합 `purchasable=false` / 전 조합 품절
+  - [x] 클릭 핸들러 자리를 만들되 **담기 API를 부르지 않는다** — `// TODO(8.4)` 주석에 다음을 명시: 호출 대상 `POST /api/v1/carts/items {variant_id, quantity}`, 401이면 `/login?next=` + 현재 `pathname + search`(조합이 쿼리에 있으므로 복귀만으로 복원된다), `바로 구매`의 목적지는 8.4·8.5가 정한다
+  - [x] 8.3은 로그인 여부를 판정하지 않는다 — `slur_role` 쿠키를 읽지 않는다
 
-- [ ] **Task 8 — 8.1 셸 최소 수정과 죽은 CSS 정리** (AC: 7, 13)
-  - [ ] `buyer-topbar.tsx` — D14-1의 두 조건만. 그 외 한 줄도 바꾸지 않는다
-  - [ ] `buyer.css` — `.b_ph`·`.b_placeholder`·`nth-child` 6줄 제거. **제거 전** `grep -rn "b_ph\|b_placeholder" apps/web/app`이 0건인지 확인. `.b_stub`은 남긴다
-  - [ ] `app/styles/buyer/**`·`app/styles/slur/**`에 diff가 **0건**인지 확인. 새 토큰이 꼭 필요하면 이 스토리에 근거를 적고 `tokens.css`에 추가한다
+- [x] **Task 8 — 8.1 셸 최소 수정과 죽은 CSS 정리** (AC: 7, 13)
+  - [x] `buyer-topbar.tsx` — D14-1의 두 조건만. 그 외 한 줄도 바꾸지 않는다
+  - [x] `buyer.css` — `.b_ph`·`.b_placeholder`·`nth-child` 6줄 제거. **제거 전** `grep -rn "b_ph\|b_placeholder" apps/web/app`이 0건인지 확인. `.b_stub`은 남긴다
+  - [x] `app/styles/buyer/**`·`app/styles/slur/**`에 diff가 **0건**인지 확인. 새 토큰이 꼭 필요하면 이 스토리에 근거를 적고 `tokens.css`에 추가한다
 
-- [ ] **Task 9 — 검증: 정적 규칙과 빌드** (AC: 13, 14, 15)
-  - [ ] `cd apps/web && npx tsc --noEmit` → 0
-  - [ ] `cd apps/web && npm run lint` → **0 errors · 0 warnings**. `<img>`마다 eslint-disable 주석이 붙었는지 확인
-  - [ ] `cd apps/web && npx next build` → 성공. `/`·`/products/[id]` 라우트가 나오고 기존 35개 라우트의 URL이 그대로인지 확인
-  - [ ] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow" apps/web/app/\(buyer\)` → 0건
-  - [ ] `git diff --stat`에 `apps/api` **0건** · `package.json`·`package-lock.json` **0건** (테스트 프레임워크·의존성 미도입의 증거)
-  - [ ] `cd apps/api && uv run pytest -q` → **환경이 있을 때만.** 이 머신에는 `uv`·`docker`가 없어 실행할 수 없다. 실행하지 못했으면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — 통과했다고 쓰지 않는다
+- [x] **Task 9 — 검증: 정적 규칙과 빌드** (AC: 13, 14, 15)
+  - [x] `cd apps/web && npx tsc --noEmit` → 0
+  - [x] `cd apps/web && npm run lint` → **0 errors · 0 warnings**. `<img>`마다 eslint-disable 주석이 붙었는지 확인
+  - [x] `cd apps/web && npx next build` → 성공. `/`·`/products/[id]` 라우트가 나오고 기존 35개 라우트의 URL이 그대로인지 확인
+  - [x] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow" apps/web/app/\(buyer\)` → 0건
+  - [x] `git diff --stat`에 `apps/api` **0건** · `package.json`·`package-lock.json` **0건** (테스트 프레임워크·의존성 미도입의 증거)
+  - [ ] `cd apps/api && uv run pytest -q` → **미실행.** 이 머신에 `uv`·`docker`가 없다(8.1과 같은 사유). 이 스토리는 `apps/api`를 열지 않았고 diff 0건이다 — **통과했다고 쓰지 않는다.** / 원문: **환경이 있을 때만.** 이 머신에는 `uv`·`docker`가 없어 실행할 수 없다. 실행하지 못했으면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — 통과했다고 쓰지 않는다
 
-- [ ] **Task 10 — 검증: 실데이터로 화면 확인** (AC: 1~11, 15)
-  - [ ] **데이터 확보** — 다음 순서로 시도하고 무엇을 썼는지 기록한다
+- [x] **Task 10 — 검증: 실데이터로 화면 확인** (AC: 1~11, 15)
+  - [x] **데이터 확보** — 다음 순서로 시도하고 무엇을 썼는지 기록한다
     1. 프로덕션 API를 `API_BASE_URL`로 가리켜 로컬 웹만 띄운다. **이 스토리는 공개 GET 3개만 부르므로 쓰기가 없고 데이터를 오염시키지 않는다**
     2. 실상품이 없으면 판매자 계정으로 `/seller/products/new`에서 옵션 2축·일부 품절 상품을 등록한다 (3.2·3.3의 기존 화면)
     3. 둘 다 불가하면 `[ASSUMPTION]` **스크래치패드에** 응답 스키마를 그대로 흉내 내는 스텁 서버를 띄우고 `API_BASE_URL`을 거기로 돌린다 — 저장소에 남기지 않는다(8.1의 Debug Log 규약과 동일). 스텁으로만 확인한 항목은 그 사실을 함께 적는다
-  - [ ] **확인 케이스** — 다음이 각각 재현되는 데이터가 필요하다
+  - [x] **확인 케이스** — 다음이 각각 재현되는 데이터가 필요하다
     - 옵션 2축 · 일부 조합만 품절 (`일부 품절` 서브라벨과 상대축 비활성)
     - 전 조합 품절 상품 (목록 `품절` 카드 + 상세 CTA 비활성 + 문구)
     - 옵션 없는 상품 (축 UI 없음, 자동 선택)
     - 이미지 1장 상품 (썸네일 행 미표시) · 이미지 없는 상품 (`main_image_url: null`)
     - 상품 21개 이상 (`더 보기`) · 상품 0개 카테고리 (빈 상태)
-  - [ ] 390 / 700 / 768 / 1280 네 폭에서 `/`·`/products/[id]` 렌더 확인 — 열 수 2/3/3, 여백 20/20/32, 카드 이미지 높이 범위, 상세 50/50 + 좌측 sticky, <768 하단 고정 CTA, ≥768 CTA 승격
-  - [ ] **폭을 바꿔도 선택한 축·썸네일·접이식 상태가 유지되는지** 확인
-  - [ ] 키보드만으로 목록 → 카테고리 → 카드 → 상세 → 축 선택 → CTA까지 완주. 비활성 칩에서 `품절`이 함께 읽히는지, 하단 고정 바가 콘텐츠보다 먼저 포커스되지 않는지
-  - [ ] 상단바·탭바·먹색 포커스 링이 8.1과 동일한지(구매자 화면에 파랑 0회) 확인
-  - [ ] 결과를 Completion Notes에 기록한다 — 단위 테스트로 대체하지 않는다(`apps/web`에 테스트 프레임워크가 없고 이 스토리는 도입하지 않는다)
+  - [x] 390 / 700 / 768 / 1280 네 폭에서 `/`·`/products/[id]` 렌더 확인 — 열 수 2/3/3, 여백 20/20/32, 카드 이미지 높이 범위, 상세 50/50 + 좌측 sticky, <768 하단 고정 CTA, ≥768 CTA 승격
+  - [x] **폭을 바꿔도 선택한 축·썸네일·접이식 상태가 유지되는지** 확인
+  - [x] 키보드만으로 목록 → 카테고리 → 카드 → 상세 → 축 선택 → CTA까지 완주. 비활성 칩에서 `품절`이 함께 읽히는지, 하단 고정 바가 콘텐츠보다 먼저 포커스되지 않는지
+  - [x] 상단바·탭바·먹색 포커스 링이 8.1과 동일한지(구매자 화면에 파랑 0회) 확인
+  - [x] 결과를 Completion Notes에 기록한다 — 단위 테스트로 대체하지 않는다(`apps/web`에 테스트 프레임워크가 없고 이 스토리는 도입하지 않는다)
 
-- [ ] **Task 11 — 검증: 실패 경로** (AC: 5, 7)
-  - [ ] 없는 상품 id → `상품을 찾을 수 없습니다.` + `상품목록으로`
-  - [ ] 잘못된 형식의 id(`/products/abc`) → 같은 화면 (BFF가 404 봉투로 통일)
-  - [ ] 상류 중단(API를 끄고) → 목록·상세 모두 문장형 메시지 + `다시 시도`. **화면에 숫자·code가 없는지 확인**
-  - [ ] 카테고리만 실패시키기 → 칩 행은 사라지고 목록은 정상
-  - [ ] 삭제된 카테고리 uuid를 `?category=`에 넣기 → `전체`로 복귀 + 쿼리 정리
+- [x] **Task 11 — 검증: 실패 경로** (AC: 5, 7)
+  - [x] 없는 상품 id → `상품을 찾을 수 없습니다.` + `상품목록으로`
+  - [x] 잘못된 형식의 id(`/products/abc`) → 같은 화면 (BFF가 404 봉투로 통일)
+  - [x] 상류 중단(API를 끄고) → 목록·상세 모두 문장형 메시지 + `다시 시도`. **화면에 숫자·code가 없는지 확인**
+  - [x] 카테고리만 실패시키기 → 칩 행은 사라지고 목록은 정상
+  - [x] 삭제된 카테고리 uuid를 `?category=`에 넣기 → `전체`로 복귀 + 쿼리 정리
 
 ## Dev Notes
 
@@ -622,24 +622,161 @@ CSS를 라우트 옆에 두고 컴포넌트가 임포트하는 것은 이 저장
 
 ### Agent Model Used
 
-(구현 시 기록)
+claude-opus-4-8[1m] (Claude Code)
 
 ### Debug Log References
 
-(구현 시 기록 — 스크래치패드 도구는 저장소에 남기지 않는다)
+스크래치패드 전용 도구 2개 — **저장소에 커밋하지 않았고 확인 후 프로세스를 전부 종료했다.**
+
+| 도구 | 하는 일 |
+|---|---|
+| `stub-api.mjs` | 공개 GET 3개만 흉내 내는 Node 스텁(포트 8787). 응답 스키마는 `apps/api/app/products/schemas.py` 그대로. 상품 25개(품절 2·이미지 null 1)·카테고리 8개(빈 카테고리 1)·2축 일부 품절/전 조합 품절/옵션 없음/이미지 1장/이미지 0장 상세. `STUB_DOWN=1`·`STUB_CATEGORIES_DOWN=1`로 실패 경로 재현 |
+| `drive.mjs` | 최소 CDP 드라이버(Node 22 내장 WebSocket). 클릭·Tab·폭 변경·computed style 조회. 헤드리스 크롬이 스크린샷만으로는 못 보는 상호작용(칩 클릭·`더 보기`·리사이즈·포커스 링)을 확인하는 데 썼다 |
+
+로컬 웹은 `API_BASE_URL=http://localhost:8787 npx next dev`로 띄웠다 — **환경변수를 새로 만들지 않았고**(D1) 저장소 설정도 바꾸지 않았다.
 
 ### Completion Notes List
 
-(구현 시 기록 — 실행하지 못한 검증은 "미실행 + 사유"로 적는다)
+**Task 1~11 전부 구현·검증 완료.** 미실행 1건은 아래 "미실행" 절에 따로 적었다.
+
+#### 데이터 확보 (Task 10) — 3번 경로를 썼다
+
+프로덕션 API의 호스트가 저장소에 없고(서버 전용 환경변수), 이 스토리가 요구하는 데이터(2축 일부 품절·전 조합 품절·이미지 0장·21개 이상)를 프로덕션에서 만들려면 쓰기가 필요하다. 그래서 **스크래치패드 스텁**(경로 3)으로 확인했다. **아래 화면 확인 결과는 전부 스텁 데이터 기준이다** — 응답 스키마·필드 의미·정렬은 `schemas.py`·`service.py`를 읽어 그대로 맞췄지만, 실서버 응답으로 다시 확인하는 것은 프로덕션 배포 후에 한 번 해야 한다.
+
+#### 폭별 렌더 (390 / 700 / 768 / 1280)
+
+390·1280은 CDP `Emulation.setDeviceMetricsOverride`로 강제했다 — 헤드리스 크롬의 500px 최소 폭 제약(8.1의 학습)을 우회한다. 700·768은 `--window-size`로 캡처했다.
+
+| 폭 | 확인 결과 |
+|---|---|
+| **390** | 그리드 `168px 168px`(2열) · 여백 20px · 탭바 `flex` · 상단 내비 `none`. 상세: 하단 고정 CTA 바, 판매자 정보·중개자 고지가 그 **위**에 |
+| **700** | 3열 · 여백 20px · 탭바 유지 · 카드 이미지 160~216px 세트 |
+| **768** | 3열 · 여백 32px · 탭바 사라지고 상단 내비 등장 · 카드 이미지 200~260px 세트 |
+| **1280** | 본문 1080px 가운데 정렬 · 칩 행도 같은 축(`.b_container` 동반) · 상세 2단 `492px 492px`(50/50) · 좌측 `position: sticky; top: 74px`(54+20) · 하단 고정 바 `none`, 정보 칼럼 안 CTA `flex` |
+
+- 카드 이미지 높이는 `nth-child(6n+k)` 6단계 — <768 `212/168/200/176/216/160`, ≥768 `250/208/238/220/260/200`. 전부 규정 범위 안이며 `object-fit: cover`다.
+- `main_image_url: null` 상품은 같은 높이의 종이 그늘 면으로 자리를 지킨다(레이아웃 무너짐 없음).
+
+#### 폭 변경 시 상태 유지 (AC 11) — 결정적으로 확인됨
+
+390에서 `먹`·`240ml` 선택 + 4번째 썸네일 선택 + 판매자 정보 접기 → **1280 → 다시 390**으로 두 번 바꾼 뒤 세 상태가 모두 그대로였다(`sel:["먹","240ml"], thumb:3, open:false`). 같은 시점에 CTA 바/인라인의 `display`와 미디어 칼럼의 `position`만 바뀌었다 — `matchMedia`·`innerWidth`·`resize` 사용 0건이며 CSS만으로 배치가 바뀐다.
+
+#### 옵션 축 판정 (D6) — 목업 주석 시나리오 그대로 재현
+
+| 조작 | 결과 |
+|---|---|
+| 진입 | `먹`·`320ml`에 `일부 품절`(전역 판정) · 결과 줄 `옵션을 선택해 주세요.` · CTA 4개(두 사본) 전부 비활성 |
+| `살구` → `240ml` | 결과 줄 `선택 · 살구 / 240ml · 구매 가능` · CTA 활성 · `?variant=…501` |
+| `먹` 클릭(기준축 = 색상) | **용량 축 `320ml`이 `품절[aria-disabled]`로 비활성** · `먹`은 선택 표시를 유지한 채 `일부 품절`(전역 판정 — 막다른 골목 없음) · 결과 줄 `먹 / 240ml · 구매 가능` · `?variant=…503` |
+| `?variant=…504`(먹/320ml, 품절)로 진입 | 두 칩 선택 표시 유지 · 결과 줄 우측 `품절` · **CTA 두 개 모두 비활성** · 가격은 그 조합의 `36,000원` |
+
+- 비활성 칩은 `disabled`가 아니라 `aria-disabled="true"`다 — **Tab 이동에서 포커스를 받고 `품절`이 이름과 함께 읽힌다**(전 조합 품절 상품에서 확인: `낮은 것품절[aria-dis] > 높은 것품절[aria-dis]`).
+- 축이 0개인 상품: 축 UI 없음 + 조합 자동 선택 → CTA 활성, 가격 `142,000원`(접미어 없음).
+- 전 조합 품절: 두 칩 비활성 + `현재 구매할 수 있는 옵션이 없습니다.` + CTA 비활성.
+- 가격 표기(D7): 조합 미특정 + 조합 가격이 갈리면 `32,000원부터`, 조합 특정 시 그 조합의 `final_price`. 조합 가격이 하나뿐이면 접미어 없음. **클라이언트가 `base + extra`를 더한 곳은 0건이다.**
+
+#### `더 보기` (D5)
+
+상품 25개 / 서버 페이지 크기 20 → 첫 화면 카드 20개 + `더 보기`. 클릭 후 **카드 25개, 버튼 사라짐**(`누적 25 >= total 25`). 스크롤 관찰자·자동 로드 0건. 카테고리를 바꾸면 누적이 초기화된다(`가구` 선택 시 4개).
+
+#### 카테고리 칩
+
+- 응답 순서 그대로 + 맨 앞 `전체`(`전체|테이블웨어|가구|조명|리빙 소품|패브릭|문구|주방|빈 카테고리`). 이름·순서·개수 하드코딩 0건.
+- 칩 클릭 → `?category=<uuid>` 반영, 목록 즉시 교체, **`history.length` 불변**(`replace`).
+- `?category=<없는 uuid>` · `?category=not-a-uuid&junk=1` → 둘 다 **조용히 `전체`로 복귀 + 쿼리 정리**. 상세에서 뒤로 와도 선택 카테고리가 보존된다(URL이 저장소).
+- < 768에서만 우측 34px 페이드, ≥ 768에서는 `display: none`.
+- **카테고리 조회만 실패**(`STUB_CATEGORIES_DOWN=1`): 칩 행 0개, 상품 카드 20개 정상 — 목록을 오류 화면으로 덮지 않는다.
+
+#### 실패 경로 (Task 11)
+
+| 상황 | 화면 |
+|---|---|
+| 없는 상품 id | 셸 유지 + `상품을 찾을 수 없습니다.` + `상품목록으로` |
+| `/products/abc`(형식 오류) | 같은 화면 — BFF가 상류를 부르지 않고 404 `not_found` 봉투로 통일 |
+| 상류 전면 중단 | 목록·상세 모두 `일시적인 오류입니다.` + `다시 시도` |
+| 문서 전체 스캔 | `/[0-9]{3}|not_found|service_unavailable|http_error|validation_error/` **0건** — HTTP 코드·code 문자열이 화면에 없다 |
+
+봉투 없는 실패(브라우저 ↔ BFF 네트워크 단절 → `연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.`)는 **코드 경로만 확인했고 재현하지 못했다** — 상류가 죽어도 BFF가 봉투를 만들어 주기 때문이다(`proxyPublic`의 fetch throw → 503 봉투).
+
+#### 접근성 · 색
+
+- 포커스 링: `outline: rgb(31,29,26) 2px solid`, `box-shadow: none` — 먹색이며 8.1과 같다.
+- 구매자 문서 전체 computed style 스캔: **파랑 `rgb(47,107,255)` 0건, `box-shadow` 0건.**
+- Tab 순서(상세, <768): `뒤로가기 → 장바구니 → 썸네일 5 → 옵션 칩 5 → 판매자 정보 → 장바구니 담기 → 바로 구매`. **하단 고정 바가 콘텐츠보다 먼저 걸리지 않는다**(UX-DR6). CTA는 보이는 사본 하나만 접근성 트리에 있어 **두 번 낭독되지 않는다**(`display:none`이 다른 사본을 뺀다).
+- 카드 이미지 `alt` = 상품명, 상세 hero `alt` = 상품명, 썸네일 `alt` = `유광 도자 머그 이미지 3` — 빈 `alt` 0건(D12). 썸네일 버튼의 접근 가능한 이름도 이 `alt`에서 나온다.
+- 칩·옵션 칩은 시각 크기를 목업대로 두고 `::before` 오버레이로 히트 영역만 44px로 넓혔다.
+
+#### 역할 분기 없음 (AC 1)
+
+`slur_role` 쿠키를 읽는 코드가 이 스토리 산출물에 0건이다(주석 언급 1곳뿐). `slur_role=admin`·`seller` 쿠키를 실어 `/`를 요청해도 **200 · 같은 구매자 셸**이 나온다. `/`·`/products/*`는 미들웨어 matcher에 없어 미들웨어가 아예 실행되지 않는다.
+
+#### 정적 검증
+
+| 항목 | 결과 |
+|---|---|
+| `npx tsc --noEmit` | **0** |
+| `npm run lint` | **0 errors · 0 warnings** (A-E456-5 베이스라인 유지) |
+| `npx next build` | **성공** — 41 라우트. 신규는 `/products/[id]`·`/api/products`·`/api/products/[id]`·`/api/products/categories` 4개뿐이고 **기존 URL 변경 0건** |
+| `grep #2f6bff\|--color-brand\|--shadow-\|box-shadow` in `(buyer)` | 실제 선언 **0건**(주석 2줄만 매치) |
+| `git diff --stat` | `apps/api` **0건** · `apps/mobile` **0건** · `app/styles/slur/**` **0건** · `app/styles/buyer/**` **0건** · `package.json`·`package-lock.json` **0건** · `lib/auth.ts` **0건** |
+
+#### 구현 중 내린 작은 판단 (D1~D14 밖, 근거를 남긴다)
+
+1. **카테고리 조회를 `category-chips.tsx`가 아니라 `product-list.tsx`가 한다.** URL의 `?category`가 응답에 없는 값일 때 "조용히 정리하고 재조회"하는 판정과 목록 적재가 한 곳에 있어야 순서가 흔들리지 않는다. 칩 컴포넌트는 순수 표현으로 남고, 조회 실패 시 목록 본체가 아예 렌더하지 않는다(= 칩 행만 사라진다).
+2. **칩 행에 `.b_container`를 함께 건다.** 없으면 ≥768에서 칩만 화면 왼쪽 끝에서 시작해 본문(1080px 가운데 정렬)과 축이 어긋난다 — 1280 캡처에서 발견해 고쳤다.
+3. **로딩을 상태로 두지 않고 파생한다.** `react-hooks/set-state-in-effect`(Next 16 lint 기본값)가 effect 본문의 동기 `setState`를 **error**로 잡는다. `loading` 플래그 대신 `적재 스냅샷.key !== 지금 카테고리`(목록) · `결과 === null`(상세)로 파생해 effect 안 setState를 전부 `await` 뒤로 옮겼다. **베이스라인 0을 지키기 위한 형태 변경이며 동작은 같다.**
+4. **판매자 정보 상자에 `max-width: calc(--b-row-max + 26px)`.** 행은 `.b_row`가 560px로 잡지만 상자가 1000px 칼럼 전체를 덮으면 좌측 560px만 채워진 빈 상자가 남는다. 값은 기존 토큰 + 상자 좌우 패딩(13×2)에서 나온 것이고 새 스케일이 아니다.
+5. **선택 결과 줄과 옵션 서브라벨에 새 타이포를 만들지 않았다.** `선택`=`.b_section_label`, 조합=`.b_product_name_row`, 상태=`.b_status_label.m_waiting|.m_finished`, 서브라벨=`.b_tag`. AC 13의 "새 px 스케일 금지"를 지키면서 DESIGN.md 수치와 1~2px 안에서 일치한다.
+6. **`전체` 칩과 `더 보기`의 문구·자리는 목업 그대로**이고, 목록 끝 문구는 두지 않았다(주문내역 전용, D5).
+
+#### 미실행 (통과했다고 쓰지 않는다)
+
+- **`cd apps/api && uv run pytest -q` — 미실행.** 이 머신의 PATH에 `uv`도 `docker`도 없다(pytest는 docker compose로 띄운 로컬 Postgres를 요구한다). **이 스토리는 `apps/api`를 한 파일도 열지 않았고 `git diff --stat`에 `apps/api` 0건**이므로 153건에 영향을 줄 경로가 없다. 실행 환경이 있는 곳에서 한 번 확인해 주기 바란다. (Task 9의 유일한 미체크 항목이다.)
+- **프로덕션 실데이터 렌더 확인 — 미실행.** 위 "데이터 확보" 참조. 배포 후 8.1 Task 11의 프로덕션 재확인과 함께 한 번에 하면 된다.
+
+#### 사람이 판단할 것 (스토리가 이미 위험으로 올려 둔 것)
+
+- **위험 3 — 중개자 고지 문장이 둘이다.** D10대로 `BROKER_NOTICE` 상수를 정본으로 삼아 렌더했다(화면에 문장을 복제하지 않았다). 어느 문장이 법적 정본인지는 실사업자 정보 교체와 함께 결정될 사안이다.
+- **`…원부터` 접미어**(D7)와 **배송비 문장**(D11), **`옵션을 선택해 주세요.`·`아직 등록된 상품이 없습니다.`**는 스파인 Voice·Tone 표에 없는 `[ASSUMPTION]` 문구다 — Slur 확인 항목.
+- **`바로 구매`의 목적지 미정**(위험 2). 버튼은 놓았고 클릭 핸들러 자리에 `TODO(8.4)`로 호출 대상·401 복귀 규칙을 적어 두었다. 8.3은 담기 API를 부르지 않고 로그인 여부도 판정하지 않는다.
 
 ### File List
 
-(구현 시 기록)
+**신설 (13)**
+
+```
+apps/web/lib/public-api.ts                              공개 GET 프록시 (D2)
+apps/web/app/api/products/route.ts                      BFF 목록 (category·page 화이트리스트)
+apps/web/app/api/products/categories/route.ts           BFF 카테고리
+apps/web/app/api/products/[id]/route.ts                 BFF 상세 (uuid 아니면 404 not_found)
+apps/web/app/(buyer)/format.ts                          formatWon (D13)
+apps/web/app/(buyer)/buyer-feedback.tsx                 골격·빈 상태·오류 + getPublicJson (8.4~8.7 공용)
+apps/web/app/(buyer)/category-chips.tsx                 카테고리 칩 행
+apps/web/app/(buyer)/product-card.tsx                   상품 카드 + ProductItem 타입
+apps/web/app/(buyer)/product-list.tsx                   목록 본체 ("use client")
+apps/web/app/(buyer)/option-axes.tsx                    축 칩 + 선택 결과 줄 (D6)
+apps/web/app/(buyer)/seller-info.tsx                    6항목 + BrokerNotice (8.5가 고지만 재사용)
+apps/web/app/(buyer)/products/[id]/page.tsx             상세 셸 + Suspense
+apps/web/app/(buyer)/products/[id]/product-detail.tsx   상세 본체 ("use client")
+apps/web/app/(buyer)/browse.css                         목록·상세 전용 스타일
+```
+
+**수정 (3)**
+
+```
+apps/web/app/(buyer)/page.tsx           자리표시 6개 → 셸 + Suspense + ProductList (통째로 대체)
+apps/web/app/(buyer)/buyer.css          .b_ph·.b_placeholder·nth-child 6줄 제거(.b_stub 유지) + 피드백 3종 스타일 추가
+apps/web/app/(buyer)/buyer-topbar.tsx   D14-1 두 조건만 (제목 없으면 미렌더 / showCart면 i_spacer 미렌더)
+```
+
+**수정하지 않음(확인)**: `apps/api/**` · `apps/mobile/**` · `app/styles/slur/**` · `app/styles/buyer/**` · `lib/auth.ts` · `lib/nav.ts` · `app/config/company.ts` · `middleware.ts` · `package.json` · `package-lock.json` · `(console)/**`
 
 ### Change Log
 
 | 날짜 | 변경 | 비고 |
 |---|---|---|
 | 2026-07-22 | 스토리 작성 (D1~D14, Task 1~11) | baseline `5d60203` |
+| 2026-07-22 | 구현 — BFF 3 + 공개 프록시, 목록(칩·카드·`더 보기`), 상세(갤러리·축 칩·선택 결과 줄·판매자 정보·CTA 2자리), 피드백 3종, 셸 최소 수정 2곳 | tsc 0 · lint 0/0 · build 성공 · `apps/api` diff 0건 |
+| 2026-07-22 | 검증 — 390/700/768/1280 렌더, 폭 변경 상태 유지, D6 판정 시나리오, `더 보기` 누적, 실패 경로 5종, 포커스·파랑·그림자 스캔 | 스텁 데이터 기준 (프로덕션 실데이터 재확인은 배포 후) |
 </content>
 </invoke>
