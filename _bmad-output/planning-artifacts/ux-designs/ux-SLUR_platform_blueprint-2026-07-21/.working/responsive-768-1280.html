@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>SLUR 구매자 웹 — 반응형 배치 검증 (768 · 1280)</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   SLUR 구매자 반응형 웹 · 확정 규칙 렌더 검증
+   DESIGN.md「Layout & Spacing → 반응형」 + EXPERIENCE.md「Responsive & Platform」이 정본.
+   토큰·컴포넌트·문구는 .working/screens-1-browse.html(390px 확정본)에서 그대로 가져왔다.
+
+   적용한 확정 수치
+     좌우 여백 32px (≥768) · 본문 최대 폭 1080px 가운데 정렬 (≥768)
+     상품목록 3열 · 카드 간격 36 / 20px
+     상단 내비(탭바 제거) · 하단 고정 CTA 없음 → 우측 sticky 요약 칼럼 안 버튼
+     2단 = 좌 62% / 우 34% (사이 4%)
+     상품상세의 판매자 신원정보·중개자 고지는 2단 아래 전체 폭
+
+   붉은 점선은 전부 검증용 주석이며 제품 UI가 아니다.
+   ───────────────────────────────────────────────────────────── */
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  background:#d5d3cf;color:#1f1d1a;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-0.01em;
+}
+
+/* ── 페이지 헤더 ───────────────────────────────── */
+.page-head{max-width:1344px;margin:0 auto;padding:34px 32px 26px}
+.page-head .tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.16em;
+  color:#8c4a32;background:#f1e5df;padding:5px 10px;border-radius:3px;margin-bottom:12px;
+}
+.page-head h1{font-size:30px;font-weight:800;letter-spacing:-0.02em;color:#1f1d1a}
+.page-head h1 span{color:#7d7a75;font-weight:600}
+.page-head p{margin-top:12px;max-width:860px;font-size:13.5px;line-height:1.85;color:#3c3934}
+.page-head .trade{
+  margin-top:10px;max-width:860px;font-size:12.5px;line-height:1.8;color:#5f5b55;
+  border-left:2px solid #8c4a32;padding-left:12px;
+}
+
+/* ── 목업 배치 ────────────────────────────────── */
+.stage{max-width:1344px;margin:0 auto;padding:0 32px 70px}
+.mock{margin-bottom:56px}
+.mock-label{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;padding-left:2px}
+.mock-label b{font-size:15px;font-weight:800;letter-spacing:-0.01em;color:#2c2a26}
+.mock-label i{font-style:normal;font-size:10.5px;letter-spacing:.14em;font-weight:700;color:#8e8b85}
+.mock-label u{
+  text-decoration:none;font-size:10px;letter-spacing:.06em;font-weight:700;color:#8c4a32;
+  background:#f1e5df;padding:2px 6px;border-radius:2px;
+}
+
+/* 폭 눈금 */
+.ruler{position:relative;height:19px;margin-bottom:7px;border-bottom:1px solid #a8a49c}
+.ruler .t{position:absolute;bottom:0;width:1px;height:6px;background:#a8a49c}
+.ruler .t.big{height:11px;background:#7d7a75}
+.ruler .n{
+  position:absolute;bottom:12px;font-size:9px;font-weight:700;letter-spacing:.05em;color:#6f6b64;
+  transform:translateX(-50%);white-space:nowrap;
+}
+.ruler .n.l0{transform:none}
+.ruler .n.lend{transform:translateX(-100%)}
+
+.view{position:relative;background:#faf8f4;overflow:hidden}
+.view.w768{width:768px}
+.view.w1280{width:1280px}
+
+/* 1080 본문 경계 표시 */
+.bound{position:absolute;left:100px;right:100px;top:0;bottom:0;z-index:8;pointer-events:none;
+  border-left:1px dashed rgba(140,74,50,.5);border-right:1px dashed rgba(140,74,50,.5)}
+.bound .bl{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:8px;
+  font-size:8.5px;letter-spacing:.1em;font-weight:700;color:rgba(140,74,50,.95);
+  background:#faf8f4;padding:2px 7px;border-radius:2px;border:1px solid rgba(140,74,50,.28);
+}
+/* 첫 화면 한계선 */
+.foldline{position:absolute;left:0;right:0;z-index:7;pointer-events:none}
+.foldline .ln{border-top:1px dashed rgba(140,74,50,.34)}
+.foldline .lb{
+  position:absolute;left:10px;top:3px;font-size:8.5px;letter-spacing:.08em;
+  color:rgba(140,74,50,.9);font-weight:700;background:#faf8f4;padding:2px 5px;border-radius:2px;
+}
+/* 검증 주석 */
+.note{
+  border:1px dashed rgba(140,74,50,.42);border-radius:3px;padding:9px 11px;
+  font-size:10.5px;line-height:1.65;color:#8e8b85;letter-spacing:-0.005em;
+}
+.note b{color:#8c4a32;font-weight:700}
+.mock > .note{margin-top:9px;background:#efedea;border-color:rgba(140,74,50,.35)}
+
+/* ── 공통 부품 (390px 확정본에서 승계) ────────────── */
+.logo{font-size:19px;font-weight:800;letter-spacing:.22em;color:#1f1d1a}
+.brandline{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#1f1d1a}
+.brandline.sm{font-size:11px;letter-spacing:.15em;font-weight:800}
+.dtl .brandline{font-size:11.5px;letter-spacing:.17em}
+.won{font-variant-numeric:tabular-nums}
+.hair{height:1px;background:#e3ded4}
+.badge{
+  position:absolute;right:-21px;top:-8px;min-width:17px;height:17px;border-radius:9px;
+  background:#8c4a32;color:#faf8f4;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0;
+  border:1.5px solid #faf8f4;
+}
+
+/* ── 상단 내비 (≥768 · 하단 탭바를 대신한다) ───────── */
+.topnav{height:54px;border-bottom:1px solid #e3ded4;background:#faf8f4}
+.topnav .in{height:100%;display:flex;align-items:center;justify-content:space-between}
+.nav{display:flex;align-items:center;gap:26px}
+.nav .cart{margin-right:8px}   /* 배지 자리 */
+.nav .it{
+  font-size:13px;font-weight:600;color:#6a645c;letter-spacing:-0.01em;
+  position:relative;line-height:1;
+}
+.nav .it.on{color:#1f1d1a;font-weight:800}  /* 현재 위치 = 먹색 + 800. 밑줄·알약·색 채움 없음 */
+
+/* 컨테이너 */
+.pad768{padding:0 32px}
+.pad1280{max-width:1080px;margin:0 auto;padding:0 32px}
+
+/* ── 카테고리 칩 ───────────────────────────────── */
+.chips{display:flex;gap:7px;border-bottom:1px solid #e3ded4;background:#faf8f4}
+.chips .in{display:flex;gap:7px;padding:12px 0 13px}
+.chipwrap{border-bottom:1px solid #e3ded4;background:#faf8f4}
+.chip{
+  flex:0 0 auto;font-size:12.5px;font-weight:600;color:#5f5b55;
+  border:1px solid #ded8cc;border-radius:999px;padding:6px 13px;background:transparent;
+}
+.chip.on{background:#1f1d1a;border-color:#1f1d1a;color:#faf8f4;font-weight:700}
+
+/* ── 큐레이션 ─────────────────────────────────── */
+.curation{padding:26px 0 20px}
+.curation .eyebrow{font-size:10px;font-weight:800;letter-spacing:.2em;color:#8c4a32;margin-bottom:9px}
+.curation h2{font-size:25px;font-weight:800;letter-spacing:-0.03em;line-height:1.32;color:#1f1d1a}
+.curation .meta{margin-top:11px;font-size:11.5px;color:#9c968c;letter-spacing:.02em}
+
+/* ── 상품 격자 (≥768 : 3열 · 36/20px) ─────────────── */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:36px 20px;padding:6px 0 30px;align-items:start}
+.card .ph{width:100%}
+.card .cap{padding-top:11px}
+.card .name{font-size:13px;font-weight:400;color:#605b53;margin-top:7px;letter-spacing:-0.01em;line-height:1.4}
+.card .price{font-size:13px;font-weight:800;color:#1f1d1a;margin-top:7px}
+.card.out .ph{filter:saturate(.45) brightness(1.04)}
+.card.out .name,.card.out .price{color:#9c968c}
+.card.out .brandline{color:#7d7a75}
+.card.out .price{font-weight:600;text-decoration:line-through;text-decoration-color:#c4bfb6}
+.soldtag{
+  position:absolute;left:9px;top:9px;z-index:2;
+  background:#1f1d1a;color:#faf8f4;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  padding:3px 7px;border-radius:2px;
+}
+
+/* ── 2단 (≥768) ──────────────────────────────── */
+.two{display:flex;gap:4%;align-items:flex-start}
+.two .main{width:62%}
+.two .side{width:34%;position:sticky;top:20px}
+.stickytag{
+  display:inline-block;font-size:8.5px;font-weight:800;letter-spacing:.14em;
+  color:rgba(140,74,50,.95);border:1px dashed rgba(140,74,50,.42);border-radius:2px;
+  padding:2px 6px;margin-bottom:9px;
+}
+.holegap{
+  border:1px dashed rgba(140,74,50,.30);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;letter-spacing:.06em;color:rgba(140,74,50,.75);font-weight:700;text-align:center;
+  line-height:1.6;padding:0 10px;
+}
+
+/* ── 사진 자리 ─────────────────────────────────── */
+.ph{position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;border-radius:4px}
+.ph .shape{position:relative;width:160px;height:160px;transform-origin:center bottom}
+.ph-mug   {background:linear-gradient(160deg,#f0e1d2 0%,#e9d7c6 55%,#dcc6b1 100%)}
+.ph-stool {background:linear-gradient(160deg,#e8e0d2 0%,#ded4c4 60%,#cfc3af 100%)}
+.ph-cand  {background:linear-gradient(160deg,#eae5da 0%,#e0dacd 60%,#d1c9b8 100%)}
+.ph-cloth {background:linear-gradient(160deg,#eeece3 0%,#e5e3d9 60%,#d6d4c7 100%)}
+.ph-lamp  {background:linear-gradient(160deg,#f0e8d9 0%,#e7ddcb 60%,#d8ccb4 100%)}
+.ph-weight{background:linear-gradient(160deg,#e8e5df 0%,#dedad3 60%,#cdc9c1 100%)}
+
+/* 1. 유광 도자 머그 */
+.mug-body{position:absolute;left:38px;bottom:14px;width:74px;height:82px;
+  background:linear-gradient(100deg,#dcb69a 0%,#c99a79 46%,#b9865f 78%,#c9a082 100%);
+  border-radius:6px 6px 22px 22px}
+.mug-rim{position:absolute;left:36px;bottom:88px;width:78px;height:16px;border-radius:50%;
+  background:linear-gradient(180deg,#e6c8ae,#c99a79)}
+.mug-rim-in{position:absolute;left:44px;bottom:91px;width:62px;height:9px;border-radius:50%;
+  background:#a8764f}
+.mug-handle{position:absolute;left:104px;bottom:36px;width:34px;height:40px;
+  border:10px solid #c1906e;border-radius:0 20px 20px 0;border-left:none;background:transparent}
+.mug-gloss{position:absolute;left:50px;bottom:30px;width:8px;height:52px;border-radius:5px;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0))}
+.mug-shadow{position:absolute;left:30px;bottom:8px;width:92px;height:12px;border-radius:50%;
+  background:rgba(120,90,66,.16)}
+.mug-top{position:absolute;left:36px;bottom:36px;width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(145deg,#e2bda2,#c2916f)}
+.mug-top-in{position:absolute;left:48px;bottom:48px;width:64px;height:64px;border-radius:50%;
+  background:linear-gradient(145deg,#b0805c,#96684a)}
+
+/* 2. 소반 스툴 */
+.st-top{position:absolute;left:16px;bottom:74px;width:128px;height:22px;border-radius:50%;
+  background:linear-gradient(180deg,#c2a686,#a98c6c)}
+.st-edge{position:absolute;left:16px;bottom:66px;width:128px;height:20px;border-radius:0 0 60px 60px;
+  background:linear-gradient(180deg,#a98c6c,#8e7355)}
+.st-leg{position:absolute;bottom:14px;width:9px;height:58px;border-radius:2px;
+  background:linear-gradient(180deg,#a98c6c,#846c50)}
+.st-l1{left:32px;transform:rotate(9deg)}
+.st-l2{left:76px}
+.st-l3{left:120px;transform:rotate(-9deg)}
+.st-bar{position:absolute;left:34px;bottom:34px;width:92px;height:6px;border-radius:3px;background:#9a7f5f}
+.st-shadow{position:absolute;left:22px;bottom:8px;width:116px;height:11px;border-radius:50%;
+  background:rgba(110,90,66,.15)}
+
+/* 3. 황동 촛대 세트 */
+.cd{position:absolute;bottom:14px}
+.cd-stem{position:absolute;bottom:0;left:50%;margin-left:-4px;width:8px;border-radius:2px;
+  background:linear-gradient(90deg,#8f6f34,#cfae67 40%,#a98543 100%)}
+.cd-base{position:absolute;bottom:0;left:50%;width:44px;height:11px;margin-left:-22px;border-radius:50%;
+  background:linear-gradient(180deg,#cfae67,#987629)}
+.cd-cup{position:absolute;left:50%;width:26px;height:9px;margin-left:-13px;border-radius:50%;
+  background:linear-gradient(180deg,#dcbe7c,#a3801f)}
+.cd-knob{position:absolute;left:50%;width:18px;height:10px;margin-left:-9px;border-radius:50%;
+  background:linear-gradient(180deg,#d2b06a,#9d7c33)}
+.cd-candle{position:absolute;left:50%;width:9px;margin-left:-4.5px;border-radius:2px 2px 0 0;
+  background:linear-gradient(90deg,#efe7d6,#fbf7ee 50%,#e2d8c2)}
+.cd-a{left:34px;height:108px;width:60px}
+.cd-b{left:92px;height:80px;width:60px}
+.cd-shadow{position:absolute;left:26px;bottom:9px;width:112px;height:11px;border-radius:50%;
+  background:rgba(120,100,50,.14)}
+
+/* 4. 리넨 테이블보 */
+.cl-body{position:absolute;left:22px;bottom:20px;width:116px;height:98px;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.30) 0 2px,rgba(0,0,0,0) 2px 6px),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.045) 0 2px,rgba(0,0,0,0) 2px 6px),
+    linear-gradient(170deg,#dcdccd 0%,#cbcbb9 60%,#bcbca8 100%);
+  border-radius:2px 2px 10px 10px;
+  clip-path:polygon(0 0,100% 0,100% 86%,88% 100%,72% 88%,56% 100%,40% 88%,24% 100%,10% 88%,0 98%);
+}
+.cl-fold{position:absolute;left:70px;bottom:24px;width:1.5px;height:92px;background:rgba(0,0,0,.10)}
+.cl-fold2{position:absolute;left:44px;bottom:26px;width:1.5px;height:88px;background:rgba(0,0,0,.06)}
+.cl-corner{position:absolute;left:92px;bottom:34px;width:40px;height:52px;transform:rotate(-9deg);
+  background:linear-gradient(150deg,rgba(240,240,230,.92),rgba(203,203,185,.92));
+  border-radius:2px 2px 14px 3px;
+  clip-path:polygon(0 0,100% 0,100% 88%,52% 100%,0 90%)}
+.cl-shadow{position:absolute;left:24px;bottom:14px;width:112px;height:10px;border-radius:50%;
+  background:rgba(110,110,90,.13)}
+
+/* 5. 라탄 조명 */
+.lp-cord{position:absolute;left:79px;top:0;width:2px;height:34px;background:#8b7855}
+.lp-shade{position:absolute;left:26px;top:32px;width:108px;height:74px;
+  background:
+    repeating-linear-gradient(90deg,rgba(90,66,30,.20) 0 1.5px,rgba(0,0,0,0) 1.5px 8px),
+    repeating-linear-gradient(0deg,rgba(90,66,30,.16) 0 1.5px,rgba(0,0,0,0) 1.5px 9px),
+    linear-gradient(180deg,#d8b87e 0%,#c39f61 60%,#ab8646 100%);
+  border-radius:56px 56px 8px 8px / 46px 46px 8px 8px;
+}
+.lp-rim{position:absolute;left:24px;top:100px;width:112px;height:14px;border-radius:50%;
+  background:linear-gradient(180deg,#b5904f,#a07c3c)}
+.lp-glow{position:absolute;left:44px;top:106px;width:72px;height:44px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,229,168,.85),rgba(255,229,168,0) 70%)}
+
+/* 6. 종이 문진 */
+.pw-paper{position:absolute;left:26px;bottom:22px;width:106px;height:74px;transform:rotate(-4deg);
+  background:linear-gradient(160deg,#fbf9f4,#eae6dd);border-radius:1px}
+.pw-paper2{position:absolute;left:32px;bottom:28px;width:106px;height:70px;transform:rotate(3deg);
+  background:linear-gradient(160deg,#fdfbf7,#efece4);border-radius:1px}
+.pw-line{position:absolute;left:44px;width:74px;height:1.5px;background:rgba(31,29,26,.13)}
+.pw-stone{position:absolute;left:52px;bottom:52px;width:58px;height:30px;
+  border-radius:30px 30px 5px 5px;
+  background:linear-gradient(165deg,#a6a29a 0%,#8b877f 55%,#726e67 100%)}
+.pw-stone-hl{position:absolute;left:62px;bottom:70px;width:20px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.35)}
+.pw-shadow{position:absolute;left:44px;bottom:48px;width:76px;height:9px;border-radius:50%;
+  background:rgba(60,56,50,.16)}
+
+/* ── 상품상세 ─────────────────────────────────── */
+.hero{width:100%;border-radius:4px}
+.thumbs{display:flex;gap:7px;padding:12px 0 0}
+.thumbs .ph{width:52px;height:52px;flex:0 0 52px;border:1px solid #e3ded4}
+.thumbs .ph.sel{border:1.6px solid #8c4a32}
+.thumbs .shape{transform:scale(.30)}
+.dtl .brandline{margin-bottom:9px}
+.dtl h2{font-size:23px;font-weight:800;letter-spacing:-0.03em;line-height:1.3}
+.dtl .price{font-size:20px;font-weight:800;color:#8c4a32;margin-top:12px;letter-spacing:-0.02em}
+.dtl .desc{margin-top:16px;font-size:13px;line-height:1.85;color:#4d4942;letter-spacing:-0.01em}
+
+.sec-h{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#8e8b85;margin-bottom:13px}
+.axis{margin-bottom:16px}
+.axis .lb{font-size:11.5px;color:#6a645c;margin-bottom:8px;font-weight:600}
+.opts{display:flex;gap:7px;flex-wrap:wrap}
+.opt{
+  font-size:12.5px;font-weight:600;color:#3c3934;border:1px solid #ded8cc;background:#fff;
+  padding:8px 15px;border-radius:4px;letter-spacing:-0.01em;
+}
+.opt.on{background:#1f1d1a;border-color:#1f1d1a;color:#faf8f4;font-weight:700}
+.opt .sub{font-size:10px;color:#8c4a32;font-weight:700;margin-left:5px;letter-spacing:.02em}
+.opt.on .sub{color:#e2b7a4}
+.opt.dis{background:#f2eee6;border-color:#e8e3da;color:#ada79d;
+  text-decoration:line-through;text-decoration-color:#c9c3b9}
+.opt.dis .sub{color:#faf8f4;background:#9c968c;padding:2px 5px;border-radius:2px;
+  text-decoration:none;display:inline-block;font-size:9.5px;letter-spacing:.06em}
+.opt.xs{font-size:11px;padding:6px 10px;flex:0 0 auto}
+
+.pick{
+  display:flex;align-items:center;gap:9px;margin-top:2px;
+  border:1px solid #e3ded4;border-left:2px solid #8c4a32;border-radius:3px;
+  background:#f7f4ee;padding:11px 13px;
+}
+.pick .k{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#8e8b85}
+.pick .v{font-size:13px;font-weight:700;color:#1f1d1a;letter-spacing:-0.01em}
+.pick .s{margin-left:auto;font-size:11px;font-weight:700;color:#8c4a32;letter-spacing:.01em}
+
+.ann{margin-top:12px;border:1px dashed rgba(140,74,50,.42);border-radius:3px;padding:10px 11px}
+.ann .ah{font-size:8.5px;font-weight:800;letter-spacing:.14em;color:rgba(140,74,50,.9);margin-bottom:8px}
+.ann .ab{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ann .at{font-size:10.5px;line-height:1.6;color:#8e8b85;letter-spacing:-0.005em}
+.ann .at b{color:#6a645c;font-weight:700}
+
+.rowline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0}
+.rowline .k{font-size:11.5px;color:#8e8b85;flex:0 0 112px;letter-spacing:.01em;white-space:nowrap}
+.rowline .v{font-size:12.5px;color:#2c2a26;text-align:right;flex:1;letter-spacing:-0.01em}
+.ship .v{font-weight:600}
+.ship .v em{font-style:normal;color:#8e8b85;font-weight:400;font-size:11.5px}
+
+.seller-h{display:flex;align-items:center;justify-content:space-between}
+.caret{width:11px;height:11px;position:relative}
+.caret::before{content:"";position:absolute;left:0;top:2px;width:8px;height:8px;
+  border-left:1.5px solid #6a645c;border-top:1.5px solid #6a645c;transform:rotate(45deg)}
+.seller-body{margin-top:13px;border:1px solid #e3ded4;border-radius:4px;padding:14px 13px;background:#f7f4ee}
+.notice{margin-top:14px;font-size:11px;line-height:1.75;color:#7d7a75;
+  border-top:1px solid #e3ded4;padding-top:13px;letter-spacing:-0.005em}
+
+/* ── 장바구니 ─────────────────────────────────── */
+.group{padding:20px 0 18px}
+.group + .group{border-top:1px solid #e3ded4}
+.group-h{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.chk{width:16px;height:16px;border-radius:3px;border:1.4px solid #1f1d1a;background:#1f1d1a;
+  position:relative;flex:0 0 16px}
+.chk::after{content:"";position:absolute;left:4.5px;top:2px;width:5px;height:9px;
+  border-right:1.8px solid #faf8f4;border-bottom:1.8px solid #faf8f4;transform:rotate(42deg)}
+.chk.off{background:#fff;border-color:#d5cfc4}
+.chk.off::after{display:none}
+.group-h .ship{margin-left:auto;font-size:11px;color:#8e8b85;letter-spacing:.01em}
+.group-h .ship b{color:#3c3934;font-weight:700}
+
+.citem{display:flex;gap:12px}
+.citem .ph{width:74px;height:74px;flex:0 0 74px;border:1px solid #e6e1d8}
+.citem .shape{transform:scale(.42)}
+.citem .info{flex:1;min-width:0}
+.citem .nm{font-size:13px;font-weight:600;color:#2c2a26;margin-top:5px;letter-spacing:-0.01em}
+.citem .op{font-size:11.5px;color:#8e8b85;margin-top:4px}
+.citem .pr{font-size:14px;font-weight:800;margin-top:9px;letter-spacing:-0.02em}
+.qtyrow{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+.qty{display:flex;align-items:center;border:1px solid #ded8cc;border-radius:4px;overflow:hidden}
+.qty b{width:28px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:#3c3934}
+.qty i{width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:13px;color:#6a645c;background:#f7f4ee}
+.del{font-size:11.5px;color:#8e8b85;text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:#cdc7bc}
+
+.group.dead .ph{filter:grayscale(.85) brightness(1.06)}
+.group.dead .nm,.group.dead .op,.group.dead .pr{color:#a8a29a}
+.group.dead .brandline{color:#a8a29a}
+.group.dead .qty{opacity:.5}
+.group.dead .pr{text-decoration:line-through;text-decoration-color:#cdc7bc;font-weight:600}
+.deadtag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.09em;
+  color:#8c4a32;background:#f1e5df;padding:3px 7px;border-radius:2px}
+.deadnote{margin-top:12px;font-size:11.5px;color:#8c4a32;background:#faf1ec;border-radius:3px;
+  padding:9px 11px;line-height:1.55}
+
+.sum-r{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;color:#6a645c}
+.sum-r .v{color:#2c2a26;font-weight:600}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:12px;padding-top:14px;border-top:1px solid #e3ded4}
+.sum-total .k{font-size:13px;font-weight:700;color:#1f1d1a}
+.sum-total .v{font-size:21px;font-weight:800;color:#8c4a32;letter-spacing:-0.02em}
+/* 우측 요약 칼럼 상자 — 8px 종이 접기 띠 대신 hairline 상자(DESIGN「테두리 상자」) */
+.sidebox{border:1px solid #e3ded4;border-radius:4px;padding:17px 17px 18px;background:#faf8f4}
+
+.btnrow{display:flex;gap:9px;margin-top:16px}
+.btn{flex:1;text-align:center;padding:15px 0;border-radius:4px;font-size:14px;font-weight:700;
+  letter-spacing:-0.01em}
+.btn-ghost{border:1.4px solid #1f1d1a;color:#1f1d1a;background:transparent}
+.btn-solid{background:#1f1d1a;color:#faf8f4}
+.spacer{height:26px}
+.vspace{height:34px}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="tag">반응형 배치 검증 · 768 · 1280</div>
+  <h1>확정 반응형 규칙을 그대로 그린 것 <span>— 폰 프레임 없음 · 브라우저 폭 그대로</span></h1>
+  <p>
+    <b>DESIGN.md「Layout &amp; Spacing → 반응형」</b>과 <b>EXPERIENCE.md「Responsive &amp; Platform」</b>의 확정 수치만 적용했다.
+    좌우 여백 32px · 상품목록 3열 · 카드 간격 36/20px · 본문 최대 폭 1080px 가운데 정렬 ·
+    상단 내비(하단 탭바 제거) · 하단 고정 CTA 없이 우측 sticky 요약 칼럼 안 버튼 · 2단은 좌 62% / 우 34%.
+    토큰·컴포넌트·문구는 390px 확정본 <b>screens-1-browse.html</b>에서 그대로 가져왔고 새로 발명한 것은 상단 내비 하나다.
+  </p>
+  <p class="trade">
+    붉은 점선은 전부 검증용 주석이며 제품 UI가 아니다. 1280 목업의 좌우 점선은 <b>본문 1080px 경계</b>,
+    가로 점선은 <b>첫 화면 한계선</b>, 사각 점선 상자는 <b>규칙이 정하지 않아 판단이 필요한 지점</b>이다.
+  </p>
+</div>
+
+<div class="stage">
+
+<!-- ══════════════════ A-1. 768px · 상품목록 ══════════════════ -->
+<div class="mock">
+  <div class="mock-label"><b>768px · 상품목록</b><i>TABLET / LIST</i><u>3열 · 상단 내비 · 탭바 없음</u></div>
+  <div class="ruler" style="width:768px">
+    <div class="t big" style="left:0"></div><div class="n l0" style="left:0">0</div>
+    <div class="t" style="left:100px"></div>
+    <div class="t big" style="left:200px"></div><div class="n" style="left:200px">200</div>
+    <div class="t" style="left:300px"></div>
+    <div class="t big" style="left:400px"></div><div class="n" style="left:400px">400</div>
+    <div class="t" style="left:500px"></div>
+    <div class="t big" style="left:600px"></div><div class="n" style="left:600px">600</div>
+    <div class="t" style="left:700px"></div>
+    <div class="t big" style="left:767px"></div><div class="n lend" style="left:768px">768px</div>
+  </div>
+
+  <div class="view w768">
+    <div class="foldline" style="top:1024px"><div class="ln"></div><div class="lb">첫 화면 끝 · 1024px (태블릿 세로)</div></div>
+
+    <!-- 상단 내비 : 하단 탭바를 대신한다 -->
+    <div class="topnav"><div class="in pad768">
+      <div class="logo">SLUR</div>
+      <div class="nav">
+        <div class="it on">홈</div>
+        <div class="it cart" style="position:relative">장바구니<span class="badge">3</span></div>
+        <div class="it">주문내역</div>
+        <div class="it">내 정보</div>
+      </div>
+    </div></div>
+
+    <div class="chipwrap"><div class="pad768"><div class="chips" style="border:none;padding:12px 0 13px">
+      <div class="chip on">전체</div>
+      <div class="chip">오브제</div>
+      <div class="chip">테이블웨어</div>
+      <div class="chip">조명</div>
+      <div class="chip">문구</div>
+      <div class="chip">패브릭</div>
+    </div></div></div>
+
+    <div class="pad768">
+      <div class="curation">
+        <div class="eyebrow">큐레이션</div>
+        <h2>이번 주,<br>손이 자주 가는 것들</h2>
+        <div class="meta">여섯 곳의 브랜드 · 6개 품목</div>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <div class="ph ph-mug" style="height:279px">
+            <div class="shape" style="transform:scale(1.317)">
+              <div class="mug-shadow"></div><div class="mug-handle"></div>
+              <div class="mug-body"></div><div class="mug-rim"></div>
+              <div class="mug-rim-in"></div><div class="mug-gloss"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">토림도예</div>
+            <div class="name">유광 도자 머그</div>
+            <div class="price won">32,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-stool" style="height:221px">
+            <div class="shape" style="transform:scale(1.212) translateY(6px)">
+              <div class="st-shadow"></div>
+              <div class="st-leg st-l1"></div><div class="st-leg st-l3"></div>
+              <div class="st-leg st-l2"></div><div class="st-bar"></div>
+              <div class="st-edge"></div><div class="st-top"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">무연</div>
+            <div class="name">소반 스툴</div>
+            <div class="price won">168,000원</div>
+          </div>
+        </div>
+
+        <div class="card out">
+          <div class="ph ph-cand" style="height:219px">
+            <div class="soldtag">품절</div>
+            <div class="shape" style="transform:scale(1.212) translateY(6px)">
+              <div class="cd-shadow"></div>
+              <div class="cd cd-a">
+                <div class="cd-stem" style="height:72px"></div><div class="cd-base"></div>
+                <div class="cd-knob" style="bottom:34px"></div>
+                <div class="cd-cup" style="bottom:68px"></div>
+                <div class="cd-candle" style="bottom:74px;height:34px"></div>
+              </div>
+              <div class="cd cd-b">
+                <div class="cd-stem" style="height:50px"></div><div class="cd-base"></div>
+                <div class="cd-knob" style="bottom:24px"></div>
+                <div class="cd-cup" style="bottom:46px"></div>
+                <div class="cd-candle" style="bottom:52px;height:28px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">곳간</div>
+            <div class="name">황동 촛대 세트</div>
+            <div class="price won">89,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-cloth" style="height:285px">
+            <div class="shape" style="transform:scale(1.396)">
+              <div class="cl-shadow"></div><div class="cl-body"></div>
+              <div class="cl-fold"></div><div class="cl-fold2"></div><div class="cl-corner"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">온실</div>
+            <div class="name">리넨 테이블보</div>
+            <div class="price won">54,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-lamp" style="height:271px">
+            <div class="shape" style="transform:scale(1.370) translateY(-4px)">
+              <div class="lp-cord"></div><div class="lp-shade"></div>
+              <div class="lp-rim"></div><div class="lp-glow"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">빛물</div>
+            <div class="name">라탄 조명</div>
+            <div class="price won">132,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-weight" style="height:211px">
+            <div class="shape" style="transform:scale(1.185) translateY(8px)">
+              <div class="pw-paper"></div><div class="pw-paper2"></div>
+              <div class="pw-line" style="bottom:44px"></div>
+              <div class="pw-line" style="bottom:36px;width:56px"></div>
+              <div class="pw-shadow"></div>
+              <div class="pw-stone"></div><div class="pw-stone-hl"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">활자공간</div>
+            <div class="name">종이 문진</div>
+            <div class="price won">24,000원</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    카드 폭 <b>221px</b> = (768 − 여백 64 − 가로 간격 20×2) ÷ 3. 이미지 높이는 390px 확정본의 비율(160~216px @ 168px 폭)을
+    <b>그대로 확대</b>한 값이다 — 확정 규칙은 「카드가 커진다」까지만 말하고 <b>이미지 높이를 어떻게 다룰지 정하지 않았다</b>.
+    비율을 유지하면 리듬은 살지만 카드가 커지고, 높이를 고정하면 세로 사진이 가로 사진이 되며 리듬이 죽는다.
+  </div>
+</div>
+
+<!-- ══════════════════ A-2. 768px · 상품상세 ══════════════════ -->
+<div class="mock">
+  <div class="mock-label"><b>768px · 상품상세</b><i>TABLET / DETAIL</i><u>2단 62 / 34 · 고지는 아래 전체 폭</u></div>
+  <div class="ruler" style="width:768px">
+    <div class="t big" style="left:0"></div><div class="n l0" style="left:0">0</div>
+    <div class="t" style="left:100px"></div>
+    <div class="t big" style="left:200px"></div><div class="n" style="left:200px">200</div>
+    <div class="t" style="left:300px"></div>
+    <div class="t big" style="left:400px"></div><div class="n" style="left:400px">400</div>
+    <div class="t" style="left:500px"></div>
+    <div class="t big" style="left:600px"></div><div class="n" style="left:600px">600</div>
+    <div class="t" style="left:700px"></div>
+    <div class="t big" style="left:767px"></div><div class="n lend" style="left:768px">768px</div>
+  </div>
+
+  <div class="view w768">
+    <div class="topnav"><div class="in pad768">
+      <div class="logo">SLUR</div>
+      <div class="nav">
+        <div class="it">홈</div>
+        <div class="it cart" style="position:relative">장바구니<span class="badge">3</span></div>
+        <div class="it">주문내역</div>
+        <div class="it">내 정보</div>
+      </div>
+    </div></div>
+
+    <div class="pad768">
+      <div class="vspace"></div>
+
+      <div class="two">
+        <!-- 좌 62% : 이미지 갤러리 -->
+        <div class="main">
+          <div class="ph ph-mug hero" style="height:369px">
+            <div class="shape" style="transform:scale(1.588) translateY(-6px)">
+              <div class="mug-shadow"></div><div class="mug-handle"></div>
+              <div class="mug-body"></div><div class="mug-rim"></div>
+              <div class="mug-rim-in"></div><div class="mug-gloss"></div>
+            </div>
+          </div>
+          <div class="thumbs">
+            <div class="ph ph-mug sel"><div class="shape">
+              <div class="mug-handle"></div><div class="mug-body"></div>
+              <div class="mug-rim"></div><div class="mug-gloss"></div></div></div>
+            <div class="ph ph-mug"><div class="shape" style="transform:scale(.30) scaleX(-1)">
+              <div class="mug-handle"></div><div class="mug-body"></div><div class="mug-rim"></div></div></div>
+            <div class="ph ph-mug"><div class="shape"><div class="mug-top"></div><div class="mug-top-in"></div></div></div>
+            <div class="ph ph-mug" style="background:linear-gradient(160deg,#e8e5de,#d5d1c8)">
+              <div class="shape">
+                <div class="mug-handle" style="border-color:#6f6a63"></div>
+                <div class="mug-body" style="background:linear-gradient(100deg,#7b766e,#4a4640 60%,#5d5952)"></div>
+                <div class="mug-rim" style="background:linear-gradient(180deg,#8b857d,#5a5650)"></div></div></div>
+            <div class="ph ph-mug" style="background:linear-gradient(160deg,#f3efe8,#e0dcd3)">
+              <div class="shape">
+                <div class="mug-handle" style="border-color:#dcd6ca"></div>
+                <div class="mug-body" style="background:linear-gradient(100deg,#f2eee5,#dcd6ca 60%,#cbc4b6)"></div>
+                <div class="mug-rim" style="background:linear-gradient(180deg,#f7f4ed,#d9d3c6)"></div></div></div>
+          </div>
+
+          <!-- 좌 칼럼이 우 칼럼보다 먼저 끝나 생기는 빈자리 -->
+          <div class="holegap" style="height:196px;margin-top:16px">
+            좌 칼럼(이미지)이 우 칼럼보다 먼저 끝난다 · 약 200px 빈자리<br>
+            확정 규칙은 이 자리에 무엇을 둘지 정하지 않았다
+          </div>
+        </div>
+
+        <!-- 우 34% : sticky 정보 칼럼 -->
+        <div class="side">
+          <div class="stickytag">STICKY · 스크롤을 따라간다</div>
+          <div class="dtl">
+            <div class="brandline">토림도예</div>
+            <h2>유광 도자 머그</h2>
+            <div class="price won">32,000원</div>
+            <div class="desc">유약이 고르게 앉도록 두 번 굽습니다. 손잡이는 검지 두 마디가 편히 들어가는 폭입니다.</div>
+          </div>
+
+          <div class="spacer"></div>
+          <div class="hair"></div>
+
+          <div style="padding:22px 0">
+            <div class="sec-h">옵션 선택</div>
+            <div class="axis">
+              <div class="lb">색상</div>
+              <div class="opts">
+                <div class="opt on">살구</div>
+                <div class="opt">먹<span class="sub">일부 품절</span></div>
+                <div class="opt">백자</div>
+              </div>
+            </div>
+            <div class="axis">
+              <div class="lb">용량</div>
+              <div class="opts">
+                <div class="opt on">240ml</div>
+                <div class="opt">320ml</div>
+              </div>
+            </div>
+            <div class="pick">
+              <div class="k">선택</div>
+              <div class="v">살구 / 240ml</div>
+              <div class="s">구매 가능</div>
+            </div>
+            <div class="ann">
+              <div class="ah">정지 화면 주석 — 품절 조합 표기 규칙</div>
+              <div class="ab">
+                <span class="opt xs dis">320ml<span class="sub">품절</span></span>
+                <span class="at"><b>먹</b>을 고르면 용량 축의 <b>320ml</b>이 이렇게 비활성됩니다. 품절 조합을 숨기지 않는 규칙(FR-10)입니다.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hair"></div>
+          <div style="padding:16px 0 4px">
+            <div class="rowline ship">
+              <div class="k">배송비</div>
+              <div class="v won">3,000원 <em>· 제주·도서산간 +3,000원</em></div>
+            </div>
+          </div>
+
+          <!-- 하단 고정 CTA 대신 우측 칼럼 안 버튼 -->
+          <div class="btnrow">
+            <div class="btn btn-ghost">장바구니 담기</div>
+            <div class="btn btn-solid">바로 구매</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2단 아래 전체 폭 : 판매자 신원정보 + 중개자 고지 -->
+      <div class="vspace"></div>
+      <div class="hair"></div>
+      <div style="padding:22px 0 34px">
+        <div class="seller-h">
+          <div class="sec-h" style="margin-bottom:0">판매자 정보</div>
+          <div class="caret"></div>
+        </div>
+        <div class="seller-body">
+          <div class="rowline"><div class="k">상호</div><div class="v">토림도예</div></div>
+          <div class="rowline"><div class="k">대표자</div><div class="v">김현수</div></div>
+          <div class="rowline"><div class="k">사업자등록번호</div><div class="v won">123-45-67890</div></div>
+          <div class="rowline"><div class="k">통신판매업 신고번호</div><div class="v won">2026-서울마포-0451</div></div>
+          <div class="rowline"><div class="k">사업장 주소</div><div class="v">서울특별시 마포구 성미산로 23길 11</div></div>
+          <div class="rowline"><div class="k">연락처</div><div class="v won">02-336-0451</div></div>
+        </div>
+        <div class="notice">
+          SLUR는 통신판매중개자이며 통신판매의 당사자가 아닙니다. 상품 정보와 거래에 관한 책임은 판매자에게 있습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    좌 436px / 우 239px (704px의 62% · 34%). <b>하단 고정 CTA는 없고</b> `장바구니 담기`·`바로 구매`가 우측 칼럼 안으로 올라왔다.
+    <b>판매자 신원정보·중개자 고지는 우측이 아니라 2단 아래 704px 전체 폭</b>에 있다 — 확정 규칙 그대로.
+    다만 6항목 정의 목록이 704px로 늘어나면서 라벨(좌)과 값(우)이 500px 넘게 벌어진다.
+  </div>
+</div>
+
+<!-- ══════════════════ B-1. 1280px · 상품목록 ══════════════════ -->
+<div class="mock">
+  <div class="mock-label"><b>1280px · 상품목록</b><i>DESKTOP / LIST</i><u>본문 1080px 가운데 · 3열</u></div>
+  <div class="ruler" style="width:1280px">
+    <div class="t big" style="left:0"></div><div class="n l0" style="left:0">0</div>
+    <div class="t" style="left:100px"></div>
+    <div class="t big" style="left:200px"></div><div class="n" style="left:200px">200</div>
+    <div class="t" style="left:300px"></div>
+    <div class="t big" style="left:400px"></div><div class="n" style="left:400px">400</div>
+    <div class="t" style="left:500px"></div>
+    <div class="t big" style="left:600px"></div><div class="n" style="left:600px">600</div>
+    <div class="t" style="left:700px"></div>
+    <div class="t big" style="left:800px"></div><div class="n" style="left:800px">800</div>
+    <div class="t" style="left:900px"></div>
+    <div class="t big" style="left:1000px"></div><div class="n" style="left:1000px">1000</div>
+    <div class="t" style="left:1100px"></div>
+    <div class="t big" style="left:1200px"></div><div class="n" style="left:1200px">1200</div>
+    <div class="t big" style="left:1279px"></div><div class="n lend" style="left:1280px">1280px</div>
+  </div>
+
+  <div class="view w1280">
+    <div class="bound"><div class="bl">본문 1080px · 가운데 정렬 (좌우 100px 여백)</div></div>
+    <div class="foldline" style="top:800px"><div class="ln"></div><div class="lb">첫 화면 끝 · 800px (노트북 브라우저)</div></div>
+
+    <div class="topnav"><div class="in pad1280">
+      <div class="logo">SLUR</div>
+      <div class="nav">
+        <div class="it on">홈</div>
+        <div class="it cart" style="position:relative">장바구니<span class="badge">3</span></div>
+        <div class="it">주문내역</div>
+        <div class="it">내 정보</div>
+      </div>
+    </div></div>
+
+    <div class="chipwrap"><div class="pad1280"><div class="chips" style="border:none;padding:12px 0 13px">
+      <div class="chip on">전체</div>
+      <div class="chip">오브제</div>
+      <div class="chip">테이블웨어</div>
+      <div class="chip">조명</div>
+      <div class="chip">문구</div>
+      <div class="chip">패브릭</div>
+    </div></div></div>
+
+    <div class="pad1280">
+      <div class="curation">
+        <div class="eyebrow">큐레이션</div>
+        <h2>이번 주,<br>손이 자주 가는 것들</h2>
+        <div class="meta">여섯 곳의 브랜드 · 6개 품목</div>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <div class="ph ph-mug" style="height:411px">
+            <div class="shape" style="transform:scale(1.936)">
+              <div class="mug-shadow"></div><div class="mug-handle"></div>
+              <div class="mug-body"></div><div class="mug-rim"></div>
+              <div class="mug-rim-in"></div><div class="mug-gloss"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">토림도예</div>
+            <div class="name">유광 도자 머그</div>
+            <div class="price won">32,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-stool" style="height:325px">
+            <div class="shape" style="transform:scale(1.781) translateY(6px)">
+              <div class="st-shadow"></div>
+              <div class="st-leg st-l1"></div><div class="st-leg st-l3"></div>
+              <div class="st-leg st-l2"></div><div class="st-bar"></div>
+              <div class="st-edge"></div><div class="st-top"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">무연</div>
+            <div class="name">소반 스툴</div>
+            <div class="price won">168,000원</div>
+          </div>
+        </div>
+
+        <div class="card out">
+          <div class="ph ph-cand" style="height:321px">
+            <div class="soldtag">품절</div>
+            <div class="shape" style="transform:scale(1.781) translateY(6px)">
+              <div class="cd-shadow"></div>
+              <div class="cd cd-a">
+                <div class="cd-stem" style="height:72px"></div><div class="cd-base"></div>
+                <div class="cd-knob" style="bottom:34px"></div>
+                <div class="cd-cup" style="bottom:68px"></div>
+                <div class="cd-candle" style="bottom:74px;height:34px"></div>
+              </div>
+              <div class="cd cd-b">
+                <div class="cd-stem" style="height:50px"></div><div class="cd-base"></div>
+                <div class="cd-knob" style="bottom:24px"></div>
+                <div class="cd-cup" style="bottom:46px"></div>
+                <div class="cd-candle" style="bottom:52px;height:28px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">곳간</div>
+            <div class="name">황동 촛대 세트</div>
+            <div class="price won">89,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-cloth" style="height:418px">
+            <div class="shape" style="transform:scale(2.052)">
+              <div class="cl-shadow"></div><div class="cl-body"></div>
+              <div class="cl-fold"></div><div class="cl-fold2"></div><div class="cl-corner"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">온실</div>
+            <div class="name">리넨 테이블보</div>
+            <div class="price won">54,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-lamp" style="height:399px">
+            <div class="shape" style="transform:scale(2.013) translateY(-4px)">
+              <div class="lp-cord"></div><div class="lp-shade"></div>
+              <div class="lp-rim"></div><div class="lp-glow"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">빛물</div>
+            <div class="name">라탄 조명</div>
+            <div class="price won">132,000원</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ph ph-weight" style="height:310px">
+            <div class="shape" style="transform:scale(1.742) translateY(8px)">
+              <div class="pw-paper"></div><div class="pw-paper2"></div>
+              <div class="pw-line" style="bottom:44px"></div>
+              <div class="pw-line" style="bottom:36px;width:56px"></div>
+              <div class="pw-shadow"></div>
+              <div class="pw-stone"></div><div class="pw-stone-hl"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">활자공간</div>
+            <div class="name">종이 문진</div>
+            <div class="price won">24,000원</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    카드 폭 <b>325px</b> = (1080 − 여백 64 − 가로 간격 20×2) ÷ 3. 768과 같은 비율 규칙을 그대로 밀면 머그 이미지가 <b>411px</b>,
+    테이블보가 <b>418px</b>가 된다. 첫 화면(800px)에 <b>한 줄 3품목의 사진 절반</b>까지만 들어온다 —
+    390px 확정본이 첫 화면에 2.5품목을 보여주던 것보다 밀도가 낮다. B를 고른 이유가 「스크롤 한 번에 여섯 품목」이었다.
+  </div>
+</div>
+
+<!-- ══════════════════ B-2. 1280px · 장바구니 ══════════════════ -->
+<div class="mock">
+  <div class="mock-label"><b>1280px · 장바구니</b><i>DESKTOP / CART</i><u>2단 62 / 34 · 우측 sticky 요약</u></div>
+  <div class="ruler" style="width:1280px">
+    <div class="t big" style="left:0"></div><div class="n l0" style="left:0">0</div>
+    <div class="t" style="left:100px"></div>
+    <div class="t big" style="left:200px"></div><div class="n" style="left:200px">200</div>
+    <div class="t" style="left:300px"></div>
+    <div class="t big" style="left:400px"></div><div class="n" style="left:400px">400</div>
+    <div class="t" style="left:500px"></div>
+    <div class="t big" style="left:600px"></div><div class="n" style="left:600px">600</div>
+    <div class="t" style="left:700px"></div>
+    <div class="t big" style="left:800px"></div><div class="n" style="left:800px">800</div>
+    <div class="t" style="left:900px"></div>
+    <div class="t big" style="left:1000px"></div><div class="n" style="left:1000px">1000</div>
+    <div class="t" style="left:1100px"></div>
+    <div class="t big" style="left:1200px"></div><div class="n" style="left:1200px">1200</div>
+    <div class="t big" style="left:1279px"></div><div class="n lend" style="left:1280px">1280px</div>
+  </div>
+
+  <div class="view w1280">
+    <div class="bound"><div class="bl">본문 1080px · 가운데 정렬 (좌우 100px 여백)</div></div>
+
+    <div class="topnav"><div class="in pad1280">
+      <div class="logo">SLUR</div>
+      <div class="nav">
+        <div class="it">홈</div>
+        <div class="it on cart" style="position:relative">장바구니<span class="badge">3</span></div>
+        <div class="it">주문내역</div>
+        <div class="it">내 정보</div>
+      </div>
+    </div></div>
+
+    <div class="pad1280">
+      <div class="vspace"></div>
+      <div class="two">
+        <!-- 좌 62% : 판매자 묶음 -->
+        <div class="main">
+          <div class="group" style="padding-top:0">
+            <div class="group-h">
+              <div class="chk"></div>
+              <div class="brandline">토림도예</div>
+              <div class="ship">배송비 <b class="won">3,000원</b></div>
+            </div>
+            <div class="citem">
+              <div class="ph ph-mug">
+                <div class="shape">
+                  <div class="mug-handle"></div><div class="mug-body"></div>
+                  <div class="mug-rim"></div><div class="mug-gloss"></div>
+                </div>
+              </div>
+              <div class="info">
+                <div class="nm">유광 도자 머그</div>
+                <div class="op">살구 / 240ml</div>
+                <div class="pr won">64,000원</div>
+                <div class="qtyrow">
+                  <div class="qty"><i>−</i><b>2</b><i>+</i></div>
+                  <div class="del">삭제</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="group dead">
+            <div class="group-h">
+              <div class="chk off"></div>
+              <div class="brandline">곳간</div>
+              <div class="ship"><span class="deadtag">구매 불가 · 품절</span></div>
+            </div>
+            <div class="citem">
+              <div class="ph ph-cand">
+                <div class="shape">
+                  <div class="cd cd-a">
+                    <div class="cd-stem" style="height:72px"></div><div class="cd-base"></div>
+                    <div class="cd-knob" style="bottom:34px"></div>
+                    <div class="cd-cup" style="bottom:68px"></div>
+                    <div class="cd-candle" style="bottom:74px;height:34px"></div>
+                  </div>
+                  <div class="cd cd-b">
+                    <div class="cd-stem" style="height:50px"></div><div class="cd-base"></div>
+                    <div class="cd-knob" style="bottom:24px"></div>
+                    <div class="cd-cup" style="bottom:46px"></div>
+                    <div class="cd-candle" style="bottom:52px;height:28px"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="info">
+                <div class="nm">황동 촛대 세트</div>
+                <div class="op">—</div>
+                <div class="pr won">89,000원</div>
+                <div class="qtyrow">
+                  <div class="qty"><i>−</i><b>1</b><i>+</i></div>
+                  <div class="del">삭제</div>
+                </div>
+              </div>
+            </div>
+            <div class="deadnote">담은 뒤 품절된 상품입니다. 주문에서 제외됩니다.</div>
+          </div>
+
+          <div class="group">
+            <div class="group-h">
+              <div class="chk"></div>
+              <div class="brandline">온실</div>
+              <div class="ship"><b>무료배송</b></div>
+            </div>
+            <div class="citem">
+              <div class="ph ph-cloth">
+                <div class="shape">
+                  <div class="cl-body"></div><div class="cl-fold"></div><div class="cl-corner"></div>
+                </div>
+              </div>
+              <div class="info">
+                <div class="nm">리넨 테이블보</div>
+                <div class="op">—</div>
+                <div class="pr won">54,000원</div>
+                <div class="qtyrow">
+                  <div class="qty"><i>−</i><b>1</b><i>+</i></div>
+                  <div class="del">삭제</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우 34% : sticky 금액 요약 -->
+        <div class="side">
+          <div class="stickytag">STICKY · 스크롤을 따라간다</div>
+          <div class="sidebox">
+            <div class="sum-r"><span>상품 금액</span><span class="v won">118,000원</span></div>
+            <div class="sum-r"><span>배송비</span><span class="v won">3,000원</span></div>
+            <div class="sum-total">
+              <div class="k">결제 예정 금액</div>
+              <div class="v won">121,000원</div>
+            </div>
+            <div class="btnrow">
+              <div class="btn btn-solid">주문하기 (2건)</div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:10px">
+            요약 상자를 어떻게 감쌀지는 확정 규칙에 없다. 모바일에서는 <b>8px 종이 접기 띠</b>가 위 콘텐츠와 갈랐는데,
+            옆으로 오면 가를 것이 없어 <b>hairline 상자</b>로 바꿔 그렸다.
+          </div>
+        </div>
+      </div>
+      <div class="vspace"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    좌 630px / 우 345px. 곳간 묶음은 회색조 + <b>구매 불가 · 품절</b> + 취소선 + 체크 해제로 그대로 죽어 있고,
+    우측 합계는 89,000원을 뺀 <b>121,000원</b>이다. 다만 좌 칼럼이 630px로 넓어지면서
+    수량 스테퍼와 <b>삭제</b>가 500px 넘게 벌어지고(`justify-content:space-between`), 74px 썸네일이 행 안에서 작아 보인다.
+  </div>
+</div>
+
+</div>
+</body>
+</html>
