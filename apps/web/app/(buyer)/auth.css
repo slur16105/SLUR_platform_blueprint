@@ -1,0 +1,62 @@
+/* ─────────────────────────────────────────────
+   AUTH — 로그인·회원가입 두 화면의 고유 조각 (D6)
+   프리미티브(버튼·입력·체크박스·구분선)는 buyer.css가 갖는다.
+   여기 남는 것은 두 화면의 폭·리듬과 이 화면들에만 있는 부품뿐이다.
+   두 라우트가 함께 쓰므로 그룹 루트에 평평하게 둔다.
+   값은 --b-* 토큰 · 타이포는 type.css 역할 클래스. hex 리터럴 0건.
+   ───────────────────────────────────────────── */
+
+/* 폼 지면 — 640px 한 단(.b_container.m_read)이 폭을 정하고 여기서 리듬만 준다 */
+.b_auth { padding-block: 26px 44px; }
+.b_authform { display: block; }
+/* 마지막 필드는 버튼과의 간격을 폼이 직접 정한다 */
+.b_authform .b_field.m_last { margin-bottom: 14px; }
+.b_btn.m_gap { margin-top: 20px; }
+
+/* 카카오 폼은 로그인 폼의 형제다 — 중첩 금지(HTML 무효) */
+.b_kakaoform { display: block; }
+
+/* `아직 회원이 아니신가요? 회원가입` */
+.b_footlink {
+  margin-top: 12px;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
+  color: var(--b-ink-secondary);
+  text-align: center;
+}
+.b_footlink .i_link {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 13px 4px; /* 44px 히트 영역 (UX-DR7) */
+  font-weight: 700;
+  color: var(--b-accent);
+}
+.b_footlink .i_link span { padding-bottom: 1px; border-bottom: 1px solid var(--b-accent-line); }
+
+/* 필수 동의 2줄 — 체크 라벨은 행 전체를 감싸 44px를 확보한다.
+   `보기`는 라벨 밖에 둔다 — 안에 두면 눌렀을 때 체크가 함께 토글된다. */
+.b_terms { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--b-hairline); }
+.b_term { display: flex; align-items: center; gap: 9px; }
+.b_term .i_check {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.b_term .i_tx { font-size: 12.5px; letter-spacing: -0.01em; color: var(--b-ink-body); }
+.b_term .i_req { font-style: normal; font-weight: 700; color: var(--b-accent); }
+.b_view {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: auto;
+  padding: 0 2px;
+  font-size: 11.5px;
+  color: var(--b-ink-quiet);
+}
+.b_view span { padding-bottom: 1px; border-bottom: 1px solid var(--b-checkbox-border); }
+
+/* 가입 안내 — 경고가 아니라 인쇄된 사실 */
+.b_signup_guide { margin-top: 18px; }

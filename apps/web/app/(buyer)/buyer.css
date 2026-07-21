@@ -189,6 +189,106 @@
   letter-spacing: 0;
 }
 
+/* ─────────────────────────────────────────────
+   폼 프리미티브 (D6) — 버튼·입력·체크박스는 화면 부품이 아니라 시스템 컴포넌트다.
+   8.3~8.6이 옵션 칩·배송지 폼·장바구니 체크박스·CTA로 다시 쓴다.
+   색은 전부 --b-* 토큰이며 hex 리터럴을 새로 만들지 않는다.
+   포커스는 D4의 먹색 outline이 이미 전 인터랙티브 요소를 덮으므로
+   폼 요소에 별도 포커스 스타일을 만들지 않는다 (규칙이 두 벌이 된다).
+   ───────────────────────────────────────────── */
+
+/* ── 버튼 ────────────────────────────────────── */
+.b_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px; /* 터치 타깃 44×44 (UX-DR7) */
+  padding: 15px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--b-rounded);
+  background: none;
+  color: var(--b-ink);
+  text-align: center;
+  cursor: pointer;
+}
+.b_btn.m_full { width: 100%; }
+.b_btn.m_solid { background: var(--b-ink); color: var(--b-paper); }
+.b_btn.m_ghost { border-color: var(--b-field-border); background: var(--b-field-surface); }
+/* 이 지면의 유일한 예외 색 — 카카오 브랜드 규정. 리터럴이 아니라 토큰으로만 쓴다. */
+.b_btn.m_kakao { background: var(--b-kakao); color: var(--b-ink); }
+/* 약한 텍스트 버튼 — 로그아웃 같은 물러난 조작 */
+.b_btn.m_text { padding: 14px 0; border: none; color: var(--b-ink-quiet); }
+.b_btn:disabled {
+  border-color: var(--b-disabled-border);
+  background: var(--b-disabled-surface);
+  color: var(--b-disabled-ink);
+  cursor: default;
+}
+
+/* ── 필드 ────────────────────────────────────── */
+.b_field { margin-bottom: 17px; }
+.b_label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 7px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--b-ink-secondary);
+}
+.b_label .i_opt { font-style: normal; font-size: 10.5px; font-weight: 500; color: var(--b-ink-muted); }
+.b_input {
+  display: block;
+  width: 100%;
+  height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--b-field-border);
+  border-radius: var(--b-rounded);
+  background: var(--b-field-surface);
+  color: var(--b-ink-strong);
+  letter-spacing: -0.01em;
+}
+.b_input::placeholder { color: var(--b-field-placeholder); }
+/* 오류 = 테두리 액센트 + 오류 면. 색 하나에만 의존하지 않고 문장을 함께 낸다 (UX-DR9). */
+.b_input.m_error { border-color: var(--b-accent); background: var(--b-field-error-surface); }
+.b_help { margin-top: 7px; font-size: 11px; color: var(--b-ink-muted); }
+.b_err_msg { margin-top: 9px; font-size: 11.5px; font-weight: 600; line-height: 1.5; color: var(--b-accent); }
+.b_err_msg.m_center { text-align: center; }
+
+/* ── 체크박스 ─────────────────────────────────
+   네이티브 <input type="checkbox">에 시각만 입힌다 —
+   커스텀 div 체크박스는 키보드·스크린리더에서 조용히 깨진다 (UX-DR6). */
+.b_checkbox {
+  position: relative;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border: 1.4px solid var(--b-checkbox-border);
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-field-surface);
+  appearance: none;
+  cursor: pointer;
+}
+.b_checkbox:checked { border-color: var(--b-ink); background: var(--b-ink); }
+.b_checkbox:checked::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 5px;
+  height: 9px;
+  border-right: 1.8px solid var(--b-paper);
+  border-bottom: 1.8px solid var(--b-paper);
+  transform: rotate(42deg);
+}
+
+/* ── `또는` 구분선 ─────────────────────────────── */
+.b_or { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+.b_or .i_line { flex: 1; height: 1px; background: var(--b-hairline); }
+.b_or .i_text { font-size: 11.5px; letter-spacing: .02em; color: var(--b-ink-muted); }
+
 /* ── 자리표시 (8.3·8.4·8.6·8.7이 통째로 대체한다) ──── */
 .b_section { padding-block: var(--b-section-y); }
 .b_section .i_eyebrow { margin-bottom: 9px; }

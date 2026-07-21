@@ -1,4 +1,0 @@
-.page_login { display: flex; flex: 1; align-items: center; justify-content: center; padding: var(--space-24); background: var(--color-surface-sunken); }
-.page_login .p_form { display: flex; width: 100%; max-width: 360px; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
-.page_login .p_logo { font-size: var(--text-3xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); color: var(--color-text-primary); text-align: center; }
-.page_login .p_desc { font-size: var(--text-sm); color: var(--color-text-secondary); text-align: center; }
