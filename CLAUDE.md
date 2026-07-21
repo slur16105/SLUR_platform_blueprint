@@ -47,3 +47,12 @@ cd apps/mobile && flutter analyze && flutter run
 - PRD 화면 목록 밖 기능(리뷰·검색·알림 등)은 임의 추가하지 않는다. 필요해 보이면 근거와 함께 제안만 한다.
 - 기획·문서 작업은 BMad 워크플로우(`.claude/skills/bmad-*`)를 쓰고, 산출물은 `_bmad-output/` 아래에 쌓인다.
 - 소통·문서 언어: 한국어.
+
+## Orca 단일 레인 세션 규칙
+
+- 기본 작업 위치는 `main`이며, 하나의 BMAD 작업만 진행한다. 병렬·실험 작업에만 별도 worktree를 만든다.
+- 새 세션 시작 전 `.orca/SESSION_HANDOFF.md`, `sprint-status.yaml`, 현재 Story/계획 문서를 읽는다. 핸드오프 `state`가 `ready`가 아니면 새 구현을 시작하지 않는다.
+- 작업 시작·조사·구현·검증·결정대기·완료의 각 의미 있는 단계에서 `orca worktree set --worktree active --comment "..."`으로 Orca 모바일 카드 상태를 갱신한다.
+- 세션 종료 전 `.orca/SESSION_HANDOFF.md`에 완료 작업, 실제 테스트 결과 또는 미실행 사유, Git/원격 상태, 다음 BMAD 워크플로우·다음 액션·Dan 결정 필요 사항을 기록한다. 그 뒤 state를 `ready` 또는 `blocked`로 바꾼다.
+- `in-progress` 세션은 정리하거나 다음 세션을 자동 시작하지 않는다. Git 작업 트리가 clean이고 `main`과 `origin/main`이 동기화된 경우에만 세션 정리를 완료한다.
+- `scripts/orca_next_session.py`의 `status`, `cleanup`, `start`가 이 규칙의 표준 실행 경로다.

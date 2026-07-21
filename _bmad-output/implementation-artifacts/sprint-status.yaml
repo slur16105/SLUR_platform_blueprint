@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-20  # 부채 정리·PG 초안 — Slur 견적/실기 대기
+last_updated: 2026-07-21  # 코스 코렉션 승인 — Epic 8(구매자 반응형 웹 전환) 신설
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -92,7 +92,7 @@ development_status:
   5-4-seller-dashboard: done        # 판매자 대시보드
   5-5-admin-order-intervention: done # 관리자 주문 개입
   5-6-admin-lookup: done            # 관리자 조회 (회원·판매자·상품)
-  5-7-admin-settings: done          # 관리자 설정 — 입금 계좌 (2026-07-20 Slur 승인 추가)
+  5-7-admin-settings: done            # 관리자 설정 — 입금 계좌 (2026-07-20 Slur 승인 추가)
   epic-5-retrospective: done
 
   # Epic 6: 법적 고지와 오픈 준비
@@ -100,6 +100,18 @@ development_status:
   6-1-legal-pages-footer: done      # 약관·개인정보처리방침과 푸터
   6-2-seller-info-disclosure: done  # 중개자 지위·판매자 신원정보 노출
   epic-6-retrospective: done
+
+  # Epic 8: 구매자 반응형 웹 전환 (2026-07-21 코스 코렉션 승인 — sprint-change-proposal-2026-07-21.md)
+  # Flutter 구매자 앱 → 모바일 퍼스트 반응형 웹(PWA). 백엔드 API 불변. Epic 1~6 done 기록은 Flutter 시절 사실로 보존.
+  # 선행: bmad-prd(update) → bmad-ux(최초 실행, Slur 톤 선택 게이트) → 스토리 파일 생성 → 구현.
+  epic-8: backlog
+  8-1-web-shell-auth-pwa: backlog   # 웹 셸·구매자 인증·PWA 기반 (FR-1·2, 첫 스토리)
+  8-2-buyer-product-browse-web: backlog  # 상품목록·상세 (FR-8~13·32·34·35)
+  8-3-cart-web: backlog             # 장바구니 (FR-35)
+  8-4-order-checkout-web: backlog   # 주문서·주문완료 (FR-16·23·32)
+  8-5-order-history-cancel-web: backlog  # 주문내역·상세·취소 (FR-22, 4-6)
+  8-6-flutter-archive-remove: backlog    # Flutter 보관·제거 (Q2/A — 마지막)
+  epic-8-retrospective: optional
 
 # Epic 1 회고 (2026-07-16) — Epic 2부터 적용. 스토리 작성·구현 시 이 목록을 먼저 읽는다.
 action_items:
@@ -120,3 +132,6 @@ action_items:
   - { id: A-E456-5, epic: 4-6, status: done, owner: "Claude", action: "웹 lint 베이스라인 정리 — 14 errors·2 warnings → 0 (effect IIFE 래핑·router.replace 전환·Link, 동작 보존 대조 완료)" }
   - { id: A-E456-6, epic: 4-6, status: done, owner: "Claude", action: "deferred 백로그 안전 항목 5건 정리 — 제약명 판정·담기 race 테스트·수량 상한 테스트·RefreshIndicator·window.location (153 통과)" }
   - { id: A-E456-7, epic: 7, status: open, owner: "Claude", action: "Epic 7 PG 초안 작성됨(벤더 중립 설계·스토리 7분해). 견적 후 epics.md 정식 이관 + AD-2 스파인 개정 승인 필요" }
+
+# 코스 코렉션 (2026-07-21) — 구매자 표면 반응형 웹 전환. sprint-change-proposal-2026-07-21.md
+  - { id: CC-1, epic: 8, status: open, owner: "Claude+Slur", action: "구매자 반응형 웹 전환 — bmad-prd(update, PRD·브리프·스파인 갱신) → bmad-ux(최초 실행, 3화면×3안 → Slur 선택) → Epic 8 스토리 파일 → 구현(8.1→8.6). Flutter는 보관 후 제거(8.6). PG(Epic 7)는 별개 트랙, 오픈 게이트 최우선 불변" }
