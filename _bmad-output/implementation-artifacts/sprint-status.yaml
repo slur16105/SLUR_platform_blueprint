@@ -102,15 +102,26 @@ development_status:
   epic-6-retrospective: done
 
   # Epic 8: 구매자 반응형 웹 전환 (2026-07-21 코스 코렉션 승인 — sprint-change-proposal-2026-07-21.md)
-  # Flutter 구매자 앱 → 모바일 퍼스트 반응형 웹(PWA). 백엔드 API 불변. Epic 1~6 done 기록은 Flutter 시절 사실로 보존.
+  # Flutter 구매자 앱 → 모바일 퍼스트 반응형 웹(PWA). 백엔드 API 불변(ERD 변경 0건, 구매자 API 12개 재사용, 테스트 153건 무영향).
+  # Epic 1~6 done 기록은 Flutter 시절 사실로 보존. Epic 8은 Epic 7(PG)보다 선행한다 (PG는 클라이언트 표면에 종속).
   # 선행: bmad-prd(update) → bmad-ux(최초 실행, Slur 톤 선택 게이트) → 스토리 파일 생성 → 구현.
+  #
+  # [2026-07-21 교체] 아래 8스토리는 이전 6항목(8-1-web-shell-auth-pwa ~ 8-6-flutter-archive-remove)을 대체한다.
+  # 이유: 이전 8-1이 웹 셸 + 구매자 인증 + PWA 셋을 한 스토리에 묶고 있었다.
+  #   (1) 인증은 역할 쿠키를 admin|seller|none → buyer 포함으로 바꾸는 유일한 판매자·관리자 회귀 지점이라
+  #       실기 회귀 확인 Task를 갖는 독립 스토리여야 한다 (제안서 §3.4).
+  #   (2) PWA(manifest·service worker)는 화면 구현이 끝난 뒤에 얹는 마감 작업이라 첫 스토리에 둘 이유가 없다 —
+  #       내 정보(/me, FR-31·33)와 함께 8.7로 내렸다.
+  # 정본 정의: epics.md "Epic 8: 구매자 반응형 웹 전환 (PWA)" 절.
   epic-8: backlog
-  8-1-web-shell-auth-pwa: backlog   # 웹 셸·구매자 인증·PWA 기반 (FR-1·2, 첫 스토리)
-  8-2-buyer-product-browse-web: backlog  # 상품목록·상세 (FR-8~13·32·34·35)
-  8-3-cart-web: backlog             # 장바구니 (FR-35)
-  8-4-order-checkout-web: backlog   # 주문서·주문완료 (FR-16·23·32)
-  8-5-order-history-cancel-web: backlog  # 주문내역·상세·취소 (FR-22, 4-6)
-  8-6-flutter-archive-remove: backlog    # Flutter 보관·제거 (Q2/A — 마지막)
+  8-1-buyer-web-shell: backlog        # 구매자 웹 셸·반응형 기반 (탭바/상단 내비, 구매자 팔레트·먹색 포커스 링, / 라우트 전환, 미들웨어 공개·보호 구분)
+  8-2-buyer-auth-web: backlog         # 구매자 가입·로그인 (FR-1·2·4, 카카오 웹 인가코드, 역할 쿠키 buyer 도입 + 판매자·관리자 회귀 확인)
+  8-3-buyer-product-browse-web: backlog  # 상품목록·상품상세 (FR-8~13·32·34)
+  8-4-cart-web: backlog               # 장바구니 (FR-14·35)
+  8-5-checkout-web: backlog           # 주문서·주문완료 (FR-16·17·23·32·35)
+  8-6-order-history-cancel-web: backlog  # 주문내역·주문상세·취소 (FR-18·21·22)
+  8-7-me-and-pwa: backlog             # 내 정보 + PWA 기반 (FR-31·33, NFR-7)
+  8-8-flutter-archive-remove: backlog # Flutter 보관·제거 (Q2/A — 태그 원격 푸시 확인 후에만, 마지막)
   epic-8-retrospective: optional
 
 # Epic 1 회고 (2026-07-16) — Epic 2부터 적용. 스토리 작성·구현 시 이 목록을 먼저 읽는다.
@@ -134,4 +145,4 @@ action_items:
   - { id: A-E456-7, epic: 7, status: open, owner: "Claude", action: "Epic 7 PG 초안 작성됨(벤더 중립 설계·스토리 7분해). 견적 후 epics.md 정식 이관 + AD-2 스파인 개정 승인 필요" }
 
 # 코스 코렉션 (2026-07-21) — 구매자 표면 반응형 웹 전환. sprint-change-proposal-2026-07-21.md
-  - { id: CC-1, epic: 8, status: open, owner: "Claude+Slur", action: "구매자 반응형 웹 전환 — bmad-prd(update, PRD·브리프·스파인 갱신) → bmad-ux(최초 실행, 3화면×3안 → Slur 선택) → Epic 8 스토리 파일 → 구현(8.1→8.6). Flutter는 보관 후 제거(8.6). PG(Epic 7)는 별개 트랙, 오픈 게이트 최우선 불변" }
+  - { id: CC-1, epic: 8, status: in-progress, owner: "Claude+Slur", action: "구매자 반응형 웹 전환 — [완료] 코스 코렉션 제안 승인 · PRD·브리프·스파인 갱신(AD-14·NFR-7 신설) · bmad-ux 최초 실행(톤 B 매거진 Slur 선택, DESIGN.md·EXPERIENCE.md 확정) · epics.md UX-DR1~16 추출 + Epic 8 스토리 8건 정의(2026-07-21). [다음] bmad-create-story로 8.1부터 스토리 파일 생성 → 구현. 8.2는 역할 쿠키 buyer 도입 = 판매자·관리자 유일 회귀 지점이라 실기 확인 필수. Flutter는 8.8에서 태그 원격 푸시 확인 후 제거. PG(Epic 7)는 Epic 8 완료 후 착수 — 초안 7.4 Flutter 결제 플로우는 무효" }
