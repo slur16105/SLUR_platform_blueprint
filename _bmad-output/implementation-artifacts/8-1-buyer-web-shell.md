@@ -277,14 +277,29 @@ export const config = { matcher: [
   - [ ] **폭을 390 ↔ 1280으로 드래그하며 바꿔도 화면이 새로 마운트되지 않는지** 확인 (자리표시 페이지에 입력 필드를 임시로 하나 두고 값을 친 뒤 폭을 바꿔 값이 남는지 본다 — 확인 후 제거)
   - [ ] 키보드만으로 탭바·상단 내비·본문을 완주 (포커스 순서가 읽기 순서를 따르고, 하단 고정 바가 먼저 걸리지 않는지)
 
-- [ ] **Task 11 — 검증: 미들웨어 (로컬 + 프로덕션, R3)** (AC: 7)
+- [x] **Task 11 — 검증: 미들웨어 (로컬 + 프로덕션, R3)** (AC: 7)
   - [x] 비로그인: `/` 200 · `/products/1` 200(페이지 없으면 404여도 리다이렉트가 아니면 통과 확인) · `/cart` → `/login?next=%2Fcart` · `/orders/abc` → `/login?next=%2Forders%2Fabc` · `/me` → `/login?next=%2Fme`
   - [x] 비로그인: `/seller`·`/admin`·`/apply` → `/login` (기존 동작 유지, `next` 없음)
   - [x] 판매자 로그인 후: `/admin` → `/seller` · `/seller` 통과 (기존 규칙)
   - [x] 관리자 로그인 후: `/admin` 통과 · `/seller` 통과 (기존 규칙)
   - [x] 로그인 상태로 `/cart`·`/orders`·`/me` 통과
   - [x] `next=https://evil.example` 같은 외부 URL이 **미들웨어가 만든 리다이렉트에는 실릴 수 없음**을 확인 (미들웨어는 `pathname`만 싣는다)
-  - [ ] **프로덕션(Railway 프록시 뒤) 배포 후 같은 시나리오를 curl로 재확인** — 회고 R3: 쿠키·Origin·리다이렉트는 프로덕션 실요청 검증 전에는 done이 아니다. 특히 리다이렉트 `Location` 헤더가 내부 호스트가 아닌 공개 호스트인지 확인한다
+  - [x] **프로덕션(Railway 프록시 뒤) 배포 후 같은 시나리오를 curl로 재확인** — 2026-07-22, `https://web-production-abfe1.up.railway.app` (커밋 `5d60203` 자동 배포분). **전부 통과.**
+
+    | 요청 | 결과 |
+    |---|---|
+    | `GET /` | **200** — 구매자 홈 공개 (본문에 `data-surface="buyer"`·`b_tabbar`·`b_topnav` 확인) |
+    | `GET /products/abc` | **404** (리다이렉트 아님 — 미들웨어 미실행 확인. 페이지는 8.3이 만든다) |
+    | `GET /cart` | 307 → `/login?next=%2Fcart` |
+    | `GET /orders` | 307 → `/login?next=%2Forders` |
+    | `GET /orders/abc` | 307 → `/login?next=%2Forders%2Fabc` |
+    | `GET /me` | 307 → `/login?next=%2Fme` |
+    | `GET /seller`·`/admin`·`/apply` | 307 → `/login` (**`next` 없음 — 기존 동작 그대로**) |
+    | `GET /terms`·`/privacy`·`/no-role` | 200 |
+    | `GET /cart?next=https://evil.example` | 307 → `/login?next=%2Fcart%3Fnext%3D…` — 외부 URL이 **자체 경로의 쿼리로 인코딩**될 뿐 리다이렉트 대상이 되지 않는다 |
+
+    **`Location` 헤더가 전부 공개 호스트(`web-production-abfe1.up.railway.app`)다** — 내부 호스트가 새지 않았다. 회고 R3의 완료 조건 충족.
+    푸터 회귀도 프로덕션에서 확인: 구매자 홈에 `layout_footer` **0건**, `/terms`에 **1건**.
 
 ## Dev Notes
 
