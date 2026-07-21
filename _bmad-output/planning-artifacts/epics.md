@@ -17,7 +17,7 @@ This document provides the complete epic and story breakdown for SLUR 커머스 
 ### Functional Requirements
 
 FR-1: 이메일+비밀번호 회원가입·로그인 (Argon2id 해시)
-FR-2: 카카오 로그인 (앱·웹 공통), FastAPI 자체 JWT 발급, 범용 OAuth 구조
+FR-2: 카카오 로그인 (구매자 화면·판매자/관리자 화면 공통), FastAPI 자체 JWT 발급, 범용 OAuth 구조
 FR-3: 단일 계정 다중 역할(구매자/판매자/관리자), FastAPI RBAC
 FR-4: 이메일 가입 최소 수집(이메일·비밀번호·이름·선택 휴대폰), 이메일 인증 생략
 FR-5: 입점 신청 폼 — 법정 필수(상호·대표자·사업자번호·통판신고번호·주소·연락처)+브랜드명·소개
@@ -59,12 +59,13 @@ NFR-2: JWT(FastAPI 발급) + Argon2id, access 단기 + refresh 서버 저장
 NFR-3: 재고 차감·상태 전이 동시성 정합성 (DB 수준 원자성)
 NFR-4: 성능 수치 목표 없음 (소규모 상식선)
 NFR-5: 개인정보 최소 수집·보관, 결제·정산 정보는 PG 전 수집 금지
-NFR-6: 배포 Railway (FastAPI+Next.js), CSS 슬러 시스템
+NFR-6: 배포 Railway (FastAPI+Next.js), CSS 슬러 시스템 — 구매자 화면은 모바일 퍼스트 확장, 톤 B·매거진, 브랜드 파랑 미사용
+NFR-7: 구매자 화면은 PWA로 홈 화면 설치 가능 (v1 범위는 반응형 웹 + 최소 manifest까지)
 
 ### Additional Requirements
 
 - 스타터 템플릿 없음 — 커스텀 그린필드. 백엔드는 도메인 모듈러 모놀리스 (app/{core,auth,sellers,products,carts,orders,admin}, 각 도메인에 router/service/models/schemas 고정 명명)
-- 스택 핀 (2026-07 웹 검증): Python 3.14, FastAPI 0.139, Pydantic 2.13, SQLAlchemy 2.0.51(async)+asyncpg 0.31, Alembic 1.18, uv, Next.js 16.2(App Router), React 19.2, Flutter 3.44/Dart 3.12+Riverpod 3, Supabase PG17
+- 스택 핀 (2026-07 웹 검증): Python 3.14, FastAPI 0.139, Pydantic 2.13, SQLAlchemy 2.0.51(async)+asyncpg 0.31, Alembic 1.18, uv, Next.js 16.2(App Router), React 19.2, Supabase PG17
 - AD-2 도메인 의존 방향 그래프 준수 (service 경유만, 순환 금지)
 - AD-3 주문 상태 기계 3층(결제/배송/취소) 전이표+단일 전이 함수, system 역할 포함, order_events 기록
 - AD-4 재고 증감은 orders 전이 함수만, 조건부 UPDATE
@@ -85,7 +86,12 @@ NFR-6: 배포 Railway (FastAPI+Next.js), CSS 슬러 시스템
 
 ### UX Design Requirements
 
-UX 설계 문서 없음 — Next.js 화면은 슬러 시스템 스킬(slur-ux·slur-design)을 구현 시 적용. Flutter는 표준 Material 기반. (별도 UX-DR 없음)
+구매자 화면은 bmad-ux 산출물(2026-07-21 실행)을 따른다 — 핵심 3화면(상품목록·상품상세·장바구니) 3안 중 Slur가 고른 **B·매거진**이 톤의 기준이며, 나머지 화면은 그 톤으로 전개한다. 전 화면에 슬러 시스템(slur-ux·slur-design)을 적용한다.
+
+- 시각 계약(색·활자·간격·컴포넌트): `_bmad-output/planning-artifacts/ux-designs/ux-SLUR_platform_blueprint-2026-07-21/DESIGN.md`
+- 동작 계약(IA·라우트·접근 권한·상태·문구): 같은 폴더 `EXPERIENCE.md`
+- 확정 사항 요약: 하단 탭 내비 4탭(홈·장바구니·주문내역·내 정보) / 구매자 홈 = `/` / 비로그인은 상품목록·상품상세까지 공개, 장바구니부터 로그인 / 브랜드 파랑은 구매자 화면 미사용 / 구매자 화면 9개(내 정보 포함, PRD §4)
+- **스파인이 목업과 충돌하면 스파인(DESIGN.md·EXPERIENCE.md)이 이긴다.**
 
 ### FR Coverage Map
 
@@ -236,6 +242,8 @@ So that 클라이언트를 우회한 권한 상승이 불가능하다.
 **And** 역할 검사는 core의 공통 의존성 하나로만 구현된다 (엔드포인트별 자체 검사 금지)
 
 ### Story 1.5: Flutter 로그인 화면
+
+> **[2026-07-21 대체됨]** Flutter 로그인 화면은 반응형 웹 전환으로 폐기. 후속은 Story 8.2(구매자 가입·로그인 웹 — 카카오 웹 인가코드 플로우, httpOnly 쿠키 + BFF). 구현 기록은 태그 `flutter-app-final`에 보존. **완료 상태는 되돌리지 않는다** — 당시 실제로 완료됐던 사실이다.
 
 As a 구매자,
 I want 앱에서 이메일 또는 카카오로 가입·로그인하는 것,
@@ -388,6 +396,8 @@ So that 상품을 최신 상태로 유지한다.
 
 ### Story 3.5: 구매자 상품 목록·상세
 
+> **[2026-07-21 대체됨]** 아래 Flutter 화면 서술(`Flutter 앱 홈`, `앱에서 상품을 둘러보고`)은 반응형 웹 전환으로 폐기. 후속은 Epic 8 초안의 8.3(상품목록·상품상세 웹 — `/`·`/products/[id]`, 비로그인 열람 가능). **백엔드 판정(AD-10 단일 술어·AD-12 파생 값)은 그대로 유효**하다. 구현 기록은 태그 `flutter-app-final`에 보존.
+
 As a 구매자,
 I want 앱에서 상품을 둘러보고 상세를 보는 것,
 So that 살 물건을 고를 수 있다.
@@ -410,6 +420,8 @@ So that 살 물건을 고를 수 있다.
 
 ### Story 4.1: 장바구니
 
+> **[2026-07-21 대체됨]** AC는 클라이언트 중립이지만 구매자 **화면**은 Flutter로 구현됐다. 그 화면은 반응형 웹 전환으로 폐기되고 후속은 Epic 8 초안의 8.4(장바구니 웹 — `/cart`, 로그인 필요). `cart_items` API·구매 가능 판정(AD-10)은 그대로 유효. 구현 기록은 태그 `flutter-app-final`에 보존.
+
 As a 구매자,
 I want 여러 판매자의 상품을 한 장바구니에 담는 것,
 So that 한 번에 주문할 수 있다.
@@ -429,6 +441,8 @@ So that 한 번에 주문할 수 있다.
 **Then** 즉시 반영된다 (담기 시점 재고 차감 없음)
 
 ### Story 4.2: 주문 데이터 모델과 배송비 계산 (주문서 미리보기)
+
+> **[2026-07-21 대체됨]** 마지막 AC의 "주문서 화면"은 Flutter 화면을 가리켰다. 그 화면은 반응형 웹 전환으로 폐기되고 후속은 Epic 8 초안의 8.5(주문서 웹 — `/checkout`). **데이터 모델·배송비 계산 함수·시드는 전량 유효**하며 변경 대상이 아니다 (ERD 변경 0건).
 
 As a 구매자,
 I want 주문 전에 상품 합계·배송비·도서산간 추가비가 정확히 계산된 금액을 보는 것,
@@ -460,6 +474,8 @@ So that 어떤 화면·코드 경로에서도 무결성이 깨지지 않는다.
 **And** 모든 전이 성공이 `order_events`에 기록된다 (누가·언제·무엇을) — `order_events`·`cancellations` 마이그레이션 포함
 
 ### Story 4.4: 주문 생성
+
+> **[2026-07-21 대체됨]** AC의 `Flutter 주문서에서 배송지(카카오 우편번호 검색)…` 서술은 반응형 웹 전환으로 폐기. 후속은 Epic 8 초안의 8.5(주문서·주문 생성 웹 — 웹 우편번호 검색 오버레이, `[ASSUMPTION]` 제공자 미정). **주문 생성 트랜잭션·재고 원자 차감(AD-4)·에러 봉투는 그대로 유효**하다. 구현 기록은 태그 `flutter-app-final`에 보존.
 
 As a 구매자,
 I want 장바구니 상품을 배송지 입력과 함께 주문하는 것,
@@ -518,6 +534,8 @@ So that 마음이 바뀌어도 안심하고 주문할 수 있다.
 구매자는 내역을 보고, 관리자는 입금을 확인하고, 판매자는 배송을 처리한다.
 
 ### Story 5.1: 구매자 주문내역·상세
+
+> **[2026-07-21 대체됨]** AC는 클라이언트 중립이지만 구매자 **화면**은 Flutter로 구현됐다. 그 화면은 반응형 웹 전환으로 폐기되고 후속은 Epic 8 초안의 8.6(주문내역·주문상세 웹 — `/orders`·`/orders/[id]`). 조회 API·파생 값 계산(AD-12)은 그대로 유효. 구현 기록은 태그 `flutter-app-final`에 보존.
 
 As a 구매자,
 I want 내 주문들의 진행 상황을 보는 것,
@@ -636,6 +654,8 @@ So that 계좌 변경 시 DB를 직접 만지지 않아도 되고 오타 사고�
 약관·개인정보·중개자 고지·판매자 정보 노출이 갖춰져 내부 테스트 가능 상태가 된다.
 
 ### Story 6.1: 약관·개인정보처리방침과 푸터
+
+> **[2026-07-21 대체됨]** 마지막 AC의 `Flutter 앱에는 설정/정보 화면에…`는 반응형 웹 전환으로 폐기. 그 자리를 구매자 웹의 **`내 정보` 화면(`/me`)** 이 대신한다 — 모바일에는 PC 웹 같은 상시 푸터가 없으므로 FR-31·FR-33이 여기에 놓인다 (PRD §4, `EXPERIENCE.md`). 웹 푸터·약관·개인정보처리방침 페이지는 그대로 유효. 후속은 Epic 8의 구매자 웹 화면 스토리.
 
 As a 운영자,
 I want 필수 정책 페이지와 사업자 정보 고지가 갖춰지는 것,
