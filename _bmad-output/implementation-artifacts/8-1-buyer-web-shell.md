@@ -206,7 +206,9 @@ export const config = { matcher: [
 
 - [ ] **Task 1 — 라우트 그룹 분리와 푸터 이관** (AC: 6, 8)
   - [ ] `git mv`로 `app/{seller,admin,apply,login,no-role,terms,privacy}` → `app/(console)/` (7개 폴더)
-  - [ ] `app/(console)/layout.tsx` 신설 — `{children}` + `<SiteFooter />`. `site-footer.tsx`·`site-footer.css`·`logout-button.tsx`·`config/company.ts`는 `app/` 자리에 그대로 둔다
+  - [ ] `app/(console)/layout.tsx` 신설 — **반드시 프래그먼트로** `<>{children}<SiteFooter /></>`를 반환한다. `site-footer.tsx`·`site-footer.css`·`logout-button.tsx`·`config/company.ts`는 `app/` 자리에 그대로 둔다
+    - 🚨 **`<div>`로 감싸면 푸터가 깨진다.** `globals.css:23-26`이 `body { display:flex; flex-direction:column }`이고 `site-footer.css:6`의 `.layout_footer { margin-top: auto }`가 **body의 flex 자식일 때만** 동작한다. 래핑 엘리먼트가 하나라도 끼면 푸터가 짧은 페이지에서 바닥에 붙지 않고 콘텐츠 바로 아래로 올라온다 — 눈에 잘 안 띄는 회귀다
+    - [ ] 검증: `/terms`처럼 **콘텐츠가 짧은 페이지**에서 푸터가 뷰포트 바닥에 붙는지 확인한다 (긴 페이지에서는 이 회귀가 보이지 않는다)
   - [ ] `app/layout.tsx`에서 `SiteFooter` import·렌더 **두 줄만** 제거. `<html lang="ko">`·Pretendard link·슬러 CSS 임포트 18줄·`metadata`는 손대지 않는다
   - [ ] 깨진 상대 경로 수정 — 이동한 파일들의 `../logout-button`(9곳)·`../config/company`(2곳)·`../styles/policy.css`(2곳)를 `@/app/logout-button`·`@/app/config/company`·`@/app/styles/policy.css`로 바꾼다(별칭 `@/*` → `./*`는 tsconfig에 이미 있다). 깊이 결합을 끊어 다음 이동 때 다시 깨지지 않게 한다. 같은 폴더 안 상대 경로(`./category-panel`·`./status`·`./*.css`)는 함께 이동하므로 손대지 않는다
   - [ ] `app/page.tsx` 삭제 (`/`는 `(buyer)/page.tsx`가 가진다 — 남겨두면 경로 충돌로 빌드 실패)
@@ -216,7 +218,8 @@ export const config = { matcher: [
   - [ ] `app/styles/buyer/tokens.css` — `[data-surface="buyer"] { --b-* }`. DESIGN.md 프론트매터 `colors` 24색 + D6의 5색 + `spacing`(gutter 20/32, section-y 22, band 8, grid-gap 14/26·20/36, topbar-h 54, tabbar-h 56, cta-bar 13/20) + `rounded`(2/3/4/5/999) + `--b-content-max:1080px`·`--b-read-max:640px`·`--b-narrow-max:560px`·`--b-row-max:560px` + 포커스 링 3종
   - [ ] `app/styles/buyer/type.css` — DESIGN.md 프론트매터 `typography` 전 항목을 역할 클래스로 (logo·brand-label·eyebrow·section-label·display·title·title-sm·topbar-title·price-*·deposit-amount·product-name-*·body·control·input·meta·status-label·notice·tab-label·button·tag). 금액 계열에 `tabular-nums`
   - [ ] **슬러 시스템 파일(`app/styles/slur/**`)을 열지도 수정하지도 않는다.** 이 스토리의 diff에 `styles/slur/` 경로가 나타나면 잘못된 것이다
-  - [ ] 두 파일은 `(buyer)/layout.tsx`에서만 임포트한다 (콘솔 번들에 섞이지 않게)
+  - [ ] 두 파일은 `(buyer)/layout.tsx`에서만 임포트한다
+    - ⚠️ **격리의 근거는 임포트 위치가 아니라 셀렉터다.** App Router는 임포트된 CSS가 다른 라우트의 스타일시트에 섞이지 않는다고 보장하지 않는다 — 실제 격리는 전부 `[data-surface="buyer"]` 스코프에서 나온다. 임포트 위치는 정리 차원일 뿐이므로, **스코프 없는 전역 셀렉터(`body`·`a`·`button` 같은 태그 셀렉터)를 구매자 CSS에 절대 쓰지 않는다**
 
 - [ ] **Task 3 — 구매자 셸 레이아웃** (AC: 1, 2, 3, 5)
   - [ ] `app/(buyer)/layout.tsx` — 셸 래퍼에 `data-surface="buyer"`, `min-height:100dvh`, 종이 배경. 상단바 → `<main>` → 하단 고정 바(탭바) **DOM 순서 준수**
@@ -252,7 +255,8 @@ export const config = { matcher: [
 - [ ] **Task 8 — 검증: 빌드·정적 규칙** (AC: 10, 11)
   - [ ] `cd apps/web && npx tsc --noEmit` → 0
   - [ ] `cd apps/web && npm run lint` → 0 errors · 0 warnings (현재 베이스라인, A-E456-5 — 늘어나면 이 스토리가 깬 것)
-  - [ ] `cd apps/api && uv run pytest -q` → 153 passed (백엔드 무변경의 증거). `git diff --stat`에 `apps/api` 경로가 0건인지 확인
+  - [ ] **백엔드 무변경의 1차 증거는 `git diff --stat`에 `apps/api` 경로가 0건인 것이다.** 이 스토리는 `apps/api`를 열지 않으므로 이것으로 충분하다
+  - [ ] `cd apps/api && uv run pytest -q` → 153 passed — **환경이 갖춰진 경우에만.** 현재 이 머신에는 `uv`도 `docker`도 PATH에 없고(pytest는 docker compose로 띄운 로컬 Postgres를 요구한다) 이 스토리는 백엔드를 건드리지 않는다. 실행하지 못했다면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — 통과했다고 쓰지 않는다
   - [ ] `next build` 성공 — 경로 충돌(`/` 중복)·그룹 이동 후 임포트 깨짐이 여기서 잡힌다
 
 - [ ] **Task 9 — 검증: 판매자·관리자 회귀 (눈으로)** (AC: 3, 4, 8, 11) — **이 스토리의 가장 중요한 Task다**
@@ -316,7 +320,9 @@ export const config = { matcher: [
 **`apps/web/app/globals.css`**
 1. `--background/--foreground`(다크 미디어쿼리 포함), `html/body` 리셋, `body { font-family: Arial… }`, 전역 `*` 리셋, `a { color: inherit }`, `.page_landing`(= `/no-role` 전용).
 2. **수정하지 않는다.** 구매자 규칙은 새 파일에만 쓴다.
-3. `body`의 `display:flex; flex-direction:column`(푸터 `margin-top:auto`가 이것에 의존)과 `.page_landing`(`/no-role`이 쓴다). `body { font-family: Arial }`은 뒤에 임포트되는 `slur/global.css`가 `var(--font-sans)`로 덮고 있다 — 이 순서 의존을 흔들지 않는다.
+3. `body`의 `display:flex; flex-direction:column`(`globals.css:23-26`)과 `.page_landing`(`/no-role`이 쓴다). `body { font-family: Arial }`은 뒤에 임포트되는 `slur/global.css`가 `var(--font-sans)`로 덮고 있다 — 이 순서 의존을 흔들지 않는다.
+   - 🚨 **푸터가 이 flex에 의존한다.** `.layout_footer { margin-top: auto }`(`site-footer.css:6`)는 푸터가 **body의 직계 flex 자식일 때만** 바닥에 붙는다. Task 1에서 `(console)/layout.tsx`를 프래그먼트로 만들어야 하는 이유이며, 래핑 엘리먼트를 하나라도 끼우면 짧은 페이지에서 푸터가 떠오른다.
+   - 구매자 셸도 body의 직계 flex 자식이 된다. `min-height:100dvh`를 주되 flex 축소로 눌리지 않는지 확인한다(`flex-shrink:0` 또는 `flex:1`).
 
 **`apps/web/app/styles/slur/**` (토큰 8 + global + 컴포넌트 7)**
 1. `--color-brand-500: #2f6bff` 등 프리미티브 → `--color-brand`·`--color-focus-ring`·`--color-surface-page` 등 시맨틱 2층 구조. `global.css`가 `body`와 폼 컨트롤 포커스를 전역 태그 셀렉터로 지정. `data-theme="dark"` 지원(구매자는 라이트 한 벌뿐).
