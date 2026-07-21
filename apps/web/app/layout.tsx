@@ -17,7 +17,6 @@ import "./styles/slur/components/alert.css";
 import "./styles/slur/components/badge.css";
 import "./styles/slur/components/table.css";
 import "./styles/slur/components/modal.css";
-import SiteFooter from "./site-footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +45,6 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        <SiteFooter />
       </body>
     </html>
   );

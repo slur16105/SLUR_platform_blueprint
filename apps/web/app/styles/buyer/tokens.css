@@ -1,0 +1,102 @@
+/* ─────────────────────────────────────────────
+   BUYER TOKENS — 구매자 표면 전용 이름공간 (--b-*)
+   D1: 슬러 시맨틱 토큰(--color-*)을 재바인딩하지 않는다.
+   선언 위치는 [data-surface="buyer"] 하나뿐이며 이 속성은
+   (buyer) 라우트 그룹의 셸 래퍼에만 붙는다. 이름이 겹치지
+   않으므로 판매자·관리자로 새는 경로가 물리적으로 닫힌다.
+   값의 정본: ux-designs/.../DESIGN.md 프론트매터.
+   🚨 이 파일에 스코프 없는 전역 태그 셀렉터를 쓰지 않는다.
+   ───────────────────────────────────────────── */
+
+[data-surface="buyer"] {
+  /* ── 종이 ── */
+  --b-paper:              #faf8f4;
+  --b-paper-shade:        #f2eee6;
+
+  /* ── 먹 4단 ── */
+  --b-ink:                #1f1d1a;
+  --b-ink-strong:         #2c2a26;
+  --b-ink-body:           #3c3934;
+  --b-ink-prose:          #4d4942;
+  --b-ink-secondary:      #6a645c;
+
+  /* ── 흐린 3단 ── */
+  --b-ink-quiet:          #7d7a75;
+  --b-ink-label:          #8e8b85;
+  --b-ink-muted:          #9c968c;
+
+  /* ── 선 ── */
+  --b-hairline:           #e3ded4;
+
+  /* ── 액센트 (이 지면의 유일한 유채색) ── */
+  --b-accent:             #8c4a32;
+  --b-accent-soft:        #f1e5df;
+  --b-accent-wash:        #faf1ec;
+  --b-accent-line:        #ecd9d0;
+
+  /* ── 폼 계열 ── */
+  --b-field-surface:      #ffffff;
+  --b-field-border:       #ded8cc;
+  --b-field-error-surface:#fdf7f4;
+  --b-field-placeholder:  #b3ada3;
+  --b-disabled-surface:   #f2eee6;
+  --b-disabled-border:    #e8e3da;
+  --b-disabled-ink:       #ada79d;
+  --b-strike-line:        #c9c3b9;
+
+  /* ── 예외 색 하나 — 카카오 브랜드 규정 (8.2가 쓴다) ── */
+  --b-kakao:              #fee500;
+
+  /* ── DESIGN.md 본문에서 온 5색 (D6 — 이름을 여기서 붙인다) ── */
+  --b-surface-inset:      #f7f4ee;  /* 판매자 정보 상자·선택 결과 줄 */
+  --b-product-name:       #605b53;  /* 카드 상품명 */
+  --b-ink-unavailable:    #a8a29a;  /* 구매 불가 묶음 글자 */
+  --b-checkbox-border:    #d5cfc4;
+  --b-pack-foot-line:     #efeae1;
+
+  /* ── 간격 스케일 ── */
+  --b-space-1:  4px;
+  --b-space-2:  8px;
+  --b-space-3:  12px;
+  --b-space-4:  16px;
+  --b-space-5:  20px;
+  --b-space-6:  24px;
+  --b-space-7:  32px;
+
+  --b-gutter:          20px;   /* ≥768에서 32px로 커진다 */
+  --b-section-y:       22px;
+  --b-band:            8px;    /* 종이 접기 띠 */
+  --b-grid-gap-x:      14px;   /* ≥768에서 20px */
+  --b-grid-gap-y:      26px;   /* ≥768에서 36px */
+  --b-topbar-h:        54px;
+  --b-tabbar-h:        56px;
+  --b-cta-bar-y:       13px;
+  --b-cta-bar-bottom:  20px;
+
+  /* ── 라운드 ── */
+  --b-rounded-xs:      2px;
+  --b-rounded-sm:      3px;
+  --b-rounded:         4px;
+  --b-rounded-md:      5px;
+  --b-rounded-full:    999px;
+
+  /* ── 폭 ── */
+  --b-content-max:     1080px;  /* 본문 최대 폭 (패딩 포함) */
+  --b-read-max:        640px;   /* 읽는 화면 */
+  --b-narrow-max:      560px;   /* 주문완료 */
+  --b-row-max:         560px;   /* 라벨-값 행·항목 조작 행 */
+
+  /* ── 먹색 포커스 링 (D4) ── */
+  --b-focus-ring-color:  var(--b-ink);
+  --b-focus-ring-width:  2px;
+  --b-focus-ring-offset: 2px;
+}
+
+/* ≥768 — 여백과 그리드 간격만 커진다 (breakpoints.css: md 768px) */
+@media (min-width: 768px) {
+  [data-surface="buyer"] {
+    --b-gutter:     32px;
+    --b-grid-gap-x: 20px;
+    --b-grid-gap-y: 36px;
+  }
+}

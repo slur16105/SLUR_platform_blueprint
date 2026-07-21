@@ -4,7 +4,7 @@ baseline_commit: 8c5198375fa3bd5a966c323a82fded57a28ea311
 
 # Story 8.1: 구매자 웹 셸과 반응형 기반
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 
@@ -204,86 +204,86 @@ export const config = { matcher: [
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — 라우트 그룹 분리와 푸터 이관** (AC: 6, 8)
-  - [ ] `git mv`로 `app/{seller,admin,apply,login,no-role,terms,privacy}` → `app/(console)/` (7개 폴더)
-  - [ ] `app/(console)/layout.tsx` 신설 — **반드시 프래그먼트로** `<>{children}<SiteFooter /></>`를 반환한다. `site-footer.tsx`·`site-footer.css`·`logout-button.tsx`·`config/company.ts`는 `app/` 자리에 그대로 둔다
+- [x] **Task 1 — 라우트 그룹 분리와 푸터 이관** (AC: 6, 8)
+  - [x] `git mv`로 `app/{seller,admin,apply,login,no-role,terms,privacy}` → `app/(console)/` (7개 폴더)
+  - [x] `app/(console)/layout.tsx` 신설 — **반드시 프래그먼트로** `<>{children}<SiteFooter /></>`를 반환한다. `site-footer.tsx`·`site-footer.css`·`logout-button.tsx`·`config/company.ts`는 `app/` 자리에 그대로 둔다
     - 🚨 **`<div>`로 감싸면 푸터가 깨진다.** `globals.css:23-26`이 `body { display:flex; flex-direction:column }`이고 `site-footer.css:6`의 `.layout_footer { margin-top: auto }`가 **body의 flex 자식일 때만** 동작한다. 래핑 엘리먼트가 하나라도 끼면 푸터가 짧은 페이지에서 바닥에 붙지 않고 콘텐츠 바로 아래로 올라온다 — 눈에 잘 안 띄는 회귀다
-    - [ ] 검증: `/terms`처럼 **콘텐츠가 짧은 페이지**에서 푸터가 뷰포트 바닥에 붙는지 확인한다 (긴 페이지에서는 이 회귀가 보이지 않는다)
-  - [ ] `app/layout.tsx`에서 `SiteFooter` import·렌더 **두 줄만** 제거. `<html lang="ko">`·Pretendard link·슬러 CSS 임포트 18줄·`metadata`는 손대지 않는다
-  - [ ] 깨진 상대 경로 수정 — 이동한 파일들의 `../logout-button`(9곳)·`../config/company`(2곳)·`../styles/policy.css`(2곳)를 `@/app/logout-button`·`@/app/config/company`·`@/app/styles/policy.css`로 바꾼다(별칭 `@/*` → `./*`는 tsconfig에 이미 있다). 깊이 결합을 끊어 다음 이동 때 다시 깨지지 않게 한다. 같은 폴더 안 상대 경로(`./category-panel`·`./status`·`./*.css`)는 함께 이동하므로 손대지 않는다
-  - [ ] `app/page.tsx` 삭제 (`/`는 `(buyer)/page.tsx`가 가진다 — 남겨두면 경로 충돌로 빌드 실패)
-  - [ ] `app/api/**`는 이동하지 않는다 (BFF Route Handler)
+    - [x] 검증: `/terms`처럼 **콘텐츠가 짧은 페이지**에서 푸터가 뷰포트 바닥에 붙는지 확인한다 (긴 페이지에서는 이 회귀가 보이지 않는다)
+  - [x] `app/layout.tsx`에서 `SiteFooter` import·렌더 **두 줄만** 제거. `<html lang="ko">`·Pretendard link·슬러 CSS 임포트 18줄·`metadata`는 손대지 않는다
+  - [x] 깨진 상대 경로 수정 — 이동한 파일들의 `../logout-button`(9곳)·`../config/company`(2곳)·`../styles/policy.css`(2곳)를 `@/app/logout-button`·`@/app/config/company`·`@/app/styles/policy.css`로 바꾼다(별칭 `@/*` → `./*`는 tsconfig에 이미 있다). 깊이 결합을 끊어 다음 이동 때 다시 깨지지 않게 한다. 같은 폴더 안 상대 경로(`./category-panel`·`./status`·`./*.css`)는 함께 이동하므로 손대지 않는다
+  - [x] `app/page.tsx` 삭제 (`/`는 `(buyer)/page.tsx`가 가진다 — 남겨두면 경로 충돌로 빌드 실패)
+  - [x] `app/api/**`는 이동하지 않는다 (BFF Route Handler)
 
-- [ ] **Task 2 — 구매자 토큰·타이포 신설 (스코프 격리)** (AC: 3, 4)
-  - [ ] `app/styles/buyer/tokens.css` — `[data-surface="buyer"] { --b-* }`. DESIGN.md 프론트매터 `colors` 24색 + D6의 5색 + `spacing`(gutter 20/32, section-y 22, band 8, grid-gap 14/26·20/36, topbar-h 54, tabbar-h 56, cta-bar 13/20) + `rounded`(2/3/4/5/999) + `--b-content-max:1080px`·`--b-read-max:640px`·`--b-narrow-max:560px`·`--b-row-max:560px` + 포커스 링 3종
-  - [ ] `app/styles/buyer/type.css` — DESIGN.md 프론트매터 `typography` 전 항목을 역할 클래스로 (logo·brand-label·eyebrow·section-label·display·title·title-sm·topbar-title·price-*·deposit-amount·product-name-*·body·control·input·meta·status-label·notice·tab-label·button·tag). 금액 계열에 `tabular-nums`
-  - [ ] **슬러 시스템 파일(`app/styles/slur/**`)을 열지도 수정하지도 않는다.** 이 스토리의 diff에 `styles/slur/` 경로가 나타나면 잘못된 것이다
-  - [ ] 두 파일은 `(buyer)/layout.tsx`에서만 임포트한다
+- [x] **Task 2 — 구매자 토큰·타이포 신설 (스코프 격리)** (AC: 3, 4)
+  - [x] `app/styles/buyer/tokens.css` — `[data-surface="buyer"] { --b-* }`. DESIGN.md 프론트매터 `colors` 24색 + D6의 5색 + `spacing`(gutter 20/32, section-y 22, band 8, grid-gap 14/26·20/36, topbar-h 54, tabbar-h 56, cta-bar 13/20) + `rounded`(2/3/4/5/999) + `--b-content-max:1080px`·`--b-read-max:640px`·`--b-narrow-max:560px`·`--b-row-max:560px` + 포커스 링 3종
+  - [x] `app/styles/buyer/type.css` — DESIGN.md 프론트매터 `typography` 전 항목을 역할 클래스로 (logo·brand-label·eyebrow·section-label·display·title·title-sm·topbar-title·price-*·deposit-amount·product-name-*·body·control·input·meta·status-label·notice·tab-label·button·tag). 금액 계열에 `tabular-nums`
+  - [x] **슬러 시스템 파일(`app/styles/slur/**`)을 열지도 수정하지도 않는다.** 이 스토리의 diff에 `styles/slur/` 경로가 나타나면 잘못된 것이다
+  - [x] 두 파일은 `(buyer)/layout.tsx`에서만 임포트한다
     - ⚠️ **격리의 근거는 임포트 위치가 아니라 셀렉터다.** App Router는 임포트된 CSS가 다른 라우트의 스타일시트에 섞이지 않는다고 보장하지 않는다 — 실제 격리는 전부 `[data-surface="buyer"]` 스코프에서 나온다. 임포트 위치는 정리 차원일 뿐이므로, **스코프 없는 전역 셀렉터(`body`·`a`·`button` 같은 태그 셀렉터)를 구매자 CSS에 절대 쓰지 않는다**
 
-- [ ] **Task 3 — 구매자 셸 레이아웃** (AC: 1, 2, 3, 5)
-  - [ ] `app/(buyer)/layout.tsx` — 셸 래퍼에 `data-surface="buyer"`, `min-height:100dvh`, 종이 배경. 상단바 → `<main>` → 하단 고정 바(탭바) **DOM 순서 준수**
-  - [ ] `buyer-topbar.tsx` — `variant: "logo" | "logo-center" | "back-title" | "title"`, `title?`, `showCart?`. ≥768에서는 형태와 무관하게 로고 + 상단 내비로 수렴하고 뒤로가기가 사라진다
-  - [ ] `buyer-tabbar.tsx` / `buyer-topnav.tsx` — 같은 4항목 정의를 공유(단일 배열 상수). 활성 판정은 셸이 받는 `tab: "home" | "cart" | "orders" | "me"` prop으로 하고 pathname 추측에 의존하지 않는다(상세 화면이 소속 최상위를 활성 표시해야 하므로)
-  - [ ] `buyer-icons.tsx` — 22px 인라인 SVG 4종(홈·장바구니·주문내역·내 정보). `currentColor` + `stroke-width: var(--b-tab-stroke)` (1.4px, 활성 1.9px). 아이콘 폰트·이모지·외부 CDN 금지
-  - [ ] 장바구니 배지 **슬롯만** 만들고 값은 넣지 않는다 — 개수 조회는 8.4 소관 (담긴 항목 수 **전체**, 구매 불가 포함)
-  - [ ] 같은 탭 재탭 → `window.scrollTo({ top: 0 })` (smooth 미사용)
-  - [ ] 탭바·상단 내비를 **둘 다 항상 렌더**하고 CSS `display`로만 전환 (조건부 렌더 금지)
+- [x] **Task 3 — 구매자 셸 레이아웃** (AC: 1, 2, 3, 5)
+  - [x] `app/(buyer)/layout.tsx` — 셸 래퍼에 `data-surface="buyer"`, `min-height:100dvh`, 종이 배경. 상단바 → `<main>` → 하단 고정 바(탭바) **DOM 순서 준수**
+  - [x] `buyer-topbar.tsx` — `variant: "logo" | "logo-center" | "back-title" | "title"`, `title?`, `showCart?`. ≥768에서는 형태와 무관하게 로고 + 상단 내비로 수렴하고 뒤로가기가 사라진다
+  - [x] `buyer-tabbar.tsx` / `buyer-topnav.tsx` — 같은 4항목 정의를 공유(단일 배열 상수). 활성 판정은 셸이 받는 `tab: "home" | "cart" | "orders" | "me"` prop으로 하고 pathname 추측에 의존하지 않는다(상세 화면이 소속 최상위를 활성 표시해야 하므로)
+  - [x] `buyer-icons.tsx` — 22px 인라인 SVG 4종(홈·장바구니·주문내역·내 정보). `currentColor` + `stroke-width: var(--b-tab-stroke)` (1.4px, 활성 1.9px). 아이콘 폰트·이모지·외부 CDN 금지
+  - [x] 장바구니 배지 **슬롯만** 만들고 값은 넣지 않는다 — 개수 조회는 8.4 소관 (담긴 항목 수 **전체**, 구매 불가 포함)
+  - [x] 같은 탭 재탭 → `window.scrollTo({ top: 0 })` (smooth 미사용)
+  - [x] 탭바·상단 내비를 **둘 다 항상 렌더**하고 CSS `display`로만 전환 (조건부 렌더 금지)
 
-- [ ] **Task 4 — 반응형 유틸리티와 셸 CSS** (AC: 1, 2, 3, 4, 5)
-  - [ ] `app/(buyer)/buyer.css` — D5 표의 유틸리티 전부 + 상단바/탭바/상단 내비 컴포넌트 스타일 + D4의 포커스 링 규칙
-  - [ ] `box-shadow` 선언이 이 파일에 **0건**인지 확인 (`grep -n "box-shadow" app/(buyer)/buyer.css app/styles/buyer/*.css` → `box-shadow: none` 한 줄 외에 없어야 한다)
-  - [ ] `#2f6bff`·`--color-brand`·`--shadow-` 문자열이 구매자 파일에 0건인지 확인
-  - [ ] `100vh` 대신 `100dvh`
+- [x] **Task 4 — 반응형 유틸리티와 셸 CSS** (AC: 1, 2, 3, 4, 5)
+  - [x] `app/(buyer)/buyer.css` — D5 표의 유틸리티 전부 + 상단바/탭바/상단 내비 컴포넌트 스타일 + D4의 포커스 링 규칙
+  - [x] `box-shadow` 선언이 이 파일에 **0건**인지 확인 (`grep -n "box-shadow" app/(buyer)/buyer.css app/styles/buyer/*.css` → `box-shadow: none` 한 줄 외에 없어야 한다)
+  - [x] `#2f6bff`·`--color-brand`·`--shadow-` 문자열이 구매자 파일에 0건인지 확인
+  - [x] `100vh` 대신 `100dvh`
 
-- [ ] **Task 5 — 라우트 자리표시와 홈** (AC: 5, 6)
-  - [ ] `(buyer)/page.tsx`(`/`) — 셸 적용 + `.b_grid` 위 자리표시 블록 6개(높이를 서로 다르게 두어 2/3/3열 전환과 리듬을 눈으로 확인). **8.3이 통째로 대체한다**
-  - [ ] `(buyer)/cart/page.tsx`·`orders/page.tsx`·`me/page.tsx` — 탭 목적지가 실제로 존재해야 탭바를 검증할 수 있으므로 최소 자리표시만. 각각 8.4·8.6·8.7이 대체한다
-  - [ ] `/products/[id]`·`/checkout`·`/orders/[id]`·`/orders/complete`는 **만들지 않는다** — 미들웨어 matcher에만 미리 등록한다 (해당 스토리가 페이지를 만든다)
-  - [ ] `viewport` export를 추가하지 **않는다** — Next가 `width=device-width, initial-scale=1`을 기본으로 넣는다. 특히 `maximumScale`·`userScalable: false`는 글자 200% 확대 요구(UX-DR7)와 충돌하므로 금지. `themeColor`는 8.7(PWA)
+- [x] **Task 5 — 라우트 자리표시와 홈** (AC: 5, 6)
+  - [x] `(buyer)/page.tsx`(`/`) — 셸 적용 + `.b_grid` 위 자리표시 블록 6개(높이를 서로 다르게 두어 2/3/3열 전환과 리듬을 눈으로 확인). **8.3이 통째로 대체한다**
+  - [x] `(buyer)/cart/page.tsx`·`orders/page.tsx`·`me/page.tsx` — 탭 목적지가 실제로 존재해야 탭바를 검증할 수 있으므로 최소 자리표시만. 각각 8.4·8.6·8.7이 대체한다
+  - [x] `/products/[id]`·`/checkout`·`/orders/[id]`·`/orders/complete`는 **만들지 않는다** — 미들웨어 matcher에만 미리 등록한다 (해당 스토리가 페이지를 만든다)
+  - [x] `viewport` export를 추가하지 **않는다** — Next가 `width=device-width, initial-scale=1`을 기본으로 넣는다. 특히 `maximumScale`·`userScalable: false`는 글자 200% 확대 요구(UX-DR7)와 충돌하므로 금지. `themeColor`는 8.7(PWA)
 
-- [ ] **Task 6 — 미들웨어 확장** (AC: 7)
-  - [ ] D3의 신규 블록 추가 + matcher에 보호 라우트 5개 추가. **기존 세 개의 `if`와 기존 matcher 4항목은 문자 그대로 보존**
-  - [ ] `next` 파라미터 생성 규칙 구현(자체 경로만, 쿼리 포함). **소비(로그인 성공 후 복귀)는 8.2 소관**임을 코드 주석에 남긴다
-  - [ ] 세션 판정은 `slur_role !== undefined` 유지 — 8.2가 `buyer` 값을 추가해도 수정 불필요함을 주석으로 명시
+- [x] **Task 6 — 미들웨어 확장** (AC: 7)
+  - [x] D3의 신규 블록 추가 + matcher에 보호 라우트 5개 추가. **기존 세 개의 `if`와 기존 matcher 4항목은 문자 그대로 보존**
+  - [x] `next` 파라미터 생성 규칙 구현(자체 경로만, 쿼리 포함). **소비(로그인 성공 후 복귀)는 8.2 소관**임을 코드 주석에 남긴다
+  - [x] 세션 판정은 `slur_role !== undefined` 유지 — 8.2가 `buyer` 값을 추가해도 수정 불필요함을 주석으로 명시
 
-- [ ] **Task 7 — 공유 컴포넌트 자리 잡기** (AC: 9)
-  - [ ] `brand-label.tsx` — 완성 (순수 표현. `size: "card" | "pack" | "detail"` → 11px/.15em · 10.5px/.14em · 11.5px/.17em. 자간은 CSS로만 주고 글자 사이에 공백을 넣지 않는다 — 낭독을 깨뜨린다)
-  - [ ] `status-label.tsx` — 완성 (면 없는 11.5px/800/.05em. 입금대기=액센트 / 진행 중=먹색 / 완료·취소=흐린색. 색 + 텍스트를 항상 함께, 스크린리더에 상태로 전달)
-  - [ ] `amount-summary.tsx`·`seller-pack.tsx` — **뼈대만**: 타입·마크업 골격·CSS. 행 순서 고정(상품 금액 · 배송비 · 도서산간 추가 · 합계)과 "도서산간 0원이어도 줄을 지우지 않는다"를 타입·주석으로 못 박는다. 데이터 연결은 8.4·8.5·8.6
+- [x] **Task 7 — 공유 컴포넌트 자리 잡기** (AC: 9)
+  - [x] `brand-label.tsx` — 완성 (순수 표현. `size: "card" | "pack" | "detail"` → 11px/.15em · 10.5px/.14em · 11.5px/.17em. 자간은 CSS로만 주고 글자 사이에 공백을 넣지 않는다 — 낭독을 깨뜨린다)
+  - [x] `status-label.tsx` — 완성 (면 없는 11.5px/800/.05em. 입금대기=액센트 / 진행 중=먹색 / 완료·취소=흐린색. 색 + 텍스트를 항상 함께, 스크린리더에 상태로 전달)
+  - [x] `amount-summary.tsx`·`seller-pack.tsx` — **뼈대만**: 타입·마크업 골격·CSS. 행 순서 고정(상품 금액 · 배송비 · 도서산간 추가 · 합계)과 "도서산간 0원이어도 줄을 지우지 않는다"를 타입·주석으로 못 박는다. 데이터 연결은 8.4·8.5·8.6
 
-- [ ] **Task 8 — 검증: 빌드·정적 규칙** (AC: 10, 11)
-  - [ ] `cd apps/web && npx tsc --noEmit` → 0
-  - [ ] `cd apps/web && npm run lint` → 0 errors · 0 warnings (현재 베이스라인, A-E456-5 — 늘어나면 이 스토리가 깬 것)
-  - [ ] **백엔드 무변경의 1차 증거는 `git diff --stat`에 `apps/api` 경로가 0건인 것이다.** 이 스토리는 `apps/api`를 열지 않으므로 이것으로 충분하다
+- [x] **Task 8 — 검증: 빌드·정적 규칙** (AC: 10, 11)
+  - [x] `cd apps/web && npx tsc --noEmit` → 0
+  - [x] `cd apps/web && npm run lint` → 0 errors · 0 warnings (현재 베이스라인, A-E456-5 — 늘어나면 이 스토리가 깬 것)
+  - [x] **백엔드 무변경의 1차 증거는 `git diff --stat`에 `apps/api` 경로가 0건인 것이다.** 이 스토리는 `apps/api`를 열지 않으므로 이것으로 충분하다
   - [ ] `cd apps/api && uv run pytest -q` → 153 passed — **환경이 갖춰진 경우에만.** 현재 이 머신에는 `uv`도 `docker`도 PATH에 없고(pytest는 docker compose로 띄운 로컬 Postgres를 요구한다) 이 스토리는 백엔드를 건드리지 않는다. 실행하지 못했다면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — 통과했다고 쓰지 않는다
-  - [ ] `next build` 성공 — 경로 충돌(`/` 중복)·그룹 이동 후 임포트 깨짐이 여기서 잡힌다
+  - [x] `next build` 성공 — 경로 충돌(`/` 중복)·그룹 이동 후 임포트 깨짐이 여기서 잡힌다
 
 - [ ] **Task 9 — 검증: 판매자·관리자 회귀 (눈으로)** (AC: 3, 4, 8, 11) — **이 스토리의 가장 중요한 Task다**
   - [ ] 관리자 계정으로 로그인 → `/admin`·`/admin/orders`·`/admin/settings`·`/admin/lookup`·`/admin/deposits` 진입. 파랑 버튼·카드·배지·표의 **색과 레이아웃이 전과 동일**한지 확인
   - [ ] 판매자 계정으로 로그인 → `/seller`·`/seller/products`·`/seller/orders` 동일 확인
-  - [ ] `/apply`·`/terms`·`/privacy`·`/no-role`·`/login`에 **푸터가 그대로** 붙는지 확인 (사업자 정보 2줄 + 중개자 고지 + 약관·개인정보 링크)
+  - [x] `/apply`·`/terms`·`/privacy`·`/no-role`·`/login`에 **푸터가 그대로** 붙는지 확인 (사업자 정보 2줄 + 중개자 고지 + 약관·개인정보 링크)
   - [ ] 판매자·관리자 화면에서 Tab 키로 이동 → **파랑 포커스 링이 그대로** 보이는지 확인 (구매자 링이 새지 않았다는 증거)
   - [ ] 구매자 화면에서 Tab 키로 이동 → **먹색 링**이 모든 인터랙티브 요소에 보이는지, 파랑이 한 번도 나타나지 않는지 확인
-  - [ ] 브라우저 개발자도구에서 `/seller` 문서의 `<body>`에 `data-surface` 속성이 없는지, computed `--color-focus-ring`이 파랑 그대로인지 확인
+  - [x] 브라우저 개발자도구에서 `/seller` 문서의 `<body>`에 `data-surface` 속성이 없는지, computed `--color-focus-ring`이 파랑 그대로인지 확인
   - [ ] 결과를 Completion Notes에 기록한다 (단위 테스트로 대체하지 않는다)
 
 - [ ] **Task 10 — 검증: 반응형 3폭** (AC: 1, 2, 5)
-  - [ ] 390 / 768 / 1280 세 폭에서 `/`·`/cart`·`/orders`·`/me` 렌더 확인
-  - [ ] 390: 하단 탭바 56px 4탭 균등, 활성=먹색+800+굵은 선, 상단 내비 없음, 좌우 여백 20px, 그리드 2열
-  - [ ] 640~767(예: 700): 그리드 3열, 여백 20px, 아직 탭바
-  - [ ] 768: 탭바 사라지고 상단 내비 등장, 여백 32px, 본문 1080px 미만이라 가운데 정렬 효과 없음, 그리드 3열 간격 20/36
-  - [ ] 1280: 본문 1080px 가운데 정렬, 좌우 여백 100px씩 남음
+  - [x] 390 / 768 / 1280 세 폭에서 `/`·`/cart`·`/orders`·`/me` 렌더 확인
+  - [x] 390: 하단 탭바 56px 4탭 균등, 활성=먹색+800+굵은 선, 상단 내비 없음, 좌우 여백 20px, 그리드 2열
+  - [x] 640~767(예: 700): 그리드 3열, 여백 20px, 아직 탭바
+  - [x] 768: 탭바 사라지고 상단 내비 등장, 여백 32px, 본문 1080px 미만이라 가운데 정렬 효과 없음, 그리드 3열 간격 20/36
+  - [x] 1280: 본문 1080px 가운데 정렬, 좌우 여백 100px씩 남음
   - [ ] **폭을 390 ↔ 1280으로 드래그하며 바꿔도 화면이 새로 마운트되지 않는지** 확인 (자리표시 페이지에 입력 필드를 임시로 하나 두고 값을 친 뒤 폭을 바꿔 값이 남는지 본다 — 확인 후 제거)
   - [ ] 키보드만으로 탭바·상단 내비·본문을 완주 (포커스 순서가 읽기 순서를 따르고, 하단 고정 바가 먼저 걸리지 않는지)
 
 - [ ] **Task 11 — 검증: 미들웨어 (로컬 + 프로덕션, R3)** (AC: 7)
-  - [ ] 비로그인: `/` 200 · `/products/1` 200(페이지 없으면 404여도 리다이렉트가 아니면 통과 확인) · `/cart` → `/login?next=%2Fcart` · `/orders/abc` → `/login?next=%2Forders%2Fabc` · `/me` → `/login?next=%2Fme`
-  - [ ] 비로그인: `/seller`·`/admin`·`/apply` → `/login` (기존 동작 유지, `next` 없음)
-  - [ ] 판매자 로그인 후: `/admin` → `/seller` · `/seller` 통과 (기존 규칙)
-  - [ ] 관리자 로그인 후: `/admin` 통과 · `/seller` 통과 (기존 규칙)
-  - [ ] 로그인 상태로 `/cart`·`/orders`·`/me` 통과
-  - [ ] `next=https://evil.example` 같은 외부 URL이 **미들웨어가 만든 리다이렉트에는 실릴 수 없음**을 확인 (미들웨어는 `pathname`만 싣는다)
+  - [x] 비로그인: `/` 200 · `/products/1` 200(페이지 없으면 404여도 리다이렉트가 아니면 통과 확인) · `/cart` → `/login?next=%2Fcart` · `/orders/abc` → `/login?next=%2Forders%2Fabc` · `/me` → `/login?next=%2Fme`
+  - [x] 비로그인: `/seller`·`/admin`·`/apply` → `/login` (기존 동작 유지, `next` 없음)
+  - [x] 판매자 로그인 후: `/admin` → `/seller` · `/seller` 통과 (기존 규칙)
+  - [x] 관리자 로그인 후: `/admin` 통과 · `/seller` 통과 (기존 규칙)
+  - [x] 로그인 상태로 `/cart`·`/orders`·`/me` 통과
+  - [x] `next=https://evil.example` 같은 외부 URL이 **미들웨어가 만든 리다이렉트에는 실릴 수 없음**을 확인 (미들웨어는 `pathname`만 싣는다)
   - [ ] **프로덕션(Railway 프록시 뒤) 배포 후 같은 시나리오를 curl로 재확인** — 회고 R3: 쿠키·Origin·리다이렉트는 프로덕션 실요청 검증 전에는 done이 아니다. 특히 리다이렉트 `Location` 헤더가 내부 호스트가 아닌 공개 호스트인지 확인한다
 
 ## Dev Notes
@@ -414,8 +414,187 @@ export const config = { matcher: [
 
 ### Agent Model Used
 
+claude-opus-4-8[1m] (Claude Code) — 2026-07-22
+
 ### Debug Log References
+
+로컬 검증에만 쓰고 저장소에는 남기지 않은 도구 두 가지(스크래치패드에서만 실행):
+
+1. **쿠키 주입 프록시** — 보호 라우트(`/cart`·`/orders`·`/me`)를 헤드리스 캡처하려면 세션 쿠키가 필요한데
+   Chrome `--headless --screenshot`에는 쿠키를 넣을 인자가 없다. `:3002` → `:3000`으로 요청을 넘기며
+   `Cookie: slur_role=buyer`를 붙이는 20줄짜리 Node 프록시로 해결했다.
+2. **포커스 링 계측 스크립트** — 같은 프록시가 HTML에 스크립트를 주입해 `<input>`을 만들고 `focus()` 후
+   `getComputedStyle`을 읽게 했다. Task 9의 "computed 값 확인"을 자동화한 것이며 결과는 아래 Completion Notes에 있다.
 
 ### Completion Notes List
 
+#### 완료 — Task 1~8, 10(대부분), 11(로컬 전부)
+
+**Task 8 결과 (수치)**
+- `npx tsc --noEmit` → **0** (exit 0)
+- `npm run lint` → **0 errors · 0 warnings** (A-E456-5 베이스라인 유지)
+- `npx next build` → **성공**. 35개 라우트 생성, 경로 충돌 없음. **URL이 하나도 바뀌지 않았다** —
+  `/seller`·`/seller/orders`·`/seller/products`·`/seller/products/new`·`/admin`(+4)·`/apply`·`/login`·`/no-role`·`/terms`·`/privacy`
+  전부 그대로이고, 신규는 `/`·`/cart`·`/orders`·`/me` 넷뿐이다.
+- `git diff --stat`에 **`apps/api` 0건** (백엔드 무변경의 1차 증거). `app/styles/slur/` 경로도 **0건**.
+- **`cd apps/api && uv run pytest -q` → 미실행.** 사유: 이 머신 PATH에 `uv`·`docker`가 없고(pytest는
+  docker compose로 띄운 로컬 Postgres를 요구한다), 이 스토리는 `apps/api`를 한 번도 열지 않았다.
+  **통과했다고 기록하지 않는다.** 153건 통과는 CI 또는 백엔드 환경이 있는 곳에서 확인해야 한다.
+
+**정적 격리 확인 (AC 3·4)**
+- 구매자 파일(`app/(buyer)/**`·`app/styles/buyer/**`)에 `#2f6bff`·`--color-brand`·`--shadow-`·`outline: none`
+  문자열 **0건**. `box-shadow`는 D4가 파랑 링을 끊는 `box-shadow: none` **한 줄뿐**이고 나머지는 주석이다.
+  `100vh`도 주석에만 있고 실제 선언은 `100dvh`다.
+- 서빙된 `/seller` 문서에 `data-surface` **0건**, `--b-paper` **0건**. `/` 문서에는 `data-surface="buyer"` 존재.
+
+**포커스 링 — computed 값으로 증명 (AC 4, Task 9 일부)**
+같은 `<input>`을 각 표면에 넣고 `focus()` 후 계측한 결과:
+
+| | 구매자 `/` | 콘솔 `/seller` |
+|---|---|---|
+| `outline` | `rgb(31, 29, 26) solid 2px` (먹색 `#1f1d1a`) | `none` |
+| `box-shadow` | `none` | `rgba(47, 107, 255, 0.3) 0 0 0 3px` (슬러 파랑) |
+| `--color-focus-ring` | `0 0 0 3px #2f6bff4d` | `0 0 0 3px #2f6bff4d` |
+
+→ 구매자 스코프에서 먹색 outline이 서고 파랑 box-shadow가 꺼진다. 콘솔은 파랑 링 그대로다.
+→ `--color-focus-ring` 변수 값이 **양쪽에서 동일**한 것이 D1의 핵심 증거다 — 구매자는 전역 시맨틱 토큰을
+  재바인딩하지 않고 스코프 안에서 *수단*(box-shadow)만 껐다.
+
+**Task 10 — 반응형 (실제 렌더 캡처를 눈으로 확인)**
+Chrome이 최소 500px 폭을 강제해 390px은 정확히 재현되지 않는다. `<640` 구간은 **500px**으로 확인하고
+390px 고유 수치는 CSS 미디어쿼리 값과 대조했다(브레이크포인트가 640이므로 390과 500은 같은 구간이다).
+
+- **500 (=<640)**: 하단 탭바 표시·4탭 균등·활성 `홈`이 먹색+라벨 800+굵은 아이콘 선, 상단 내비 없음,
+  좌우 여백 20px, 그리드 **2열**, 카드 높이 200/168… 로 어긋난 리듬. 한글 정상 렌더.
+- **700 (640~767)**: 그리드 **3열**, 여백 **20px 유지**, **탭바 여전히 있음**, 간격 14/26 유지. 사양대로.
+- **768**: 탭바 사라지고 **상단 내비 등장**(활성 항목 먹색 800), 여백 **32px**, 그리드 3열 간격 20/36.
+  상단바가 형태와 무관하게 **로고 + 내비로 수렴**하는 것을 `/cart`에서 확인 — 768에서 `장바구니` 제목이 사라진다(AC 2).
+- **1280**: 본문 **1080px 가운데 정렬**, 좌우 100px씩 남음(카드 좌단 x=132 = 100 + padding 32).
+  `/orders`는 `m_read`로 본문만 640px 중앙(x=352), 상단바는 1080px 컨테이너를 유지.
+- `/cart`·`/orders`·`/me` 자리표시 페이지 전부 정상 표시, 각 탭이 활성으로 표시됨.
+
+**Task 11 — 미들웨어 로컬 전 시나리오 통과**
+
+| 요청 | 쿠키 | 결과 |
+|---|---|---|
+| `/` | 없음 | 200 |
+| `/products/1` | 없음 | 404 (리다이렉트 아님 = 통과) |
+| `/cart` `/checkout` `/orders` `/orders/abc` `/orders/complete` `/me` | 없음 | 307 → `/login?next=%2F…` (경로 인코딩 보존) |
+| `/seller` `/admin` `/apply` | 없음 | 307 → `/login` (**`next` 없음** — 기존 동작 유지) |
+| `/cart` `/orders` `/me` | `slur_role=buyer` | 200 |
+| `/admin` | `slur_role=seller` | 307 → `/seller` (기존 규칙 보존) |
+| `/seller` `/apply` | `slur_role=seller` | 200 |
+| `/seller` `/admin` | `slur_role=admin` | 200 |
+| `/cart?next=https://evil.example` | 없음 | `Location: /login?next=%2Fcart%3Fnext%3D…` — Location이 항상 자체 경로로 시작. 외부 URL이 실릴 수 없다 |
+
+**Task 1 — 푸터 회귀 없음 (프래그먼트 규칙 확인)**
+`/terms`·`/privacy`·`/no-role`·`/login` 네 페이지 모두 `layout_footer` 마크업이 그대로 붙는다.
+**뷰포트보다 짧은 페이지에서 푸터가 바닥에 붙는지**를 `/no-role`과 `/login`에서 눈으로 확인했다 —
+둘 다 콘텐츠가 화면 절반이고 푸터가 뷰포트 하단에 정확히 붙는다(`margin-top: auto` 살아 있음).
+
+#### 미완 — 사람이 해야 할 것
+
+- **Task 9 (판매자·관리자 회귀, 로그인 필요)** — 관리자/판매자 계정으로 실제 로그인해
+  `/admin`(+`orders`·`settings`·`lookup`·`deposits`)와 `/seller`(+`products`·`orders`)의 **색·레이아웃이
+  전과 동일한지** 눈으로 확인해야 한다. 이 머신에는 계정도 백엔드도 없어 로그인할 수 없었다.
+  대신 로그인 없이 가능한 두 항목(푸터 4페이지, `/seller`의 `data-surface` 부재 + computed `--color-focus-ring`)은
+  확인했고, 포커스 링은 위 표처럼 computed 값으로 증명했다.
+- **Task 9 — Tab 키 이동 눈 확인** (양 표면). computed 값 증명은 했으나 **실제 키보드 이동 시 링이
+  모든 인터랙티브 요소에서 보이는지**는 사람이 봐야 한다.
+- **Task 10 — 폭 드래그 시 언마운트 없음** 확인. 헤드리스로는 창 크기를 실시간으로 바꿀 수 없다.
+  구조적으로는 보장돼 있다: `app/(buyer)` 전체에 `matchMedia`·`innerWidth`·`resize` **0건**이고
+  탭바/상단 내비 전환이 전부 CSS `display`다. 다만 스토리가 요구한 "입력 필드에 값을 치고 폭을 바꿔
+  값이 남는지" 실측은 하지 않았다(임시 입력 필드를 저장소에 넣지 않기 위해서이기도 하다).
+- **Task 10 — 키보드만으로 완주.** DOM 순서(`header` → `main` → `nav.b_tabbar`)는 서빙된 HTML에서
+  확인했으므로 하단 고정 바가 먼저 걸리지 않는 것은 보장되나, 실제 Tab 순회는 사람이 해야 한다.
+- **Task 11 — 프로덕션(Railway 프록시 뒤) 재확인 (R3).** 배포 후 같은 curl 시나리오를 돌려
+  리다이렉트 `Location`이 내부 호스트가 아닌 공개 호스트인지 확인해야 한다. **이것 전에는 done이 아니다.**
+
+#### 구현 중 발견 — 스토리와 어긋났던 지점
+
+1. **`/terms`는 짧은 페이지가 아니다.** Task 1의 검증 지시가 "`/terms`처럼 콘텐츠가 짧은 페이지"라고
+   쓰여 있지만 실제 `/terms`는 뷰포트를 훨씬 넘는 긴 약관 문서라 이 페이지로는 푸터 회귀가 보이지 않는다.
+   짧은 페이지는 **`/no-role`과 `/login`**이며, 이 둘로 검증했다. (검증 의도는 그대로 충족)
+2. **`middleware.ts`는 Next 16에서 deprecated다.** 번들된 문서(`node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`)
+   첫 줄이 "The `middleware` file convention is deprecated and has been renamed to `proxy`"이고,
+   빌드 출력도 `ƒ Proxy (Middleware)`로 표시된다. 코드모드도 제공된다.
+   **이 스토리에서는 옮기지 않았다** — 스토리가 기존 세 `if`와 matcher를 문자 그대로 보존하라고 못박았고,
+   파일 이름 변경은 그 지시의 범위 밖이다. 별도 부채 항목으로 남긴다.
+3. **`page.module.css`를 함께 삭제했다.** Dev Notes 위험목록 6번의 판단 위임에 따라
+   `grep -rn "page.module" apps/web/app` → **0건**을 확인한 뒤 지웠다(`app/page.tsx` 삭제로 확실한 고아가 됨).
+4. **`npm install`이 `package-lock.json`을 건드렸다.** 이 머신의 npm이 optional 의존성의 `libc` 필드를
+   지우는 diff를 만들어, 의존성 변화가 아님을 확인하고 `git checkout`으로 되돌렸다. 락파일은 무변경이다.
+5. **`buyer-icons.tsx`가 `BUYER_NAV_ITEMS`와 `CartBadge`도 내보낸다.** D2의 파일 목록에 내비 항목 배열을
+   둘 파일이 없어서, 탭바·상단 내비·상단바 셋이 공유해야 하는 정의(Task 3의 "단일 배열 상수")를
+   아이콘과 짝지어 이 파일에 두었다. 새 파일을 만들지 않기 위한 선택이다.
+6. **셸이 레이아웃과 컴포넌트로 나뉜다.** `(buyer)/layout.tsx`는 `data-surface="buyer"` 래퍼와 CSS 임포트만
+   갖고, 상단바/`<main>`/탭바 조립은 `buyer-shell.tsx`가 한다. Next 레이아웃은 페이지에서 prop을 받을 수
+   없는데 AC 1이 `tab`·`showTabbar`를 화면별로 요구하기 때문이다. DOM 순서 요구(UX-DR6)는 셸이 지킨다.
+
+#### 후속 스토리가 반드시 이어받아야 할 것
+
+- **8.2** — `/no-role` 문구가 이제 사실과 어긋난다("구매는 SLUR 앱을 이용해 주세요"). 8.1은 화면을
+  `(console)`로 옮기기만 했고 문구는 그대로 두었다. 8.2가 고쳐야 한다.
+- **8.2** — 미들웨어가 만든 `next` 값의 **소비**(로그인 성공 후 복귀)는 8.2 소관이며, 소비 측도
+  자체 경로 여부를 다시 확인해야 한다(미들웨어는 자체 경로만 싣지만 `/login?next=`는 누구나 손으로 붙일 수 있다).
+- **8.4~8.7** — 보호 라우트 페이지는 API 401을 **자기 손으로** `/login` 처리해야 한다.
+  미들웨어 통과는 인증이 아니다(`slur_role` 14일 > `slur_access` 30분).
+- **8.7** — iOS 오버스크롤에서 흰 `body`가 비칠 수 있다(`[ASSUMPTION]`). `theme-color`와 함께 확인.
+  `env(safe-area-inset-bottom)`의 실제 값도 PWA standalone에서 의미가 커진다.
+
 ### File List
+
+**신규 (18)**
+- `apps/web/app/(buyer)/layout.tsx`
+- `apps/web/app/(buyer)/page.tsx`
+- `apps/web/app/(buyer)/buyer-shell.tsx`
+- `apps/web/app/(buyer)/buyer-topbar.tsx`
+- `apps/web/app/(buyer)/buyer-tabbar.tsx`
+- `apps/web/app/(buyer)/buyer-topnav.tsx`
+- `apps/web/app/(buyer)/buyer-icons.tsx`
+- `apps/web/app/(buyer)/brand-label.tsx`
+- `apps/web/app/(buyer)/status-label.tsx`
+- `apps/web/app/(buyer)/amount-summary.tsx`
+- `apps/web/app/(buyer)/seller-pack.tsx`
+- `apps/web/app/(buyer)/buyer.css`
+- `apps/web/app/(buyer)/cart/page.tsx`
+- `apps/web/app/(buyer)/orders/page.tsx`
+- `apps/web/app/(buyer)/me/page.tsx`
+- `apps/web/app/(console)/layout.tsx`
+- `apps/web/app/styles/buyer/tokens.css`
+- `apps/web/app/styles/buyer/type.css`
+
+**수정 (2)**
+- `apps/web/app/layout.tsx` — `SiteFooter` import·렌더 두 줄만 제거
+- `apps/web/middleware.ts` — 보호 라우트 블록 + matcher 5항목 추가 (기존 세 `if`·matcher 4항목 무변경)
+
+**삭제 (2)**
+- `apps/web/app/page.tsx` — `/`는 `(buyer)/page.tsx`가 가진다
+- `apps/web/app/page.module.css` — create-next-app 잔재, 참조 0건
+
+**이동 (`git mv`, URL 불변 — 29파일 / 7폴더)**
+- `apps/web/app/seller/**` → `apps/web/app/(console)/seller/**` (8)
+- `apps/web/app/admin/**` → `apps/web/app/(console)/admin/**` (14)
+- `apps/web/app/apply/**` → `apps/web/app/(console)/apply/**` (2)
+- `apps/web/app/login/**` → `apps/web/app/(console)/login/**` (2)
+- `apps/web/app/no-role/page.tsx` → `apps/web/app/(console)/no-role/page.tsx`
+- `apps/web/app/terms/page.tsx` → `apps/web/app/(console)/terms/page.tsx`
+- `apps/web/app/privacy/page.tsx` → `apps/web/app/(console)/privacy/page.tsx`
+
+이동한 파일 중 11개는 깨진 상대 경로를 별칭으로 바꿨다(`../logout-button` 9곳 · `../config/company` 2곳 ·
+`../styles/policy.css` 2곳 → `@/app/…`). 로직·마크업은 무변경이다.
+
+**무변경 (확인)**
+- `apps/web/app/styles/slur/**` — diff 0건
+- `apps/web/app/globals.css` · `site-footer.tsx` · `site-footer.css` · `logout-button.tsx` · `config/company.ts`
+- `apps/web/app/api/**` (BFF Route Handler, 그룹 안으로 옮기지 않음)
+- `apps/api/**` — diff 0건
+
+### Change Log
+
+| 날짜 | 변경 | 비고 |
+|---|---|---|
+| 2026-07-22 | Task 1~7 구현 (라우트 그룹 2개 분리, 구매자 토큰·타이포, 셸·탭바·상단 내비, 반응형 유틸리티, 자리표시 라우트, 미들웨어 확장, 공유 컴포넌트 4종) | D1~D6 그대로 적용 |
+| 2026-07-22 | Task 8 통과 — tsc 0 · lint 0 · next build 성공 · URL 불변 · `apps/api` diff 0건 | pytest는 미실행(환경 없음) |
+| 2026-07-22 | Task 10 반응형 500/700/768/1280 렌더 확인, Task 11 로컬 미들웨어 전 시나리오 확인 | 폭 드래그·키보드 완주·프로덕션은 미완 |
+| 2026-07-22 | Status → `in-progress` (Task 9 로그인 회귀와 Task 11 프로덕션 검증이 남음) | |
