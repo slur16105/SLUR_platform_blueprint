@@ -2,17 +2,22 @@
 
 리뷰·스토리 진행 중 이월된 항목의 로그. "지금은 안 하기로 결정"한 근거와 재개 조건을 남긴다.
 
+> **[2026-07-21 정리 규약]** 구매자 표면이 Flutter 앱 → Next.js 반응형 웹으로 전환됐다 (`_bmad-output/planning-artifacts/sprint-change-proposal-2026-07-21.md`, §5.6).
+> `apps/mobile`은 **아직 저장소에 있으며**, Story 8.8에서 보존 태그(`flutter-app-final`) 생성 후 제거될 예정이다.
+> 대상 코드가 앱에만 있던 부채는 **[소멸 2026-07-21]** 로 표시하고 사유를 남긴다 — 고쳐서 없어진 것이 아니라 **대상이 사라질 예정이라 추적을 멈추는 것**이므로 해소와 구분한다.
+> 같은 문제가 웹에서 재발할 여지가 있으면 후속 지점(Epic 8)을 한 줄로 남긴다.
+
 ## Deferred from: code review of 4-1-cart (2026-07-19)
 
 - **합산 후 총량 재고 초과 담기 policy 유지** — `apps/api/app/carts/service.py:25~46` `add_item`은 요청 수량만 술어 검증. 스토리 Completion Notes에서 policy로 확정. 4.4 주문 생성이 조건부 UPDATE로 최종 진실 보장 (`AD-4`). 담기 → 즉시 구매 불가 UX 단절은 감수
 - **variants upsert flush 순서 임시 UNIQUE 위반 위험** — `apps/api/app/products/service.py:152~174`. 판매자가 조합 A ↔ B 옵션 값 스왑 시 auto-flush 임시 상태에서 UNIQUE 위반 가능. 현재 IntegrityError를 `duplicate_variant`로 잡아 낼 수 있음(원인 메시지는 실제와 다름). 완화 시 삭제 flush 선행 필요 → 4.1 범위 밖, 별도 스토리로 승격 후보
-- **Flutter cart_screen guard() finally 무조건 invalidate** — `apps/mobile/lib/src/carts/cart_screen.dart:96~98`. 성공·실패 무관 refresh로 실패 스낵바 직후 화면 튐. 정합성 편에 서 유지. 성공 시에만 invalidate로 전환 시 오히려 서버 상태 반영 지연 리스크
+- **[소멸 2026-07-21]** ~~**Flutter cart_screen guard() finally 무조건 invalidate**~~ — `apps/mobile/lib/src/carts/cart_screen.dart:96~98`. 성공·실패 무관 refresh로 실패 스낵바 직후 화면 튐. 정합성 편에 서 유지하기로 했던 policy. 구매자 표면 반응형 웹 전환으로 대상 파일이 제거 예정(Story 8.8)이라 소멸 처리 — `sprint-change-proposal-2026-07-21.md` §5.6. **후속**: 웹 장바구니(Epic 8.4)에서 수량 변경·삭제 실패 시의 재조회가 오류 표시를 덮어쓰지 않게 할 것 — 같은 트레이드오프(정합성 vs 오류 가시성)가 그대로 재현되는 자리다
 - **[해소 2026-07-20]** ~~**IntegrityError 원인 판정 문자열 매칭 취약**~~ — `products/service.py`에 `_constraint_name()` 헬퍼 추가. asyncpg(`exc.orig.__cause__.constraint_name`)·psycopg2(`exc.orig.diag.constraint_name`) 양쪽 경로를 시도하고 `UQ_VARIANT_COMBINATION` 상수와 대조. 이름을 못 얻으면 기존 문자열 매칭으로 안전 폴백. `test_variants.py::test_duplicate_combo_422`에 `code == "duplicate_variant"` 단언 추가로 봉인
 - **[해소 2026-07-20]** ~~**담기 합산·캡의 race 테스트 부재**~~ — `test_carts.py::test_concurrent_add_is_atomic`(gather×10, 3개씩 → 1행·수량 30)·`test_concurrent_add_respects_cap`(gather×10, 200개씩 → 999 캡) 추가. 행 수는 API 응답이 아닌 DB 직접 조회로 검증. 기존 구현(ON CONFLICT DO UPDATE + LEAST) 그대로 통과
 - **Alembic downgrade가 cart_items를 drop만 함** — `apps/api/alembic/versions/7fceea006abe_cart_items.py:41~46`. 프로덕션 롤백 시 카트 데이터 유실. 일반 alembic 관행이며 v1 완주엔 지장 없음
-- **AD-13: `999` 리터럴 4곳 확산** — `carts/service.py:16`, `carts/models.py:22`, `carts/schemas.py:8,12`, `cart_screen.dart:140,144`, `product_detail_screen.dart:116`. 스토리 스펙이 "1~999 서버·클라 양쪽 강제"로 고정했으므로 v1 지장 없음. 블루프린트 추출 시 `core/config`로 승격
+- **AD-13: `999` 리터럴 4곳 확산** — `carts/service.py:16`, `carts/models.py:22`, `carts/schemas.py:8,12` (앱 측 ~~`cart_screen.dart:140,144`·`product_detail_screen.dart:116`~~은 2026-07-21 전환으로 소멸 — 단 **같은 상한이 웹 장바구니·상품상세에 다시 놓이므로 확산 자체는 해소되지 않는다**). 스토리 스펙이 "1~999 서버·클라 양쪽 강제"로 고정했으므로 v1 지장 없음. 블루프린트 추출 시 `core/config`로 승격
 - **[해소 2026-07-20]** ~~**RefreshIndicator future await 형식**~~ — `cart_screen.dart`·`screens/home_screen.dart`(앱 전체 grep으로 동일 안티패턴 1건 추가 발견) 두 곳을 `onRefresh: () => ref.refresh(...)` 형태로 교체 — Future를 그대로 반환해 RefreshIndicator가 직접 await한다. 블록 형식(`() async { await ... }`)은 `ref.refresh`의 `@useResult` 때문에 `unused_result` 경고가 나서 채택하지 않음. `flutter analyze` 0 (기존 order_history/order_detail의 블록 형식은 자체 메서드 호출이라 무관·유지)
-- **사용자 이탈 후 API 실패 시 스낵바 유실** — `cart_screen.dart:92~95`. `context.mounted == false`면 오류 표시 없이 무음. 로깅·재시도 큐 후속
+- **[소멸 2026-07-21]** ~~**사용자 이탈 후 API 실패 시 스낵바 유실**~~ — `cart_screen.dart:92~95`. `context.mounted == false`면 오류 표시 없이 무음. 앱 제거 예정(Story 8.8)으로 소멸 — `sprint-change-proposal-2026-07-21.md` §5.6. **후속**: 웹 장바구니에서도 화면을 떠난 뒤의 실패가 무음이 되지 않도록, EXPERIENCE.md의 `네트워크 실패`(문장형 한국어 메시지 + 재시도 수단, HTTP 코드 미노출) 규칙을 Epic 8.4에서 적용
 - **[해소 2026-07-20]** ~~**PATCH `quantity=1000` 방어 테스트 부재**~~ — `test_carts.py::test_patch_quantity_bounds` 추가. 1000·0·-1 → 422, 경계값 1·999 → 200으로 상한이 내려가지 않았음도 함께 봉인
 - **variants upsert exact 매칭 — 대소문자·strip 이후 남는 공백만 다르면 SET NULL 조용한 소멸** — `apps/api/app/products/service.py:158`. UX 가이드(대소문자 표기 통일) + 판매자 저장 시 정규화 후속
 
@@ -74,9 +79,9 @@
 
 ## Deferred from: Epic 6 (2026-07-20) — 실서비스 오픈 게이트 항목
 
-- **사업자 실정보 교체** — 웹 `app/config/company.ts`·앱 `lib/src/config/company.dart` placeholder → 실값 (상호·대표·사업자번호·통판신고·주소·연락처·이메일)
+- **사업자 실정보 교체 (오픈 게이트 — 유지)** — 웹 `app/config/company.ts` placeholder → 실값 (상호·대표·사업자번호·통판신고·주소·연락처·이메일). 앱 ~~`lib/src/config/company.dart`~~ 부분은 2026-07-21 전환으로 소멸(앱 제거 예정, `sprint-change-proposal-2026-07-21.md` §5.6). **웹 항목은 그대로 오픈 게이트다** — 구매자 웹의 상품상세·주문서·내 정보에도 같은 값이 노출되므로 노출 면이 오히려 넓어진다 (EXPERIENCE.md 법적 고지 배치 규칙: 현재 화면에 `임시 정보` 태그 표기)
 - **약관·개인정보처리방침 법률 검토** — 현재 초안 배너 명시 상태. 청약철회·환불 규정 확정 조항 포함
-- **웹 커스텀 도메인 → 앱 WEB_BASE_URL 주입 갱신**
+- **[소멸 2026-07-21]** ~~**웹 커스텀 도메인 → 앱 WEB_BASE_URL 주입 갱신**~~ — 앱이 약관·개인정보처리방침 등 웹 페이지를 열기 위해 필요했던 주입이다. 구매자 표면이 웹으로 단일화되어(AD-14) 앱→웹 링크 주입 대상 자체가 없어지므로 소멸 — `sprint-change-proposal-2026-07-21.md` §5.6. (커스텀 도메인 연결 자체는 이 항목의 범위가 아니었다)
 - (기존 게이트 항목: PG 연동·정산, 도서산간 목록 공식 대조, CONCURRENTLY 인덱스, 모니터링)
 
 ## Deferred from: lint 베이스라인 정리 (2026-07-20, A-E456-5)
