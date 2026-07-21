@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-21  # 코스 코렉션 승인 — Epic 8(구매자 반응형 웹 전환) 신설
+last_updated: 2026-07-21  # Story 8.1 스토리 파일 생성 — Epic 8 착수
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -113,8 +113,8 @@ development_status:
   #   (2) PWA(manifest·service worker)는 화면 구현이 끝난 뒤에 얹는 마감 작업이라 첫 스토리에 둘 이유가 없다 —
   #       내 정보(/me, FR-31·33)와 함께 8.7로 내렸다.
   # 정본 정의: epics.md "Epic 8: 구매자 반응형 웹 전환 (PWA)" 절.
-  epic-8: backlog
-  8-1-buyer-web-shell: backlog        # 구매자 웹 셸·반응형 기반 (탭바/상단 내비, 구매자 팔레트·먹색 포커스 링, / 라우트 전환, 미들웨어 공개·보호 구분)
+  epic-8: in-progress
+  8-1-buyer-web-shell: ready-for-dev  # 구매자 웹 셸·반응형 기반 (탭바/상단 내비, 구매자 팔레트·먹색 포커스 링, / 라우트 전환, 미들웨어 공개·보호 구분)
   8-2-buyer-auth-web: backlog         # 구매자 가입·로그인 (FR-1·2·4, 카카오 웹 인가코드, 역할 쿠키 buyer 도입 + 판매자·관리자 회귀 확인)
   8-3-buyer-product-browse-web: backlog  # 상품목록·상품상세 (FR-8~13·32·34)
   8-4-cart-web: backlog               # 장바구니 (FR-14·35)
