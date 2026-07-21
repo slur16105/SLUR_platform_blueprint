@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>SLUR 구매자 모바일 웹 — 시안 B · 매거진</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   시안 B · 매거진  —  핵심 hex
+
+   종이 배경(프레임 안)   #faf8f4
+   종이 그늘 / 면 구분     #f2eee6
+   먹색 텍스트            #1f1d1a
+   보조 텍스트            #6a645c
+   흐린 텍스트 / 캡션      #9c968c
+   선(hairline)          #e3ded4
+   액센트 벽돌빛          #8c4a32   (링크·선택·가격·품절 경고에만 소량)
+   액센트 연한 벽돌       #f1e5df
+   프레임 밖 중립 회색     #d5d3cf  /  라벨 회색 #7d7a75
+
+   사진 자리(따뜻한 저채도):
+   머그 #e9d7c6 / 스툴 #ded4c4 / 촛대 #e0dacd
+   테이블보 #e5e3d9 / 조명 #e7ddcb / 문진 #dedad3
+   ───────────────────────────────────────────────────────────── */
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  background:#d5d3cf;color:#1f1d1a;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-0.01em;
+}
+
+/* ── 페이지 헤더 ───────────────────────────────── */
+.page-head{max-width:1234px;margin:0 auto;padding:34px 0 26px}
+.page-head .tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.16em;
+  color:#8c4a32;background:#f1e5df;padding:5px 10px;border-radius:3px;margin-bottom:12px;
+}
+.page-head h1{font-size:30px;font-weight:800;letter-spacing:-0.02em;color:#1f1d1a}
+.page-head h1 span{color:#7d7a75;font-weight:600}
+.page-head p{
+  margin-top:12px;max-width:760px;font-size:13.5px;line-height:1.85;color:#3c3934;
+}
+.page-head .trade{
+  margin-top:10px;max-width:760px;font-size:12.5px;line-height:1.8;color:#5f5b55;
+  border-left:2px solid #8c4a32;padding-left:12px;
+}
+.swatches{display:flex;gap:6px;margin-top:16px;align-items:center}
+.sw{width:26px;height:26px;border-radius:3px;border:1px solid rgba(31,29,26,.12)}
+.sw-l{font-size:10.5px;letter-spacing:.1em;color:#7d7a75;margin-right:4px;font-weight:700}
+
+/* ── 프레임 배치 ───────────────────────────────── */
+.stage{max-width:1234px;margin:0 auto;padding:0 0 60px;display:flex;gap:32px;align-items:flex-start}
+.slot{width:390px}
+.slot-label{
+  display:flex;align-items:baseline;gap:8px;margin-bottom:10px;padding-left:2px;
+}
+.slot-label b{font-size:14px;font-weight:800;letter-spacing:-0.01em;color:#2c2a26}
+.slot-label i{font-style:normal;font-size:10.5px;letter-spacing:.14em;font-weight:700;color:#8e8b85}
+
+.frame{
+  width:390px;background:#faf8f4;border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 16px rgba(31,29,26,.16);
+  display:flex;flex-direction:column;position:relative;
+}
+
+/* ── 공통 부품 ─────────────────────────────────── */
+.topbar{
+  height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;border-bottom:1px solid #e3ded4;background:#faf8f4;
+}
+.logo{font-size:19px;font-weight:800;letter-spacing:.22em;color:#1f1d1a}
+.tb-title{font-size:15px;font-weight:700;letter-spacing:.02em}
+.icon-back{width:22px;height:22px;position:relative}
+.icon-back::before{
+  content:"";position:absolute;left:6px;top:5px;width:11px;height:11px;
+  border-left:1.6px solid #1f1d1a;border-bottom:1.6px solid #1f1d1a;transform:rotate(45deg);
+}
+.icon-cart{width:24px;height:24px;position:relative}
+.icon-cart::before{ /* 바구니 */
+  content:"";position:absolute;left:2px;top:8px;width:20px;height:13px;
+  border:1.5px solid #1f1d1a;border-radius:1px 1px 4px 4px;
+}
+.icon-cart::after{ /* 손잡이 */
+  content:"";position:absolute;left:7px;top:2px;width:10px;height:10px;
+  border:1.5px solid #1f1d1a;border-bottom:none;border-radius:5px 5px 0 0;
+}
+.badge{
+  position:absolute;right:-7px;top:-6px;min-width:17px;height:17px;border-radius:9px;
+  background:#8c4a32;color:#faf8f4;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0;
+  border:1.5px solid #faf8f4;
+}
+.icon-cart{margin-right:6px;margin-top:4px}
+
+.brandline{ /* 브랜드 라벨 — 상품명보다 먼저 읽힌다 */
+  font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#1f1d1a;
+}
+.brandline.sm{font-size:11px;letter-spacing:.15em;font-weight:800}
+.dtl .brandline{font-size:11.5px;letter-spacing:.17em}
+.won{font-variant-numeric:tabular-nums}
+
+.hair{height:1px;background:#e3ded4}
+
+/* ── 사진 자리(그라디언트 실루엣) ──────────────── */
+.ph{position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;border-radius:4px}
+.ph .shape{position:relative;width:160px;height:160px;transform-origin:center bottom}
+.ph-mug   {background:linear-gradient(160deg,#f0e1d2 0%,#e9d7c6 55%,#dcc6b1 100%)}
+.ph-stool {background:linear-gradient(160deg,#e8e0d2 0%,#ded4c4 60%,#cfc3af 100%)}
+.ph-cand  {background:linear-gradient(160deg,#eae5da 0%,#e0dacd 60%,#d1c9b8 100%)}
+.ph-cloth {background:linear-gradient(160deg,#eeece3 0%,#e5e3d9 60%,#d6d4c7 100%)}
+.ph-lamp  {background:linear-gradient(160deg,#f0e8d9 0%,#e7ddcb 60%,#d8ccb4 100%)}
+.ph-weight{background:linear-gradient(160deg,#e8e5df 0%,#dedad3 60%,#cdc9c1 100%)}
+
+/* 1. 유광 도자 머그 */
+.mug-body{position:absolute;left:38px;bottom:14px;width:74px;height:82px;
+  background:linear-gradient(100deg,#dcb69a 0%,#c99a79 46%,#b9865f 78%,#c9a082 100%);
+  border-radius:6px 6px 22px 22px}
+.mug-rim{position:absolute;left:36px;bottom:88px;width:78px;height:16px;border-radius:50%;
+  background:linear-gradient(180deg,#e6c8ae,#c99a79)}
+.mug-rim-in{position:absolute;left:44px;bottom:91px;width:62px;height:9px;border-radius:50%;
+  background:#a8764f}
+.mug-handle{position:absolute;left:104px;bottom:36px;width:34px;height:40px;
+  border:10px solid #c1906e;border-radius:0 20px 20px 0;border-left:none;background:transparent}
+.mug-gloss{position:absolute;left:50px;bottom:30px;width:8px;height:52px;border-radius:5px;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0))}
+.mug-shadow{position:absolute;left:30px;bottom:8px;width:92px;height:12px;border-radius:50%;
+  background:rgba(120,90,66,.16)}
+
+/* 2. 소반 스툴 */
+.st-top{position:absolute;left:16px;bottom:74px;width:128px;height:22px;border-radius:50%;
+  background:linear-gradient(180deg,#c2a686,#a98c6c)}
+.st-edge{position:absolute;left:16px;bottom:66px;width:128px;height:20px;border-radius:0 0 60px 60px;
+  background:linear-gradient(180deg,#a98c6c,#8e7355)}
+.st-leg{position:absolute;bottom:14px;width:9px;height:58px;border-radius:2px;
+  background:linear-gradient(180deg,#a98c6c,#846c50)}
+.st-l1{left:32px;transform:rotate(9deg)}
+.st-l2{left:76px}
+.st-l3{left:120px;transform:rotate(-9deg)}
+.st-bar{position:absolute;left:34px;bottom:34px;width:92px;height:6px;border-radius:3px;
+  background:#9a7f5f}
+.st-shadow{position:absolute;left:22px;bottom:8px;width:116px;height:11px;border-radius:50%;
+  background:rgba(110,90,66,.15)}
+
+/* 3. 황동 촛대 세트 (2개) */
+.cd{position:absolute;bottom:14px}
+.cd-stem{position:absolute;bottom:0;left:50%;margin-left:-4px;width:8px;border-radius:2px;
+  background:linear-gradient(90deg,#8f6f34,#cfae67 40%,#a98543 100%)}
+.cd-base{position:absolute;bottom:0;left:50%;width:44px;height:11px;margin-left:-22px;border-radius:50%;
+  background:linear-gradient(180deg,#cfae67,#987629)}
+.cd-cup{position:absolute;left:50%;width:26px;height:9px;margin-left:-13px;border-radius:50%;
+  background:linear-gradient(180deg,#dcbe7c,#a3801f)}
+.cd-knob{position:absolute;left:50%;width:18px;height:10px;margin-left:-9px;border-radius:50%;
+  background:linear-gradient(180deg,#d2b06a,#9d7c33)}
+.cd-candle{position:absolute;left:50%;width:9px;margin-left:-4.5px;border-radius:2px 2px 0 0;
+  background:linear-gradient(90deg,#efe7d6,#fbf7ee 50%,#e2d8c2)}
+.cd-a{left:34px;height:108px;width:60px}
+.cd-b{left:92px;height:80px;width:60px}
+.cd-shadow{position:absolute;left:26px;bottom:9px;width:112px;height:11px;border-radius:50%;
+  background:rgba(120,100,50,.14)}
+
+/* 4. 리넨 테이블보 */
+.cl-body{position:absolute;left:22px;bottom:20px;width:116px;height:98px;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.30) 0 2px,rgba(0,0,0,0) 2px 6px),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.045) 0 2px,rgba(0,0,0,0) 2px 6px),
+    linear-gradient(170deg,#dcdccd 0%,#cbcbb9 60%,#bcbca8 100%);
+  border-radius:2px 2px 10px 10px;
+  clip-path:polygon(0 0,100% 0,100% 86%,88% 100%,72% 88%,56% 100%,40% 88%,24% 100%,10% 88%,0 98%);
+}
+.cl-fold{position:absolute;left:70px;bottom:24px;width:1.5px;height:92px;background:rgba(0,0,0,.10)}
+.cl-fold2{position:absolute;left:44px;bottom:26px;width:1.5px;height:88px;background:rgba(0,0,0,.06)}
+.cl-corner{position:absolute;left:92px;bottom:34px;width:40px;height:52px;transform:rotate(-9deg);
+  background:linear-gradient(150deg,rgba(240,240,230,.92),rgba(203,203,185,.92));
+  border-radius:2px 2px 14px 3px;
+  clip-path:polygon(0 0,100% 0,100% 88%,52% 100%,0 90%)}
+.cl-shadow{position:absolute;left:24px;bottom:14px;width:112px;height:10px;border-radius:50%;
+  background:rgba(110,110,90,.13)}
+
+/* 5. 라탄 조명 */
+.lp-cord{position:absolute;left:79px;top:0;width:2px;height:34px;background:#8b7855}
+.lp-shade{position:absolute;left:26px;top:32px;width:108px;height:74px;
+  background:
+    repeating-linear-gradient(90deg,rgba(90,66,30,.20) 0 1.5px,rgba(0,0,0,0) 1.5px 8px),
+    repeating-linear-gradient(0deg,rgba(90,66,30,.16) 0 1.5px,rgba(0,0,0,0) 1.5px 9px),
+    linear-gradient(180deg,#d8b87e 0%,#c39f61 60%,#ab8646 100%);
+  border-radius:56px 56px 8px 8px / 46px 46px 8px 8px;
+}
+.lp-rim{position:absolute;left:24px;top:100px;width:112px;height:14px;border-radius:50%;
+  background:linear-gradient(180deg,#b5904f,#a07c3c)}
+.lp-glow{position:absolute;left:44px;top:106px;width:72px;height:44px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,229,168,.85),rgba(255,229,168,0) 70%)}
+
+/* 6. 종이 문진 */
+.pw-paper{position:absolute;left:26px;bottom:22px;width:106px;height:74px;transform:rotate(-4deg);
+  background:linear-gradient(160deg,#fbf9f4,#eae6dd);border-radius:1px}
+.pw-paper2{position:absolute;left:32px;bottom:28px;width:106px;height:70px;transform:rotate(3deg);
+  background:linear-gradient(160deg,#fdfbf7,#efece4);border-radius:1px}
+.pw-line{position:absolute;left:44px;width:74px;height:1.5px;background:rgba(31,29,26,.13)}
+.pw-stone{position:absolute;left:52px;bottom:52px;width:58px;height:30px;
+  border-radius:30px 30px 5px 5px;
+  background:linear-gradient(165deg,#a6a29a 0%,#8b877f 55%,#726e67 100%)}
+.pw-stone-hl{position:absolute;left:62px;bottom:70px;width:20px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.35)}
+.pw-shadow{position:absolute;left:44px;bottom:48px;width:76px;height:9px;border-radius:50%;
+  background:rgba(60,56,50,.16)}
+
+/* ── 1) 상품목록 ───────────────────────────────── */
+.chips{
+  display:flex;gap:7px;padding:12px 20px 13px;border-bottom:1px solid #e3ded4;
+  overflow:hidden;white-space:nowrap;position:relative;background:#faf8f4;
+}
+.chips::after{
+  content:"";position:absolute;right:0;top:0;bottom:0;width:34px;
+  background:linear-gradient(90deg,rgba(250,248,244,0),#faf8f4 72%);
+}
+.chip{
+  flex:0 0 auto;font-size:12.5px;font-weight:600;color:#5f5b55;
+  border:1px solid #ded8cc;border-radius:999px;padding:6px 13px;background:transparent;
+}
+.chip.on{background:#1f1d1a;border-color:#1f1d1a;color:#faf8f4;font-weight:700}
+
+.curation{padding:26px 20px 20px}
+.curation .eyebrow{
+  font-size:10px;font-weight:800;letter-spacing:.2em;color:#8c4a32;margin-bottom:9px;
+}
+.curation h2{font-size:25px;font-weight:800;letter-spacing:-0.03em;line-height:1.32;color:#1f1d1a}
+.curation .meta{margin-top:11px;font-size:11.5px;color:#9c968c;letter-spacing:.02em}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:26px 14px;padding:6px 20px 30px;align-items:start}
+.card .ph{width:100%}
+.card .cap{padding-top:11px}
+.card .name{font-size:13px;font-weight:400;color:#605b53;margin-top:7px;letter-spacing:-0.01em;line-height:1.4}
+.card .price{font-size:13px;font-weight:800;color:#1f1d1a;margin-top:7px}
+.card.out .ph{filter:saturate(.45) brightness(1.04)}
+.card.out .name,.card.out .price{color:#9c968c}
+.card.out .brandline{color:#7d7a75}
+.card.out .price{font-weight:600;text-decoration:line-through;text-decoration-color:#c4bfb6}
+.soldtag{
+  position:absolute;left:9px;top:9px;z-index:2;
+  background:#1f1d1a;color:#faf8f4;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  padding:3px 7px;border-radius:2px;
+}
+/* 밀도 한계를 숨기지 않는 주석선 */
+.foldline{position:absolute;left:0;right:0;top:844px;z-index:5;pointer-events:none}
+.foldline .ln{border-top:1px dashed rgba(140,74,50,.5)}
+.foldline .lb{
+  position:absolute;right:10px;top:3px;font-size:8.5px;letter-spacing:.08em;
+  color:rgba(140,74,50,.9);font-weight:700;background:#faf8f4;padding:2px 5px;border-radius:2px;
+}
+/* 위에서 본 머그 컷(썸네일용) */
+.mug-top{position:absolute;left:36px;bottom:36px;width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(145deg,#e2bda2,#c2916f)}
+.mug-top-in{position:absolute;left:48px;bottom:48px;width:64px;height:64px;border-radius:50%;
+  background:linear-gradient(145deg,#b0805c,#96684a)}
+
+/* ── 2) 상품상세 ───────────────────────────────── */
+.hero{height:330px;width:100%;border-radius:0}
+.hero .shape{transform:scale(1.42) translateY(-6px)}
+.thumbs{display:flex;gap:7px;padding:12px 20px 0}
+.thumbs .ph{width:52px;height:52px;flex:0 0 52px;border:1px solid #e3ded4}
+.thumbs .ph.sel{border:1.6px solid #8c4a32}
+.thumbs .shape{transform:scale(.30)}
+.dtl{padding:22px 20px 0}
+.dtl .brandline{margin-bottom:9px}
+.dtl h2{font-size:23px;font-weight:800;letter-spacing:-0.03em;line-height:1.3}
+.dtl .price{font-size:20px;font-weight:800;color:#8c4a32;margin-top:12px;letter-spacing:-0.02em}
+.dtl .desc{margin-top:16px;font-size:13px;line-height:1.85;color:#4d4942;letter-spacing:-0.01em}
+
+.sec{padding:22px 20px}
+.sec-h{
+  font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#8e8b85;margin-bottom:13px;
+}
+.axis{margin-bottom:15px}
+.axis .lb{font-size:11.5px;color:#6a645c;margin-bottom:8px;font-weight:600}
+.opts{display:flex;gap:7px;flex-wrap:wrap}
+.opt{
+  font-size:12.5px;font-weight:600;color:#3c3934;border:1px solid #ded8cc;background:#fff;
+  padding:8px 15px;border-radius:4px;letter-spacing:-0.01em;
+}
+.opt.on{background:#1f1d1a;border-color:#1f1d1a;color:#faf8f4;font-weight:700}
+.opt .sub{font-size:10px;color:#8c4a32;font-weight:700;margin-left:5px;letter-spacing:.02em}
+
+.combos{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px}
+.combo{
+  border:1px solid #e3ded4;border-radius:4px;padding:9px 10px;background:#fff;
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+}
+.combo span{font-size:12px;color:#3c3934;letter-spacing:-0.01em}
+.combo.sel{border-color:#8c4a32;background:#faf1ec}
+.combo.sel span{color:#8c4a32;font-weight:700}
+.combo.sel .mark{font-size:10px;font-weight:800;color:#8c4a32;letter-spacing:.06em}
+.combo.dis{background:#f2eee6;border-color:#e8e3da}
+.combo.dis span{color:#adA79d;color:#ada79d;text-decoration:line-through;text-decoration-color:#c9c3b9}
+.combo.dis .mark{
+  font-size:9.5px;font-weight:700;color:#faf8f4;background:#9c968c;
+  padding:2px 5px;border-radius:2px;letter-spacing:.06em;text-decoration:none;
+}
+.combo-note{margin-top:10px;font-size:11px;color:#9c968c;line-height:1.6}
+
+.rowline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0}
+.rowline dt,.rowline .k{font-size:11.5px;color:#8e8b85;flex:0 0 112px;letter-spacing:.01em;white-space:nowrap}
+.rowline dd,.rowline .v{font-size:12.5px;color:#2c2a26;text-align:right;flex:1;letter-spacing:-0.01em}
+.ship .v{font-weight:600}
+.ship .v em{font-style:normal;color:#8e8b85;font-weight:400;font-size:11.5px}
+
+.seller-h{display:flex;align-items:center;justify-content:space-between;cursor:default}
+.caret{width:11px;height:11px;position:relative}
+.caret::before{
+  content:"";position:absolute;left:0;top:2px;width:8px;height:8px;
+  border-left:1.5px solid #6a645c;border-top:1.5px solid #6a645c;transform:rotate(45deg);
+}
+.seller-body{margin-top:13px;border:1px solid #e3ded4;border-radius:4px;padding:14px 13px;background:#f7f4ee}
+.notice{
+  margin-top:14px;font-size:11px;line-height:1.75;color:#7d7a75;
+  border-top:1px solid #e3ded4;padding-top:13px;letter-spacing:-0.005em;
+}
+
+/* ── 3) 장바구니 ───────────────────────────────── */
+.cart-body{padding:6px 0 0}
+.group{padding:20px 20px 18px}
+.group + .group{border-top:1px solid #e3ded4}
+.group-h{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.chk{
+  width:16px;height:16px;border-radius:3px;border:1.4px solid #1f1d1a;background:#1f1d1a;
+  position:relative;flex:0 0 16px;
+}
+.chk::after{
+  content:"";position:absolute;left:4.5px;top:2px;width:5px;height:9px;
+  border-right:1.8px solid #faf8f4;border-bottom:1.8px solid #faf8f4;transform:rotate(42deg);
+}
+.chk.off{background:#fff;border-color:#d5cfc4}
+.chk.off::after{display:none}
+.group-h .ship{margin-left:auto;font-size:11px;color:#8e8b85;letter-spacing:.01em}
+.group-h .ship b{color:#3c3934;font-weight:700}
+
+.citem{display:flex;gap:12px}
+.citem .ph{width:74px;height:74px;flex:0 0 74px;border:1px solid #e6e1d8}
+.citem .shape{transform:scale(.42)}
+.citem .info{flex:1;min-width:0}
+.citem .nm{font-size:13px;font-weight:600;color:#2c2a26;margin-top:5px;letter-spacing:-0.01em}
+.citem .op{font-size:11.5px;color:#8e8b85;margin-top:4px}
+.citem .pr{font-size:14px;font-weight:800;margin-top:9px;letter-spacing:-0.02em}
+.qtyrow{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+.qty{display:flex;align-items:center;border:1px solid #ded8cc;border-radius:4px;overflow:hidden}
+.qty b{width:28px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:#3c3934}
+.qty i{width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:13px;color:#6a645c;background:#f7f4ee}
+.del{font-size:11.5px;color:#8e8b85;text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:#cdc7bc}
+
+.group.dead .ph{filter:grayscale(.85) brightness(1.06)}
+.group.dead .nm,.group.dead .op,.group.dead .pr{color:#a8a29a}
+.group.dead .brandline{color:#a8a29a}
+.group.dead .qty{opacity:.5}
+.group.dead .pr{text-decoration:line-through;text-decoration-color:#cdc7bc;font-weight:600}
+.deadtag{
+  display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.09em;
+  color:#8c4a32;background:#f1e5df;padding:3px 7px;border-radius:2px;
+}
+.deadnote{
+  margin-top:12px;font-size:11.5px;color:#8c4a32;background:#faf1ec;border-radius:3px;
+  padding:9px 11px;line-height:1.55;
+}
+
+.summary{padding:20px 20px 4px;border-top:8px solid #f2eee6}
+.sum-r{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;color:#6a645c}
+.sum-r .v{color:#2c2a26;font-weight:600}
+.sum-total{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:12px;padding-top:14px;border-top:1px solid #e3ded4;
+}
+.sum-total .k{font-size:13px;font-weight:700;color:#1f1d1a}
+.sum-total .v{font-size:21px;font-weight:800;color:#8c4a32;letter-spacing:-0.02em}
+
+/* ── 하단 고정 바 ──────────────────────────────── */
+.bottombar{
+  position:sticky;bottom:0;background:#faf8f4;border-top:1px solid #e3ded4;
+  padding:13px 20px 20px;display:flex;gap:9px;margin-top:auto;
+}
+.btn{
+  flex:1;text-align:center;padding:15px 0;border-radius:4px;font-size:14px;font-weight:700;
+  letter-spacing:-0.01em;
+}
+.btn-ghost{border:1.4px solid #1f1d1a;color:#1f1d1a;background:transparent}
+.btn-solid{background:#1f1d1a;color:#faf8f4}
+.spacer{height:26px}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="tag">DIRECTION B</div>
+  <h1>B · 매거진 <span>— 큐레이션이 먼저 읽히는 지면</span></h1>
+  <p>
+    SLUR가 파는 것은 물건 이전에 <b>선별</b>이므로, 화면의 첫 문장은 상품이 아니라 “이번 주 무엇을 골랐는가”가 되게 했다.
+    브랜드명을 상품명보다 작지만 더 강하게(굵기·자간) 세우고, 카드마다 이미지 비율을 달리해 편집숍 지면의 리듬을 만든다.
+    종이 같은 오프화이트(#faf8f4)와 먹색(#1f1d1a) 한 벌에 흙빛 액센트(#8c4a32)만 소량 — 파랑을 쓰지 않는 쪽의 얼굴이다.
+  </p>
+  <p class="trade">
+    감출 수 없는 약점: 정보 밀도가 중간이다. 첫 화면(844px)에 상품이 네 개 남짓 들어오고, 상품이 수십 개로 늘면 탐색이 느려진다.
+    목록 프레임에 첫 화면이 끝나는 지점을 점선으로 그려 이 한계를 그대로 보이게 두었다.
+  </p>
+  <div class="swatches">
+    <span class="sw-l">PALETTE</span>
+    <span class="sw" style="background:#faf8f4"></span>
+    <span class="sw" style="background:#f2eee6"></span>
+    <span class="sw" style="background:#e3ded4"></span>
+    <span class="sw" style="background:#9c968c"></span>
+    <span class="sw" style="background:#6a645c"></span>
+    <span class="sw" style="background:#1f1d1a"></span>
+    <span class="sw" style="background:#8c4a32"></span>
+    <span class="sw" style="background:#f1e5df"></span>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ══════════ 1) 상품목록 ══════════ -->
+  <div class="slot">
+    <div class="slot-label"><b>상품목록</b><i>LIST</i></div>
+    <div class="frame">
+      <div class="foldline"><div class="ln"></div><div class="lb">첫 화면 끝 · 844px</div></div>
+
+      <div class="topbar">
+        <div class="logo">SLUR</div>
+        <div class="icon-cart"><span class="badge">3</span></div>
+      </div>
+
+      <div class="chips">
+        <div class="chip on">전체</div>
+        <div class="chip">오브제</div>
+        <div class="chip">테이블웨어</div>
+        <div class="chip">조명</div>
+        <div class="chip">문구</div>
+        <div class="chip">패브릭</div>
+      </div>
+
+      <div class="curation">
+        <div class="eyebrow">큐레이션</div>
+        <h2>이번 주,<br>손이 자주 가는 것들</h2>
+        <div class="meta">여섯 곳의 브랜드 · 6개 품목</div>
+      </div>
+
+      <div class="grid">
+        <!-- 1 유광 도자 머그 -->
+        <div class="card">
+          <div class="ph ph-mug" style="height:212px">
+            <div class="shape">
+              <div class="mug-shadow"></div><div class="mug-handle"></div>
+              <div class="mug-body"></div><div class="mug-rim"></div>
+              <div class="mug-rim-in"></div><div class="mug-gloss"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">토림도예</div>
+            <div class="name">유광 도자 머그</div>
+            <div class="price won">32,000원</div>
+          </div>
+        </div>
+
+        <!-- 2 소반 스툴 -->
+        <div class="card">
+          <div class="ph ph-stool" style="height:168px">
+            <div class="shape" style="transform:scale(.92) translateY(6px)">
+              <div class="st-shadow"></div>
+              <div class="st-leg st-l1"></div><div class="st-leg st-l3"></div>
+              <div class="st-leg st-l2"></div><div class="st-bar"></div>
+              <div class="st-edge"></div><div class="st-top"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">무연</div>
+            <div class="name">소반 스툴</div>
+            <div class="price won">168,000원</div>
+          </div>
+        </div>
+
+        <!-- 3 황동 촛대 세트 (품절) -->
+        <div class="card out">
+          <div class="ph ph-cand" style="height:166px">
+            <div class="soldtag">품절</div>
+            <div class="shape" style="transform:scale(.92) translateY(6px)">
+              <div class="cd-shadow"></div>
+              <div class="cd cd-a">
+                <div class="cd-stem" style="height:72px"></div>
+                <div class="cd-base"></div>
+                <div class="cd-knob" style="bottom:34px"></div>
+                <div class="cd-cup" style="bottom:68px"></div>
+                <div class="cd-candle" style="bottom:74px;height:34px"></div>
+              </div>
+              <div class="cd cd-b">
+                <div class="cd-stem" style="height:50px"></div>
+                <div class="cd-base"></div>
+                <div class="cd-knob" style="bottom:24px"></div>
+                <div class="cd-cup" style="bottom:46px"></div>
+                <div class="cd-candle" style="bottom:52px;height:28px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">곳간</div>
+            <div class="name">황동 촛대 세트</div>
+            <div class="price won">89,000원</div>
+          </div>
+        </div>
+
+        <!-- 4 리넨 테이블보 -->
+        <div class="card">
+          <div class="ph ph-cloth" style="height:216px">
+            <div class="shape" style="transform:scale(1.06)">
+              <div class="cl-shadow"></div><div class="cl-body"></div>
+              <div class="cl-fold"></div><div class="cl-fold2"></div><div class="cl-corner"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">온실</div>
+            <div class="name">리넨 테이블보</div>
+            <div class="price won">54,000원</div>
+          </div>
+        </div>
+
+        <!-- 5 라탄 조명 -->
+        <div class="card">
+          <div class="ph ph-lamp" style="height:206px">
+            <div class="shape" style="transform:scale(1.04) translateY(-4px)">
+              <div class="lp-cord"></div><div class="lp-shade"></div>
+              <div class="lp-rim"></div><div class="lp-glow"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">빛물</div>
+            <div class="name">라탄 조명</div>
+            <div class="price won">132,000원</div>
+          </div>
+        </div>
+
+        <!-- 6 종이 문진 -->
+        <div class="card">
+          <div class="ph ph-weight" style="height:160px">
+            <div class="shape" style="transform:scale(.9) translateY(8px)">
+              <div class="pw-paper"></div><div class="pw-paper2"></div>
+              <div class="pw-line" style="bottom:44px"></div>
+              <div class="pw-line" style="bottom:36px;width:56px"></div>
+              <div class="pw-shadow"></div>
+              <div class="pw-stone"></div><div class="pw-stone-hl"></div>
+            </div>
+          </div>
+          <div class="cap">
+            <div class="brandline sm">활자공간</div>
+            <div class="name">종이 문진</div>
+            <div class="price won">24,000원</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 2) 상품상세 ══════════ -->
+  <div class="slot">
+    <div class="slot-label"><b>상품상세</b><i>DETAIL</i></div>
+    <div class="frame">
+      <div class="topbar">
+        <div class="icon-back"></div>
+        <div class="icon-cart"><span class="badge">3</span></div>
+      </div>
+
+      <div class="ph ph-mug hero">
+        <div class="shape">
+          <div class="mug-shadow"></div><div class="mug-handle"></div>
+          <div class="mug-body"></div><div class="mug-rim"></div>
+          <div class="mug-rim-in"></div><div class="mug-gloss"></div>
+        </div>
+      </div>
+
+      <div class="thumbs">
+        <div class="ph ph-mug sel"><div class="shape">
+          <div class="mug-handle"></div><div class="mug-body"></div>
+          <div class="mug-rim"></div><div class="mug-gloss"></div></div></div>
+        <div class="ph ph-mug"><div class="shape" style="transform:scale(.30) scaleX(-1)">
+          <div class="mug-handle"></div><div class="mug-body"></div><div class="mug-rim"></div></div></div>
+        <div class="ph ph-mug"><div class="shape"><div class="mug-top"></div><div class="mug-top-in"></div></div></div>
+        <div class="ph ph-mug" style="background:linear-gradient(160deg,#e8e5de,#d5d1c8)">
+          <div class="shape">
+            <div class="mug-handle" style="border-color:#6f6a63"></div>
+            <div class="mug-body" style="background:linear-gradient(100deg,#7b766e,#4a4640 60%,#5d5952)"></div>
+            <div class="mug-rim" style="background:linear-gradient(180deg,#8b857d,#5a5650)"></div></div></div>
+        <div class="ph ph-mug" style="background:linear-gradient(160deg,#f3efe8,#e0dcd3)">
+          <div class="shape">
+            <div class="mug-handle" style="border-color:#dcd6ca"></div>
+            <div class="mug-body" style="background:linear-gradient(100deg,#f2eee5,#dcd6ca 60%,#cbc4b6)"></div>
+            <div class="mug-rim" style="background:linear-gradient(180deg,#f7f4ed,#d9d3c6)"></div></div></div>
+      </div>
+
+      <div class="dtl">
+        <div class="brandline">토림도예</div>
+        <h2>유광 도자 머그</h2>
+        <div class="price won">32,000원</div>
+        <div class="desc">유약이 고르게 앉도록 두 번 굽습니다. 손잡이는 검지 두 마디가 편히 들어가는 폭입니다.</div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="hair"></div>
+
+      <div class="sec">
+        <div class="sec-h">옵션 선택</div>
+
+        <div class="axis">
+          <div class="lb">색상</div>
+          <div class="opts">
+            <div class="opt on">살구</div>
+            <div class="opt">먹<span class="sub">일부 품절</span></div>
+            <div class="opt">백자</div>
+          </div>
+        </div>
+
+        <div class="axis">
+          <div class="lb">용량</div>
+          <div class="opts">
+            <div class="opt on">240ml</div>
+            <div class="opt">320ml</div>
+          </div>
+        </div>
+
+        <div class="lb" style="font-size:11.5px;color:#6a645c;margin-bottom:8px;font-weight:600">조합</div>
+        <div class="combos">
+          <div class="combo sel"><span>살구 / 240ml</span><span class="mark">선택</span></div>
+          <div class="combo"><span>살구 / 320ml</span></div>
+          <div class="combo"><span>먹 / 240ml</span></div>
+          <div class="combo dis"><span>먹 / 320ml</span><span class="mark">품절</span></div>
+          <div class="combo"><span>백자 / 240ml</span></div>
+          <div class="combo"><span>백자 / 320ml</span></div>
+        </div>
+        <div class="combo-note">품절 조합은 목록에서 숨기지 않고 그대로 두되 선택되지 않습니다.</div>
+      </div>
+
+      <div class="hair"></div>
+
+      <div class="sec" style="padding-top:18px;padding-bottom:18px">
+        <div class="rowline ship">
+          <div class="k">배송비</div>
+          <div class="v won">3,000원 <em>· 제주·도서산간 +3,000원</em></div>
+        </div>
+      </div>
+
+      <div class="hair"></div>
+
+      <div class="sec">
+        <div class="seller-h">
+          <div class="sec-h" style="margin-bottom:0">판매자 정보</div>
+          <div class="caret"></div>
+        </div>
+        <div class="seller-body">
+          <div class="rowline"><div class="k">상호</div><div class="v">토림도예</div></div>
+          <div class="rowline"><div class="k">대표자</div><div class="v">김현수</div></div>
+          <div class="rowline"><div class="k">사업자등록번호</div><div class="v won">123-45-67890</div></div>
+          <div class="rowline"><div class="k">통신판매업 신고번호</div><div class="v won">2026-서울마포-0451</div></div>
+          <div class="rowline"><div class="k">사업장 주소</div><div class="v">서울특별시 마포구 성미산로 23길 11</div></div>
+          <div class="rowline"><div class="k">연락처</div><div class="v won">02-336-0451</div></div>
+        </div>
+        <div class="notice">
+          SLUR는 통신판매중개자이며 통신판매의 당사자가 아닙니다. 상품 정보와 거래에 관한 책임은 판매자에게 있습니다.
+        </div>
+      </div>
+
+      <div class="bottombar">
+        <div class="btn btn-ghost">장바구니 담기</div>
+        <div class="btn btn-solid">바로 구매</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 3) 장바구니 ══════════ -->
+  <div class="slot">
+    <div class="slot-label"><b>장바구니</b><i>CART</i></div>
+    <div class="frame">
+      <div class="topbar">
+        <div class="icon-back"></div>
+        <div class="tb-title">장바구니</div>
+        <div style="width:24px"></div>
+      </div>
+
+      <div class="cart-body">
+
+        <!-- 토림도예 -->
+        <div class="group">
+          <div class="group-h">
+            <div class="chk"></div>
+            <div class="brandline">토림도예</div>
+            <div class="ship">배송비 <b class="won">3,000원</b></div>
+          </div>
+          <div class="citem">
+            <div class="ph ph-mug">
+              <div class="shape">
+                <div class="mug-handle"></div><div class="mug-body"></div>
+                <div class="mug-rim"></div><div class="mug-gloss"></div>
+              </div>
+            </div>
+            <div class="info">
+              <div class="nm">유광 도자 머그</div>
+              <div class="op">살구 / 240ml</div>
+              <div class="pr won">64,000원</div>
+              <div class="qtyrow">
+                <div class="qty"><i>−</i><b>2</b><i>+</i></div>
+                <div class="del">삭제</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 곳간 — 구매 불가 -->
+        <div class="group dead">
+          <div class="group-h">
+            <div class="chk off"></div>
+            <div class="brandline">곳간</div>
+            <div class="ship"><span class="deadtag">구매 불가 · 품절</span></div>
+          </div>
+          <div class="citem">
+            <div class="ph ph-cand">
+              <div class="shape">
+                <div class="cd cd-a">
+                  <div class="cd-stem" style="height:72px"></div><div class="cd-base"></div>
+                  <div class="cd-knob" style="bottom:34px"></div>
+                  <div class="cd-cup" style="bottom:68px"></div>
+                  <div class="cd-candle" style="bottom:74px;height:34px"></div>
+                </div>
+                <div class="cd cd-b">
+                  <div class="cd-stem" style="height:50px"></div><div class="cd-base"></div>
+                  <div class="cd-knob" style="bottom:24px"></div>
+                  <div class="cd-cup" style="bottom:46px"></div>
+                  <div class="cd-candle" style="bottom:52px;height:28px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="info">
+              <div class="nm">황동 촛대 세트</div>
+              <div class="op">—</div>
+              <div class="pr won">89,000원</div>
+              <div class="qtyrow">
+                <div class="qty"><i>−</i><b>1</b><i>+</i></div>
+                <div class="del">삭제</div>
+              </div>
+            </div>
+          </div>
+          <div class="deadnote">담은 뒤 품절된 상품입니다. 주문에서 제외됩니다.</div>
+        </div>
+
+        <!-- 온실 -->
+        <div class="group">
+          <div class="group-h">
+            <div class="chk"></div>
+            <div class="brandline">온실</div>
+            <div class="ship"><b>무료배송</b></div>
+          </div>
+          <div class="citem">
+            <div class="ph ph-cloth">
+              <div class="shape">
+                <div class="cl-body"></div><div class="cl-fold"></div><div class="cl-corner"></div>
+              </div>
+            </div>
+            <div class="info">
+              <div class="nm">리넨 테이블보</div>
+              <div class="op">—</div>
+              <div class="pr won">54,000원</div>
+              <div class="qtyrow">
+                <div class="qty"><i>−</i><b>1</b><i>+</i></div>
+                <div class="del">삭제</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="sum-r"><span>상품 금액</span><span class="v won">118,000원</span></div>
+          <div class="sum-r"><span>배송비</span><span class="v won">3,000원</span></div>
+          <div class="sum-total">
+            <div class="k">결제 예정 금액</div>
+            <div class="v won">121,000원</div>
+          </div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="bottombar">
+        <div class="btn btn-solid">주문하기 (2건)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

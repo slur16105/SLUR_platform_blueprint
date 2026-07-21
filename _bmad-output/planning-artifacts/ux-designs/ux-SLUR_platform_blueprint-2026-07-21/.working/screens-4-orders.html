@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>SLUR 구매자 웹 — 8. 주문내역 · 9. 주문상세 (톤 B · 매거진)</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   담당 화면: 8. 주문내역(탭바 있음) · 9. 주문상세(탭바 없음)
+              + 주문상세 아래 "상태 예시" 조각 (배송중 묶음 · 송장 표시)
+
+   사용 hex (B 원본 direction-b-editorial.html에서 그대로 승계)
+   종이 배경(프레임 안)   #faf8f4
+   종이 그늘 / 면 구분     #f2eee6   섹션 구분 8px 띠 · 보조 면
+   먹색 텍스트            #1f1d1a
+   보조 텍스트            #6a645c   /  #3c3934 #2c2a26 (본문 강도)
+   흐린 텍스트 / 캡션      #9c968c   /  #8e8b85
+   선(hairline)          #e3ded4   /  입력·버튼 테두리 #ded8cc
+   액센트 벽돌빛          #8c4a32   (입금대기 상태 · 입금 안내 · 합계)
+   액센트 연한 벽돌       #f1e5df   /  면 #faf1ec  /  테두리 #ecd9d0
+   프레임 밖 중립 회색     #d5d3cf  /  라벨 회색 #7d7a75
+
+   사진 자리(따뜻한 저채도, B 원본 재사용):
+   머그 #e9d7c6 / 스툴 #ded4c4 / 테이블보 #e5e3d9 / 문진 #dedad3
+   ───────────────────────────────────────────────────────────── */
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  background:#d5d3cf;color:#1f1d1a;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-0.01em;
+}
+
+/* ── 페이지 헤더 ───────────────────────────────── */
+.page-head{max-width:900px;margin:0 auto;padding:32px 24px 24px}
+.page-head .tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.16em;
+  color:#8c4a32;background:#f1e5df;padding:5px 10px;border-radius:3px;margin-bottom:12px;
+}
+.page-head h1{font-size:27px;font-weight:800;letter-spacing:-0.02em;color:#1f1d1a}
+.page-head h1 span{color:#7d7a75;font-weight:600}
+.page-head p{margin-top:11px;max-width:760px;font-size:13px;line-height:1.8;color:#3c3934}
+
+/* ── 프레임 배치 ───────────────────────────────── */
+.stage{max-width:900px;margin:0 auto;padding:0 24px 64px;display:flex;gap:32px;align-items:flex-start}
+.slot{width:390px}
+.slot-label{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;padding-left:2px}
+.slot-label b{font-size:14px;font-weight:800;letter-spacing:-0.01em;color:#2c2a26}
+.slot-label i{font-style:normal;font-size:10.5px;letter-spacing:.14em;font-weight:700;color:#8e8b85}
+
+.frame{
+  width:390px;background:#faf8f4;border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 16px rgba(31,29,26,.16);
+  display:flex;flex-direction:column;position:relative;
+}
+
+/* ── 공통 부품 (B 원본 승계) ───────────────────── */
+.topbar{
+  height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;border-bottom:1px solid #e3ded4;background:#faf8f4;
+}
+.tb-title{font-size:15px;font-weight:700;letter-spacing:.02em}
+.icon-back{width:22px;height:22px;position:relative}
+.icon-back::before{
+  content:"";position:absolute;left:6px;top:5px;width:11px;height:11px;
+  border-left:1.6px solid #1f1d1a;border-bottom:1.6px solid #1f1d1a;transform:rotate(45deg);
+}
+.brandline{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#1f1d1a}
+.brandline.sm{font-size:11px;letter-spacing:.15em;font-weight:800}
+.won{font-variant-numeric:tabular-nums}
+.hair{height:1px;background:#e3ded4}
+.band{height:8px;background:#f2eee6}
+.spacer{height:24px}
+
+.sec{padding:22px 20px}
+.sec-h{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#8e8b85;margin-bottom:13px}
+.rowline{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:4px 0}
+.rowline .k{font-size:11.5px;color:#8e8b85;flex:0 0 74px;letter-spacing:.01em;white-space:nowrap}
+.rowline .v{font-size:12.5px;color:#2c2a26;text-align:right;flex:1;letter-spacing:-0.01em;line-height:1.6}
+.notice{
+  font-size:11px;line-height:1.75;color:#7d7a75;letter-spacing:-0.005em;
+}
+.caret-r{width:11px;height:11px;position:relative;flex:0 0 11px}
+.caret-r::before{
+  content:"";position:absolute;left:1px;top:1.5px;width:8px;height:8px;
+  border-right:1.5px solid #b6b0a6;border-top:1.5px solid #b6b0a6;transform:rotate(45deg);
+}
+
+/* ── 사진 자리 (B 원본 색·도형 재사용) ─────────── */
+.ph{position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;border-radius:4px}
+.ph .shape{position:relative;width:160px;height:160px;transform-origin:center bottom}
+.ph-mug   {background:linear-gradient(160deg,#f0e1d2 0%,#e9d7c6 55%,#dcc6b1 100%)}
+.ph-stool {background:linear-gradient(160deg,#e8e0d2 0%,#ded4c4 60%,#cfc3af 100%)}
+.ph-cloth {background:linear-gradient(160deg,#eeece3 0%,#e5e3d9 60%,#d6d4c7 100%)}
+.ph-weight{background:linear-gradient(160deg,#e8e5df 0%,#dedad3 60%,#cdc9c1 100%)}
+
+.mug-body{position:absolute;left:38px;bottom:14px;width:74px;height:82px;
+  background:linear-gradient(100deg,#dcb69a 0%,#c99a79 46%,#b9865f 78%,#c9a082 100%);
+  border-radius:6px 6px 22px 22px}
+.mug-rim{position:absolute;left:36px;bottom:88px;width:78px;height:16px;border-radius:50%;
+  background:linear-gradient(180deg,#e6c8ae,#c99a79)}
+.mug-handle{position:absolute;left:104px;bottom:36px;width:34px;height:40px;
+  border:10px solid #c1906e;border-radius:0 20px 20px 0;border-left:none;background:transparent}
+.mug-gloss{position:absolute;left:50px;bottom:30px;width:8px;height:52px;border-radius:5px;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0))}
+
+.st-top{position:absolute;left:16px;bottom:74px;width:128px;height:22px;border-radius:50%;
+  background:linear-gradient(180deg,#c2a686,#a98c6c)}
+.st-edge{position:absolute;left:16px;bottom:66px;width:128px;height:20px;border-radius:0 0 60px 60px;
+  background:linear-gradient(180deg,#a98c6c,#8e7355)}
+.st-leg{position:absolute;bottom:14px;width:9px;height:58px;border-radius:2px;
+  background:linear-gradient(180deg,#a98c6c,#846c50)}
+.st-l1{left:32px;transform:rotate(9deg)}
+.st-l2{left:76px}
+.st-l3{left:120px;transform:rotate(-9deg)}
+.st-bar{position:absolute;left:34px;bottom:34px;width:92px;height:6px;border-radius:3px;background:#9a7f5f}
+
+.cl-body{position:absolute;left:22px;bottom:20px;width:116px;height:98px;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.30) 0 2px,rgba(0,0,0,0) 2px 6px),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.045) 0 2px,rgba(0,0,0,0) 2px 6px),
+    linear-gradient(170deg,#dcdccd 0%,#cbcbb9 60%,#bcbca8 100%);
+  border-radius:2px 2px 10px 10px;
+  clip-path:polygon(0 0,100% 0,100% 86%,88% 100%,72% 88%,56% 100%,40% 88%,24% 100%,10% 88%,0 98%);
+}
+.cl-fold{position:absolute;left:70px;bottom:24px;width:1.5px;height:92px;background:rgba(0,0,0,.10)}
+.cl-corner{position:absolute;left:92px;bottom:34px;width:40px;height:52px;transform:rotate(-9deg);
+  background:linear-gradient(150deg,rgba(240,240,230,.92),rgba(203,203,185,.92));
+  border-radius:2px 2px 14px 3px;
+  clip-path:polygon(0 0,100% 0,100% 88%,52% 100%,0 90%)}
+
+.pw-paper{position:absolute;left:26px;bottom:22px;width:106px;height:74px;transform:rotate(-4deg);
+  background:linear-gradient(160deg,#fbf9f4,#eae6dd);border-radius:1px}
+.pw-paper2{position:absolute;left:32px;bottom:28px;width:106px;height:70px;transform:rotate(3deg);
+  background:linear-gradient(160deg,#fdfbf7,#efece4);border-radius:1px}
+.pw-stone{position:absolute;left:52px;bottom:52px;width:58px;height:30px;
+  border-radius:30px 30px 5px 5px;
+  background:linear-gradient(165deg,#a6a29a 0%,#8b877f 55%,#726e67 100%)}
+.pw-stone-hl{position:absolute;left:62px;bottom:70px;width:20px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.35)}
+
+/* ── 상태 라벨 (배지 아님 — 작은 라벨 + 색 구분) ── */
+.stat{font-size:11.5px;font-weight:800;letter-spacing:.05em;white-space:nowrap}
+.stat.wait{color:#8c4a32}   /* 입금대기 — 유일한 액센트 사용처 */
+.stat.move{color:#1f1d1a}   /* 배송중 — 먹색 */
+.stat.done{color:#9c968c}   /* 배송완료 — 물러난 보조색 */
+
+/* ── 8) 주문내역 ───────────────────────────────── */
+.olist{padding:4px 0 0}
+.oitem{padding:19px 20px 20px}
+.oitem + .oitem{border-top:1px solid #e3ded4}
+.o-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.o-date{font-size:11.5px;color:#9c968c;letter-spacing:.02em}
+.o-no{margin-top:5px;font-size:11.5px;color:#8e8b85;letter-spacing:.03em}
+.o-body{display:flex;align-items:center;gap:12px;margin-top:13px}
+.o-body .ph{width:64px;height:64px;flex:0 0 64px;border:1px solid #e6e1d8}
+.o-body .shape{transform:scale(.36)}
+.o-info{flex:1;min-width:0}
+.o-name{font-size:13px;font-weight:600;color:#2c2a26;letter-spacing:-0.01em}
+.o-sub{font-size:11.5px;color:#9c968c;margin-top:4px}
+.o-price{font-size:14px;font-weight:800;color:#1f1d1a;margin-top:8px;letter-spacing:-0.02em}
+.olist-end{
+  padding:16px 20px 22px;font-size:11px;color:#9c968c;line-height:1.7;
+  border-top:1px solid #e3ded4;
+}
+
+/* ── 하단 탭 내비게이션 ────────────────────────── */
+.tabbar{
+  height:56px;flex:0 0 56px;margin-top:auto;display:flex;background:#faf8f4;
+  border-top:1px solid #e3ded4;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:#9c968c;position:relative;
+}
+.tab.on{color:#1f1d1a}
+.tab .lb{font-size:10.5px;font-weight:600;letter-spacing:-0.01em}
+.tab.on .lb{font-weight:800}
+.tab .ic{width:22px;height:21px;position:relative;color:inherit}
+.tab.on .ic::before,.tab.on .ic::after{border-width:1.9px}
+
+.ic-home::before{content:"";position:absolute;left:3px;top:9px;width:16px;height:11px;
+  border:1.5px solid currentColor;border-top:none;border-radius:0 0 2px 2px}
+.ic-home::after{content:"";position:absolute;left:4.5px;top:3px;width:13px;height:13px;
+  border-left:1.5px solid currentColor;border-top:1.5px solid currentColor;
+  transform:rotate(45deg);border-radius:2px 0 0 0}
+
+.ic-cart::before{content:"";position:absolute;left:2px;top:8px;width:18px;height:12px;
+  border:1.5px solid currentColor;border-radius:1px 1px 4px 4px}
+.ic-cart::after{content:"";position:absolute;left:6px;top:2px;width:10px;height:9px;
+  border:1.5px solid currentColor;border-bottom:none;border-radius:5px 5px 0 0}
+.tab .badge{
+  position:absolute;left:calc(50% + 6px);top:6px;min-width:16px;height:16px;border-radius:8px;
+  background:#8c4a32;color:#faf8f4;font-size:9.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;letter-spacing:0;
+  border:1.5px solid #faf8f4;
+}
+
+.ic-doc::before{content:"";position:absolute;left:4px;top:2px;width:15px;height:18px;
+  border:1.5px solid currentColor;border-radius:2px}
+.ic-doc::after{content:"";position:absolute;left:7.5px;top:7px;width:8px;height:1.5px;
+  background:currentColor;box-shadow:0 4.5px 0 currentColor}
+
+.ic-me::before{content:"";position:absolute;left:7px;top:2px;width:8px;height:8px;
+  border-radius:50%;border:1.5px solid currentColor}
+.ic-me::after{content:"";position:absolute;left:2.5px;top:12px;width:17px;height:9px;
+  border:1.5px solid currentColor;border-bottom:none;border-radius:9px 9px 0 0}
+
+/* ── 9) 주문상세 ───────────────────────────────── */
+.od-head{padding:20px 20px 18px}
+.od-no{font-size:16px;font-weight:800;letter-spacing:.02em;color:#1f1d1a}
+.od-when{margin-top:6px;font-size:11.5px;color:#9c968c;letter-spacing:.02em}
+
+.paybox{
+  margin:0 20px 20px;border:1px solid #ecd9d0;background:#faf1ec;border-radius:5px;
+  padding:15px 15px 14px;
+}
+.paybox .ph-h{
+  font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#8c4a32;margin-bottom:11px;
+}
+.paybox .amt{display:flex;align-items:baseline;justify-content:space-between;
+  padding-bottom:11px;border-bottom:1px solid #ecd9d0}
+.paybox .amt .k{font-size:12px;color:#6a645c}
+.paybox .amt .v{font-size:20px;font-weight:800;color:#8c4a32;letter-spacing:-0.02em}
+.paybox .rowline{padding:5px 0}
+.paybox .rowline:first-of-type{padding-top:11px}
+.paybox .rowline .k{color:#9a8479}
+.paybox .rowline .v{color:#3c3934}
+.paybox .memo{
+  margin-top:11px;padding-top:11px;border-top:1px solid #ecd9d0;
+  font-size:11px;line-height:1.7;color:#8c4a32;
+}
+
+/* 판매자별 묶음 — 상태가 각각 독립 전이 (FR-15) */
+.pack{padding:18px 20px 17px}
+.pack + .pack{border-top:1px solid #e3ded4}
+.pack-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pack-item{display:flex;gap:12px;margin-top:13px}
+.pack-item .ph{width:68px;height:68px;flex:0 0 68px;border:1px solid #e6e1d8}
+.pack-item .shape{transform:scale(.38)}
+.pack-item .info{flex:1;min-width:0}
+.pack-item .nm{font-size:13px;font-weight:600;color:#2c2a26;letter-spacing:-0.01em}
+.pack-item .op{font-size:11.5px;color:#8e8b85;margin-top:4px}
+.pack-item .pr{font-size:13.5px;font-weight:800;margin-top:8px;letter-spacing:-0.02em}
+.pack-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:14px;padding-top:12px;border-top:1px solid #efeae1;
+}
+.pack-ship{font-size:11.5px;color:#8e8b85}
+.pack-ship b{color:#3c3934;font-weight:700}
+.btn-cancel{
+  font-size:11.5px;font-weight:700;color:#3c3934;letter-spacing:-0.01em;
+  border:1px solid #ded8cc;border-radius:3px;padding:8px 14px;background:#fff;
+}
+.track{
+  margin-top:12px;padding:10px 12px;background:#f2eee6;border-radius:3px;
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+}
+.track .k{font-size:11px;color:#8e8b85;letter-spacing:.01em}
+.track .v{font-size:12.5px;font-weight:700;color:#2c2a26;letter-spacing:.01em}
+.no-cancel{margin-top:10px;font-size:11px;color:#9c968c;line-height:1.7}
+
+.sum-r{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;color:#6a645c}
+.sum-r .v{color:#2c2a26;font-weight:600}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:11px;padding-top:13px;border-top:1px solid #e3ded4}
+.sum-total .k{font-size:13px;font-weight:700;color:#1f1d1a}
+.sum-total .v{font-size:20px;font-weight:800;color:#8c4a32;letter-spacing:-0.02em}
+.pay-way{display:flex;justify-content:space-between;margin-top:14px;padding-top:12px;
+  border-top:1px solid #efeae1;font-size:12.5px}
+.pay-way .k{color:#8e8b85;font-size:11.5px}
+.pay-way .v{color:#2c2a26;font-weight:600}
+
+/* ── 상태 예시 조각 (프레임 아님) ──────────────── */
+.snippet{margin-top:26px;width:390px}
+.snip-label{display:flex;align-items:baseline;gap:8px;margin-bottom:9px;padding-left:2px}
+.snip-label b{font-size:12.5px;font-weight:800;color:#2c2a26;letter-spacing:-0.01em}
+.snip-label i{font-style:normal;font-size:10px;letter-spacing:.13em;font-weight:700;color:#8e8b85}
+.snip-note{
+  font-size:11.5px;line-height:1.75;color:#5f5b55;margin-bottom:11px;padding-left:2px;
+  border-left:2px solid #8c4a32;padding:2px 0 2px 10px;
+}
+.snip-card{
+  background:#faf8f4;border-radius:10px;box-shadow:0 2px 12px rgba(31,29,26,.14);
+  border:1px dashed #c9c2b6;overflow:hidden;
+}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="tag">TONE B · EDITORIAL</div>
+  <h1>주문 조회 <span>— 8. 주문내역 · 9. 주문상세</span></h1>
+  <p>
+    주문내역은 최상위 화면이라 하단 탭바를 두고, 주문상세는 뒤로가기 헤더만 둔다.
+    주문상세의 뼈대는 <b>판매자별 묶음이 각자의 상태·배송비·취소 버튼을 갖는다</b>는 것이다(FR-15·FR-18) —
+    주문 전체에 걸리는 상태 표시나 전체 취소 버튼은 두지 않았다.
+    상태 표기는 배지가 아니라 작은 라벨과 색의 층으로만 구분하고, 액센트 벽돌빛은 <b>입금대기</b>에만 쓴다.
+  </p>
+</div>
+
+<div class="stage">
+
+  <!-- ══════════ 8) 주문내역 ══════════ -->
+  <div class="slot">
+    <div class="slot-label"><b>8. 주문내역</b><i>ORDERS</i></div>
+    <div class="frame" style="min-height:844px">
+
+      <div class="topbar">
+        <div class="tb-title">주문내역</div>
+      </div>
+
+      <div class="olist">
+
+        <!-- 1건: 입금대기 -->
+        <div class="oitem">
+          <div class="o-top">
+            <div class="o-date won">2026.07.21</div>
+            <div class="stat wait">입금대기</div>
+          </div>
+          <div class="o-no won">20260721-0037</div>
+          <div class="o-body">
+            <div class="ph ph-mug">
+              <div class="shape">
+                <div class="mug-handle"></div><div class="mug-body"></div>
+                <div class="mug-rim"></div><div class="mug-gloss"></div>
+              </div>
+            </div>
+            <div class="o-info">
+              <div class="o-name">유광 도자 머그 외 1건</div>
+              <div class="o-sub">토림도예 · 온실</div>
+              <div class="o-price won">121,000원</div>
+            </div>
+            <div class="caret-r"></div>
+          </div>
+        </div>
+
+        <!-- 2건: 배송중 -->
+        <div class="oitem">
+          <div class="o-top">
+            <div class="o-date won">2026.07.14</div>
+            <div class="stat move">배송중</div>
+          </div>
+          <div class="o-no won">20260714-0021</div>
+          <div class="o-body">
+            <div class="ph ph-stool">
+              <div class="shape">
+                <div class="st-leg st-l1"></div><div class="st-leg st-l3"></div>
+                <div class="st-leg st-l2"></div><div class="st-bar"></div>
+                <div class="st-edge"></div><div class="st-top"></div>
+              </div>
+            </div>
+            <div class="o-info">
+              <div class="o-name">소반 스툴</div>
+              <div class="o-sub">무연</div>
+              <div class="o-price won">171,000원</div>
+            </div>
+            <div class="caret-r"></div>
+          </div>
+        </div>
+
+        <!-- 3건: 배송완료 -->
+        <div class="oitem">
+          <div class="o-top">
+            <div class="o-date won">2026.06.28</div>
+            <div class="stat done">배송완료</div>
+          </div>
+          <div class="o-no won">20260628-0009</div>
+          <div class="o-body">
+            <div class="ph ph-weight">
+              <div class="shape">
+                <div class="pw-paper"></div><div class="pw-paper2"></div>
+                <div class="pw-stone"></div><div class="pw-stone-hl"></div>
+              </div>
+            </div>
+            <div class="o-info">
+              <div class="o-name">종이 문진 외 2건</div>
+              <div class="o-sub">활자공간 · 곳간</div>
+              <div class="o-price won">98,000원</div>
+            </div>
+            <div class="caret-r"></div>
+          </div>
+        </div>
+
+        <div class="olist-end">최근 주문부터 보입니다.</div>
+      </div>
+
+      <!-- 하단 탭바 · 주문내역 활성 -->
+      <div class="tabbar">
+        <div class="tab"><div class="ic ic-home"></div><div class="lb">홈</div></div>
+        <div class="tab">
+          <div class="ic ic-cart"></div><span class="badge">3</span><div class="lb">장바구니</div>
+        </div>
+        <div class="tab on"><div class="ic ic-doc"></div><div class="lb">주문내역</div></div>
+        <div class="tab"><div class="ic ic-me"></div><div class="lb">내 정보</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 9) 주문상세 ══════════ -->
+  <div class="slot">
+    <div class="slot-label"><b>9. 주문상세</b><i>ORDER DETAIL</i></div>
+    <div class="frame">
+
+      <div class="topbar">
+        <div class="icon-back"></div>
+        <div class="tb-title">주문상세</div>
+        <div style="width:22px"></div>
+      </div>
+
+      <!-- 주문번호 · 일시 -->
+      <div class="od-head">
+        <div class="od-no won">20260721-0037</div>
+        <div class="od-when">2026년 7월 21일 14:22</div>
+      </div>
+
+      <!-- 입금 안내 (입금대기 상태이므로 최상단) -->
+      <div class="paybox">
+        <div class="ph-h">입금 안내</div>
+        <div class="amt">
+          <div class="k">입금 금액</div>
+          <div class="v won">121,000원</div>
+        </div>
+        <div class="rowline"><div class="k">입금 계좌</div><div class="v won">국민은행 123456-01-987654</div></div>
+        <div class="rowline"><div class="k">예금주</div><div class="v">슬러</div></div>
+        <div class="rowline"><div class="k">입금 기한</div><div class="v">2026년 7월 24일까지</div></div>
+        <div class="memo">입금자명을 주문자 이름(김소연)과 같게 해주세요.</div>
+      </div>
+
+      <div class="band"></div>
+
+      <!-- 판매자별 묶음 — 상태 독립 -->
+      <div class="sec" style="padding-bottom:0">
+        <div class="sec-h" style="margin-bottom:0">주문 상품 · 판매자별 2건</div>
+      </div>
+
+      <div class="pack">
+        <div class="pack-h">
+          <div class="brandline">토림도예</div>
+          <div class="stat wait">입금대기</div>
+        </div>
+        <div class="pack-item">
+          <div class="ph ph-mug">
+            <div class="shape">
+              <div class="mug-handle"></div><div class="mug-body"></div>
+              <div class="mug-rim"></div><div class="mug-gloss"></div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="nm">유광 도자 머그</div>
+            <div class="op">살구 / 240ml · 2개</div>
+            <div class="pr won">64,000원</div>
+          </div>
+        </div>
+        <div class="pack-foot">
+          <div class="pack-ship">배송비 <b class="won">3,000원</b></div>
+          <div class="btn-cancel">주문 취소</div>
+        </div>
+      </div>
+
+      <div class="pack">
+        <div class="pack-h">
+          <div class="brandline">온실</div>
+          <div class="stat wait">입금대기</div>
+        </div>
+        <div class="pack-item">
+          <div class="ph ph-cloth">
+            <div class="shape">
+              <div class="cl-body"></div><div class="cl-fold"></div><div class="cl-corner"></div>
+            </div>
+          </div>
+          <div class="info">
+            <div class="nm">리넨 테이블보</div>
+            <div class="op">1개</div>
+            <div class="pr won">54,000원</div>
+          </div>
+        </div>
+        <div class="pack-foot">
+          <div class="pack-ship"><b>무료배송</b></div>
+          <div class="btn-cancel">주문 취소</div>
+        </div>
+      </div>
+
+      <div class="band"></div>
+
+      <!-- 배송 정보 -->
+      <div class="sec">
+        <div class="sec-h">배송 정보</div>
+        <div class="rowline"><div class="k">수령인</div><div class="v">김소연</div></div>
+        <div class="rowline"><div class="k">연락처</div><div class="v won">010-2847-3391</div></div>
+        <div class="rowline"><div class="k">주소</div><div class="v">(04044) 서울특별시 마포구 양화로 45 301호</div></div>
+        <div class="rowline"><div class="k">요청사항</div><div class="v">부재 시 경비실에 맡겨주세요</div></div>
+      </div>
+
+      <div class="band"></div>
+
+      <!-- 결제 정보 -->
+      <div class="sec">
+        <div class="sec-h">결제 정보</div>
+        <div class="sum-r"><span>상품 금액</span><span class="v won">118,000원</span></div>
+        <div class="sum-r"><span>배송비</span><span class="v won">3,000원</span></div>
+        <div class="sum-total">
+          <div class="k">합계</div>
+          <div class="v won">121,000원</div>
+        </div>
+        <div class="pay-way">
+          <div class="k">결제수단</div>
+          <div class="v">무통장입금</div>
+        </div>
+      </div>
+
+      <div class="hair"></div>
+
+      <div class="sec" style="padding-top:16px;padding-bottom:24px">
+        <div class="notice">배송준비 전까지 판매자 묶음 단위로 취소할 수 있습니다.</div>
+      </div>
+    </div>
+
+    <!-- ── 상태 예시 조각 (세 번째 프레임이 아님) ── -->
+    <div class="snippet">
+      <div class="snip-label"><b>상태 예시 — 배송중 묶음</b><i>STATE</i></div>
+      <div class="snip-note">
+        같은 주문상세 화면의 묶음 하나가 <b>배송중</b>으로 전이했을 때.
+        송장번호가 나타나고 <b>주문 취소 버튼은 사라진다</b> — 배송준비 이후에는 취소할 수 없다.
+        묶음마다 상태가 따로 움직이므로 위 화면에서 온실만 이 모습이 될 수 있다.
+      </div>
+      <div class="snip-card">
+        <div class="pack" style="padding-bottom:18px">
+          <div class="pack-h">
+            <div class="brandline">온실</div>
+            <div class="stat move">배송중</div>
+          </div>
+          <div class="pack-item">
+            <div class="ph ph-cloth">
+              <div class="shape">
+                <div class="cl-body"></div><div class="cl-fold"></div><div class="cl-corner"></div>
+              </div>
+            </div>
+            <div class="info">
+              <div class="nm">리넨 테이블보</div>
+              <div class="op">1개</div>
+              <div class="pr won">54,000원</div>
+            </div>
+          </div>
+          <div class="track">
+            <div class="k">송장번호</div>
+            <div class="v won">CJ대한통운 1234-5678-9012</div>
+          </div>
+          <div class="pack-foot">
+            <div class="pack-ship"><b>무료배송</b></div>
+          </div>
+          <div class="no-cancel">배송준비 이후에는 취소할 수 없습니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
