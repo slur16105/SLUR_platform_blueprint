@@ -82,7 +82,7 @@ NFR-7: 구매자 화면은 PWA로 홈 화면 설치 가능 (v1 범위는 반응�
 - 로컬 개발 Docker Compose(PG17), 시크릿 Railway 환경변수+.env, 미입금 자동취소는 APScheduler(단일 인스턴스)
 - Railway 서비스별 Dockerfile, Alembic은 pre-deploy 실행
 - remote_area_zips 시드 데이터(우체국 공개 목록) 준비 필요
-- 웹 토큰 보관 방식(httpOnly 쿠키 vs 메모리)은 auth 첫 스토리에서 확정 (Deferred)
+- ~~웹 토큰 보관 방식(httpOnly 쿠키 vs 메모리)은 auth 첫 스토리에서 확정 (Deferred)~~ → **해소**: httpOnly 쿠키 + Next.js BFF 경유로 확정(Story 1.6·2.1 구현). 2026-07-21 신설된 **AD-14**(클라이언트 표면 단일화)가 이를 승계해 구매자 화면에도 같은 경로를 강제한다
 
 ### UX Design Requirements
 

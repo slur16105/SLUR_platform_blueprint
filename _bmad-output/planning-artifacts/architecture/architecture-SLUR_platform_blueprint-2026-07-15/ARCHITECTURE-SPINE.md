@@ -4,15 +4,17 @@ type: architecture-spine
 purpose: build-substrate
 altitude: feature
 paradigm: '도메인 모듈러 모놀리스 (domain-modular monolith)'
-scope: 'SLUR 커머스 플랫폼 1호 전체 시스템 — FastAPI 백엔드, Flutter 구매자 앱, Next.js 판매자·관리자 웹, Supabase(PG+Storage), Railway 배포'
+scope: 'SLUR 커머스 플랫폼 1호 전체 시스템 — FastAPI 백엔드, Next.js 단일 웹(구매자 모바일 퍼스트 반응형 + 판매자·관리자 PC), Supabase(PG+Storage), Railway 배포'
 status: final
 created: '2026-07-15'
-updated: '2026-07-15'
-binds: ['FR-1~35', 'NFR-1~6']
+updated: '2026-07-21'
+binds: ['FR-1~35', 'NFR-1~7']
 sources:
   - '_bmad-output/planning-artifacts/prds/prd-SLUR_platform_blueprint-2026-07-14/prd.md'
   - '_bmad-output/planning-artifacts/prds/prd-SLUR_platform_blueprint-2026-07-14/addendum.md'
-companions: []
+companions:
+  - '_bmad-output/planning-artifacts/ux-designs/ux-SLUR_platform_blueprint-2026-07-21/DESIGN.md'
+  - '_bmad-output/planning-artifacts/ux-designs/ux-SLUR_platform_blueprint-2026-07-21/EXPERIENCE.md'
 ---
 
 # Architecture Spine — SLUR 커머스 플랫폼 1호
@@ -40,7 +42,7 @@ app/
 
 - **Binds:** all
 - **Prevents:** 권한·비즈니스 로직이 클라이언트나 DB(RLS)로 분산되는 것
-- **Rule:** 인증, RBAC, 상태 전이, 재고, 주문 로직은 FastAPI만 소유한다. Flutter·Next.js는 FastAPI API만 호출한다. Supabase Auth·RLS·Edge Functions 사용 금지 — Supabase는 매니지드 Postgres + Storage로만 쓴다.
+- **Rule:** 인증, RBAC, 상태 전이, 재고, 주문 로직은 FastAPI만 소유한다. 모든 클라이언트는 FastAPI API만 호출한다. Supabase Auth·RLS·Edge Functions 사용 금지 — Supabase는 매니지드 Postgres + Storage로만 쓴다.
 
 ### AD-2 — 도메인 간 의존 방향
 
@@ -126,8 +128,8 @@ graph TD
 
 ### AD-12 — 파생 값은 백엔드가 계산해 내려준다
 
-- **Binds:** FR-15, FR-22, 두 클라이언트
-- **Prevents:** Flutter와 Next.js가 같은 주문의 대표 상태·합계를 각자 계산해 다르게 표시하는 것
+- **Binds:** FR-15, FR-22, 전 클라이언트 화면
+- **Prevents:** 구매자 화면과 판매자·관리자 화면이 같은 주문의 대표 상태·합계를 각자 계산해 다르게 표시하는 것
 - **Rule:** 주문 대표 상태, 금액 합계, 취소 가능 여부 등 파생 값은 FastAPI가 계산해 API 응답 필드로 내려준다. 클라이언트는 파생 로직을 구현하지 않고 받은 값을 표시만 한다.
 
 ### AD-13 — SLUR 고유 값 하드코딩 금지 (블루프린트 규칙)
@@ -136,17 +138,24 @@ graph TD
 - **Prevents:** 2차 목표(범용 블루프린트 추출) 시점에 SLUR 고유 값이 코드 전체에 박혀 분리 불가능해지는 것
 - **Rule:** 브랜드명·입금 계좌·정책 수치(미입금 기한 3일, 품절 임박 5, 옵션 축 2 등)는 코드 상수 모듈(`core/config`) 또는 `settings` 테이블에만 둔다. 도메인 로직 본문에 리터럴로 쓰지 않는다.
 
+### AD-14 — 클라이언트 표면 단일화 `[ADOPTED]`
+
+- **Binds:** FR-1~3, NFR-1, NFR-6, NFR-7, 전 구매자 화면
+- **Prevents:** 역할별로 인증·API 호출 방식이 갈라져 토큰 보관이 두 벌이 되는 것
+- **Rule:** 구매자·판매자·관리자는 **하나의 Next.js 앱**에서 Role로 갈린다. 구매자 라우트는 모바일 퍼스트 반응형(+PWA), 판매자·관리자 라우트는 PC 폭 기준이다. 인증은 세 역할 모두 **동일한 BFF 경로**를 쓴다 — 브라우저는 httpOnly 쿠키만 갖고, 토큰은 Next.js Route Handler가 FastAPI에 중계하며 refresh 회전도 그 경로에서 일어난다. 클라이언트 코드가 access/refresh 토큰을 직접 읽거나 저장하지 않는다. 구매자 화면의 시각·동작 계약은 companions의 `DESIGN.md`(무엇이 어떻게 보이는가)·`EXPERIENCE.md`(무엇이 어떻게 동작하는가)가 소유하며, 목업과 충돌하면 그 두 문서가 이긴다.
+- **History:** 전환 전에는 Flutter가 Android Keystore(secure storage), 웹이 httpOnly 쿠키로 토큰을 보관해 인증 경로가 두 벌이었다. 구매자 표면을 반응형 웹으로 옮기며 한 벌로 합쳐진다 (2026-07-21 코스 코렉션, `sprint-change-proposal-2026-07-21.md`).
+
 ## Consistency Conventions
 
 | Concern | Convention |
 | --- | --- |
 | API | REST + JSON, `/api/v1/{복수형-리소스}`. 요청·응답 필드 snake_case. 페이지네이션은 page 기반 |
 | 에러 봉투 | 모든 에러 응답은 `{code, message, details}` — `code`는 문자열 enum(분기용), `message`는 한국어(그대로 표시 가능), `details`는 필드별 배열. FastAPI 기본 422 응답(`detail` 필드 형식)도 전역 핸들러가 이 봉투로 변환한다. 클라이언트는 `code`로만 분기한다 |
-| 주소 입력 | 우편번호·주소 검색은 카카오(다음) 우편번호 서비스 위젯/SDK (무료·키 불요) — 두 클라이언트 공통 |
+| 주소 입력 | 우편번호·주소 검색은 카카오(다음) 우편번호 서비스 웹 위젯 (무료·키 불요). `[ASSUMPTION]` 제공자는 구매자 웹 주문서 구현 시 확정 |
 | DB 명명 | 테이블 복수형 snake_case, FK는 `{단수형}_id`. enum은 PG native enum이 아닌 CHECK 제약 + 문자열 (enum 값 추가 시 마이그레이션 부담 회피) |
 | 백엔드 파일 | 각 도메인 패키지 안에 `router.py`, `service.py`, `models.py`(SQLAlchemy), `schemas.py`(Pydantic) 고정 명명 |
-| 프론트 | Next.js는 App Router + 슬러 시스템 CSS 규칙(`slur-ux`·`slur-design` 스킬). Flutter 상태관리는 Riverpod 3 |
-| 인증 흐름 | access token 단기(30분) + refresh token — 두 클라이언트 공통 |
+| 프론트 | Next.js App Router + 슬러 시스템 CSS. 구매자 화면은 모바일 퍼스트 반응형 + PWA이며 시각·동작 계약은 companions의 `DESIGN.md`·`EXPERIENCE.md`가 소유한다 (AD-14) |
+| 인증 흐름 | access token 단기(30분) + refresh token. 브라우저 보관은 httpOnly 쿠키 + Next.js BFF 경유로 확정 (AD-14) |
 | 에러·로깅 | 도메인 서비스는 core의 공통 예외 타입을 던지고, 라우터는 잡지 않는다 — core의 전역 핸들러가 에러 봉투로 변환 |
 | 이미지 | Supabase Storage 업로드는 FastAPI를 경유(사전서명 URL 발급) — 클라이언트가 Storage 키를 직접 갖지 않는다 (AD-1 연장) |
 
@@ -165,8 +174,6 @@ graph TD
 | uv (패키지 관리) | 0.11 |
 | Next.js (App Router) | 16.2 |
 | React | 19.2 |
-| Flutter / Dart | 3.44 / 3.12 |
-| Riverpod | 3.x |
 | Supabase Postgres | 17 |
 | Railway 빌드 | 서비스별 Dockerfile |
 
@@ -177,8 +184,8 @@ graph TD
 ```mermaid
 graph LR
     subgraph clients
-        FL[Flutter 앱<br/>Android 먼저]
-        NX[Next.js PC 웹<br/>판매자+관리자 Role 분기]
+        BW[모바일 브라우저<br/>구매자 반응형 웹 · PWA]
+        NX[PC 브라우저<br/>판매자+관리자 Role 분기]
     end
     subgraph Railway
         API[FastAPI 서비스]
@@ -188,8 +195,8 @@ graph LR
         PG[(Postgres 17)]
         ST[Storage<br/>상품 이미지]
     end
-    FL -->|HTTPS /api/v1| API
-    NX -->|브라우저| WEB
+    BW -->|HTTPS| WEB
+    NX -->|HTTPS| WEB
     WEB -->|HTTPS /api/v1| API
     API --> PG
     API -->|사전서명 URL 발급| ST
@@ -247,7 +254,7 @@ erDiagram
 | F5 주문 조회 (FR-22~23) | app/orders | AD-6, AD-7 |
 | F6 판매자 화면 (FR-24~26) | Next.js + app/{products,orders} | AD-2 |
 | F7 관리자 (FR-27~30) | app/admin | AD-3, AD-6, AD-9 |
-| F8 법적 고지 (FR-31~33) | Next.js·Flutter 정적 + sellers 노출 API | AD-1 |
+| F8 법적 고지 (FR-31~33) | Next.js 정적(푸터·약관·`/me`) + sellers 노출 API | AD-1, AD-14 |
 
 ## Deferred
 
@@ -257,7 +264,7 @@ erDiagram
 | 정산·수수료 데이터 모델 | PG와 한 묶음 (PRD §8) |
 | soft reservation(재고 예약), 다중 창고 | 대형 트래픽 문제 — v1 규모에서 불필요 (AD-4가 자리 지킴) |
 | 검색·알림·리뷰의 아키텍처 | PRD가 v1 제외 — 필요 확인 시 도메인 패키지 추가로 흡수 |
-| iOS 빌드·Apple 로그인 | 오픈 이후. auth_providers 구조가 자리 확보 (AD-5) |
-| 프론트 상세 폴더 구조 (Next.js/Flutter) | 첫 구현 시 슬러 시스템 스킬과 함께 확정 — 백엔드만큼 갈라질 위험이 낮음. 단 웹의 토큰 보관 방식(httpOnly 쿠키 vs 메모리)은 인증 계약이므로 auth 구현 첫 스토리에서 확정 |
+| 네이티브 스토어 출시(Capacitor 래퍼)·Apple 로그인 | 스토어 출시 필요가 실제로 확인되는 시점. 반응형 웹이 iOS·안드로이드 브라우저를 이미 커버하므로 v1 범위 밖. auth_providers 구조가 자리 확보 (AD-5) |
+| 프론트 상세 폴더 구조 (Next.js) | 첫 구현 시 슬러 시스템과 함께 확정 — 백엔드만큼 갈라질 위험이 낮다. ~~웹의 토큰 보관 방식~~ → **해소**: httpOnly 쿠키 + BFF로 확정(1.6·2.1 구현, AD-14가 승계) |
 | CI/CD 파이프라인 상세 | Railway 기본 배포로 시작, 테스트 자동화 필요가 확인되면 GitHub Actions 추가 |
 | 백업·모니터링 운영 절차 | Supabase·Railway 매니지드 기본값으로 시작, 실구매자 오픈 게이트에서 점검 |
