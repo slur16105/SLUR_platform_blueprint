@@ -117,7 +117,7 @@ development_status:
   8-1-buyer-web-shell: in-progress   # 구매자 웹 셸·반응형 기반 (탭바/상단 내비, 구매자 팔레트·먹색 포커스 링, / 라우트 전환, 미들웨어 공개·보호 구분)
   8-2-buyer-auth-web: in-progress    # 구매자 가입·로그인 (FR-1·2·4, 카카오 웹 인가코드, 역할 쿠키 buyer 도입 + 판매자·관리자 회귀 확인)
   8-3-buyer-product-browse-web: ready-for-dev # 상품목록·상품상세 (FR-8~13·32·34)
-  8-4-cart-web: backlog               # 장바구니 (FR-14·35)
+  8-4-cart-web: ready-for-dev         # 장바구니 (FR-14·35)
   8-5-checkout-web: backlog           # 주문서·주문완료 (FR-16·17·23·32·35)
   8-6-order-history-cancel-web: backlog  # 주문내역·주문상세·취소 (FR-18·21·22)
   8-7-me-and-pwa: backlog             # 내 정보 + PWA 기반 (FR-31·33, NFR-7)
