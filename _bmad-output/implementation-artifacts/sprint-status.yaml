@@ -120,7 +120,7 @@ development_status:
   8-4-cart-web: review               # 장바구니 (FR-14·35)
   8-5-checkout-web: in-progress       # 주문서·주문완료 (FR-16·17·23·32·35)
   8-6-order-history-cancel-web: ready-for-dev # 주문내역·주문상세·취소 (FR-18·21·22)
-  8-7-me-and-pwa: backlog             # 내 정보 + PWA 기반 (FR-31·33, NFR-7)
+  8-7-me-and-pwa: ready-for-dev       # 내 정보 + PWA 기반 (FR-31·33, NFR-7)
   8-8-flutter-archive-remove: backlog # Flutter 보관·제거 (Q2/A — 태그 원격 푸시 확인 후에만, 마지막)
   epic-8-retrospective: optional
 
