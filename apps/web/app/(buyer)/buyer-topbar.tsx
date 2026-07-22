@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { CartBadge, IconBack, IconCart, type BuyerTab } from "./buyer-icons";
 import BuyerTopnav from "./buyer-topnav";
+import { useCartCount } from "./cart-count";
 
 export type BuyerTopbarVariant = "logo" | "logo-center" | "back-title" | "title";
 
@@ -25,6 +26,11 @@ export default function BuyerTopbar({
   tab,
 }: BuyerTopbarProps & { tab?: BuyerTab }) {
   const router = useRouter();
+  /* 링크에 aria-label이 있으면 그것이 이름의 전부가 되어 안의 배지 숫자가 낭독되지 않는다.
+     탭바·상단 내비는 글자 라벨을 갖고 있어 문제가 없지만 여기는 아이콘뿐이다 —
+     그래서 건수를 이름에 함께 싣는다. 값이 없으면(비로그인·조회 전) `장바구니`만 읽는다. */
+  const { count } = useCartCount();
+  const cartLabel = count !== undefined && count > 0 ? `장바구니 ${count}건` : "장바구니";
 
   return (
     <header className="b_topbar">
@@ -53,7 +59,7 @@ export default function BuyerTopbar({
           ) : null}
 
           {showCart && variant !== "logo-center" ? (
-            <Link href="/cart" className="i_cart" aria-label="장바구니">
+            <Link href="/cart" className="i_cart" aria-label={cartLabel}>
               <IconCart />
               <CartBadge />
             </Link>

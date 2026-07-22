@@ -113,6 +113,14 @@ export default function OrderDetailView({ orderId }: { orderId: string }) {
     setResult({ data: r.data, error: null });
   }, [orderId, toLogin]);
 
+  /* `다시 시도` — 오류 화면을 지우고 골격으로 되돌린 뒤 다시 읽는다 (재시도 규약, /me와 같다).
+     위의 조용한 재조회와 다르다: 저쪽은 성공한 조작 뒤 화면을 흔들지 않으려는 것이고,
+     이쪽은 오류 화면에서 시작하므로 되돌아갈 화면이 골격이어야 누른 티가 난다. */
+  const retry = useCallback(() => {
+    setResult(null);
+    setReloadKey((n) => n + 1);
+  }, []);
+
   const onAsk = useCallback((id: string) => {
     // 한 번에 하나의 묶음만 확인 상태다 — 다른 묶음의 `주문 취소`를 누르면 이전 확인 줄이 닫힌다
     setConfirmId(id);
@@ -194,7 +202,7 @@ export default function OrderDetailView({ orderId }: { orderId: string }) {
         {notFound ? (
           <EmptyState message={NOT_FOUND} action={<OrdersLink />} />
         ) : (
-          <ErrorState message={result.error?.message ?? ""} onRetry={() => setReloadKey((n) => n + 1)} />
+          <ErrorState message={result.error?.message ?? ""} onRetry={retry} />
         )}
       </div>
     );

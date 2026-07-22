@@ -194,6 +194,13 @@ export default function CartView() {
     el?.focus();
   }, []);
 
+  /* `다시 시도` — 오류 화면을 지우고 골격으로 되돌린 뒤 다시 읽는다 (재시도 규약, /me와 같다).
+     reloadKey만 올리면 응답이 올 때까지 같은 오류 화면이 그대로 남아 눌러도 아무 일이 없어 보인다. */
+  const retry = useCallback(() => {
+    setResult(null);
+    setReloadKey((n) => n + 1);
+  }, []);
+
   const loading = result === null;
   const data = result?.data ?? null;
   const error = result?.error ?? null;
@@ -215,7 +222,7 @@ export default function CartView() {
       <div className="b_cart">
         <div className="i_packs">
           <div className="b_container">
-            <ErrorState message={error?.message ?? ""} onRetry={() => setReloadKey((n) => n + 1)} />
+            <ErrorState message={error?.message ?? ""} onRetry={retry} />
           </div>
         </div>
       </div>

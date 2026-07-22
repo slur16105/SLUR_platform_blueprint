@@ -143,6 +143,14 @@ export default function ProductList() {
     setLoadingMore(false);
   }
 
+  /* `다시 시도` — 오류 화면을 지우고 골격으로 되돌린 뒤 다시 읽는다 (재시도 규약, /me와 같다).
+     retry만 올리면 응답이 올 때까지 같은 오류 화면이 남아 눌러도 아무 일이 없어 보인다.
+     🚨 `더 보기` 실패의 재시도(loadMore)는 이것과 다르다 — 그쪽은 이미 그린 목록을 지우지 않는다. */
+  const retryFirstPage = useCallback(() => {
+    setSnap(null);
+    setRetry((n) => n + 1);
+  }, []);
+
   function select(id: string | null) {
     router.replace(id ? `${pathname}?category=${encodeURIComponent(id)}` : pathname);
   }
@@ -164,7 +172,7 @@ export default function ProductList() {
         {loading ? <GridSkeleton /> : null}
 
         {!loading && error && items.length === 0 ? (
-          <ErrorState message={error.message} onRetry={() => setRetry((n) => n + 1)} />
+          <ErrorState message={error.message} onRetry={retryFirstPage} />
         ) : null}
 
         {!loading && !error && items.length === 0 ? (

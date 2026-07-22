@@ -187,8 +187,10 @@ export default function OptionAxes({
         <div className="b_pick">
           <span className="b_section_label i_key">선택</span>
           <span className="b_product_name_row i_value">{comboText}</span>
+          {/* 🚨 주문 상태 modifier(m_waiting·m_finished)를 빌려 쓰지 않는다 — 액센트가 붙는 상태는
+              주문의 `입금대기` 하나뿐이며(DESIGN 상태 라벨), 옵션의 `구매 가능`은 그 상태가 아니다. */}
           <span
-            className={`b_status_label i_state ${selected.purchasable ? "m_waiting" : "m_finished"}`}
+            className={`b_status_label i_state ${selected.purchasable ? "m_available" : "m_soldout"}`}
           >
             {selected.purchasable ? "구매 가능" : "품절"}
           </span>

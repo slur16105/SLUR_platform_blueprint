@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { MSG, mapFieldErrors, type ErrorEnvelope, type FieldErrors } from "../auth-errors";
+import { useCartCount } from "../cart-count";
 import { roleHome } from "@/lib/nav";
 
 const FIELDS = ["email", "password", "name", "phone"] as const;
@@ -15,6 +16,7 @@ const PHONE_RE = /^01[016789]\d{7,8}$/;
 
 export default function SignupForm({ next }: { next: string | null }) {
   const router = useRouter();
+  const { refresh: refreshCartCount } = useCartCount();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -73,6 +75,8 @@ export default function SignupForm({ next }: { next: string | null }) {
         }
         return;
       }
+      // 배지도 로그인과 같은 규칙이다 — /signup도 (buyer) 그룹이라 replace로는 다시 읽지 않는다
+      refreshCartCount();
       router.replace(next ?? roleHome(data.role)); // 로그인과 같은 복귀 규칙
       router.refresh();
     } catch {

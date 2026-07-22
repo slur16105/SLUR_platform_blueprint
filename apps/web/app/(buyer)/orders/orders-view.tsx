@@ -122,6 +122,13 @@ export default function OrdersView() {
     })();
   }, [morePending, result, toLogin]);
 
+  /* `다시 시도` — 오류 화면을 지우고 골격으로 되돌린 뒤 다시 읽는다 (재시도 규약, /me와 같다).
+     reloadKey만 올리면 응답이 올 때까지 같은 오류 화면이 남아 눌러도 아무 일이 없어 보인다. */
+  const retry = useCallback(() => {
+    setResult(null);
+    setReloadKey((n) => n + 1);
+  }, []);
+
   // 최초 로딩은 행 골격이다 — 화면 중앙 스피너를 쓰지 않는다 (UX-DR9)
   if (result === null) {
     return (
@@ -136,7 +143,7 @@ export default function OrdersView() {
   if (result.error) {
     return (
       <div className="i_feedback">
-        <ErrorState message={result.error.message} onRetry={() => setReloadKey((n) => n + 1)} />
+        <ErrorState message={result.error.message} onRetry={retry} />
       </div>
     );
   }

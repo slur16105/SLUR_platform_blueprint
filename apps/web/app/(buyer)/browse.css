@@ -267,7 +267,11 @@
   border-radius: var(--b-rounded-sm);
   background: var(--b-surface-inset);
 }
+/* 옵션 상태는 **주문 상태가 아니다** — buyer.css의 m_waiting(액센트)·m_finished를 빌려 쓰지 않는다.
+   액센트가 붙는 상태 라벨은 주문의 `입금대기` 하나뿐이다 (DESIGN 상태 라벨). */
 .b_pick .i_state { margin-left: auto; }
+.b_pick .i_state.m_available { color: var(--b-ink); }
+.b_pick .i_state.m_soldout { color: var(--b-ink-muted); }
 .b_pick .i_msg { color: var(--b-ink-secondary); }
 
 /* ── 배송비 줄 (D11) ───────────────────────────

@@ -13,7 +13,8 @@
    부채로 남기는 사실 셋 (D1):
    - 현재 이 앱에 CSP 헤더가 없어 지금은 막히지 않는다. CSP를 도입하면
      script-src https://t1.daumcdn.net, frame-src·img-src·connect-src *.daumcdn.net·*.daum.net이 필요하다.
-   - PWA(8.7)의 서비스워커는 이 스크립트를 캐시하지 않는다 — 오프라인에서 검색은 되지 않는다.
+   - 8.7은 서비스워커를 등록하지 않기로 확정했다 — 오프라인에서 검색은 되지 않는다
+     (이 화면만이 아니라 앱 전체가 오프라인 동작을 약속하지 않는다).
    - 개인정보처리방침의 제3자 스크립트 고지 검토 대상이다(오픈 게이트). */
 
 import { useCallback, useEffect, useRef, useState } from "react";

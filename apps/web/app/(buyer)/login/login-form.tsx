@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { MSG, mapFieldErrors, type ErrorEnvelope, type FieldErrors } from "../auth-errors";
+import { useCartCount } from "../cart-count";
 import { roleHome } from "@/lib/nav";
 
 const FIELDS = ["email", "password"] as const;
@@ -27,6 +28,7 @@ function KakaoMark() {
    401은 어느 쪽이 틀렸는지 말하지 않고 두 필드를 함께 표시한다. */
 export default function LoginForm({ next, notice }: { next: string | null; notice: string | null }) {
   const router = useRouter();
+  const { refresh: refreshCartCount } = useCartCount();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -63,6 +65,10 @@ export default function LoginForm({ next, notice }: { next: string | null; notic
         }
         return;
       }
+      /* /login도 (buyer) 그룹이라 아래 replace로는 배지 프로바이더가 remount되지 않는다 —
+         방금 로그인한 사람의 장바구니 배지가 비어 있지 않도록 여기서 다시 읽게 한다.
+         이동은 그대로다(콘솔 역할 포함) — 이 호출은 배지 값만 건드린다. */
+      refreshCartCount();
       router.replace(next ?? roleHome(data.role));
       router.refresh(); // Router Cache 잔상 제거
     } catch {

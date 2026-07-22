@@ -5,9 +5,11 @@
 
    D4 — 구매 불가의 진실 단위는 **항목**이다. 묶음 헤더 태그와 하단 안내 상자는
         묶음의 모든 항목이 불가일 때만 붙는다. 한 묶음에 가능·불가가 섞여 있으면
-        행만 흐려진다 — 살 수 있는 물건이 있는 묶음을 통째로 죽은 것처럼 그리지 않는다.
+        행이 흐려지고 그 행에 `구매 불가 · 품절` 태그가 붙는다 — 살 수 있는 물건이 있는
+        묶음을 통째로 죽은 것처럼 그리지 않되, 색만으로 알리지도 않는다.
    D3 — 체크박스는 조작이 아니라 상태 표시다(disabled). POST /orders/preview에 항목 선택
-        파라미터가 없어 부분 선택은 주문서 금액과 어긋난다. aria-label로 상태를 말한다.
+        파라미터가 없어 부분 선택은 주문서 금액과 어긋난다. 세 상태(전부·일부·전무)를
+        각각 체크·부분 선택·빈 칸으로 표시하고 aria-label이 같은 사실을 말한다.
    D7 — 삭제는 인라인 확인 줄이다. 모달·window.confirm·스와이프 삭제를 만들지 않는다. */
 
 import SellerPack from "../seller-pack";
@@ -72,6 +74,13 @@ function CartRow({
         <p className="b_product_name_row i_name">{item.product_name}</p>
         {/* 옵션이 없는 조합은 `—`로 자리를 지킨다 — 행 높이가 흔들리지 않게 (AC 1) */}
         <p className="b_meta i_option">{item.option_text || "—"}</p>
+        {/* 🚨 색만으로 상태를 전달하지 않는다 (EXPERIENCE) — 회색조·취소선 옆에 글자가 함께 선다.
+            묶음 헤더 태그는 묶음 전체가 불가일 때만 나오므로 섞인 묶음은 이 행 태그가 유일한 단서다. */}
+        {dead ? (
+          <p className="i_flag">
+            <span className="b_tag m_unavailable">{DEAD_PACK_TAG}</span>
+          </p>
+        ) : null}
         <p className="b_price_item i_price">{lineTotal === null ? "—" : formatWon(lineTotal)}</p>
 
         {confirming ? (
@@ -161,6 +170,9 @@ export default function CartPack({
 }) {
   const purchasableCount = pack.items.filter((i) => i.purchasable).length;
   const allDead = purchasableCount === 0;
+  /* 섞인 묶음은 체크도 빈 칸도 사실이 아니다 — 안의 불가 항목은 이미 합계와 `주문하기 (N건)`에서
+     빠져 있다. 네이티브 부분 선택 상태(indeterminate)로 표시하고 낭독 문장도 건수를 말한다. */
+  const partial = !allDead && purchasableCount < pack.items.length;
 
   return (
     <SellerPack
@@ -170,10 +182,19 @@ export default function CartPack({
         <input
           type="checkbox"
           className="b_checkbox"
-          checked={!allDead}
+          checked={!allDead && !partial}
+          ref={(el) => {
+            if (el) el.indeterminate = partial;
+          }}
           disabled
           readOnly
-          aria-label={allDead ? "구매 불가 — 주문에서 제외" : "주문에 포함"}
+          aria-label={
+            allDead
+              ? "구매 불가 — 주문에서 제외"
+              : partial
+                ? `${pack.items.length}건 중 ${purchasableCount}건만 주문에 포함`
+                : "주문에 포함"
+          }
         />
       }
       headEnd={allDead ? <span className="b_tag m_unavailable">{DEAD_PACK_TAG}</span> : undefined}

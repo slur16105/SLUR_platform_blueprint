@@ -78,10 +78,10 @@ export function IconBack({ className }: IconProps) {
 /* 장바구니 개수 배지 — 값은 (buyer) 레이아웃의 컨텍스트 하나가 소유한다 (8.4 D5).
    담긴 항목 수 전체(구매 불가 포함)이며 수량의 합이 아니다.
    값이 없으면(비로그인·조회 전·401) 아무것도 그리지 않는다.
-   count prop은 override로 남긴다 — 세 호출부는 prop 없이 부르고 있고 그대로 둔다. */
-export function CartBadge({ count }: { count?: number }) {
-  const { count: fromContext } = useCartCount();
-  const value = count ?? fromContext;
+   🚨 prop으로 값을 받지 않는다 — 세 호출부(탭바·상단 내비·상단바)가 모두 컨텍스트를 읽고,
+      두 번째 입구를 열면 화면마다 다른 숫자가 나올 수 있다. */
+export function CartBadge() {
+  const { count: value } = useCartCount();
   if (value === undefined || value <= 0) return null;
   return (
     <span className="b_badge" aria-label={`장바구니 ${value}건`}>

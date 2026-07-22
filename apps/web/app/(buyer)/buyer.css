@@ -283,20 +283,29 @@
   border-bottom: 1.8px solid var(--b-paper);
   transform: rotate(42deg);
 }
+/* 부분 선택 — 가운데 짧은 가로선. 체크(전부)와 빈 칸(전무) 사이의 세 번째 사실이며
+   장바구니의 섞인 묶음이 쓴다. 낭독은 브라우저가 "부분 선택"으로 말한다. */
+.b_checkbox:indeterminate { border-color: var(--b-ink); background: var(--b-ink); }
+.b_checkbox:indeterminate::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 3px;
+  width: 7px;
+  height: 0;
+  border-bottom: 1.8px solid var(--b-paper);
+}
 
 /* ── `또는` 구분선 ─────────────────────────────── */
 .b_or { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
 .b_or .i_line { flex: 1; height: 1px; background: var(--b-hairline); }
 .b_or .i_text { font-size: 11.5px; letter-spacing: .02em; color: var(--b-ink-muted); }
 
-/* ── 섹션 · 자리표시 ─────────────────────────────
-   8.3이 `/`를 대체하면서 고아가 된 .b_ph·.b_placeholder 계열을 제거했다.
-   .b_stub은 /cart·/orders·/me가 아직 쓰므로 남긴다 (8.4·8.6·8.7이 대체한다). */
+/* ── 섹션 ────────────────────────────────────────
+   자리표시(.b_ph·.b_placeholder·.b_stub) 계열은 8.4~8.7이 실제 화면으로 대체하면서 전부 사라졌다. */
 .b_section { padding-block: var(--b-section-y); }
 .b_section .i_eyebrow { margin-bottom: 9px; }
 .b_section .i_display { margin-bottom: var(--b-section-y); }
-.b_stub { padding-block: var(--b-section-y); }
-.b_stub .i_note { margin-top: 10px; }
 
 /* ─────────────────────────────────────────────
    피드백 — 로딩(골격) · 빈 상태 · 오류 (UX-DR9, 8.3 신설)

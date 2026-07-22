@@ -585,6 +585,14 @@ export default function CheckoutView() {
             <ErrorState message={quote.error.message} onRetry={() => void refreshPreview(postalDigits)} />
           ) : null}
           {failBlock}
+          {/* ── 중개자 고지 (≥768) ──
+              🚨 `주문하기`보다 **위**다. 우측 sticky 칼럼에 버튼이 있고 고지가 문서 끝에 있으면
+                 고지를 읽지 않고도 주문이 끝난다 (EXPERIENCE 2026-07-22 정정, FR-32).
+              CTA와 같은 방식으로 두 자리에 렌더하고 CSS display로만 전환한다 —
+              <768은 고정 CTA 바 바로 위(문서 끝), ≥768은 이 자리. */}
+          <div className="i_legal m_side">
+            <BrokerNotice className="i_broker" />
+          </div>
           <div className="i_cta_side">{orderButton}</div>
         </section>
 
@@ -611,11 +619,11 @@ export default function CheckoutView() {
           <p className="b_pay_note">{PAY_NOTE}</p>
         </section>
 
-        {/* ── 중개자 고지 ──
-            🚨 청약 버튼 바로 위, 같은 스크롤 흐름 안이다. ≥768 2단에서도 우측 sticky 칼럼이 아니라
-               2단 아래 전체 폭에 놓인다 — 디자인 취향이 아니라 규제 요건이다 (FR-32, UX-DR10).
+        {/* ── 중개자 고지 (<768) ──
+            🚨 하단 고정 CTA 바 바로 위, 같은 스크롤 흐름 안이다 — 디자인 취향이 아니라
+               규제 요건이다 (FR-32, UX-DR10). ≥768에서는 CSS로 감추고 위의 m_side가 대신한다.
             🚨 문구는 app/config/company.ts의 BROKER_NOTICE가 정본이다. 여기에 복사하지 않는다. */}
-        <div className="i_legal">
+        <div className="i_legal m_flow">
           <BrokerNotice className="i_broker" />
         </div>
       </div>

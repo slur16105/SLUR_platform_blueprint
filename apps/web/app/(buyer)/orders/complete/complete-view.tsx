@@ -60,6 +60,13 @@ export default function CompleteView() {
     };
   }, [orderId, valid, reloadKey, toLogin]);
 
+  /* `다시 시도` — 오류 화면을 지우고 골격으로 되돌린 뒤 다시 읽는다 (재시도 규약, /me와 같다).
+     reloadKey만 올리면 응답이 올 때까지 같은 오류 화면이 남아 눌러도 아무 일이 없어 보인다. */
+  const retry = useCallback(() => {
+    setResult(null);
+    setReloadKey((n) => n + 1);
+  }, []);
+
   /* order 파라미터가 없거나 UUID 형식이 아니면 빈 화면이 아니라 안내를 낸다 (AC 12) */
   if (!valid) {
     return (
@@ -88,7 +95,7 @@ export default function CompleteView() {
         {notFound ? (
           <EmptyState message={NOT_FOUND} action={<OrdersLink />} />
         ) : (
-          <ErrorState message={result.error?.message ?? ""} onRetry={() => setReloadKey((n) => n + 1)} />
+          <ErrorState message={result.error?.message ?? ""} onRetry={retry} />
         )}
       </div>
     );
@@ -123,7 +130,7 @@ export default function CompleteView() {
       ) : null}
 
       <div className="i_acts">
-        {/* 목적지 /orders/[id]는 8.6이 만든다 — 그때까지 죽은 링크다. 비활성으로 만들지 않는다 */}
+        {/* 목적지 /orders/[id]는 8.6이 만들었다 — 살아 있는 링크다 */}
         <Link href={`/orders/${order.order_id}`} className="b_btn m_solid m_full b_button_text">
           주문 상세 보기
         </Link>

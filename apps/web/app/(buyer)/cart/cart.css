@@ -134,6 +134,9 @@
   text-decoration-color: var(--b-strike-line);
 }
 .b_cart_item[data-unavailable="true"] .b_stepper { opacity: .5; }
+/* 🚨 회색조·취소선은 색이다. 글자 단서(`구매 불가 · 품절` 태그)가 같은 행에 함께 선다 —
+   묶음에 가능·불가가 섞이면 헤더 태그가 나오지 않으므로 이 자리가 유일한 텍스트다. */
+.b_cart_item .i_flag { margin-top: var(--b-space-2); }
 
 /* 묶음 하단 안내 상자 — 묶음 전체가 빠질 때만 참인 문장이다.
    SellerPack의 i_foot는 배송비·액션용 구획선을 갖고 있어 장바구니에서만 덮는다. */
