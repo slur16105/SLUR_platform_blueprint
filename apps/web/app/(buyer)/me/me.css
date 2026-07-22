@@ -1,0 +1,119 @@
+/* ─────────────────────────────────────────────
+   내 정보 전용 배치 (8.7)
+   공용 부품(.b_btn.m_text · .b_kv_row · .b_tag · .b_block_skeleton · .b_notice)은
+   이미 buyer.css·type.css에 있다. 여기에는 이 화면만의 구획 배치만 둔다 —
+   공용 규칙을 buyer.css에 새로 만들지 않는다.
+
+   🚨 --b-* 토큰과 .b_* 역할 클래스만 쓴다. 새 hex를 만들지 않는다 (UX-DR1).
+   🚨 box-shadow 선언 0건 (UX-DR12). 깊이는 8px 종이 접기 띠 · 1px hairline ·
+      테두리 상자 셋으로만 만든다.
+   🚨 파랑(#2f6bff·--color-brand)을 쓰지 않는다. 포커스 링은 8.1 D4의 먹색 outline이
+      전 인터랙티브 요소를 이미 덮으므로 여기서 다시 선언하지 않는다.
+   ───────────────────────────────────────────── */
+
+/* 구획의 좌우 여백은 각 구획이 갖는다 — 8px 띠와 hairline이 컨테이너 폭 끝까지 그어져야 한다
+   (장바구니 묶음·주문서 상품 구획과 같은 방법). 폭 상한 640px은 .m_read가 준다 (UX-DR4). */
+.b_me.b_container { padding-inline: 0; }
+.b_me .i_sec { padding: var(--b-section-y) var(--b-gutter); }
+
+/* ── 계정 ─────────────────────────────────────
+   `계정` eyebrow · 이름(20px 계열) · 이메일. 🚨 `가입 방식` 줄은 없다 (D2). */
+.b_me .i_acct_sec { padding-top: var(--b-space-6); }
+.b_me .i_eyebrow { margin-bottom: 10px; }
+.b_me .i_email { margin-top: 9px; color: var(--b-ink-secondary); }
+
+/* 로딩 골격 — 이름·이메일 두 줄의 자리를 그대로 잡는다 (레이아웃이 튀지 않는다) */
+.b_me .i_sk_name { height: 26px; width: 45%; }
+.b_me .i_sk_email { height: 13px; width: 65%; margin-top: 12px; }
+/* 오류는 구획 안에서 좌측 정렬로 선다 — 위쪽 여백만 다듬는다 */
+.b_me .i_acct_sec .b_feedback { padding-block: var(--b-space-4) var(--b-space-2); }
+
+/* ── 메뉴 줄 ───────────────────────────────────
+   행 전체가 링크이고 높이가 44px 이상이다 (UX-DR7). 위는 8px 종이 접기 띠. */
+.b_me .i_menu { display: block; border-top: var(--b-band) solid var(--b-paper-shade); }
+.b_me .i_menu_item {
+  display: flex;
+  align-items: center;
+  gap: var(--b-space-3);
+  min-height: 44px;
+  padding: var(--b-space-4) var(--b-gutter);
+  border-bottom: 1px solid var(--b-hairline);
+  color: var(--b-ink-strong);
+}
+.b_me .i_menu_item .i_label { letter-spacing: -0.01em; }
+
+/* 셰브런 — CSS 도형이다. 🚨 인라인 SVG를 만들지 않는다:
+   [data-surface="buyer"] svg의 stroke-width 전역 규칙을 물려받는다 (8.4 학습 12). */
+.b_me .i_chev {
+  position: relative;
+  flex: 0 0 11px;
+  width: 11px;
+  height: 11px;
+  margin-left: auto;
+}
+.b_me .i_chev::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 8px;
+  height: 8px;
+  border-top: 1.5px solid var(--b-ink-muted);
+  border-right: 1.5px solid var(--b-ink-muted);
+  transform: rotate(45deg);
+}
+
+/* ── 사업자 정보 (FR-31, UX-DR10) ────────────────
+   위는 8px 띠. 라벨 + `임시 정보` 태그가 한 줄, 그 아래 점선 상자에 6행. */
+.b_me .i_biz_sec { border-top: var(--b-band) solid var(--b-paper-shade); }
+.b_me .i_biz_head {
+  display: flex;
+  align-items: center;
+  gap: var(--b-space-2);
+  margin-bottom: 14px;
+  max-width: var(--b-row-max);
+}
+.b_me .i_biz_label { margin: 0; }
+/* placeholder 표기 — 액센트 글자 + accent-soft 면. 태그 크기·굵기·자간은 type.css의 .b_tag가 갖는다. */
+.b_me .i_ph_tag {
+  display: inline-block;
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: var(--b-rounded-xs);
+  background: var(--b-accent-soft);
+  color: var(--b-accent);
+}
+/* 🚨 점선 테두리는 "아직 확정되지 않은 값"의 표기이며 이 지면에서 여기 한 곳에만 쓴다. */
+.b_me .i_biz_box {
+  padding: var(--b-space-4) var(--b-space-3);
+  border: 1px dashed var(--b-field-border);
+  border-radius: var(--b-rounded);
+  background: var(--b-surface-inset);
+}
+/* 라벨이 길다(`통신판매업 신고번호`) — .b_kv_row 기본 62px으로는 접힌다. 이 상자에서만 넓힌다. */
+.b_me .i_biz_box .i_key { flex: 0 0 116px; white-space: nowrap; }
+.b_me .i_biz_box .i_value { color: var(--b-ink-muted); }
+.b_me .i_biz_note { margin-top: 11px; max-width: var(--b-row-max); color: var(--b-ink-muted); }
+
+/* 중개자 고지 — 접히지 않는다. .b_broker(browse.css)의 배치 여백에 기대지 않고
+   이 화면이 직접 준다(browse.css는 여기서 로드되지 않는다). */
+.b_me .i_broker {
+  margin-top: 14px;
+  padding-top: 13px;
+  max-width: var(--b-row-max);
+  border-top: 1px solid var(--b-hairline);
+}
+
+/* ── 로그아웃 ──────────────────────────────────
+   약한 텍스트 버튼(.b_btn.m_text) — 면 없는 밑줄 글자, 위 1px hairline.
+   🚨 빨강·경고색을 쓰지 않는다 (이 팔레트에 빨강이 없다). */
+.b_me .i_logout_sec { padding: var(--b-space-1) var(--b-gutter) var(--b-space-7); }
+.b_me .i_logout { border-top: 1px solid var(--b-hairline); border-radius: 0; letter-spacing: .01em; }
+.b_me .i_logout .i_text { padding-bottom: 2px; border-bottom: 1px solid var(--b-checkbox-border); }
+/* 요청 중 — 면이 생기지 않게 .b_btn:disabled의 배경·테두리를 이 버튼에서만 되돌린다 */
+.b_me .i_logout:disabled {
+  border-color: transparent;
+  border-top-color: var(--b-hairline);
+  background: none;
+  color: var(--b-disabled-ink);
+}

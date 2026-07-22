@@ -4,7 +4,7 @@ baseline_commit: d9228db7cb07ae1da34c0509aa8be236ab28a758
 
 # Story 8.7: 내 정보와 PWA 기반
 
-Status: ready-for-dev
+Status: in-progress
 
 > **선행 조건.** 8.1(셸·토큰·미들웨어)·8.2(로그인·로그아웃 BFF)가 끝나 있어야 한다. **8.6(주문내역·주문상세)와는 파일이 겹치지 않지만 같은 기간에 진행 중**이므로,
 > 착수 시점에 `app/(buyer)/orders/**`·`app/api/orders/**`가 중간 상태일 수 있다. **이 스토리는 그 파일들을 열지도 고치지도 않는다.**
@@ -332,95 +332,95 @@ html:has([data-surface="buyer"]) { background: var(--b-paper); }
 
 ## Tasks / Subtasks
 
-- [ ] **Task 0 — 착수 전 확인** (AC: 전부)
-  - [ ] `git pull` 후 `app/(buyer)/me/page.tsx`가 아직 8.1의 자리표시인지 확인한다 (이 스토리가 통째로 대체한다)
-  - [ ] `app/api/auth/` 아래에 **`me/route.ts`가 없는지** 확인한다 — baseline에는 `login`·`logout`·`signup`·`kakao/*`만 있다. 있으면 그것을 쓰고 새로 만들지 않는다
-  - [ ] `app/(buyer)/seller-info.tsx`의 `BrokerNotice` export 시그니처를 읽는다 (`{ className?: string }`)
-  - [ ] `app/(buyer)/buyer-feedback.tsx`의 골격·오류 컴포넌트와 `getPublicJson`·`NETWORK_MESSAGE`·`GENERIC_MESSAGE`를 읽는다 — **두 번째 규약을 만들지 않는다**
-  - [ ] `app/(buyer)/cart-count.tsx`의 `useCartCount().setCount` 시그니처를 확인한다 (D4)
-  - [ ] `buyer.css`의 `.b_row`·`.b_tag`·`.b_block_skeleton`·`.b_section`·포커스 링 블록 실제 선언을 읽는다. **값을 다시 선언하지 않는다**
-  - [ ] 🚨 **8.6이 진행 중이면 `app/(buyer)/orders/**`·`app/api/orders/**`를 열지 않는다.** 이 스토리는 그 파일들이 필요 없다
+- [x] **Task 0 — 착수 전 확인** (AC: 전부)
+  - [x] `app/(buyer)/me/page.tsx`가 8.1의 자리표시임을 확인했다 (`b_stub` + 안내 두 줄). 통째로 대체했다
+  - [x] `app/api/auth/` 아래에 `me/route.ts`가 **없음**을 확인하고 새로 만들었다 (`login`·`logout`·`signup`·`kakao/*`만 있었다)
+  - [x] `seller-info.tsx`의 `BrokerNotice({ className?: string })` 시그니처 확인
+  - [x] `buyer-feedback.tsx`의 `BlockSkeleton`·`ErrorState`·`getPublicJson`·`NETWORK_MESSAGE`·`GENERIC_MESSAGE` 확인 — 두 번째 규약을 만들지 않고 그대로 썼다
+  - [x] `cart-count.tsx`의 `useCartCount(): { count, setCount }` 확인 (D4)
+  - [x] `buyer.css`의 `.b_row`·`.b_tag`·`.b_kv_row`·`.b_block_skeleton`·`.b_btn.m_text`·포커스 링 블록 확인. 값을 다시 선언하지 않았다
+  - [x] 8.6은 착수 시점에 **머지 완료**(`a12606b`)였고, 그럼에도 `app/(buyer)/orders/**`·`app/api/orders/**`를 **열지 않았다**
 
-- [ ] **Task 1 — 계정 조회 BFF** (AC: 1, 5, 12)
-  - [ ] `app/api/auth/me/route.ts` 신설 — `GET`, `proxyWithRefresh(req, "/api/v1/auth/me", { method: "GET" })`
-  - [ ] **`assertSameOrigin`을 붙이지 않는다** — 읽기 요청이다 (8.6 Task 1의 GET 규칙과 같다)
-  - [ ] `proxyWithRefresh`가 돌려준 `NextResponse`를 **그대로 반환**한다 — 다시 감싸면 회전된 세션 쿠키가 유실된다
-  - [ ] `lib/auth.ts`는 **import만 한다. 수정하지 않는다**
+- [x] **Task 1 — 계정 조회 BFF** (AC: 1, 5, 12)
+  - [x] `app/api/auth/me/route.ts` 신설 — `GET`, `proxyWithRefresh(req, "/api/v1/auth/me", { method: "GET" })`
+  - [x] `assertSameOrigin` 붙이지 않음 (읽기 요청)
+  - [x] `proxyWithRefresh`의 `NextResponse`를 그대로 반환 (가공 0)
+  - [x] `lib/auth.ts` import만 — diff **0줄**
 
-- [ ] **Task 2 — `/me` 화면 골격 (서버 층)** (AC: 1, 2, 3, 11)
-  - [ ] `me/page.tsx` 대체 — `<BuyerShell tab="me" showTabbar topbar={{ variant: "title", title: "내 정보" }}>` + `.b_container.m_read`. **셸 호출 형태를 바꾸지 않는다**(8.1이 탭 활성 판정에 쓴다)
-  - [ ] 구획 순서: **계정(`<AccountCard />`) → 8px 띠 → 메뉴 줄 3개 → 8px 띠 → 사업자 정보 + 고지 → 1px hairline → 로그아웃**
-  - [ ] 메뉴 줄 — `<Link>` 3개(`/orders`·`/terms`·`/privacy`), 각 줄 아래 1px hairline, 높이 ≥44px, 우측 셰브런은 **CSS 도형**(`::before` 회전 사각, 목업 `.chev`와 같은 방식). **인라인 SVG 금지**
-  - [ ] 사업자 정보 — `COMPANY` 임포트, 6행을 `<dl>` 라벨-값 행(`.b_row`, 560px)으로. `임시 정보` 태그(`.b_tag`) + `실사업자 정보는 서비스 오픈 전에 교체됩니다.`
-  - [ ] 중개자 고지 — `import { BrokerNotice } from "../seller-info"` 재사용. **문장을 다시 쓰지 않는다**
-  - [ ] `me/me.css` — 이 화면 전용 배치만. 공용 규칙을 `buyer.css`에 새로 만들지 않는다(이 화면에만 쓰이는 것들이다)
+- [x] **Task 2 — `/me` 화면 골격 (서버 층)** (AC: 1, 2, 3, 11)
+  - [x] `me/page.tsx` 대체 — 셸 호출 형태(`tab="me"`·`showTabbar`·`topbar.variant="title"`) 유지, `.b_container.m_read` 유지
+  - [x] 구획 순서: 계정 → 8px 띠 → 메뉴 줄 3개 → 8px 띠 → 사업자 정보 + 고지 → 1px hairline → 로그아웃
+  - [x] 메뉴 줄 — `<Link>` 3개(`/orders`·`/terms`·`/privacy`), 아래 1px hairline, 실측 높이 **52px**(≥44), 셰브런은 **CSS 도형**(`::before` 회전 사각). 인라인 SVG 0건
+  - [x] 사업자 정보 — `COMPANY` 임포트, 6행 `<dl>`(`.b_kv_row` + `.b_row` 560px), `임시 정보` 태그(`.b_tag`) + `실사업자 정보는 서비스 오픈 전에 교체됩니다.`
+  - [x] 중개자 고지 — `import { BrokerNotice } from "../seller-info"` 재사용. 문장 리터럴 0건
+  - [x] `me/me.css` — 이 화면 전용 배치만. `buyer.css`에 공용 규칙을 추가하지 않았다
 
-- [ ] **Task 3 — 계정 구획과 로그아웃 (클라이언트 층)** (AC: 1, 4, 5)
-  - [ ] `me/account-card.tsx` — `"use client"`. effect 안 async IIFE + `alive` 가드로 `GET /api/auth/me` 조회. **effect 안에서 동기 `setState` 금지**(`react-hooks/set-state-in-effect`가 lint error)
-  - [ ] 결과는 `{ data, error } | null` 한 벌 — 로딩을 **파생**시킨다(8.4·8.6의 관례)
-  - [ ] 표시: `계정` eyebrow(`.b_eyebrow`) · 이름(`.b_title_sm`) · 이메일(`.b_meta`, `null`이면 `—`). **`가입 방식`·전화번호 줄을 만들지 않는다** (D2)
-  - [ ] 로딩은 `.b_block_skeleton`, 오류는 `message` + `다시 시도`, 401은 `router.replace("/login?next=%2Fme")`
-  - [ ] `me/logout-link.tsx` — `"use client"`. `POST /api/auth/logout` → `setCount(undefined)` → `router.replace("/")` → `router.refresh()` (D4)
-  - [ ] 요청 중 버튼 비활성 + 중복 제출 차단. **스피너를 쓰지 않는다**. 실패해도 쿠키는 이미 지워졌을 수 있으므로 **`/`로 보낸다**(BFF가 멱등이다)
-  - [ ] 🚨 `app/logout-button.tsx`·`app/api/auth/logout/route.ts`·`lib/auth.ts`·`cart-count.tsx`를 **열지 않는다**
+- [x] **Task 3 — 계정 구획과 로그아웃 (클라이언트 층)** (AC: 1, 4, 5)
+  - [x] `me/account-card.tsx` — effect 안 async IIFE + `alive` 가드. **effect 안 동기 `setState` 0건**
+  - [x] 결과는 `{ data, error } | null` 한 벌 — 로딩을 파생
+  - [x] `계정` eyebrow(`.b_eyebrow`) · 이름(`.b_title_sm`) · 이메일(`.b_meta`, `null` → `—` 실측 확인). `가입 방식`·전화번호 줄 0건
+  - [x] 로딩 `.b_block_skeleton` 2줄 / 오류 `message` + `다시 시도` / 401 `router.replace("/login?next=%2Fme")` — 셋 다 실렌더 확인
+  - [x] `me/logout-link.tsx` — `POST /api/auth/logout` → `setCount(undefined)` → `router.replace("/")` → `router.refresh()`
+  - [x] 요청 중 `disabled` + 중복 제출 차단. 스피너 0건. 실패해도 `/`로 보낸다
+  - [x] `app/logout-button.tsx`·`app/api/auth/logout/route.ts`·`lib/auth.ts`·`cart-count.tsx` **열지 않았다** — diff 0줄
 
-- [ ] **Task 4 — manifest** (AC: 6)
-  - [ ] `app/manifest.ts` 신설 — D5의 객체 그대로. `MetadataRoute.Manifest` 타입을 붙인다
-  - [ ] `npx next build` 후 라우트 목록에 `/manifest.webmanifest`가 나오는지 확인
-  - [ ] 미들웨어 matcher를 **건드리지 않는다** — manifest는 공개 경로이고 matcher에 없으므로 미들웨어가 실행되지 않는다
+- [x] **Task 4 — manifest** (AC: 6)
+  - [x] `app/manifest.ts` 신설 — D5의 객체 그대로, `MetadataRoute.Manifest` 타입
+  - [x] `npx next build` 라우트 목록에 `○ /manifest.webmanifest` 확인
+  - [x] 미들웨어 matcher 무수정
 
-- [ ] **Task 5 — 아이콘 5개** (AC: 7)
-  - [ ] 스크래치패드에 512 HTML 도안(일반 1장 + maskable 1장) → 헤드리스 Chrome 캡처로 PNG 생성 (D8)
-  - [ ] `public/icons/icon-192.png` · `icon-512.png` · `icon-maskable-512.png` 커밋
-  - [ ] `app/icon.png`(512) · `app/apple-icon.png`(180) 커밋
-  - [ ] `app/favicon.ico` **삭제** (create-next-app 잔재, Next 로고)
-  - [ ] maskable은 **안전영역 80%** — 512 기준 마크가 중앙 410px 안. 원형·스쿼클 마스크로 잘라보며 확인
-  - [ ] 생성용 HTML·스크립트는 **저장소에 남기지 않는다**
+- [x] **Task 5 — 아이콘 5개** (AC: 7)
+  - [x] 스크래치패드 512 HTML 도안 1장(폰트 크기만 파라미터) → 헤드리스 Chrome CDP 캡처로 PNG 생성 (D8, 의존성 0)
+  - [x] `public/icons/icon-192.png` · `icon-512.png` · `icon-maskable-512.png`
+  - [x] `app/icon.png`(512) · `app/apple-icon.png`(180)
+  - [x] `app/favicon.ico` **삭제**
+  - [x] maskable **안전영역**: 먹 잉크 박스 **239×56, 중심 (256, 255.5)** — 한 변의 46.7%, 중심 기준 반지름 **122.7 < 204.8**(80% 안전원). PNG를 직접 디코딩해 측정
+  - [ ] 원형·스쿼클 실마스크 확인 — **미완, 실기기 필요** (Task 9)
+  - [x] 생성용 HTML·스크립트는 스크래치패드에만 — 저장소 0건
 
-- [ ] **Task 6 — theme-color와 iOS 메타** (AC: 8, 10)
-  - [ ] `app/(buyer)/layout.tsx`에 `viewport`(themeColor) + `metadata`(appleWebApp) export 추가. **`"use client"`를 붙이지 않는다**(서버 컴포넌트여야 export가 산다)
-  - [ ] `app/layout.tsx`·`app/(console)/layout.tsx`에는 **아무것도 추가하지 않는다**
-  - [ ] `viewportFit`을 선언하지 **않는다** (D9). `maximumScale`·`userScalable`도 없다
-  - [ ] 8.1이 넣은 `env(safe-area-inset-bottom)` 항을 **지우지 않는다** — 지금은 0이고 그것이 정답이다
+- [x] **Task 6 — theme-color와 iOS 메타** (AC: 8, 10)
+  - [x] `(buyer)/layout.tsx`에 `viewport`(themeColor) + `metadata`(appleWebApp) export 추가. `"use client"` 없음
+  - [x] `app/layout.tsx`·`(console)/layout.tsx` **무수정**
+  - [x] `viewportFit`·`maximumScale`·`userScalable` 선언 0건
+  - [x] 8.1의 `env(safe-area-inset-bottom)` 항 그대로 유지
 
-- [ ] **Task 7 — 검증: 정적 규칙과 빌드** (AC: 11, 12, 13)
-  - [ ] `cd apps/web && npx tsc --noEmit` → 0
-  - [ ] `npm run lint` → **0 errors · 0 warnings** (A-E456-5 베이스라인 — 늘어나면 이 스토리가 깬 것)
-  - [ ] `npx next build` 성공 — `/manifest.webmanifest`·`/icon.png`·`/apple-icon.png`가 라우트/자산 목록에 나오는지 확인
-  - [ ] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow\|matchMedia\|innerWidth" "app/(buyer)/me"` → 0건
-  - [ ] `git diff --stat`에 `apps/api` **0건** · `app/styles/slur/` 0건 · `package.json`/`package-lock.json` **0건** · `app/logout-button.tsx` 0건 · `app/api/auth/logout/` 0건 · `lib/auth.ts` 0건
-  - [ ] `grep -rn "통신판매중개자\|사업자등록번호" "app/(buyer)/me"` → **문자열 리터럴 0건**(전부 상수 임포트여야 한다). 라벨(`상호`·`대표자` 등)만 화면 문자열이다
-  - [ ] `cd apps/api && uv run pytest -q` → **환경이 있을 때만.** 이 머신에는 `uv`·`docker`가 없다. 실행하지 못했으면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — **통과했다고 쓰지 않는다**
+- [x] **Task 7 — 검증: 정적 규칙과 빌드** (AC: 11, 12, 13)
+  - [x] `npx tsc --noEmit` → **0**
+  - [x] `npm run lint` → **0 errors · 0 warnings**
+  - [x] `npx next build` → 성공. `○ /manifest.webmanifest` · `○ /icon.png` · `○ /apple-icon.png` · `ƒ /api/auth/me` 확인
+  - [x] `grep -rn "#2f6bff|--color-brand|--shadow-|box-shadow|matchMedia|innerWidth" "app/(buyer)/me"` → **선언 0건**(주석 2줄만)
+  - [x] `git diff --stat`: `apps/api` 0건 · `apps/mobile` 0건 · `app/styles/slur/` 0건 · `app/styles/buyer/` 0건 · `package.json`/`package-lock.json` **0건** · `logout-button.tsx` 0줄 · `app/api/auth/logout/` 0줄 · `lib/auth.ts` 0줄
+  - [x] 사업자 **값** 리터럴(`000-00-00000`·`(주)슬러`·`제0000-서울-…` 등) **0건**. `통신판매중개자` **0건**. ⚠️ `사업자등록번호`는 **라벨로 1건** — 스토리의 grep 기대치가 라벨과 값을 구분하지 못한다(아래 어긋난 지점 1)
+  - [ ] `cd apps/api && uv run pytest -q` → **미실행.** 이 머신에 `uv`·`docker`가 없다. 통과했다고 쓰지 않는다
 
-- [ ] **Task 8 — 검증: 자동으로 확인 가능한 것** (AC: 6, 7, 8, 13) — D12 표의 ✅ 항목
-  - [ ] `curl -s localhost:3000/manifest.webmanifest | python3 -m json.tool` → 유효 JSON. `name`·`short_name`·`start_url`·`scope`·`display`·`theme_color`·`background_color`·`icons`(3개) 존재 단언
-  - [ ] 아이콘 5개 `curl -I` → 200 + `content-type: image/png`. `file` 또는 PNG 헤더로 **실제 픽셀 크기**가 선언과 같은지 확인(192·512·512·512·180)
-  - [ ] `curl -s localhost:3000/ | grep -c 'name="theme-color"'` → **1**, `curl -s localhost:3000/seller | grep -c 'name="theme-color"'` → **0** (AC 8의 핵심 증거)
-  - [ ] `/` 문서에 `<link rel="manifest"`·`apple-touch-icon`·`apple-mobile-web-app-capable` 존재 / `/seller` 문서에 `apple-mobile-web-app-capable` **부재** 확인
-  - [ ] `<html lang="ko">`가 양쪽 문서에 그대로 있는지 확인
-  - [ ] `/me`를 500(=<640) / 700 / 768 / 1280 네 폭에서 렌더 — 640px 한 단, `<768` 탭바 있음·`내 정보` 활성, `≥768` 상단 내비로 전환·`내 정보` 활성. **8.1의 쿠키 주입 프록시를 재사용**한다(보호 라우트라 세션 쿠키가 필요하다)
-  - [ ] 계정 조회를 실패시킨 상태에서 **사업자 정보·고지·약관 링크가 그대로 보이는지** 확인 (AC 5 — D3의 핵심)
-  - [ ] 401 응답 스텁 → `/login?next=%2Fme`로 replace되는지 확인
-  - [ ] 키보드만으로 완주 — 메뉴 줄 3개 → 로그아웃까지 **먹색 포커스 링**이 보이고, 하단 탭바가 콘텐츠보다 먼저 걸리지 않는지 (UX-DR6)
-  - [ ] `[ASSUMPTION]` 느린 네트워크에서 첫 렌더의 폰트 교체(FOUT)가 거슬리는지 눈으로 보고, 거슬리면 사실만 `deferred-work.md`에 적는다 (D11)
+- [x] **Task 8 — 검증: 자동으로 확인 가능한 것** (AC: 6, 7, 8, 13) — D12 표의 ✅ 항목
+  - [x] `curl /manifest.webmanifest | json.tool` → 유효 JSON. `name`·`short_name`·`description`·`id`·`lang`·`start_url`·`scope`·`display`·`theme_color`·`background_color`·`icons`(3, purpose `any`/`any`/`maskable`) 단언 통과
+  - [x] 아이콘 5개 200 + `content-type: image/png`, **실제 픽셀 크기** 192/512/512/512/180 (IHDR 직접 읽음)
+  - [x] `theme-color`: `/`·`/me`·`/cart`·`/products/*`·`/login` = **1** / `/seller`·`/admin`·`/apply`·`/terms`·`/privacy`·`/no-role` = **0**
+  - [x] `/` 문서에 `<link rel="manifest">`·`apple-touch-icon`·**`mobile-web-app-capable`** 존재 / 콘솔 문서에 `mobile-web-app-capable` **부재**. ⚠️ Next 16은 `apple-mobile-web-app-capable`이 아니라 `mobile-web-app-capable`을 낸다(어긋난 지점 2)
+  - [x] `<html lang="ko">`가 양쪽 문서에 유지
+  - [x] `/me` **390 / 700 / 768 / 1280** 렌더 — 전 폭에서 `.b_me` 폭 = min(뷰포트, 640), 가로 스크롤 0. `<768` 탭바 `display:flex` + `내 정보` 활성 / `≥768` 탭바 `none` + 상단 내비 `내 정보` 활성
+  - [x] 계정 조회 실패(503) 상태에서 **사업자 정보 6행·`임시 정보` 태그·안내 문장·중개자 고지·약관 링크 3개가 그대로** (D3 핵심)
+  - [x] 401 스텁 → `/login?next=%2Fme`로 replace 확인
+  - [x] 키보드 완주 — 메뉴 3 → 로그아웃 → 탭바 4 순서(하단 고정 바가 콘텐츠보다 **뒤**), 전부 `outline: solid 2px rgb(31,29,26)` offset 2px · `box-shadow: none`. **파랑 0건**
+  - [x] `[ASSUMPTION]` 느린 네트워크(400kbps·400ms) 첫 렌더 — 글자가 사라지는 구간 없음(폴백 스택이 즉시 그린다). `deferred-work.md`에 올릴 사실 없음 (D11)
 
 - [ ] **Task 9 — 검증: 실기기 (이것 전에는 done이 아니다)** (AC: 6, 9, 10, 13) — D12 표의 ❌ 항목
-  - [ ] **안드로이드 크롬** — 프로덕션 URL 접속 → 메뉴에 `앱 설치`/`홈 화면에 추가`가 뜨는지. 설치 → 실행 → **주소창 없는 standalone**으로 뜨고 `/`(상품목록)가 보이는지
-  - [ ] 🚨 **설치가 되지 않으면 원인을 확인한다** — 크롬 DevTools의 Application → Manifest에 "Installability" 진단이 나온다. 원인이 **service worker 부재**로 확인되면 D7의 조건부 계약대로 최소 SW를 추가하고, **다른 원인(아이콘·start_url·HTTPS)이면 그것을 고친다.** 진단 문구를 Completion Notes에 그대로 옮긴다
-  - [ ] 홈 화면 아이콘이 **원형·스쿼클 마스크에서 잘리지 않는지** (maskable 안전영역 확인)
-  - [ ] **iOS 사파리** — 공유 → 홈 화면에 추가 → 아이콘이 `apple-icon`인지, 실행 시 standalone인지, **하단 탭바가 홈 인디케이터에 가리지 않는지**
-  - [ ] iOS에서 **오버스크롤(바운스) 영역에 흰색이 보이는지** — 보이면 D10을 적용하고, 보이지 않으면 **적용하지 않고 그 사실을 기록한다**
-  - [ ] 설치 상태에서 `/me` → 로그아웃 → `/`로 가고 **배지가 사라지는지**, 다시 로그인이 되는지
-  - [ ] 설치 상태에서 `/seller`로 이동해도 **standalone 창 안에 머무는지**(`scope: "/"` 확인, D5)
-  - [ ] 실기기가 없어 실행하지 못한 항목은 **"미실행 + 사유"** 로 적는다. **통과했다고 쓰지 않는다**
+  - [ ] 안드로이드 크롬 설치 프롬프트·standalone — **미완, 실기기 필요**
+  - [ ] 설치 실패 시 DevTools Installability 진단 — **미완, 실기기 필요**
+  - [ ] 홈 화면 아이콘 원형·스쿼클 마스크 — **미완, 실기기 필요** (수치상 안전영역은 확인, Task 5)
+  - [ ] iOS 사파리 홈 화면 추가·`apple-icon`·standalone·홈 인디케이터 — **미완, 실기기 필요**
+  - [ ] iOS 오버스크롤 흰 배경(D10) — **미완, 실기기 필요.** 증상을 확인하지 못했으므로 **D10을 적용하지 않았다**(`styles/buyer/tokens.css`·`buyer.css` diff 0건)
+  - [ ] 설치 상태에서 로그아웃 → `/` + 배지 소멸 — **미완, 실기기 필요** (로컬 브라우저에서는 확인, Task 8·아래 노트)
+  - [ ] 설치 상태에서 `/seller` 이동 시 standalone 유지(`scope: "/"`) — **미완, 실기기 필요**
 
 - [ ] **Task 10 — 검증: 프로덕션과 콘솔 회귀 (R3)** (AC: 4, 8, 11)
-  - [ ] 배포 후 프로덕션에서 `/manifest.webmanifest`·아이콘 5개가 200인지 curl로 확인 (Railway 프록시 뒤)
-  - [ ] 프로덕션 `/me` 비로그인 접근 → `/login?next=%2Fme` (8.1의 미들웨어 규칙이 그대로인지)
-  - [ ] `/seller`·`/admin` 진입 → 색·레이아웃·**파랑 포커스 링**이 그대로인지 눈으로 확인
-  - [ ] 콘솔의 **로그아웃 버튼이 여전히 `/login`으로 가는지** 확인 (AC 4의 회귀 증거 — 판매자 또는 관리자 계정으로 실제 로그아웃)
-  - [ ] `/apply`·`/terms`·`/privacy`·`/no-role`·`/login`의 **푸터가 그대로**인지 확인 (사업자 정보 2줄 + 중개자 고지 + 정책 링크)
-  - [ ] 탭 아이콘이 Next 로고에서 SLUR 마크로 바뀐 것을 확인하고 **의도된 변경**임을 기록한다 (AC 7)
+  - [ ] 프로덕션 `/manifest.webmanifest`·아이콘 5개 200 — **미완, 배포가 이 작업의 범위 밖**(커밋·푸시 없음)
+  - [ ] 프로덕션 `/me` 비로그인 → `/login?next=%2Fme` — **미완, 사유 동일**
+  - [x] `/seller`·`/admin`·`/terms`·`/privacy`·`/no-role`에 `[data-surface="buyer"]` **0건**, `body` 흰색 유지, `theme-color` 메타 0건 (로컬 실렌더)
+  - [x] 콘솔 로그아웃이 여전히 **`/login`으로 가고 쿠키가 지워지는지** 실클릭 확인 (로컬, 스텁 백엔드)
+  - [x] `/terms`·`/privacy`·`/no-role` 푸터 그대로 — 사업자 정보 2줄 + 중개자 고지 + 정책 링크 (로컬 실렌더)
+  - [x] 탭 아이콘이 `favicon.ico`(Next 로고)에서 `/icon.png`(SLUR 마크)로 바뀐 것을 확인 — **의도된 변경**(AC 7)
 
 ## Dev Notes
 
@@ -625,21 +625,93 @@ html:has([data-surface="buyer"]) { background: var(--b-paper); }
 
 ### Agent Model Used
 
-(구현 시 기록)
+claude-opus-4-8[1m] (Claude Code)
 
 ### Debug Log References
 
-(구현 시 기록 — 아이콘 생성용 HTML·헤드리스 캡처 스크립트·쿠키 주입 프록시는 스크래치패드에만 두고 저장소에 남기지 않는다)
+스크래치패드에서만 실행하고 **저장소에 남기지 않은** 도구 다섯 (전부 종료함):
+
+1. `s87/icon.html` — 512 도안 한 장(종이색 면 + 먹색 `SLUR` 워드마크, 800 / `.22em`). 폰트 크기만 쿼리로 받는다. 일반과 maskable이 **같은 파일**이고 `fs`만 다르다(96 vs 76).
+2. `s87/gen-icons.mjs` — 헤드리스 Chrome **CDP** 캡처. 🚨 `--window-size`는 500px 미만을 강제로 넓혀 버려(8.1의 학습) 192·180 캡처가 **배경만 있는 빈 PNG**로 나온다. `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot({clip})`로 우회했다. 의존성 0(Node 22의 전역 `WebSocket`).
+3. `s87/stub-api.mjs` — `GET /api/v1/auth/me`(모드: `ok`/`fail` 503/`401`/`nomail` email null) · `POST /auth/logout` 204 · `POST /auth/refresh` 401 · `GET /carts`(항목 2개 — 배지 리셋 확인용). 제어는 `GET /__mode/{ok|fail|401|nomail}`.
+4. `s87/shoot.mjs`·`states.mjs`·`focus.mjs`·`slow.mjs` — CDP 캡처·상태 검증·키보드 Tab(`Input.dispatchKeyEvent`로 실제 키를 보내야 `:focus-visible`이 발동한다 — `el.focus()`만으로는 `outline-style: none`이 나온다)·`Network.emulateNetworkConditions` 느린 네트워크.
+5. `s87/console-regress.mjs`·`console-logout.mjs` — 콘솔 회귀(파랑 링·푸터·`data-surface` 미유출)와 콘솔 로그아웃 목적지 실클릭.
+
+실행: `API_BASE_URL=http://localhost:8099 npx next dev -p 3187`. 세션 쿠키는 `Network.setCookie`로 심었다(8.1의 쿠키 주입 프록시 대신 CDP를 썼다 — 같은 목적, 코드가 더 적다).
+**개발 서버·스텁·크롬 전부 종료했고 `git status`에 스크래치패드 파일 0건.**
 
 ### Completion Notes List
 
-(구현 시 기록 — **자동 확인 항목**과 **실기기 확인 항목**을 갈라서 적는다. 실행하지 못한 것은 "미실행 + 사유"로 적고 통과했다고 쓰지 않는다. 안드로이드 설치가 되지 않았다면 DevTools의 Installability 진단 문구를 그대로 옮긴다)
+**자동으로 확인한 것 (D12 표의 ✅)**
+
+- `npx tsc --noEmit` → **0** / `npm run lint` → **0 errors · 0 warnings**(A-E456-5 베이스라인 유지) / `npx next build` → 성공.
+  라우트 목록에 `○ /manifest.webmanifest` · `○ /icon.png` · `○ /apple-icon.png` · `ƒ /api/auth/me` 등록.
+- **manifest** — 유효 JSON. `id:"/"` `name:"SLUR"` `short_name:"SLUR"` `description` `lang:"ko"` `start_url:"/"` `scope:"/"` `display:"standalone"` `theme_color`=`background_color`=`#faf8f4`, `icons` 3개(`any`·`any`·`maskable`) 단언 통과.
+- **아이콘 5개** — 전부 200 + `content-type: image/png`. PNG IHDR을 직접 읽어 **192×192 / 512×512 / 512×512 / 512×512 / 180×180** 확인. 배경 픽셀 = `rgb(250,248,244)` = `#faf8f4`.
+  - **maskable 안전영역**: 먹 잉크 박스 **239×56**, 중심 **(256.0, 255.5)** — 한 변의 **46.7%**, 중심 기준 필요 반지름 **122.7 < 204.8**(512의 80% 안전원 반지름). 일반 아이콘은 59.0%.
+- **`theme-color` 메타 (AC 8의 핵심 증거)** — `/` `1` · `/me` `1` · `/cart` `1` · `/products/*` `1` · `/login` `1` / **`/seller` `0` · `/admin` `0` · `/apply` `0` · `/terms` `0` · `/privacy` `0` · `/no-role` `0`.
+- `<html lang="ko">`는 양쪽 표면에 유지. `<link rel="manifest">`·`apple-touch-icon`은 **전 문서**에 붙는다(파일 컨벤션 — 위험 8이 예고한 그대로).
+- **`/me` 4폭 렌더 (390 / 700 / 768 / 1280)** — 전 폭에서 `.b_me` 폭 = min(뷰포트, **640**), 가로 스크롤 0, 2단으로 갈라지지 않는다. `<768` 탭바 `display:flex` + 탭 `내 정보` 활성 / `≥768` 탭바 `none` + 상단 내비 `내 정보` 활성. 메뉴 줄 실측 높이 **52px**(≥44), 행 전체가 `<a>`.
+- **D3 (이 스토리의 핵심)** — 계정 조회를 503으로 실패시킨 상태에서 **사업자 정보 6행 · `임시 정보` 태그 · `실사업자 정보는 서비스 오픈 전에 교체됩니다.` · 중개자 고지 전문 · 약관 링크 3개가 전부 그대로** 보인다. 계정 자리에만 `일시적인 오류입니다. 잠시 후 다시 시도해 주세요.` + `다시 시도`.
+- **401** → `/login?next=%2Fme`로 `replace`(로그인 폼 렌더 확인).
+- **이메일 `null`**(소셜 전용 계정 흉내) → 그 줄이 `—`로 남는다. 줄을 지우지 않는다.
+- **HTTP 코드·`code` 문자열 유출 0건** — 오류 화면 `document.body.innerText`에 `503`·`401`·`service_unavailable`·`unauthorized`·`http_error` 전부 없음.
+- **로그아웃 (D4)** — 클릭 → 쿠키 전부 소멸(`document.cookie === ""`) → `location.pathname === "/"` → **탭바 장바구니 배지가 `2` → 사라짐**. `setCount(undefined)`가 없었다면 남았을 자리다.
+- **포커스 링 (UX-DR6)** — 실제 Tab 키로 완주: 메뉴 3 → 로그아웃 → 탭바 4. 순서상 **하단 고정 탭바가 콘텐츠보다 뒤**. 전부 `outline: solid 2px rgb(31, 29, 26)` · `outline-offset: 2px` · `box-shadow: none`. 구매자 문서 전체에서 **파랑 0건**.
+- **느린 네트워크 첫 렌더 (D11 `[ASSUMPTION]`)** — 400kbps·400ms에서 글자가 사라지는 구간이 없다(폰트 스택 폴백이 즉시 그린다). 골격 상태에서도 **사업자 정보·고지가 이미 서 있다**. `deferred-work.md`에 올릴 사실 없음 — Pretendard CDN은 그대로 둔다.
+
+**콘솔 회귀 (로컬 실렌더)**
+
+- `/seller`·`/admin`·`/apply`·`/terms`·`/privacy`·`/no-role`에 `[data-surface="buyer"]` **0건**, `body` 배경 `rgb(255,255,255)` 유지, `theme-color` 메타 0건.
+- 콘솔 공용 `LogoutButton`(`.btn m_ghost`)의 **파랑 포커스 링**(`rgba(47,107,255,.3) 0 0 0 3px box-shadow`)이 그대로다 — 구매자 먹색 링과 분리된 채 공존.
+- 콘솔 로그아웃 실클릭: `/no-role` → 클릭 → **`/login`** + 쿠키 소멸. 목적지가 바뀌지 않았다.
+- `/terms`·`/privacy`·`/no-role` 푸터 그대로: 사업자 정보 2줄 + 중개자 고지 + 정책 링크.
+- **탭 아이콘이 바뀌었다** — `favicon.ico`(Next 로고, 25,931바이트) 삭제 → `<link rel="icon" href="/icon.png…" sizes="512x512">`. 콘솔 문서에도 적용되는 **의도된 변경**(AC 7). 페이지 안의 색·레이아웃은 한 픽셀도 바뀌지 않았다.
+
+**미실행 · 사람이 해야 할 일 (통과했다고 쓰지 않는다)**
+
+- **Task 9 전부 미실행 — 실기기가 없다.** 안드로이드 크롬 설치 프롬프트·standalone·홈 화면 아이콘 마스크·iOS 홈 화면 추가·홈 인디케이터·오버스크롤 흰 배경(D10)·설치된 창에서의 `scope` 유지. **이 항목들이 남아 있는 동안 이 스토리는 done이 아니다** (D12).
+- **D10을 적용하지 않았다.** 증상(iOS 바운스 영역 흰색)을 확인할 수단이 없었고, D10의 규칙이 "보이면 적용하고 보이지 않으면 아무것도 하지 않는다"이므로 **아무것도 하지 않았다.** `app/styles/buyer/tokens.css`·`app/(buyer)/buyer.css` diff **0건**.
+- **Task 10의 프로덕션 항목 미실행** — 커밋·푸시가 이 작업의 범위 밖이라 배포가 없었다. 신규 BFF는 **읽기 GET 하나**뿐이고 `assertSameOrigin`을 타지 않지만, 로그아웃(쿠키 삭제)이 **새 자리에서** 실행되므로 Railway 프록시 뒤 실요청 1회 확인이 남아 있다 (R3).
+- **백엔드 테스트 153건 미실행** — 이 머신에 `uv`·`docker`가 없다. 백엔드 무변경은 `git diff --stat`의 `apps/api` **0건**으로만 주장한다.
+- **R8** — 이 스토리는 데이터를 만들지 않는다(조회 1개 + 로그아웃뿐). **프로덕션에서 정리할 테스트 데이터가 없다.** 다만 프로덕션 회귀 검증 때 판매자·관리자 계정으로 로그아웃하면 그 세션이 끊긴다 — 순서를 고려한다 (위험 12).
+
+**스토리와 어긋난 지점 · 알게 된 것**
+
+1. **Task 7의 grep 기대치가 라벨과 값을 구분하지 못한다.** `grep -rn "통신판매중개자|사업자등록번호" "app/(buyer)/me"` → 0건을 요구하면서 같은 줄에서 "라벨(`상호`·`대표자` 등)만 화면 문자열이다"라고 허용한다. **`사업자등록번호`는 라벨이므로 반드시 1건 나온다.** 의도(=**값**을 복제하지 말 것)대로 확인했다: `통신판매중개자` **0건**, 값 리터럴(`000-00-00000`·`(주)슬러`·`제0000-서울-0000호`·`서울특별시 OO구`·`0000-0000`) **0건**, `사업자등록번호`는 `BIZ_ROWS`의 라벨로 1건.
+2. **Next 16은 `apple-mobile-web-app-capable`을 내지 않는다.** `appleWebApp: { capable: true }`는 **`<meta name="mobile-web-app-capable" content="yes">`**(현행 표준명) + `apple-mobile-web-app-title` + `apple-mobile-web-app-status-bar-style`을 낸다. Task 8이 지시한 grep 문자열(`apple-mobile-web-app-capable`)로는 구매자 문서에서도 0이 나온다 — **`mobile-web-app-capable`로 확인했고 콘솔 문서에는 부재**를 확인했다. 🚨 **iOS 실기기 확인(Task 9) 때 `apple-` 접두 메타 없이 standalone이 뜨는지 반드시 봐야 한다** — 구형 iOS는 `apple-mobile-web-app-capable`만 읽는다. 뜨지 않으면 `(buyer)/layout.tsx`에 그 메타 한 줄을 직접 더하는 것이 후속이다.
+3. **AC 8과 D6의 표가 `/login`에서 어긋난다.** AC 8은 `/login`을 "콘솔 문서(메타 없음)"에 넣었고 D6의 표는 `/login`·`/signup`을 "구매자(`#faf8f4`)"에 넣었다. 실제 라우트 그룹은 **`(buyer)`**(8.2가 옮겼다)이므로 **D6의 표가 맞고 `/login`에는 `theme-color`가 실린다.** 로그인 화면이 종이색 표면인 것과 일치하므로 그대로 두었다.
+4. **메뉴 줄 글자는 목업의 13.5px이 아니라 `.b_control`(12.5px/600)이다.** AC 11이 "새 px 스케일을 만들지 않는다 / `.b_*` 역할 클래스만 쓴다"를 요구하고, type.css에 13.5px 역할은 `.b_input_text`(400 굵기, 입력 전용)뿐이다. 역할 클래스를 이겼다 — 시각적으로 1px 작다.
+5. **`.b_kv_row`의 라벨 폭 62px으로는 `통신판매업 신고번호`가 접힌다.** 사업자 상자 안에서만 **116px**(목업 `.rowline .k` 값)로 넓혔다. 다른 화면의 `.b_kv_row`는 건드리지 않았다.
+6. **`.b_broker`(browse.css)의 배치 여백에 기대지 않았다.** `/me`는 browse.css를 로드하지 않으므로 위 hairline·여백을 `me.css`의 `.i_broker`가 직접 준다. 8.5(주문서)가 반대로 **0으로 되돌린** 것과 짝을 이룬다 — `BrokerNotice`의 배치는 화면이 소유하고 **문구만 상수가 소유한다**.
+7. **`.b_btn:disabled`가 텍스트 버튼에도 면을 칠한다.** 규칙 순서상 `.b_btn.m_text`의 `border:none`을 `.b_btn:disabled`의 배경·테두리가 덮는다. 로그아웃 요청 중 짧게 면이 생기므로 `me.css`에서 **이 버튼에만** 되돌렸다. `buyer.css`는 고치지 않았다(다른 화면의 disabled 모양이 바뀐다).
+8. **헤드리스 Chrome의 500px 최소 폭은 `--screenshot`에도 걸린다.** 192·180 아이콘을 `--window-size`로 캡처하면 **빈 PNG**가 나온다(내용이 500px 폭 기준으로 중앙 정렬되어 크롭 밖으로 나간다). 파일 크기가 500바이트대면 빈 이미지를 의심할 것. CDP `Emulation.setDeviceMetricsOverride`가 해법이다.
+9. **`el.focus()`로는 포커스 링을 검증할 수 없다.** `:focus-visible`이 발동하지 않아 `outline-style: none`이 나온다. `Input.dispatchKeyEvent`로 실제 Tab을 보내야 한다.
 
 ### File List
 
-(구현 시 기록)
+**신규**
+- `apps/web/app/api/auth/me/route.ts` — 계정 조회 BFF (`proxyWithRefresh`)
+- `apps/web/app/(buyer)/me/account-card.tsx` — 계정 구획(클라이언트): 조회·골격·오류·401
+- `apps/web/app/(buyer)/me/logout-link.tsx` — 구매자 로그아웃(클라이언트): 쿠키 제거 · 배지 리셋 · `/` 이동
+- `apps/web/app/(buyer)/me/me.css` — 화면 전용 배치
+- `apps/web/app/manifest.ts` — PWA manifest
+- `apps/web/app/icon.png` (512) · `apps/web/app/apple-icon.png` (180)
+- `apps/web/public/icons/icon-192.png` · `icon-512.png` · `icon-maskable-512.png`
+
+**수정**
+- `apps/web/app/(buyer)/me/page.tsx` — 자리표시 → 본체(셸·메뉴 줄·사업자 정보·중개자 고지)
+- `apps/web/app/(buyer)/layout.tsx` — `viewport`(themeColor) · `metadata`(appleWebApp) export 2개 추가
+
+**삭제**
+- `apps/web/app/favicon.ico` — create-next-app 잔재(Next 로고, 25,931바이트)
+
+**열지도 고치지도 않은 것 (diff 0줄)**
+`apps/web/lib/auth.ts` · `apps/web/app/logout-button.tsx` · `apps/web/app/api/auth/logout/route.ts` · `apps/web/app/(buyer)/cart-count.tsx` · `apps/web/app/(buyer)/seller-info.tsx` · `apps/web/app/config/company.ts` · `apps/web/app/layout.tsx` · `apps/web/app/(console)/**` · `apps/web/app/styles/**` · `apps/web/middleware.ts` · `apps/web/package.json` · `package-lock.json` · `apps/api/**` · `apps/mobile/**` · `app/(buyer)/orders/**` · `app/api/orders/**`
 
 ### Change Log
 
 | 날짜 | 변경 | 비고 |
 |---|---|---|
+| 2026-07-22 | Story 8.7 구현 — `/me`(계정·메뉴 줄·사업자 정보·중개자 고지·로그아웃) · 계정 조회 BFF · manifest · 아이콘 5개 · `favicon.ico` 삭제 · 구매자 전용 `theme-color`/`appleWebApp` | tsc 0 · lint 0/0 · build 성공. 백엔드 무변경(`apps/api` diff 0건), 의존성 0건, service worker 0건(D7) |
+| 2026-07-22 | Status `ready-for-dev` → `in-progress` | Task 9(실기기 설치·standalone·마스크·홈 인디케이터·오버스크롤)와 Task 10의 프로덕션 항목이 남았다 — D12가 "❌ 항목이 남아 있는 동안 done이 아니다"로 못 박았다 |
