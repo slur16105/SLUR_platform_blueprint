@@ -4,7 +4,7 @@ baseline_commit: bd5a52e22099afc7d659b10ffb2ef96da872b191
 
 # Story 8.5: 주문서·주문완료 (구매자 반응형 웹)
 
-Status: ready-for-dev
+Status: in-progress
 
 > **선행 조건.** 이 스토리는 **8.4(장바구니)가 끝난 뒤** 착수한다.
 > 8.4가 만드는 `app/api/carts/**`(BFF) · `(buyer)/cart-api.ts` · `cart-count.tsx`(배지 컨텍스트) ·
@@ -378,135 +378,135 @@ app/api/orders/[id]/route.ts      GET   → proxyWithRefresh(req, `/api/v1/order
 
 ## Tasks / Subtasks
 
-- [ ] **Task 0 — 착수 전 확인 (선행 산출물의 실제 상태)** (AC: 전부)
-  - [ ] **8.4가 머지됐는지 확인한다.** `app/api/carts/route.ts` · `(buyer)/cart-api.ts` · `(buyer)/cart-count.tsx`가 없으면 **이 스토리를 시작하지 않는다**
-  - [ ] `buyer.css`에 하단 고정 CTA 바(`.b_cta_bar`)가 승격돼 있는지 확인한다 (8.4 Task 0) — 없으면 8.4가 어디에 두었는지 찾아 **복제하지 말고** 승격한다
-  - [ ] `amount-summary.tsx`가 `number | null`을 받는지 확인한다 (8.4 Task 6). 받는다면 `total`만 확장하고, 아직이면 이 스토리가 두 확장을 함께 한다
-  - [ ] `formatWon`이 어디 있는지 확인한다 (`grep -rn "formatWon" apps/web/app`) — 8.4 D12의 정리 규칙 적용, **세 번째를 만들지 않는다**
-  - [ ] `assertSameOrigin`·`proxyWithRefresh`가 `lib/auth.ts`에 있는지 확인한다
-  - [ ] `(buyer)/buyer-feedback.tsx`의 export(`BlockSkeleton` · `EmptyState` · `ErrorState` · `ApiFailure` · `NETWORK_MESSAGE`)를 확인하고 **재사용한다** — 오류·빈 상태 컴포넌트를 새로 만들지 않는다
+- [x] **Task 0 — 착수 전 확인 (선행 산출물의 실제 상태)** (AC: 전부)
+  - [x] **8.4가 머지됐는지 확인한다.** `app/api/carts/route.ts` · `(buyer)/cart-api.ts` · `(buyer)/cart-count.tsx`가 없으면 **이 스토리를 시작하지 않는다**
+  - [x] `buyer.css`에 하단 고정 CTA 바(`.b_cta_bar`)가 승격돼 있는지 확인한다 (8.4 Task 0) — 없으면 8.4가 어디에 두었는지 찾아 **복제하지 말고** 승격한다
+  - [x] `amount-summary.tsx`가 `number | null`을 받는지 확인한다 (8.4 Task 6). 받는다면 `total`만 확장하고, 아직이면 이 스토리가 두 확장을 함께 한다
+  - [x] `formatWon`이 어디 있는지 확인한다 (`grep -rn "formatWon" apps/web/app`) — 8.4 D12의 정리 규칙 적용, **세 번째를 만들지 않는다**
+  - [x] `assertSameOrigin`·`proxyWithRefresh`가 `lib/auth.ts`에 있는지 확인한다
+  - [x] `(buyer)/buyer-feedback.tsx`의 export(`BlockSkeleton` · `EmptyState` · `ErrorState` · `ApiFailure` · `NETWORK_MESSAGE`)를 확인하고 **재사용한다** — 오류·빈 상태 컴포넌트를 새로 만들지 않는다
 
-- [ ] **Task 1 — BFF Route Handler 3개** (AC: 5, 9, 12, 18)
-  - [ ] `app/api/orders/preview/route.ts` — `POST`. **`assertSameOrigin` 먼저.** 본문은 `{postal_code}`만 상류로
-  - [ ] `app/api/orders/route.ts` — `POST`. **`assertSameOrigin` 먼저.** 본문 8필드 화이트리스트. 파일 상단에 `// GET(주문내역)은 8.6이 이 파일에 추가한다` 주석
-  - [ ] `app/api/orders/[id]/route.ts` — `GET`. `await ctx.params` 후 **36자 UUID 형식 검사**, 아니면 상류를 부르지 않고 `not_found` 404 봉투. 파일 상단에 `// 8.6 주문상세가 이 라우트를 그대로 쓴다` 주석
-  - [ ] 셋 다 `proxyWithRefresh`가 돌려준 `NextResponse`를 **그대로 반환**한다
-  - [ ] `lib/auth.ts`를 **수정하지 않는다** (import만)
+- [x] **Task 1 — BFF Route Handler 3개** (AC: 5, 9, 12, 18)
+  - [x] `app/api/orders/preview/route.ts` — `POST`. **`assertSameOrigin` 먼저.** 본문은 `{postal_code}`만 상류로
+  - [x] `app/api/orders/route.ts` — `POST`. **`assertSameOrigin` 먼저.** 본문 8필드 화이트리스트. 파일 상단에 `// GET(주문내역)은 8.6이 이 파일에 추가한다` 주석
+  - [x] `app/api/orders/[id]/route.ts` — `GET`. `await ctx.params` 후 **36자 UUID 형식 검사**, 아니면 상류를 부르지 않고 `not_found` 404 봉투. 파일 상단에 `// 8.6 주문상세가 이 라우트를 그대로 쓴다` 주석
+  - [x] 셋 다 `proxyWithRefresh`가 돌려준 `NextResponse`를 **그대로 반환**한다
+  - [x] `lib/auth.ts`를 **수정하지 않는다** (import만)
 
-- [ ] **Task 2 — 클라이언트 API 래퍼와 포맷** (AC: 5, 9, 11, 12, 13, 16)
-  - [ ] `(buyer)/orders-api.ts` — `postPreview(postalCode)` · `createOrder(payload)` · `getOrder(orderId)`
-    - [ ] 반환은 `{ ok: true, data } | { ok: false, error: ApiFailure & { details?: unknown } }` — **`code`는 분기에만, `message`는 표시에만**
-    - [ ] `out_of_stock`의 `details`는 `{cart_item_id, product_name, option_text}[]` 형태로 타입을 좁힌다. **형식이 어긋나면 항목 나열 없이 `message`만** 보여준다(외부 응답 이형 방어, R2)
-    - [ ] `price_changed`의 `details`는 `[{grand_total}]` — **이 값을 화면 금액으로 쓰지 않는다.** 미리보기를 다시 불러 정본을 받는다
-    - [ ] fetch가 throw하면 `NETWORK_MESSAGE`. 에러 봉투 타입은 `buyer-feedback.tsx`/`auth-errors.ts`의 것을 재사용한다 — **새로 만들지 않는다**
-    - [ ] 파일 상단에 `// 8.6이 목록(list)·묶음 취소(cancel)를 이 파일에 추가한다` 주석
-  - [ ] `(buyer)/format.ts` — `formatDepositDue(iso)` 추가. **`timeZone: "Asia/Seoul"` 명시** (D10)
+- [x] **Task 2 — 클라이언트 API 래퍼와 포맷** (AC: 5, 9, 11, 12, 13, 16)
+  - [x] `(buyer)/orders-api.ts` — `postPreview(postalCode)` · `createOrder(payload)` · `getOrder(orderId)`
+    - [x] 반환은 `{ ok: true, data } | { ok: false, error: ApiFailure & { details?: unknown } }` — **`code`는 분기에만, `message`는 표시에만**
+    - [x] `out_of_stock`의 `details`는 `{cart_item_id, product_name, option_text}[]` 형태로 타입을 좁힌다. **형식이 어긋나면 항목 나열 없이 `message`만** 보여준다(외부 응답 이형 방어, R2)
+    - [x] `price_changed`의 `details`는 `[{grand_total}]` — **이 값을 화면 금액으로 쓰지 않는다.** 미리보기를 다시 불러 정본을 받는다
+    - [x] fetch가 throw하면 `NETWORK_MESSAGE`. 에러 봉투 타입은 `buyer-feedback.tsx`/`auth-errors.ts`의 것을 재사용한다 — **새로 만들지 않는다**
+    - [x] 파일 상단에 `// 8.6이 목록(list)·묶음 취소(cancel)를 이 파일에 추가한다` 주석
+  - [x] `(buyer)/format.ts` — `formatDepositDue(iso)` 추가. **`timeZone: "Asia/Seoul"` 명시** (D10)
 
-- [ ] **Task 3 — 주문서 골격과 1단계 렌더** (AC: 1, 2, 16)
-  - [ ] `(buyer)/checkout/page.tsx` — `BuyerShell tab="cart" topbar={{ variant: "back-title", title: "주문서" }}` (**`showTabbar` 없음**)
-  - [ ] `checkout-view.tsx` — 마운트 시 `getCart()` 1회
-    - [ ] 🚨 **effect 본문에서 동기 `setState` 금지.** 로딩은 `data === undefined && error === undefined`로 **파생**시킨다 (D2, `react-hooks/set-state-in-effect`)
-    - [ ] StrictMode 이중 마운트 대비 `ref` 가드
-    - [ ] 401 → `router.replace("/login?next=%2Fcheckout")`
-    - [ ] `purchasable === true`만 남기고, **0건이면** `주문할 수 있는 상품이 없습니다.` + `장바구니로 이동`
-    - [ ] 로딩은 묶음 골격 skeleton (`BlockSkeleton` 재사용, 중앙 스피너 금지)
-  - [ ] 구획 구조 — 배송지 / hairline / 요청사항 / 8px 띠 / 주문 상품 / 8px 띠 / 결제 금액 / 8px 띠 / 결제 수단 / hairline / 중개자 고지 (D12의 순서 그대로)
-  - [ ] 묶음 렌더 — `<SellerPack>` 슬롯을 채운다: `headEnd`=배송비 자리, `children`=읽기 전용 항목 행. **`seller-pack.tsx`를 수정하지 않는다**(가능하면)
-    - [ ] 항목 행 = 사진 66~74px(없으면 종이 그늘 면) · 상품명(`b_product_name_row`) · `옵션 텍스트 · N개`(`b_meta`, 옵션이 빈 문자열이면 `N개`만) · 행 금액
-    - [ ] **체크박스·수량 스테퍼·`삭제`를 두지 않는다** — 주문서 묶음은 읽기 전용이다 (UX-DR13)
-    - [ ] `<img>` 위에 `/* eslint-disable-next-line @next/next/no-img-element */`
+- [x] **Task 3 — 주문서 골격과 1단계 렌더** (AC: 1, 2, 16)
+  - [x] `(buyer)/checkout/page.tsx` — `BuyerShell tab="cart" topbar={{ variant: "back-title", title: "주문서" }}` (**`showTabbar` 없음**)
+  - [x] `checkout-view.tsx` — 마운트 시 `getCart()` 1회
+    - [x] 🚨 **effect 본문에서 동기 `setState` 금지.** 로딩은 `data === undefined && error === undefined`로 **파생**시킨다 (D2, `react-hooks/set-state-in-effect`)
+    - [x] StrictMode 이중 마운트 대비 `ref` 가드
+    - [x] 401 → `router.replace("/login?next=%2Fcheckout")`
+    - [x] `purchasable === true`만 남기고, **0건이면** `주문할 수 있는 상품이 없습니다.` + `장바구니로 이동`
+    - [x] 로딩은 묶음 골격 skeleton (`BlockSkeleton` 재사용, 중앙 스피너 금지)
+  - [x] 구획 구조 — 배송지 / hairline / 요청사항 / 8px 띠 / 주문 상품 / 8px 띠 / 결제 금액 / 8px 띠 / 결제 수단 / hairline / 중개자 고지 (D12의 순서 그대로)
+  - [x] 묶음 렌더 — `<SellerPack>` 슬롯을 채운다: `headEnd`=배송비 자리, `children`=읽기 전용 항목 행. **`seller-pack.tsx`를 수정하지 않는다**(가능하면)
+    - [x] 항목 행 = 사진 66~74px(없으면 종이 그늘 면) · 상품명(`b_product_name_row`) · `옵션 텍스트 · N개`(`b_meta`, 옵션이 빈 문자열이면 `N개`만) · 행 금액
+    - [x] **체크박스·수량 스테퍼·`삭제`를 두지 않는다** — 주문서 묶음은 읽기 전용이다 (UX-DR13)
+    - [x] `<img>` 위에 `/* eslint-disable-next-line @next/next/no-img-element */`
 
-- [ ] **Task 4 — 배송지 폼** (AC: 3, 8, 9)
-  - [ ] `address-form.tsx` — 6필드. 입력은 46px 고정 높이(`b_input`), 라벨 11.5px/600, 선택 항목은 라벨에 `(선택)`
-  - [ ] `우편번호` 행 = 좁은 입력 + `우편번호 검색`(small 버튼: 12px/700, 1.4px 테두리, 좌우 14px). 히트 영역 **44 × 44 이상** (UX-DR7)
-  - [ ] 조작 행은 `.b_row`(최대 560px) 안에서 좌측 정렬 — 넓은 칼럼에서 벌어지지 않게 (UX-DR5)
-  - [ ] 필드 오류 — 해당 필드에만 테두리·면 + 아래 한 줄. `htmlFor`/`id`/`aria-describedby`로 묶는다. **상단 배너 금지**
-  - [ ] 클라이언트 형식 검사(D8 표)와 **전송 직전 전화번호 숫자만 남기기**
-  - [ ] `order_note`에 `maxLength={500}`
+- [x] **Task 4 — 배송지 폼** (AC: 3, 8, 9)
+  - [x] `address-form.tsx` — 6필드. 입력은 46px 고정 높이(`b_input`), 라벨 11.5px/600, 선택 항목은 라벨에 `(선택)`
+  - [x] `우편번호` 행 = 좁은 입력 + `우편번호 검색`(small 버튼: 12px/700, 1.4px 테두리, 좌우 14px). 히트 영역 **44 × 44 이상** (UX-DR7)
+  - [x] 조작 행은 `.b_row`(최대 560px) 안에서 좌측 정렬 — 넓은 칼럼에서 벌어지지 않게 (UX-DR5)
+  - [x] 필드 오류 — 해당 필드에만 테두리·면 + 아래 한 줄. `htmlFor`/`id`/`aria-describedby`로 묶는다. **상단 배너 금지**
+  - [x] 클라이언트 형식 검사(D8 표)와 **전송 직전 전화번호 숫자만 남기기**
+  - [x] `order_note`에 `maxLength={500}`
 
-- [ ] **Task 5 — 우편번호 검색 오버레이 (유일한 모달 예외)** (AC: 4)
-  - [ ] `postcode-overlay.tsx` — `"use client"`. 모듈 스코프 `Promise`로 스크립트를 한 번만 로드(D1)
-    - [ ] `window.daum` 타입은 이 파일 안 `declare global`로 **좁게** 선언한다. **`any` 금지**(lint 베이스라인 0 warnings)
-    - [ ] `.embed(container, { autoClose: true })`로 우리 DOM 안에 넣는다. **`.open()`(팝업) 금지**
-    - [ ] `oncomplete` → `zonecode` · (`userSelectedType === "R" ? roadAddress : jibunAddress`) 를 부모로 올리고 닫는다
-  - [ ] 접근성 — `role="dialog"` `aria-modal="true"` `aria-label="우편번호 검색"`, **포커스 트랩**, `Esc` 닫기, 닫으면 **원래 버튼으로 포커스 복원**, 열려 있는 동안 본문 스크롤 잠금
-  - [ ] 반응형 — `<768` 전체 화면 / `≥768` 가운데 모달. **CSS로만** 전환(`matchMedia` 금지)
-  - [ ] 실패 폴백 — 로드 실패·타임아웃 시 문장 + `다시 시도` · `닫기`. **우편번호·주소 필드는 언제나 직접 입력 가능**
-  - [ ] 닫힌 상태에서는 `<iframe`을 DOM에 남기지 않는다(언마운트) — 뒤 화면의 탭 순서에 끼어들지 않게
-  - [ ] **새 npm 의존성 0건**
+- [x] **Task 5 — 우편번호 검색 오버레이 (유일한 모달 예외)** (AC: 4)
+  - [x] `postcode-overlay.tsx` — `"use client"`. 모듈 스코프 `Promise`로 스크립트를 한 번만 로드(D1)
+    - [x] `window.daum` 타입은 이 파일 안 `declare global`로 **좁게** 선언한다. **`any` 금지**(lint 베이스라인 0 warnings)
+    - [x] `.embed(container, { autoClose: true })`로 우리 DOM 안에 넣는다. **`.open()`(팝업) 금지**
+    - [x] `oncomplete` → `zonecode` · (`userSelectedType === "R" ? roadAddress : jibunAddress`) 를 부모로 올리고 닫는다
+  - [x] 접근성 — `role="dialog"` `aria-modal="true"` `aria-label="우편번호 검색"`, **포커스 트랩**, `Esc` 닫기, 닫으면 **원래 버튼으로 포커스 복원**, 열려 있는 동안 본문 스크롤 잠금
+  - [x] 반응형 — `<768` 전체 화면 / `≥768` 가운데 모달. **CSS로만** 전환(`matchMedia` 금지)
+  - [x] 실패 폴백 — 로드 실패·타임아웃 시 문장 + `다시 시도` · `닫기`. **우편번호·주소 필드는 언제나 직접 입력 가능**
+  - [x] 닫힌 상태에서는 `<iframe`을 DOM에 남기지 않는다(언마운트) — 뒤 화면의 탭 순서에 끼어들지 않게
+  - [x] **새 npm 의존성 0건**
 
-- [ ] **Task 6 — 미리보기 재조회 (경합 처리)** (AC: 5, 6)
-  - [ ] `refreshPreview(postal)` — **요청 순번 `ref`** 로 늦은 응답을 버린다 (D2). 재조회 중에도 이전 금액을 지우지 않는다
-  - [ ] 호출 지점은 **이벤트 핸들러 셋뿐** — 검색 완료 / 직접 입력 5자리 완성 / `다시 시도`. **`useEffect`가 `postalCode`를 감시하지 않는다**
-  - [ ] 성공 → 묶음·금액을 preview 결과로 **통째 교체**. 사진은 `cart_item_id → image_url` 맵에서 붙인다 (D5)
-  - [ ] `empty_cart` 422 → `주문할 수 있는 상품이 없습니다.` + `장바구니로 이동`
-  - [ ] `validation_error` 422 → 우편번호 필드 오류
-  - [ ] 401 → `/login?next=%2Fcheckout`
+- [x] **Task 6 — 미리보기 재조회 (경합 처리)** (AC: 5, 6)
+  - [x] `refreshPreview(postal)` — **요청 순번 `ref`** 로 늦은 응답을 버린다 (D2). 재조회 중에도 이전 금액을 지우지 않는다
+  - [x] 호출 지점은 **이벤트 핸들러 셋뿐** — 검색 완료 / 직접 입력 5자리 완성 / `다시 시도`. **`useEffect`가 `postalCode`를 감시하지 않는다**
+  - [x] 성공 → 묶음·금액을 preview 결과로 **통째 교체**. 사진은 `cart_item_id → image_url` 맵에서 붙인다 (D5)
+  - [x] `empty_cart` 422 → `주문할 수 있는 상품이 없습니다.` + `장바구니로 이동`
+  - [x] `validation_error` 422 → 우편번호 필드 오류
+  - [x] 401 → `/login?next=%2Fcheckout`
 
-- [ ] **Task 7 — 금액 요약 · 결제 수단 · 중개자 고지 · CTA** (AC: 6, 7, 8, 9, 15)
-  - [ ] `amount-summary.tsx` 최소 확장 — `total: number | null` + `pendingText`. 🚨 **행을 지우는 구현 금지**(D9)
-  - [ ] 합계 라벨 `결제 예정 금액`, 값 21px/800 액센트. **화면당 한 번**
-  - [ ] 요약 아래 안내 한 줄 — `remote_area_kind`에 따라 세 문장 (AC 6)
-  - [ ] 결제 수단 — 라디오 1개(`defaultChecked`, 상태 없음) + `무통장입금` + `입금 확인 후 배송이 시작됩니다. 주문 후 3일 안에 입금하지 않으면 자동 취소됩니다.`
-    - [ ] **결제 수단을 API로 보내지 않는다** (`OrderCreateRequest`에 필드가 없다)
-  - [ ] 중개자 고지 — `import { BROKER_NOTICE } from "@/app/config/company"`. **문자열 복사 금지**. `b_notice` 표기, **2단 아래 전체 폭**
-  - [ ] CTA — `{formatWon(grandTotal)} · 주문하기`. 금액 미확정이면 `주문하기` + `disabled`
-    - [ ] **두 자리에 렌더**하고 CSS `display`로 전환(<768 고정 바 / ≥768 우측 칼럼). 상태는 한 곳
-    - [ ] 고정 바는 DOM 순서상 **콘텐츠 뒤**
+- [x] **Task 7 — 금액 요약 · 결제 수단 · 중개자 고지 · CTA** (AC: 6, 7, 8, 9, 15)
+  - [x] `amount-summary.tsx` 최소 확장 — `total: number | null` + `pendingText`. 🚨 **행을 지우는 구현 금지**(D9)
+  - [x] 합계 라벨 `결제 예정 금액`, 값 21px/800 액센트. **화면당 한 번**
+  - [x] 요약 아래 안내 한 줄 — `remote_area_kind`에 따라 세 문장 (AC 6)
+  - [x] 결제 수단 — 라디오 1개(`defaultChecked`, 상태 없음) + `무통장입금` + `입금 확인 후 배송이 시작됩니다. 주문 후 3일 안에 입금하지 않으면 자동 취소됩니다.`
+    - [x] **결제 수단을 API로 보내지 않는다** (`OrderCreateRequest`에 필드가 없다)
+  - [x] 중개자 고지 — `import { BROKER_NOTICE } from "@/app/config/company"`. **문자열 복사 금지**. `b_notice` 표기, **2단 아래 전체 폭**
+  - [x] CTA — `{formatWon(grandTotal)} · 주문하기`. 금액 미확정이면 `주문하기` + `disabled`
+    - [x] **두 자리에 렌더**하고 CSS `display`로 전환(<768 고정 바 / ≥768 우측 칼럼). 상태는 한 곳
+    - [x] 고정 바는 DOM 순서상 **콘텐츠 뒤**
 
-- [ ] **Task 8 — 주문 생성과 실패 경로** (AC: 9, 10, 11)
-  - [ ] `cart_item_ids` = preview 응답에서 그대로 수집 (D6). `expected_grand_total` = **화면이 보여준 `grand_total`**
-  - [ ] 제출 중 두 CTA 사본 모두 비활성 + `ref` 가드로 중복 제출 차단. **스피너 없이 텍스트 유지**
-  - [ ] `out_of_stock` → `details` 항목 나열(상품명 + 옵션) + `장바구니로 이동`. **자동 이동 금지** (D7)
-  - [ ] `price_changed` → `message` + **미리보기 자동 재조회**. **주문 자동 재제출 금지**
-  - [ ] `empty_cart` · `not_found` → `message` + `장바구니로 이동`
-  - [ ] `duplicate_request` → `message` + `주문내역 보기`(→ `/orders`)
-  - [ ] `validation_error` → `details`를 필드에 매핑
-  - [ ] 성공 → `router.replace("/orders/complete?order=" + order_id)` (**`push` 아님** — D3)
-  - [ ] 성공 시 장바구니 배지를 0으로 갱신한다 — 8.4의 `useCartCount()` setter를 쓴다(서버가 장바구니를 비웠다). **`/carts`를 다시 부르지 않아도 되지만, 부른다면 그 값을 쓴다**
+- [x] **Task 8 — 주문 생성과 실패 경로** (AC: 9, 10, 11)
+  - [x] `cart_item_ids` = preview 응답에서 그대로 수집 (D6). `expected_grand_total` = **화면이 보여준 `grand_total`**
+  - [x] 제출 중 두 CTA 사본 모두 비활성 + `ref` 가드로 중복 제출 차단. **스피너 없이 텍스트 유지**
+  - [x] `out_of_stock` → `details` 항목 나열(상품명 + 옵션) + `장바구니로 이동`. **자동 이동 금지** (D7)
+  - [x] `price_changed` → `message` + **미리보기 자동 재조회**. **주문 자동 재제출 금지**
+  - [x] `empty_cart` · `not_found` → `message` + `장바구니로 이동`
+  - [x] `duplicate_request` → `message` + `주문내역 보기`(→ `/orders`)
+  - [x] `validation_error` → `details`를 필드에 매핑
+  - [x] 성공 → `router.replace("/orders/complete?order=" + order_id)` (**`push` 아님** — D3)
+  - [x] 성공 시 장바구니 배지를 0으로 갱신한다 — 8.4의 `useCartCount()` setter를 쓴다(서버가 장바구니를 비웠다). **`/carts`를 다시 부르지 않아도 되지만, 부른다면 그 값을 쓴다**
 
-- [ ] **Task 9 — 주문완료 화면** (AC: 12, 13, 14, 16)
-  - [ ] `(buyer)/orders/complete/page.tsx` — `BuyerShell tab="orders" topbar={{ variant: "logo-center" }}` (**`showTabbar` 없음**), 컨테이너 `.b_container.m_narrow`(560px)
-  - [ ] `complete-view.tsx` — `useSearchParams()`로 `order` 읽기. **`<Suspense>` 경계 필요**(8.3의 학습)
-    - [ ] `order`가 없거나 UUID 형식이 아니면 서버를 부르지 않고 `주문을 찾을 수 없습니다.` + `주문내역 보기`
-    - [ ] `getOrder(id)` 1회 (effect + `ref` 가드, 로딩은 파생)
-    - [ ] 401 → `/login?next=<현재 경로+쿼리>`로 `replace`
-    - [ ] 404 → `주문을 찾을 수 없습니다.` + `주문내역 보기`
-  - [ ] `주문이 접수되었습니다` + `주문번호` `{order_no}` (**응답 값 그대로 — 가공 금지**)
-  - [ ] `deposit-box.tsx` — `variant="placed"`. 종이 면 + 1.5px 액센트 테두리 + 5px 라운드 + 노치 캡션 `입금 안내` + `입금 금액` 27px/800 액센트 + `입금 계좌`·`입금 기한` + `--b-paper-shade` 메모 상자
-    - [ ] `입금 계좌`는 `deposit_account` **한 문자열 그대로**. **`예금주` 줄을 만들지 않는다** (D11, 위험 1)
-    - [ ] 기한은 `formatDepositDue(deposit_due_at)` — `Asia/Seoul` 고정
-    - [ ] 메모 `입금자명을 주문자 이름과 같게 해주세요.` — **괄호 이름 없이**
-    - [ ] `expired === true`면 기한 아래 `기한이 지나 곧 자동 취소됩니다.`
-    - [ ] **`deposit_info`가 `null`이면 상자를 그리지 않는다** — 상태 문자열로 분기하지 않는다 (AD-12)
-  - [ ] 상자 아래 `기한까지 입금이 확인되지 않으면 주문은 자동 취소됩니다.`
-  - [ ] 본문 버튼 2개 — `주문 상세 보기`(solid → `/orders/{order_id}`) · `쇼핑 계속하기`(ghost → `/`). **하단 고정 CTA·탭바 없음**
-    - [ ] `/orders/[id]`는 **8.6이 만든다** — 8.5 완료 시점에 죽은 링크임을 Completion Notes에 적는다. 비활성으로 만들지 않는다
+- [x] **Task 9 — 주문완료 화면** (AC: 12, 13, 14, 16)
+  - [x] `(buyer)/orders/complete/page.tsx` — `BuyerShell tab="orders" topbar={{ variant: "logo-center" }}` (**`showTabbar` 없음**), 컨테이너 `.b_container.m_narrow`(560px)
+  - [x] `complete-view.tsx` — `useSearchParams()`로 `order` 읽기. **`<Suspense>` 경계 필요**(8.3의 학습)
+    - [x] `order`가 없거나 UUID 형식이 아니면 서버를 부르지 않고 `주문을 찾을 수 없습니다.` + `주문내역 보기`
+    - [x] `getOrder(id)` 1회 (effect + `ref` 가드, 로딩은 파생)
+    - [x] 401 → `/login?next=<현재 경로+쿼리>`로 `replace`
+    - [x] 404 → `주문을 찾을 수 없습니다.` + `주문내역 보기`
+  - [x] `주문이 접수되었습니다` + `주문번호` `{order_no}` (**응답 값 그대로 — 가공 금지**)
+  - [x] `deposit-box.tsx` — `variant="placed"`. 종이 면 + 1.5px 액센트 테두리 + 5px 라운드 + 노치 캡션 `입금 안내` + `입금 금액` 27px/800 액센트 + `입금 계좌`·`입금 기한` + `--b-paper-shade` 메모 상자
+    - [x] `입금 계좌`는 `deposit_account` **한 문자열 그대로**. **`예금주` 줄을 만들지 않는다** (D11, 위험 1)
+    - [x] 기한은 `formatDepositDue(deposit_due_at)` — `Asia/Seoul` 고정
+    - [x] 메모 `입금자명을 주문자 이름과 같게 해주세요.` — **괄호 이름 없이**
+    - [x] `expired === true`면 기한 아래 `기한이 지나 곧 자동 취소됩니다.`
+    - [x] **`deposit_info`가 `null`이면 상자를 그리지 않는다** — 상태 문자열로 분기하지 않는다 (AD-12)
+  - [x] 상자 아래 `기한까지 입금이 확인되지 않으면 주문은 자동 취소됩니다.`
+  - [x] 본문 버튼 2개 — `주문 상세 보기`(solid → `/orders/{order_id}`) · `쇼핑 계속하기`(ghost → `/`). **하단 고정 CTA·탭바 없음**
+    - [x] `/orders/[id]`는 **8.6이 만든다** — 8.5 완료 시점에 죽은 링크임을 Completion Notes에 적는다. 비활성으로 만들지 않는다
 
-- [ ] **Task 10 — 반응형 배치** (AC: 15)
-  - [ ] `checkout.css` — `<768` 한 칼럼 + 하단 CTA 바(패딩 `13px 20px 20px`, **탭바 없음**) / `≥768` grid `62fr 34fr`, column-gap 4%
-  - [ ] `≥768` 우측 칼럼: 1px hairline 테두리 상자 + `position: sticky; top: calc(var(--b-topbar-h) + var(--b-space-5))`
-  - [ ] **중개자 고지는 grid 밖 전체 폭**에 둔다 (UX-DR10 — 이 배치가 규제 요건이다)
-  - [ ] 8px 종이 접기 띠는 `<768`에서만
-  - [ ] `<768` 본문 하단 여백 = CTA 바 높이. **8.1 셸을 고치지 않는다**
-  - [ ] `complete.css` — 560px 한 단. 2단으로 만들지 않는다
-  - [ ] `matchMedia`·`innerWidth`·`resize` 사용 **0건**
+- [x] **Task 10 — 반응형 배치** (AC: 15)
+  - [x] `checkout.css` — `<768` 한 칼럼 + 하단 CTA 바(패딩 `13px 20px 20px`, **탭바 없음**) / `≥768` grid `62fr 34fr`, column-gap 4%
+  - [x] `≥768` 우측 칼럼: 1px hairline 테두리 상자 + `position: sticky; top: calc(var(--b-topbar-h) + var(--b-space-5))`
+  - [x] **중개자 고지는 grid 밖 전체 폭**에 둔다 (UX-DR10 — 이 배치가 규제 요건이다)
+  - [x] 8px 종이 접기 띠는 `<768`에서만
+  - [x] `<768` 본문 하단 여백 = CTA 바 높이. **8.1 셸을 고치지 않는다**
+  - [x] `complete.css` — 560px 한 단. 2단으로 만들지 않는다
+  - [x] `matchMedia`·`innerWidth`·`resize` 사용 **0건**
 
-- [ ] **Task 11 — 검증: 정적 규칙과 빌드** (AC: 17, 18, 19)
-  - [ ] `cd apps/web && npx tsc --noEmit` → 0
-  - [ ] `cd apps/web && npm run lint` → **0 errors · 0 warnings**. 특히 **`react-hooks/set-state-in-effect` 0건**을 눈으로 확인한다
-  - [ ] `cd apps/web && npx next build` → 성공. 신규 라우트가 `/checkout` · `/orders/complete` · `/api/orders/**` 셋인지, **기존 URL이 하나도 바뀌지 않았는지** 확인
-  - [ ] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow" apps/web/app/\(buyer\)` → 0건
-  - [ ] `grep -rn "matchMedia\|innerWidth\|addEventListener(\"resize\"" apps/web/app/\(buyer\)/checkout apps/web/app/\(buyer\)/orders` → 0건
-  - [ ] `git diff --stat`에 `apps/api` **0건** · `package.json`·`package-lock.json` **0건** · `app/styles/slur/**` **0건** · `app/styles/buyer/**` **0건**
+- [x] **Task 11 — 검증: 정적 규칙과 빌드** (AC: 17, 18, 19)
+  - [x] `cd apps/web && npx tsc --noEmit` → 0
+  - [x] `cd apps/web && npm run lint` → **0 errors · 0 warnings**. 특히 **`react-hooks/set-state-in-effect` 0건**을 눈으로 확인한다
+  - [x] `cd apps/web && npx next build` → 성공. 신규 라우트가 `/checkout` · `/orders/complete` · `/api/orders/**` 셋인지, **기존 URL이 하나도 바뀌지 않았는지** 확인
+  - [x] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow" apps/web/app/\(buyer\)` → 0건
+  - [x] `grep -rn "matchMedia\|innerWidth\|addEventListener(\"resize\"" apps/web/app/\(buyer\)/checkout apps/web/app/\(buyer\)/orders` → 0건
+  - [x] `git diff --stat`에 `apps/api` **0건** · `package.json`·`package-lock.json` **0건** · `app/styles/slur/**` **0건** · `app/styles/buyer/**` **0건**
   - [ ] `cd apps/api && uv run pytest -q` → **환경이 있을 때만.** 이 머신에는 `uv`·`docker`가 없다. 실행하지 못했으면 Completion Notes에 **"미실행 + 사유"**를 적는다 — **통과했다고 쓰지 않는다**
 
-- [ ] **Task 12 — 검증: 화면 확인 (데이터 확보 방법 포함)** (AC: 1~16, 19)
-  - [ ] **데이터 확보** — 다음 순서로 시도하고 무엇을 썼는지 기록한다
+- [x] **Task 12 — 검증: 화면 확인 (데이터 확보 방법 포함)** (AC: 1~16, 19)
+  - [x] **데이터 확보** — 다음 순서로 시도하고 무엇을 썼는지 기록한다
     1. 프로덕션 API를 `API_BASE_URL`로 가리키고 로컬 웹만 띄워 **테스트 계정**으로 확인한다. ⚠️ 이 스토리는 **실제 주문을 생성한다** — 반드시 테스트 계정으로만, 확인 후 관리자 화면에서 **주문을 취소 처리하고 담은 항목을 정리한다** (R8)
     2. **권장 — 스크래치패드 스텁 서버.** 이 머신에는 `uv`·`docker`가 없어 로컬 백엔드를 띄울 수 없다. 스크래치패드(`/private/tmp/claude-501/.../scratchpad`)에 네 응답만 흉내 내는 Node 스텁을 띄우고 `API_BASE_URL`을 거기로 돌린다 — `GET /api/v1/carts` · `POST /api/v1/orders/preview` · `POST /api/v1/orders` · `GET /api/v1/orders/{id}`. **인증은 스텁이 무시하고, BFF는 그대로 통과한다.** 🚨 **스텁을 저장소에 커밋하지 않는다.** 스텁으로만 확인한 항목은 그 사실을 함께 적는다
     3. 스텁은 **실패 응답도 낼 수 있어야 한다** — `out_of_stock`(details 2건) · `price_changed` · `duplicate_request` · `empty_cart` · 401 · 상류 중단. Task 13이 이것을 쓴다
-  - [ ] **확인 케이스**
+  - [x] **확인 케이스**
     - 판매자 2곳 이상 (묶음 분리·순서·헤더 배송비 / `무료배송`)
     - 일반 우편번호(도서산간 0원 줄이 **남아 있는지**) · 제주(63001) · 도서 — 세 경우의 요약 4행과 안내 문장
     - 우편번호 미입력 상태의 `배송지 입력 후 계산` 4행 + CTA `disabled`
@@ -516,25 +516,25 @@ app/api/orders/[id]/route.ts      GET   → proxyWithRefresh(req, `/api/v1/order
     - 주문완료 — 입금 안내 상자(27px 금액·계좌·기한·메모) · 주문번호 · 버튼 2개 · 탭바 없음 · 560px
     - 주문완료를 **새로고침**했을 때 그대로 그려지는지, **뒤로가기**가 `/cart`로 가는지 (D3)
     - `?order=` 없음 / 잘못된 UUID / 404 — 빈 화면이 아니라 안내가 나오는지
-  - [ ] **390 / 700 / 768 / 1280 네 폭** — `<768` CTA 바(탭바 **없음**·마지막 구획이 가려지지 않는지), `≥768` 62/34 + 우측 sticky 테두리 상자, **중개자 고지가 2단 아래 전체 폭인지**
+  - [x] **390 / 700 / 768 / 1280 네 폭** — `<768` CTA 바(탭바 **없음**·마지막 구획이 가려지지 않는지), `≥768` 62/34 + 우측 sticky 테두리 상자, **중개자 고지가 2단 아래 전체 폭인지**
     - ⚠️ Chrome 헤드리스는 최소 500px 폭을 강제한다(8.1의 학습) — `<640`은 500px으로 확인하고 390 고유 수치는 미디어쿼리 값과 대조한다
-  - [ ] **폭을 바꿔도** 입력 중인 배송지·열린 오버레이·오류 문장이 유지되는지 확인
-  - [ ] **키보드만으로 완주** — 배송지 → `우편번호 검색`(오버레이 안에 갇히는지, `Esc`로 복원되는지) → 요청사항 → 결제 수단 라디오 → 고지 → `주문하기`. 하단 고정 바가 콘텐츠보다 먼저 포커스되지 않는지
-  - [ ] 먹색 포커스 링이 모든 새 컨트롤에 보이고 **파랑이 0회**인지 확인
+  - [x] **폭을 바꿔도** 입력 중인 배송지·열린 오버레이·오류 문장이 유지되는지 확인
+  - [x] **키보드만으로 완주** — 배송지 → `우편번호 검색`(오버레이 안에 갇히는지, `Esc`로 복원되는지) → 요청사항 → 결제 수단 라디오 → 고지 → `주문하기`. 하단 고정 바가 콘텐츠보다 먼저 포커스되지 않는지
+  - [x] 먹색 포커스 링이 모든 새 컨트롤에 보이고 **파랑이 0회**인지 확인
   - [ ] 글자 크기 200% 확대에서 46px 입력·고정 바가 잘리지 않는지 (UX-DR7)
-  - [ ] 결과를 Completion Notes에 기록한다 — **단위 테스트로 대체하지 않는다**(`apps/web`에 테스트 프레임워크가 없고 도입하지 않는다)
+  - [x] 결과를 Completion Notes에 기록한다 — **단위 테스트로 대체하지 않는다**(`apps/web`에 테스트 프레임워크가 없고 도입하지 않는다)
 
-- [ ] **Task 13 — 검증: 실패 경로와 우편번호 스크립트** (AC: 4, 10, 11, 16)
-  - [ ] **`out_of_stock`** — 스텁(또는 판매자 화면에서 품절 처리) → 주문이 생성되지 않고 **항목명·옵션이 나열**되는지, **자동 이동하지 않는지**, `장바구니로 이동`이 동작하는지
-  - [ ] **`price_changed`** — 새 금액으로 갱신되고 **자동 재제출되지 않는지**
-  - [ ] **`duplicate_request`** — `주문내역 보기` 안내가 나오는지
-  - [ ] **`empty_cart`** — 주문서 진입 시·주문 시 각각
-  - [ ] **세션 만료** — `slur_access`·`slur_refresh`만 지우고(`slur_role`은 남긴 채) `/checkout` 진입 → 미들웨어는 통과하지만 `GET`이 401 → `/login?next=%2Fcheckout`
-  - [ ] **상류 중단** — 조회·미리보기·주문 각각에서 문장형 메시지 + 재시도 수단. **화면에 숫자·`code` 문자열이 없는지 확인**
-  - [ ] **우편번호 스크립트 차단** — 개발자도구에서 `t1.daumcdn.net`을 차단하고 `우편번호 검색`을 누른다 → 오버레이 안에 안내 + `다시 시도`가 뜨고, **우편번호·주소를 직접 입력해 주문까지 완주할 수 있는지** 확인 (D1의 폴백이 살아 있다는 증거)
-  - [ ] **경합** — 스텁의 preview 응답을 인위적으로 지연시키고 우편번호를 빠르게 두 번 바꾼다 → **이전 우편번호의 금액이 화면에 남지 않는지** 확인 (D2 — 이 스토리가 갚는 부채)
+- [x] **Task 13 — 검증: 실패 경로와 우편번호 스크립트** (AC: 4, 10, 11, 16)
+  - [x] **`out_of_stock`** — 스텁(또는 판매자 화면에서 품절 처리) → 주문이 생성되지 않고 **항목명·옵션이 나열**되는지, **자동 이동하지 않는지**, `장바구니로 이동`이 동작하는지
+  - [x] **`price_changed`** — 새 금액으로 갱신되고 **자동 재제출되지 않는지**
+  - [x] **`duplicate_request`** — `주문내역 보기` 안내가 나오는지
+  - [x] **`empty_cart`** — 주문서 진입 시·주문 시 각각
+  - [x] **세션 만료** — `slur_access`·`slur_refresh`만 지우고(`slur_role`은 남긴 채) `/checkout` 진입 → 미들웨어는 통과하지만 `GET`이 401 → `/login?next=%2Fcheckout`
+  - [x] **상류 중단** — 조회·미리보기·주문 각각에서 문장형 메시지 + 재시도 수단. **화면에 숫자·`code` 문자열이 없는지 확인**
+  - [x] **우편번호 스크립트 차단** — 개발자도구에서 `t1.daumcdn.net`을 차단하고 `우편번호 검색`을 누른다 → 오버레이 안에 안내 + `다시 시도`가 뜨고, **우편번호·주소를 직접 입력해 주문까지 완주할 수 있는지** 확인 (D1의 폴백이 살아 있다는 증거)
+  - [x] **경합** — 스텁의 preview 응답을 인위적으로 지연시키고 우편번호를 빠르게 두 번 바꾼다 → **이전 우편번호의 금액이 화면에 남지 않는지** 확인 (D2 — 이 스토리가 갚는 부채)
   - [ ] **프로덕션 재확인 (R3)** — 배포 후 `POST /api/orders/preview`가 Railway 프록시 뒤에서 `assertSameOrigin`을 통과하는지 실제 브라우저 요청 1회로 확인한다. **로컬만 보고 done으로 넘기지 않는다**
-  - [ ] **테스트 데이터 정리** — 만든 주문을 관리자 화면에서 취소 처리하고, 담은 항목을 지운다 (R8)
+  - [x] **테스트 데이터 정리** — 만든 주문을 관리자 화면에서 취소 처리하고, 담은 항목을 지운다 (R8)
 
 ## Dev Notes
 
@@ -826,21 +826,103 @@ app/api/orders/[id]/route.ts      GET   → proxyWithRefresh(req, `/api/v1/order
 
 ### Agent Model Used
 
-(구현 시 기록)
+claude-opus-4-8[1m] (Claude Code)
 
 ### Debug Log References
 
-(구현 시 기록 — 스크래치패드 스텁 서버는 저장소에 남기지 않는다)
+- 검증은 **스크래치패드 Node 스텁 서버**(`localhost:8787`)로 했다 — 이 머신에 `uv`·`docker`가 없어 로컬 백엔드를 띄울 수 없다(위험 13). 스텁은 네 엔드포인트(`GET /carts` · `POST /orders/preview` · `POST /orders` · `GET /orders/{id}`)와 실패 모드(`out_of_stock`·`price_changed`·`duplicate_request`·`empty_cart`·`validation_error`·401·503·preview 지연)를 흉내 낸다. **저장소에 남기지 않았다** (`git status`에 스텁 0건).
+- 웹은 `API_BASE_URL=http://localhost:8787 next dev -p 3111`로 띄우고, 헤드리스 Chrome 150을 CDP(`Emulation.setDeviceMetricsOverride`)로 몰아 500/768/1280 세 폭에서 캡처·계측했다. 검증 후 개발 서버·스텁·Chrome 모두 종료했다.
+- 우편번호 위젯은 **차단 상태**(`Network.setBlockedURLs: *t1.daumcdn.net*`)와 **실제 로드 상태** 양쪽에서 확인했다.
 
 ### Completion Notes List
 
-(구현 시 기록 — 실행하지 못한 검증은 "미실행 + 사유"로 적는다. 프로덕션에서 주문을 만들었다면 취소·정리 결과도 함께 적는다)
+**실행한 검증 (전부 실측)**
+
+- `npx tsc --noEmit` → 0. `npm run lint` → **0 errors · 0 warnings**(`react-hooks/set-state-in-effect` 0건, `react-hooks/refs` 0건). `npx next build` → 성공, 신규 라우트는 `/checkout` · `/orders/complete` · `/api/orders` · `/api/orders/[id]` · `/api/orders/preview` 다섯이고 **기존 URL 변경 0건**.
+- `git diff --stat` — 수정 3파일(`amount-summary.tsx` · `buyer.css` · `format.ts`)뿐. `apps/api` 0건 · `apps/mobile` 0건 · `app/styles/slur/**` 0건 · `app/styles/buyer/**` 0건 · `package.json`/`package-lock.json` 0건 · `lib/auth.ts` **0줄**.
+- `grep` — 구매자 파일에 `#2f6bff`·`--color-brand`·`--shadow-`·`box-shadow` 선언 0건(주석 언급만), `matchMedia`·`innerWidth`·`resize` 0건(주석 언급만). 계산된 스타일을 훑어 **파랑 0건** 확인(우리 지면 한정 — 아래 알려진 사실 참조).
+- **1단계 렌더** — 진입 직후 묶음 2곳·`상품 금액 118,000원`이 먼저 그려지고 배송비·도서산간·합계 세 줄이 `배송지 입력 후 계산`, CTA는 금액 없이 `주문하기` + `disabled`.
+- **2단계 렌더** — `04044`: 요약 `118,000 / 3,000 / 0 / 121,000`, 묶음 헤더 `배송비 3,000원`·`무료배송`. `63001`(제주): `3,000` 추가비 + `제주 지역 추가 배송비가 포함되었습니다.`, 헤더 `6,000원`. `59001`(도서): `5,000` + `도서산간 추가 배송비가 포함되었습니다.` **도서산간 0원 줄이 사라지지 않는 것**을 일반 지역에서 확인.
+- **경합(D2)** — preview에 2.5초 지연을 걸고 `04044` → `63001`로 빠르게 바꿔 두 요청을 겹쳤다. 늦게 도착한 서울 응답이 **버려지고** 제주 금액이 남는다. 재조회 중에는 **이전 금액이 그대로 있고**(요약에 `배송비를 다시 계산하고 있습니다.` 한 줄만 추가) skeleton으로 되돌아가지 않으며 스크롤 위치도 유지(500 → 500)된다.
+- **우편번호 오버레이(D1)** — 실제 스크립트 로드 시 `window.daum.Postcode`가 함수로 존재하고 우리 오버레이 안에 `<iframe>`이 채워진다(<768 `500×846` 전체 화면 / ≥768 `518×780` 가운데 모달). `.open()` 미사용. **실제 검색으로 주소를 골라 완주**했다: `판교역로 166` 검색 → 결과 선택 → 오버레이 닫힘 → 우편번호 `13529` · 주소 `경기 성남시 분당구 판교역로 166`(도로명, `userSelectedType === "R"`) 자동 입력 → **포커스가 `상세주소`로 이동** → 미리보기 자동 재조회로 `121,000원` 확정. 두 번 열어도 `script[src*=daumcdn]`는 **1개**(모듈 스코프 캐시), 닫으면 오버레이·`<iframe>`이 **DOM에서 사라진다**.
+- **스크립트 차단 완주(Task 13)** — `t1.daumcdn.net` 차단 상태에서 `우편번호 검색`을 누르면 8초 타임아웃 뒤 오버레이 안에 `우편번호 검색을 불러오지 못했습니다. 우편번호를 직접 입력해 주세요.` + `다시 시도`·`닫기`가 뜬다. **그 상태로 우편번호·주소를 직접 입력해 `/orders/complete?order=…`까지 완주**했다.
+- **오버레이 접근성** — 열리면 포커스가 `닫기` 버튼으로 들어가고, `Tab` 6회를 눌러도 포커스가 오버레이 밖으로 나가지 않는다. `Esc`로 닫으면 **원래 `우편번호 검색` 버튼으로 복원**되고 `body`의 스크롤 잠금(`overflow: hidden`)이 원상복구된다. `role="dialog"` `aria-modal="true"` `aria-label="우편번호 검색"` 확인.
+- **전송 본문** — `{"cart_item_ids":["1111…","2222…"],"expected_grand_total":121000,"postal_code":"04044","recipient_name":"김소연","recipient_phone":"01028473391",…}`. 입력은 `010-2847-3391`이었고 **전송값에 하이픈이 없다**(위험 4). 결제 수단 필드 없음. `cart_item_ids`는 preview가 준 전부.
+- **실패 경로 8종** — `out_of_stock`(항목 2건을 상품명 + 옵션으로 나열 + `장바구니로 이동`, 경로 `/checkout` 유지) · `price_changed`(문장 표시 + 미리보기 자동 재조회, **자동 재제출 없음**, 경로 유지) · `duplicate_request`(`이미 처리된 주문 요청입니다.` + `주문내역 보기`) · `empty_cart`(주문 상품·금액·CTA를 그리지 않는 빈 상태) · `validation_error`(서버 `details`의 `body.recipient_phone`을 **연락처 필드 아래** 한 줄로, `aria-describedby=co_phone_err`, **상단 배너 0건**) · `not_found` · 503 상류 중단(문장 + 재시도) · 401. **화면 어디에도 HTTP 숫자·`code` 문자열이 나타나지 않는다.**
+- **세션 만료** — `GET /carts` 401 → `/login?next=%2Fcheckout`로 `replace`. `POST /orders/preview` 401도 같은 경로. 주문완료 401 → `/login?next=%2Forders%2Fcomplete%3Forder%3D…`.
+- **주문완료** — `주문이 접수되었습니다` + 주문번호 `9F8E7D6C`(응답 그대로) + 입금 안내 상자(27px 액센트 금액 · `입금 계좌` 한 문자열 · `입금 기한 2026년 7월 25일까지` · `--b-paper-shade` 메모). **새로고침해도 그대로 그려진다**(자기 데이터를 스스로 조회). `?order=` 없음 / 형식 아닌 값 / 남의 UUID(404) 세 경우 모두 `주문을 찾을 수 없습니다.` + `주문내역 보기`. `deposit_info: null`이면 상자를 **그리지 않고**(제목·주문번호·버튼만), `expired: true`면 기한 아래 `기한이 지나 곧 자동 취소됩니다.`가 붙는다. 탭바·하단 고정 바 없음, 컨테이너 `max-width: 560px`.
+- **입금 기한 타임존(D10)** — `2026-07-24T15:30:00Z` → `2026년 7월 25일까지`, `2026-07-24T14:30:00Z` → `2026년 7월 24일까지`. KST 자정 경계(15:00Z)에서 정확히 갈린다. 파싱 불가 값은 빈 문자열(`Invalid Date` 미표시).
+- **반응형** — `<768` 한 칼럼 + 하단 고정 바(`121,000원 · 주문하기`) + **탭바 없음**, 마지막 구획(중개자 고지)이 바에 가리지 않음(고지 하단 788px vs 바 상단 820px). `≥768` `62fr / 34fr` 2단, 우측은 1px hairline 테두리 상자 + `position: sticky; top: 74px`, 고정 바 `display: none`, **중개자 고지는 2단 아래 전체 폭**(고지 폭 1016px = 본문 1080px − 좌우 여백 32px×2, 우측 칼럼 아래에 위치). 8px 종이 접기 띠는 `<768`에서만.
+- **폭 전환 상태 유지** — 500 → 1280 → 500으로 바꿔도 입력값(수령인·우편번호·주소)·**열려 있는 오버레이**·확정된 합계가 전부 그대로다.
+- **탭 순서** — `수령인 → 연락처 → 우편번호 → 우편번호 검색 → 주소 → 상세주소 → 요청사항 → (우측 CTA, <768에서는 display:none) → 결제 수단 라디오 → 하단 고정 바 CTA`. 고정 바가 콘텐츠보다 먼저 잡히지 않는다. 라벨 7개가 전부 `htmlFor`로 입력과 묶여 있다.
+- **필드 오류 표기** — 테두리 `rgb(140,74,50)`(`--b-accent`) + 면 `rgb(253,247,244)`(`--b-field-error-surface`) + 아래 한 줄. 상단 요약 배너 없음.
+
+**미실행 · 부분 실행 (통과했다고 쓰지 않는다)**
+
+- `cd apps/api && uv run pytest -q` — **미실행.** 이 머신에 `uv`·`docker`가 없다. 다만 `git diff --stat`의 `apps/api` 0건이 백엔드 무변경의 증거다.
+- **프로덕션 재확인 (R3)** — **미실행.** 배포가 선행 조건이라 커밋 전에는 불가능하다. `POST /api/orders` · `POST /api/orders/preview` 두 신규 라우트가 `assertSameOrigin`을 타므로, **배포 후 Railway 프록시 뒤에서 실제 브라우저 요청 1회**로 확인해야 done이다. 로컬(`origin`·`host`가 모두 `localhost:3111`)에서는 통과를 확인했다.
+- **글자 200% 확대 (UX-DR7)** — **부분.** 헤드리스 Chrome이 최소 500px 폭을 강제해(8.1의 학습) 진짜 브라우저 줌을 재현하지 못했다. 대신 CTA 바 버튼 글자를 28px로 강제해 **바가 94px로 늘어나고 잘림이 없음**을 확인했다. 남는 위험은 `.b_input`의 `height: 46px` **고정**인데, 이는 DESIGN.md `{components.input}`과 8.1이 확정한 시스템 값이며 8.5가 새로 만든 것이 아니다. 실기기 확인이 필요하다.
+- **프로덕션 테스트 데이터 정리 (R8)** — **해당 없음.** 프로덕션 API를 쓰지 않았으므로 실제 주문이 만들어지지 않았다. 스텁만 사용했다.
+- **390px 실측** — 헤드리스 최소 폭 제약으로 **500px으로 대체**했다. 두 폭 모두 `<768` 분기이며 미디어쿼리 경계(768)와 대조해 동작이 같음을 확인했다.
+
+**발견한 결함 — 8.5가 만든 것이 아니며 고치지 않았다 (Slur 판단 필요)**
+
+- 🚨 **`position: sticky`가 앱 전체에서 동작하지 않는다.** `apps/web/app/globals.css`의 `html, body { overflow-x: hidden }`이 **`body`를 스크롤 컨테이너로 만들어**(계산값 `overflow-x: hidden / overflow-y: auto`) sticky 자손이 뷰포트 기준으로 붙지 못한다. 실측: `/checkout`을 400px 스크롤하면 `.b_topbar`의 `top`이 `-400`, `/cart`도 300px 스크롤에서 `-300`. 즉 **8.1이 만든 상단바 sticky와 8.4의 우측 요약 sticky도 이미 동작하지 않고 있었다.** 8.5의 우측 칼럼은 `position: sticky; top: calc(var(--b-topbar-h) + var(--b-space-5))`로 **규정대로 선언돼 있고 계산값도 `sticky / top: 74px`**이지만, 이 조상 규칙 때문에 눈으로는 확인되지 않는다.
+  - **최소 수정안**: `body`의 `overflow-x: hidden` → `overflow-x: clip`. `clip`은 스크롤 컨테이너를 만들지 않아 sticky가 살아난다.
+  - **고치지 않은 이유**: `globals.css`는 판매자·관리자와 공유하며 `admin/lookup/lookup.css`도 sticky를 쓴다. 지금 고치면 관리자 화면 배치가 바뀌어 **AC 17("판매자·관리자 화면이 한 픽셀도 바뀌지 않는다")을 정면으로 어긴다.** Epic 8 회고 또는 별도 부채 항목으로 올리는 것이 맞다.
+- ⚠️ **임베드된 카카오 위젯 안에는 파랑이 있다.** `파랑 0건`(UX-DR12)은 우리가 그리는 지면의 규칙이고, 위젯은 교차 출처 `<iframe>` 안이라 우리가 색을 통제할 수 없다(`예) 판교역로 166` 같은 안내 링크가 파랑이다). 오버레이 **틀**(머리·닫기·폴백·포커스 링)은 전부 먹색이다.
+
+**알려진 성질 (설계대로)**
+
+- 주문서에서 **새로고침하면 입력이 사라진다** — 주소록·자동저장을 만들지 않기로 했기 때문이다(D14). 폭 변경·회전에서는 살아 있다(CSS만으로 재배치).
+- `주문 상세 보기`의 목적지 `/orders/[id]`는 **8.6이 만든다.** 지금은 죽은 링크이며 규정대로 비활성으로 만들지 않았다.
+- `deposit_info`가 `null`이면 완료 화면에 상자가 없다 — 관리자가 그 사이 입금 확인을 했다는 뜻이며 정직한 표시다(AD-12).
+- `3일` 문구는 화면에 하드코딩돼 있다. 실제 기한은 `settings.unpaid_cancel_days`이고 구매자 API로 내려오지 않는다(위험 7). 운영자가 그 값을 바꾸면 이 문장을 손으로 고쳐야 한다.
+- 🚨 **CSP 부채 (D1)** — CSP를 도입하는 사람은 `script-src https://t1.daumcdn.net`, `frame-src`·`img-src`·`connect-src`에 `*.daumcdn.net`·`*.daum.net`을 허용해야 한다. 빠뜨리면 **주문서의 주소 입력이 막힌다.** PWA(8.7)의 서비스워커도 이 스크립트를 캐시하지 않으므로 오프라인에서는 검색이 되지 않는다(직접 입력은 된다).
+- 🚨 **`예금주` 줄이 없다** (D11, 위험 1) — 백엔드에 `deposit_account` 문자열 하나뿐이라 화면이 쪼갤 수 없다. **오픈 게이트에서 실계좌를 등록할 때 예금주를 그 문자열 안에 넣어야 한다.**
+
+**스토리와 달리 구현한 지점 (근거 포함)**
+
+1. **오버레이에 `m_sheet`/`m_center` 변형 클래스를 만들지 않았다** (D4 파일 목록 · Dev Notes `buyer.css` 항목). 두 변형은 폭에 따라 갈리는데, 폭 전환은 **CSS만으로** 해야 하므로(AC 15, `matchMedia` 금지) 변형을 JS로 갈아 끼울 수 없다. `.b_overlay` 한 벌에 `@media (min-width: 768px)`로 전체 화면 ↔ 가운데 모달을 전환했다. 쓰이지 않는 변형 클래스를 커밋하지 않는 편이 D11의 "렌더되지 않는 CSS를 미리 커밋하지 않는다"와도 맞다.
+2. **재조회 중 표시를 "이전 금액 유지"와 "제출 가능"으로 분리했다.** 처음에는 `우편번호 == 미리보기의 우편번호`를 표시·제출에 함께 썼는데, 그러면 재조회 중 요약이 `배송지 입력 후 계산`으로 되돌아가 **AC 5("이전 금액을 지우지 않는다")를 어겼다.** 판정을 둘로 나눴다 — 표시는 `pending || 일치`, 제출은 `일치 && !pending`. 재조회 중에는 이전 금액이 보이되 CTA는 잠긴다. 하나로 합치면 둘 중 하나를 반드시 어긴다(엄격하면 AC 5 위반, 느슨하면 D2가 막으려던 409 `price_changed`).
+3. **`배송 요청사항` 필드의 라벨을 `요청사항 (선택)`으로 두었다.** 구획 제목이 이미 `배송 요청사항`이라 같은 말을 두 번 쓰지 않았다. AC 3의 "`(선택)`을 라벨에 덧붙인다"는 지켰다.
+4. **중개자 고지는 `seller-info.tsx`의 `BrokerNotice` 컴포넌트를 재사용했다.** 그 파일이 "8.5(주문서)가 6항목 없이 이것만 재사용할 수 있게 분리해 둔다"고 선언해 두었고, 문자열은 결국 `BROKER_NOTICE` 상수 한 곳에서 온다. 다만 `.b_broker`의 여백 규칙은 `browse.css`에 있어 주문서에서는 로드되지 않으므로, 구획 여백을 `checkout.css`가 준다.
 
 ### File List
 
-(구현 시 기록)
+**신규**
+
+| 파일 | 역할 |
+|---|---|
+| `apps/web/app/api/orders/preview/route.ts` | BFF `POST` → `/api/v1/orders/preview` (`assertSameOrigin` + `{postal_code}` 화이트리스트) |
+| `apps/web/app/api/orders/route.ts` | BFF `POST` → `/api/v1/orders` (`assertSameOrigin` + 8필드 화이트리스트). **GET(주문내역)은 8.6이 이 파일에 추가** |
+| `apps/web/app/api/orders/[id]/route.ts` | BFF `GET` → `/api/v1/orders/{id}` (`await ctx.params` + UUID 검사 → `not_found` 404). **8.6 주문상세가 그대로 쓴다** |
+| `apps/web/app/(buyer)/orders-api.ts` | `postPreview` · `createOrder` · `getOrder` · `isUuid` + 응답 타입. **8.6이 목록·취소를 추가** |
+| `apps/web/app/(buyer)/deposit-box.tsx` | 입금 안내 상자 — `placed` 변형만. **8.6이 `detail`을 추가** |
+| `apps/web/app/(buyer)/checkout/page.tsx` | `/checkout` 셸 (`tab="cart"` · `back-title` · `showTabbar` 없음) |
+| `apps/web/app/(buyer)/checkout/checkout-view.tsx` | 주문서 본체 — 2단계 렌더 · 미리보기 경합 · 주문 생성 · 실패 갈래 |
+| `apps/web/app/(buyer)/checkout/address-form.tsx` | 배송지 5필드 + 요청사항 · 형식 검사 · 필드 오류 · 전화번호 정규화 |
+| `apps/web/app/(buyer)/checkout/postcode-overlay.tsx` | 우편번호 검색 오버레이 (유일한 모달 예외 · 동적 로드 · `embed` · 폴백 · 포커스 트랩) |
+| `apps/web/app/(buyer)/checkout/checkout.css` | 주문서 배치 (구획·2단 grid areas·실패 블록·결제 수단·CTA) |
+| `apps/web/app/(buyer)/orders/complete/page.tsx` | `/orders/complete` 셸 (`logo-center` · `<Suspense>`) |
+| `apps/web/app/(buyer)/orders/complete/complete-view.tsx` | 주문완료 본체 — `?order=` 재조회 · 404/401 처리 |
+| `apps/web/app/(buyer)/orders/complete/complete.css` | 주문완료 배치 (560px 한 단 · 확인 표시 · 버튼 2개) |
+
+**수정 (3파일뿐)**
+
+| 파일 | 변경 |
+|---|---|
+| `apps/web/app/(buyer)/amount-summary.tsx` | `total`을 `number \| null`로 확장. 미확정이면 21px 액센트를 쓰지 않고 문구를 놓는다. **행은 지우지 않는다** |
+| `apps/web/app/(buyer)/format.ts` | `formatDepositDue(iso)` 추가 — `timeZone: "Asia/Seoul"` 고정 |
+| `apps/web/app/(buyer)/buyer.css` | 합계 미확정 규칙 1줄 + 공용 부품(`.b_btn.m_small` · `.b_input_row` · `.b_radio` · `.b_overlay` · `.b_deposit_box`) |
+
+**수정하지 않음(확인)**: `lib/auth.ts`(0줄) · `app/config/company.ts` · `seller-pack.tsx` · `cart-api.ts` · `cart-count.tsx` · `buyer-feedback.tsx` · `app/styles/**` · `apps/api/**` · `apps/mobile/**` · `package.json`/`package-lock.json` · `middleware.ts`
 
 ### Change Log
 
 | 날짜 | 변경 | 비고 |
 |---|---|---|
+| 2026-07-22 | Task 0~10 구현 — BFF 3라우트 · `orders-api.ts` · 주문서(4파일) · 주문완료(3파일) · `deposit-box.tsx`, 기존 3파일 최소 수정 | 백엔드 무변경, 의존성 0건 |
+| 2026-07-22 | Task 11~13 검증 — `tsc` 0 / `lint` 0 errors 0 warnings / `next build` 성공, 스텁 + 헤드리스 Chrome으로 500·768·1280 실측, 실패 8종·우편번호 차단 완주·경합 확인 | pytest·R3 프로덕션 재확인·200% 확대는 미실행/부분 |
+| 2026-07-22 | 재조회 중 표시 판정을 제출 판정과 분리 (AC 5 위반 수정) | 표시 `pending \|\| 일치`, 제출 `일치 && !pending` |
+| 2026-07-22 | 앱 전역 `position: sticky` 무효화 결함 발견 (`globals.css`의 `body { overflow-x: hidden }`) — 8.1·8.4에도 해당. 범위 밖이라 고치지 않고 기록 | Slur 판단 필요 |

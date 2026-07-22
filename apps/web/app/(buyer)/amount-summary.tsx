@@ -24,8 +24,8 @@ export type AmountSummaryData = {
   shippingFee: number | null;
   /** 도서산간 추가 — 0이어도, null이어도 줄을 지우지 않는다 */
   remoteAreaFee: number | null;
-  /** 합계 */
-  total: number;
+  /** 합계 — null이면 미확정 문구 (8.5: 우편번호 전에는 배송비를 모르므로 총액도 모른다) */
+  total: number | null;
 };
 
 function Row({ label, value, pendingText }: { label: string; value: number | null; pendingText: string }) {
@@ -56,7 +56,14 @@ export default function AmountSummary({
       <Row label="도서산간 추가" value={data.remoteAreaFee} pendingText={pendingText} />
       <div className="i_total">
         <span className="i_total_label">{totalLabel}</span>
-        <span className="i_total_value b_price_total">{formatWon(data.total)}</span>
+        {/* 미확정이면 21px 액센트를 쓰지 않는다 — 그 크기는 확정된 금액에만 허락된 자리이고
+            (UX-DR13: 화면당 한 번), 문구를 21px로 키우면 지어낸 총액처럼 읽힌다.
+            🚨 행 자체는 지우지 않는다. 값 자리의 문구로만 표현한다 (D9). */}
+        {data.total === null ? (
+          <span className="i_total_value m_pending b_control">{pendingText}</span>
+        ) : (
+          <span className="i_total_value b_price_total">{formatWon(data.total)}</span>
+        )}
       </div>
     </div>
   );

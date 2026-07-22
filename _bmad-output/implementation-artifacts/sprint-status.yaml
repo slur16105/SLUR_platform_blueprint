@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-22  # 8.4 구현 완료(review), 8.5 구현 착수
+last_updated: 2026-07-22  # 8.5 구현 완료(프로덕션 R3 대기), 8.6 구현 착수
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -118,7 +118,7 @@ development_status:
   8-2-buyer-auth-web: in-progress    # 구매자 가입·로그인 (FR-1·2·4, 카카오 웹 인가코드, 역할 쿠키 buyer 도입 + 판매자·관리자 회귀 확인)
   8-3-buyer-product-browse-web: review       # 상품목록·상품상세 (FR-8~13·32·34)
   8-4-cart-web: review               # 장바구니 (FR-14·35)
-  8-5-checkout-web: ready-for-dev     # 주문서·주문완료 (FR-16·17·23·32·35)
+  8-5-checkout-web: in-progress       # 주문서·주문완료 (FR-16·17·23·32·35)
   8-6-order-history-cancel-web: ready-for-dev # 주문내역·주문상세·취소 (FR-18·21·22)
   8-7-me-and-pwa: backlog             # 내 정보 + PWA 기반 (FR-31·33, NFR-7)
   8-8-flutter-archive-remove: backlog # Flutter 보관·제거 (Q2/A — 태그 원격 푸시 확인 후에만, 마지막)

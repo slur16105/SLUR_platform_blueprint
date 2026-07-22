@@ -366,6 +366,9 @@
 /* 값이 미확정이면(장바구니의 배송비·도서산간, 8.4 D2) 같은 무게로 물러난다.
    숫자가 아니므로 자릿수 정렬이 필요 없다. */
 .b_amount_summary .i_value.m_pending { color: var(--b-ink-muted); font-weight: 500; font-variant-numeric: normal; }
+/* 합계도 미확정일 수 있다(주문서 진입 직후 — 배송지 전, 8.5 D9).
+   21px 액센트를 쓰지 않고 물러난 문구가 된다. 줄은 지우지 않는다. */
+.b_amount_summary .i_total_value.m_pending { color: var(--b-ink-muted); font-weight: 500; }
 .b_amount_summary .i_total {
   display: flex;
   align-items: baseline;
@@ -496,4 +499,168 @@
   font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────
+   공용 부품 (8.5 신설 — 8.6이 다시 쓴다)
+   small 버튼 · 입력 행 · 라디오 · 오버레이 · 입금 안내 상자.
+   주문서 전용 배치는 checkout/checkout.css, 완료 전용은 orders/complete/complete.css에 둔다.
+   ───────────────────────────────────────────── */
+
+/* ── small 버튼 (DESIGN button-small) ────────────
+   12px/700, 1.4px 테두리, 좌우 14px. `우편번호 검색`이 유일한 사용처다.
+   높이를 46px로 두는 이유는 옆에 선 .b_input과 밑선이 맞아야 하기 때문이며,
+   그 값이 곧 터치 타깃 44px을 넘긴다 (UX-DR7). */
+.b_btn.m_small {
+  min-height: 46px;
+  padding: 0 14px;
+  border-width: 1.4px;
+  border-color: var(--b-ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* ── 입력 + 버튼 한 행 ───────────────────────────
+   우편번호처럼 입력 옆에 조작이 붙는 행. 560px 안에서 좌측 정렬이다 (.b_row와 함께 쓴다). */
+.b_input_row { display: flex; align-items: stretch; gap: 7px; }
+.b_input_row .b_input { flex: 0 1 140px; }
+
+/* ── 라디오 (DESIGN checkbox: 16px 원 + 먹색 점) ──
+   네이티브 <input type="radio">에 시각만 입힌다 — 커스텀 div 라디오는 키보드에서 조용히 깨진다.
+   포커스 링은 D4의 먹색 outline이 이미 덮는다. */
+.b_radio {
+  position: relative;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--b-ink);
+  border-radius: var(--b-rounded-full);
+  background: var(--b-field-surface);
+  appearance: none;
+  cursor: pointer;
+}
+.b_radio:checked::after {
+  content: "";
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--b-rounded-full);
+  background: var(--b-ink);
+}
+
+/* ── 오버레이 (UX-DR16의 유일한 모달 예외 — 우편번호 검색) ──
+   < 768 전체 화면 / ≥ 768 가운데 모달. 전환은 CSS만으로 한다 —
+   matchMedia로 갈아 끼우면 폭이 바뀔 때 오버레이가 언마운트되어 검색 상태가 날아간다 (AC 15).
+   🚨 그림자를 쓰지 않는다 (UX-DR12). 뒤 화면과의 구분은 1px hairline과 종이색 면이 만든다. */
+.b_overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  background: var(--b-paper);
+}
+.b_overlay .i_head {
+  display: flex;
+  flex: 0 0 var(--b-topbar-h);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--b-topbar-h);
+  padding-inline: var(--b-gutter);
+  border-bottom: 1px solid var(--b-hairline);
+}
+/* 닫기는 글자 ×다 — 인라인 SVG로 그리면 [data-surface="buyer"] svg의
+   stroke-width 전역 규칙을 물려받는다 (8.4의 학습 12). */
+.b_overlay .i_close {
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -11px;
+  border: none;
+  background: none;
+  color: var(--b-ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.b_overlay .i_body { position: relative; flex: 1; min-height: 0; }
+/* 외부 위젯이 이 상자 안에 <iframe>을 넣는다. 스코프 없는 iframe 태그 셀렉터를 쓰지 않는다. */
+.b_overlay .i_embed { width: 100%; height: 100%; }
+.b_overlay .i_embed > iframe { display: block; width: 100% !important; height: 100% !important; border: 0; }
+.b_overlay .i_fallback { display: flex; flex-direction: column; gap: 14px; padding: var(--b-space-6) var(--b-gutter); }
+.b_overlay .i_fallback .i_acts { display: flex; gap: 9px; }
+.b_overlay .i_fallback .i_acts .b_btn { min-width: 110px; }
+
+@media (min-width: 768px) {
+  .b_overlay {
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    padding: var(--b-space-7);
+    /* 새 hex를 만들지 않는다 — 먹색 토큰에서 파생시킨 반투명 면이다 (UX-DR1). */
+    background: color-mix(in srgb, var(--b-ink) 34%, transparent);
+  }
+  .b_overlay .i_panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+    height: min(560px, 100%);
+    border: 1px solid var(--b-hairline);
+    border-radius: var(--b-rounded);
+    background: var(--b-paper);
+    overflow: hidden;
+  }
+}
+/* < 768에서는 패널이 곧 화면이다 — 두 폭에서 같은 DOM을 쓰기 위한 배치 규칙 */
+.b_overlay .i_panel { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+
+/* ── 입금 안내 상자 (DESIGN deposit-box) ──────────
+   변형 둘 중 `placed`(주문완료)만 여기 있다. `detail`(주문상세)은 8.6이 자기 화면을 보며 더한다 —
+   렌더되지 않는 CSS를 미리 커밋하면 8.6이 "이미 있다"고 믿고 검증을 건너뛴다 (D11).
+   주문완료에서 가장 무거운 요소다: 1.5px 액센트 테두리 + 노치 캡션 + 27px 금액. */
+.b_deposit_box {
+  position: relative;
+  width: 100%;
+  padding: var(--b-space-5) 18px 18px;
+  border: 1.5px solid var(--b-accent);
+  border-radius: var(--b-rounded-md);
+  background: var(--b-paper);
+  text-align: left;
+}
+.b_deposit_box .i_cap {
+  position: absolute;
+  top: -9px;
+  left: 16px;
+  padding: 0 8px;
+  background: var(--b-paper);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  color: var(--b-accent);
+}
+.b_deposit_box .i_amount_label { font-size: 11px; letter-spacing: .02em; color: var(--b-ink-label); }
+.b_deposit_box .i_amount { margin-top: 5px; }
+.b_deposit_box .i_rows { margin-top: 16px; padding-top: 15px; border-top: 1px solid var(--b-hairline); }
+.b_deposit_box .i_row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.b_deposit_box .i_key { flex: 0 0 62px; color: var(--b-ink-label); }
+.b_deposit_box .i_value { flex: 1; text-align: right; font-size: 12.5px; font-weight: 600; color: var(--b-ink-strong); }
+.b_deposit_box .i_value.m_due { color: var(--b-accent); font-weight: 700; }
+.b_deposit_box .i_expired { margin-top: 7px; font-size: 11.5px; font-weight: 700; color: var(--b-accent); text-align: right; }
+.b_deposit_box .i_memo {
+  margin-top: 15px;
+  padding: 10px 11px;
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-paper-shade);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--b-ink-prose);
 }

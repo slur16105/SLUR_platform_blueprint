@@ -1,0 +1,197 @@
+/* ─────────────────────────────────────────────
+   주문서 전용 배치 (8.5 D12)
+   공용 부품(고정 CTA 바·small 버튼·라디오·오버레이·입금 안내 상자)은 buyer.css에 있다.
+   여기에는 이 화면만의 구획 배치와 2단 그리드만 둔다.
+
+   🚨 --b-* 토큰과 .b_* 역할 클래스만 쓴다. 새 hex·새 px 스케일을 만들지 않는다 (UX-DR1).
+   🚨 box-shadow 선언 0건 (UX-DR12). 깊이는 8px 띠·1px hairline·테두리 상자로만.
+   🚨 폭 전환은 CSS만으로 한다 — matchMedia·innerWidth·resize 사용 0건 (AC 15).
+   🚨 중개자 고지는 2단 **밖** 전체 폭이다. 우측 sticky 칼럼에 넣으면 스크롤 밖으로
+      나갈 수 있어 FR-32(청약 전에 읽을 수 있는 자리)를 만족하지 않는다 — 규제 요건이다.
+   ───────────────────────────────────────────── */
+
+/* < 768 : 한 칼럼. 구획 순서는
+   배송지 → hairline → 요청사항 → 8px 띠 → 주문 상품 → 8px 띠 → 결제 금액
+   → 8px 띠 → 결제 수단 → hairline → 중개자 고지.
+   DOM 순서가 곧 이 순서다 (≥768의 좌우 배치는 grid-template-areas가 만든다). */
+.b_checkout {
+  width: 100%;
+  /* 하단 고정 CTA 바(13 + 버튼 + 20 + 1px 테두리)만큼. 탭바가 없으므로 두 겹이 아니다. */
+  padding-bottom: 92px;
+}
+
+.b_checkout .i_sec { padding: var(--b-section-y) var(--b-gutter); }
+.b_checkout .i_sec_h { margin-bottom: 13px; }
+
+.b_checkout .i_note_sec { border-top: 1px solid var(--b-hairline); }
+.b_checkout .i_items_sec,
+.b_checkout .i_amount_sec,
+.b_checkout .i_pay_sec { border-top: var(--b-band) solid var(--b-paper-shade); }
+
+.b_checkout .i_legal {
+  padding: 16px var(--b-gutter) var(--b-space-5);
+  border-top: 1px solid var(--b-hairline);
+}
+/* .b_broker(browse.css)는 상품상세 배치용 여백을 갖는다 — 이 화면은 구획이 여백을 이미 준다 */
+.b_checkout .i_broker { margin-top: 0; padding-top: 0; border-top: none; }
+
+/* ── 배송지 폼 ────────────────────────────────
+   마지막 필드 아래 여백은 구획 패딩이 맡는다. */
+.b_checkout .i_ship_sec .b_field:last-of-type { margin-bottom: 0; }
+.b_checkout .i_note_sec .b_field { margin-bottom: 0; }
+/* 우편번호는 좁은 입력이다 — 다섯 자리에 맞춘 폭이며 옆의 small 버튼과 밑선이 맞는다 */
+.b_checkout .b_input_row .b_input { flex: 0 1 132px; }
+
+/* ── 주문 상품 (읽기 전용) ─────────────────────
+   묶음은 자기 좌우 여백(.b_seller_pack의 padding)을 갖고 있으므로 구획이 좌우를 비운다 —
+   묶음 사이 hairline이 화면 끝까지 그어져야 한다. */
+.b_checkout .i_items_sec { padding-inline: 0; }
+.b_checkout .i_items_sec .i_sec_h { padding-inline: var(--b-gutter); margin-bottom: 2px; }
+.b_checkout .i_items_sec .b_seller_pack:first-child { border-top: none; }
+.b_checkout .i_ship { color: var(--b-ink-label); letter-spacing: .01em; }
+.b_checkout .i_ship b { color: var(--b-ink-body); font-weight: 700; }
+.b_checkout .i_ship.m_free { color: var(--b-ink-body); font-weight: 700; }
+
+.b_order_item .i_thumb {
+  display: block;
+  flex: 0 0 66px;
+  width: 66px;
+  height: 66px;
+  overflow: hidden;
+  border: 1px solid var(--b-hairline);
+  border-radius: var(--b-rounded-sm);
+  /* 사진이 없는 항목은 같은 크기의 종이 그늘 면으로 자리를 지킨다 (D5) */
+  background: var(--b-paper-shade);
+}
+.b_order_item .i_img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.b_order_item .i_info { flex: 1; min-width: 0; }
+.b_order_item .i_option { margin-top: 4px; }
+.b_order_item .i_price { margin-top: 8px; }
+
+/* ── 결제 금액 ────────────────────────────────
+   요약 아래 한 줄은 도서산간이 어디에 더해지는지(또는 더해졌는지)를 말한다. */
+.b_checkout .i_amount_sec .i_sec_h { margin-bottom: 10px; }
+.b_checkout .i_sum_note { width: 100%; max-width: var(--b-row-max); margin-top: 9px; line-height: 1.6; }
+.b_checkout .i_sum_note.m_busy { color: var(--b-ink-secondary); }
+.b_checkout .i_cta_side { display: none; }
+/* 768~900 구간에서 우측 칼럼이 좁아도 합계 줄이 두 줄로 꺾이지 않게 한다 */
+.b_checkout .i_amount_sec .i_total_label,
+.b_checkout .i_amount_sec .i_total_value { white-space: nowrap; }
+
+/* ── 주문 실패 블록 (D7) ───────────────────────
+   머무르며 알린다. 자동 이동·자동 재제출을 하지 않는다.
+   🚨 HTTP 코드·code 문자열을 여기에 쓰지 않는다 — 문장은 봉투의 message 그대로다. */
+.b_checkout_fail {
+  width: 100%;
+  max-width: var(--b-row-max);
+  margin-top: var(--b-space-4);
+  padding: 12px 13px;
+  border: 1px solid var(--b-accent-line);
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-accent-wash);
+}
+.b_checkout_fail .i_msg { font-size: 11.5px; font-weight: 600; line-height: 1.6; color: var(--b-accent); }
+.b_checkout_fail .i_list { margin-top: 9px; padding: 0; list-style: none; }
+.b_checkout_fail .i_item { padding: 2px 0; color: var(--b-ink-secondary); }
+.b_checkout_fail .i_item .i_name { color: var(--b-ink-strong); font-weight: 600; }
+/* 이동 수단은 하나뿐이고 상자 폭을 다 먹지 않는다 — 여기서 주된 것은 문장이지 버튼이 아니다 */
+.b_checkout_fail .i_act { display: inline-flex; min-width: 140px; margin-top: 11px; }
+
+/* ── 결제 수단 ────────────────────────────────
+   라디오 하나뿐인 사실 표기다. 이 상자는 선택지가 아니라 확정된 조건을 인쇄한 자리다. */
+.b_pay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1.4px solid var(--b-ink);
+  border-radius: var(--b-rounded);
+  background: var(--b-field-surface);
+}
+.b_pay .i_name { font-size: 13.5px; font-weight: 700; color: var(--b-ink); letter-spacing: -0.01em; cursor: pointer; }
+/* 구매자가 행동해야 하는 안내는 면을 가진다 (DESIGN notice 예외) */
+.b_pay_note {
+  width: 100%;
+  max-width: var(--b-row-max);
+  margin-top: 11px;
+  padding: 10px 12px;
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-accent-wash);
+  color: var(--b-accent);
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+
+/* ── CTA ──────────────────────────────────────
+   `121,000원 · 주문하기`. 금액은 CTA 자체의 타이포이며 b_price_total을 재사용하지 않는다 —
+   21px 액센트 합계는 화면당 한 번이다 (UX-DR13). */
+.i_cta .i_amt { font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.i_cta .i_dot { color: var(--b-ink-muted); font-weight: 600; }
+
+/* ── 로딩·빈 상태 자리 ────────────────────────── */
+.b_checkout_wait { width: 100%; padding-bottom: var(--b-section-y); }
+.b_checkout_skeleton { padding: 18px var(--b-gutter); border-top: 1px solid var(--b-hairline); }
+.b_checkout_skeleton .i_head { width: 92px; height: 11px; }
+.b_checkout_skeleton .i_row { display: flex; gap: 12px; margin-top: 14px; max-width: var(--b-row-max); }
+.b_checkout_skeleton .i_thumb { flex: 0 0 66px; width: 66px; height: 66px; }
+.b_checkout_skeleton .i_lines { flex: 1; min-width: 0; }
+.b_checkout_skeleton .i_line { height: 12px; margin-top: 6px; }
+.b_checkout_skeleton .i_line.m_short { width: 40%; }
+.b_checkout_skeleton .i_line.m_price { width: 28%; margin-top: 12px; }
+
+/* ─────────────────────────────────────────────
+   ≥ 768 — 좌 62 / 우 34, column-gap 4% (62 + 34 + 4 = 100)
+   좌: 배송지 · 요청사항 · 주문 상품 · 결제 수단
+   우: 결제 금액 + `주문하기` (1px hairline 테두리 상자 + sticky)
+   아래 전체 폭: 중개자 고지
+   8px 종이 접기 띠는 <768에서만 쓴다 — 옆으로 놓인 2단에서는 위아래를 가르는 장치가 성립하지 않는다.
+   ───────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .b_checkout {
+    display: grid;
+    grid-template-columns: 62fr 34fr;
+    grid-template-areas:
+      "ship   amount"
+      "note   amount"
+      "items  amount"
+      "pay    amount"
+      "legal  legal";
+    column-gap: 4%;
+    align-items: start;
+    max-width: var(--b-content-max);
+    margin-inline: auto;
+    /* 고정 CTA 바는 buyer.css의 미디어쿼리가 이미 없앤다 — 아래 여백도 함께 사라진다 */
+    padding: var(--b-section-y) var(--b-gutter);
+  }
+  .b_checkout .i_ship_sec { grid-area: ship; }
+  .b_checkout .i_note_sec { grid-area: note; }
+  .b_checkout .i_items_sec { grid-area: items; }
+  .b_checkout .i_amount_sec { grid-area: amount; }
+  .b_checkout .i_pay_sec { grid-area: pay; }
+  .b_checkout .i_legal { grid-area: legal; }
+
+  /* 띠는 사라지고 hairline만 남는다. 여백은 구획이 갖는다. */
+  .b_checkout .i_sec { padding-inline: 0; border-top: 1px solid var(--b-hairline); }
+  .b_checkout .i_ship_sec { padding-top: 0; border-top: none; }
+  .b_checkout .i_items_sec .i_sec_h { padding-inline: 0; }
+  .b_checkout .i_items_sec .b_seller_pack { padding-inline: 0; }
+
+  /* 반응형 표가 "2단 우측 칼럼에 한해" 허용한 유일한 테두리 상자다. 그림자는 여전히 금지. */
+  .b_checkout .i_amount_sec {
+    position: sticky;
+    top: calc(var(--b-topbar-h) + var(--b-space-5));
+    padding: var(--b-space-5);
+    border: 1px solid var(--b-hairline);
+    border-radius: var(--b-rounded);
+  }
+  .b_checkout .i_cta_side { display: block; margin-top: var(--b-space-5); }
+
+  .b_checkout .i_legal { padding: 16px 0 0; }
+
+  .b_checkout_skeleton { padding-inline: 0; }
+  .b_checkout_wait {
+    max-width: var(--b-content-max);
+    margin-inline: auto;
+    padding: var(--b-section-y) var(--b-gutter);
+  }
+}
