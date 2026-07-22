@@ -129,4 +129,5 @@
 - **폼 필드 프리미티브 3벌** — `signup`·`checkout/address-form`의 `Field`와 `login`의 인라인 마크업이 라벨/`htmlFor`/`aria-describedby`/오류 한 줄이라는 같은 규약(UX-DR9)을 세 번 구현한다. 셋이 같은 CSS를 공유하므로 컴포넌트도 한 벌로 모을 수 있다
 - **콘솔에 실제로 간 변경이 문서화된 1건보다 많다** — 부채에는 아이콘·manifest만 예외로 적혀 있으나 실제로는 ⓐ `globals.css`의 `overflow-x: hidden → clip`(구매자 sticky를 살리는 수정인데 콘솔 문서에도 적용) ⓑ `/login`이 콘솔 파랑 폼에서 구매자 종이톤으로 교체 ⓒ `/no-role` 문구 변경·링크 추가. ⓐ~ⓒ 모두 EXPERIENCE의 라우트·IA 절이 사실상 승인한 결정이지만 "콘솔 무변경" 표현은 이제 정확하지 않다
 - **`login`·`signup`이 상단 내비에 활성 항목을 만들지 않는다** — 주문완료는 `tab="orders"`를 붙였는데 이 둘은 안 붙였다. EXPERIENCE의 "현재 위치 표시가 비는 화면이 있으면 안 된다"가 탐색 맥락 밖 화면(로그인·회원가입)에도 적용되는지 문서가 갈린다. `[확인 필요]`
+- 🚨 **백엔드 `kakao_redirect_uris` 기본값이 실제 콜백 경로와 다르다** — `apps/api/app/core/config.py:32`의 기본값은 `http://localhost:3000/auth/kakao/callback`인데, 웹의 실제 콜백 라우트는 `/api/auth/kakao/callback`이다(`app/api/auth/kakao/callback/route.ts`). **`/api`가 빠져 있다.** 즉 환경변수를 설정하지 않으면 **프로덕션뿐 아니라 로컬 개발에서도 카카오 로그인이 401로 떨어진다.** Story 1.3 시절 앱 기준으로 정해진 기본값이 웹 BFF 경로와 어긋난 것이다. 해법은 둘 중 하나: (a) 기본값을 `/api/auth/kakao/callback`으로 고친다(백엔드 1줄, Epic 8 경계 밖이라 미실행) (b) 로컬에서도 `KAKAO_REDIRECT_URIS`를 반드시 설정한다. **(a)가 맞다** — 기본값이 어떤 환경에서도 맞지 않는 값이면 기본값이 아니다
 
