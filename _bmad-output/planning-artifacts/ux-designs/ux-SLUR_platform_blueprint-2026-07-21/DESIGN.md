@@ -369,13 +369,15 @@ SLUR는 운영자가 판매자를 직접 골라 초청하는 편집숍이다. �
 | 장바구니 | 판매자 묶음 목록 62% | 금액 요약 + `주문하기 (N건)` 34% | 우(요약) |
 | 주문서 | 배송지·요청사항·주문 상품·결제 수단 62% | 금액 요약 + `주문하기` 34% | 우(요약) |
 
+`[근거: 우측 칼럼의 `배송비`는 **금액이 아니다** — 공개 상품 API(PublicProductDetail)에 배송비가 없고 실제 금액은 우편번호가 있어야 POST /orders/preview가 계산한다(AD-11). 구현은 그 자리에 안내 문구 한 줄을 둔다(product-detail.tsx#SHIPPING_NOTE)]`
+
 상품상세만 균등 분할에 **좌측이 sticky**인 이유: 이미지 칼럼은 hero + 썸네일로 일찍 끝나는데 정보 칼럼(옵션 축·배송비·CTA)은 훨씬 길다. 62/34로 두면 넓은 칼럼이 먼저 끝나 왼쪽에 200px 구멍이 생기고, 좁아진 오른쪽에서는 옵션 칩이 꽉 차고 배송비 한 줄이 접힌다. 균등 분할 + 이미지 고정이 이 화면의 자연스러운 형태다.
 
 **행 내부 최대 폭 560px.** 라벨-값 행(판매자 정보 6줄, 금액 요약)과 항목 조작 행(수량 스테퍼 ↔ `삭제`)은 칼럼이 아무리 넓어도 560px 안에서 좌측 정렬로 배치한다. 630px 칼럼에서 `space-between`을 그대로 쓰면 한 상품의 조작이 500px 벌어져 서로 무관한 두 열로 읽힌다.
 
 **깊이 장치 예외 하나.** 8px 종이 접기 띠는 위아래로 쌓인 면을 가르는 장치라 옆으로 놓인 2단에서는 쓸 수 없다. **2단 우측 칼럼에 한해 1px hairline 테두리 상자를 허용한다.** 판매자 정보·입금 안내 외에 테두리 상자를 쓰는 유일한 자리이며, 그림자 금지는 그대로다.
 
-상품상세의 **판매자 신원정보와 중개자 고지는 2단 아래 전체 폭**에 둔다 — 청약 전 노출 의무 항목이므로 우측 칼럼에 밀어 넣어 스크롤 밖으로 사라지게 하지 않는다.
+상품상세의 **판매자 신원정보와 중개자 고지는 2단 아래 전체 폭**에 둔다 — 청약 전 노출 의무 항목이므로 우측 칼럼에 밀어 넣어 스크롤 밖으로 사라지게 하지 않는다. `[근거: apps/web/app/(buyer)/browse.css의 grid-template-areas "media info" / "legal legal", 데이터는 PublicProductDetail.seller_info(6항목) + company.ts#BROKER_NOTICE]`
 
 **끝까지 한 단으로 두는 화면**: 주문내역 · 주문상세 · 내 정보 · 로그인 · 회원가입(최대 **640px**), 주문완료(최대 **560px**). 읽고 확인하는 화면이라 행 길이를 늘리면 오히려 읽기 어렵다. 2단으로 만들지 않는다.
 
@@ -436,7 +438,7 @@ SLUR는 운영자가 판매자를 직접 골라 초청하는 편집숍이다. �
 
 ### 상품 카드 `{components.product-card}`
 사진(4px 라운드, 높이 가변) → 11px 여백 → 브랜드 라벨 → 7px → 상품명 13px/400 `#605b53` → 7px → 가격 13px/800 먹색.
-**품절 카드**는 숨기지 않는다: 사진에 `saturate(.45)`, 좌상단에 먹색 `품절` 태그, 상품명·가격을 `{colors.ink-muted}`로 내리고 가격에 취소선.
+**품절 카드**는 숨기지 않는다: 사진에 `saturate(.45)`, 좌상단에 먹색 `품절` 태그, 상품명·가격을 `{colors.ink-muted}`로 내리고 가격에 취소선. `[근거: apps/api/app/products/schemas.py#PublicProductItem.sold_out — 카드가 그리는 값은 brand_name·name·price_from·main_image_url·sold_out 다섯뿐이다. 가격은 활성 조합 최저가이며 할인 전 가격이 없으므로 취소선은 품절 표기이지 할인 표기가 아니다]`
 
 ### 브랜드 라벨 `{components.brand-label}`
 독립 컴포넌트로 둔다. 카드·장바구니 묶음 헤더·주문서 묶음·주문상세 묶음에서 같은 얼굴로 반복되며, 이 반복이 "판매자별로 나뉜 주문"이라는 구조를 시각적으로 가르친다.
@@ -445,7 +447,7 @@ SLUR는 운영자가 판매자를 직접 골라 초청하는 편집숍이다. �
 축(`색상`, `용량`)마다 라벨 11.5px/600 + 칩 행. 칩은 12.5px/600, 흰 면, 1px `{colors.field-border}`, 4px 라운드, 패딩 `8px 15px`.
 - **선택** — 먹색 면 + 종이색 글자 + 700.
 - **부분 품절** — 칩 안 작은 서브라벨 `일부 품절`(10px, 액센트).
-- **비활성(조합 품절)** — `{colors.disabled-surface}` 면, `{colors.disabled-ink}` 글자, 취소선, 서브라벨 `품절`을 `{colors.ink-muted}` 알약으로. **숨기지 않는다.**
+- **비활성(조합 품절)** — `{colors.disabled-surface}` 면, `{colors.disabled-ink}` 글자, 취소선, 서브라벨 `품절`을 `{colors.ink-muted}` 알약으로. **숨기지 않는다.** `[근거: apps/api/app/products/schemas.py#PublicVariant — id·축 이름/값·final_price·purchasable. 재고 수량이 없으므로 `3개 남음` 같은 표기는 만들 수 없다]`
 
 축 아래에 **선택 결과 한 줄**이 붙는다: 좌측 액센트 2px 세로선 + `#f7f4ee` 면, `선택` 라벨 + `살구 / 240ml` + 우측 끝 상태(`구매 가능` / 품절). 옵션 상태를 조합 목록으로 나열하지 않고 이 한 줄이 답한다.
 
@@ -454,17 +456,21 @@ SLUR는 운영자가 판매자를 직접 골라 초청하는 편집숍이다. �
 
 ### 판매자 묶음 카드 `{components.seller-pack}`
 장바구니·주문서·주문상세에서 반복되는 뼈대. 헤더(브랜드 라벨 + 우측 배송비 또는 상태 라벨) → 상품 행(사진 66~74px + 이름/옵션/금액) → 푸터(배송비 + 액션). 묶음 사이는 1px hairline.
+
+`[근거: 배송비 자리가 성립하는 곳은 주문서(OrderPreviewResponse#PreviewSellerGroup.shipping_total)와 주문상세(OrderSubView.shipping_fee·remote_extra_fee)뿐이다. **장바구니 응답(CartResponse)에는 배송비도 seller_id도 없다** — 묶음 키는 brand_name이고 헤더 우측은 비어 있다. 사진도 주문상세에는 없다(OrderLineView에 image 필드 없음)]`
 - **장바구니**에서는 헤더 좌측에 체크박스, 상품 행에 수량 스테퍼와 `삭제`.
-- **주문상세**에서는 헤더 우측에 상태 라벨, 푸터에 `주문 취소`(취소 가능할 때만), 배송중이면 송장 줄.
+- **주문상세**에서는 헤더 우측에 상태 라벨, 푸터에 `주문 취소`(취소 가능할 때만), 배송중이면 송장 줄. `[근거: OrderSubView.cancellable 한 필드가 버튼 유무를 결정한다 — display_status 문자열로 재판정하지 않는다(AD-12)]`
 - **구매 불가 묶음**은 사진 `grayscale(.85)`, 글자 `#a8a29a`, 금액 취소선, 체크박스 해제, 헤더에 `구매 불가 · 품절` 태그, 하단에 `{colors.accent-wash}` 안내 상자.
 
 ### 금액 요약 `{components.amount-summary}`
 행: 좌측 라벨 `{colors.ink-secondary}` / 우측 값 `{colors.ink-strong}` 600. 값이 0원이면 `{colors.ink-muted}` 500으로 물러난다.
 합계: 12px 위 여백 + 14px 패딩 + 1px hairline 위 경계. 라벨 13px/700 먹색, 값 21px/800 **액센트**. 이 지면에서 액센트가 가장 크게 나타나는 곳이며, 화면당 한 번만 허용한다.
 
+`[근거: 행 수는 화면마다 갈린다 — 주문서 4행(OrderPreviewResponse: item_total·shipping_total·remote_extra_total·grand_total), 주문상세 3행(OrderDetailResponse: item_total·shipping_total·grand_total, 도서산간 분리 필드 없음), 장바구니는 상품 금액 1행 + 미확정 문구(CartResponse.purchasable_total 하나뿐)]`
+
 ### 입금 안내 상자 `{components.deposit-box}`
 v1 결제가 무통장입금뿐이므로 이것이 주문 이후 가장 중요한 컴포넌트다. 두 변형이 있다.
-- **주문완료** — 종이 면 위 1.5px 액센트 테두리, 상단 노치 캡션 `입금 안내`(10px/800/.2em/액센트), 금액 27px/800 액센트, 하단에 계좌·예금주·기한, 그 아래 `{colors.paper-shade}` 메모 상자.
+- **주문완료** — 종이 면 위 1.5px 액센트 테두리, 상단 노치 캡션 `입금 안내`(10px/800/.2em/액센트), 금액 27px/800 액센트, 하단에 계좌·예금주·기한, 그 아래 `{colors.paper-shade}` 메모 상자. `[근거: apps/api/app/orders/schemas.py#DepositInfo — grand_total·deposit_account·deposit_due_at·expired. **`deposit_account`는 settings의 문자열 하나이고 예금주 분리 필드가 없다**(시드 `은행/계좌번호/예금주 미설정`, alembic 0275fa5bfee4). 예금주는 운영자가 그 문자열 안에 넣는다]`
 - **주문상세** — `{colors.accent-wash}` 면 + 1px `{colors.accent-line}` 테두리, 금액 20px. 화면 최상단(주문번호 바로 아래)에 놓인다.
 
 **확정 — 두 변형을 유지한다.** 같은 정보지만 하는 일이 다르다. 주문완료의 상자는 **방금 무엇을 해야 하는지 알리는 통보**라서 그 화면에서 가장 무거워야 하고, 주문상세의 상자는 **다시 들어왔을 때의 상기**라서 주문 정보 위에 조용히 얹혀야 한다. 무게가 같으면 주문상세에서 배송 정보·금액 내역과 시선을 다툰다.
@@ -479,7 +485,7 @@ v1 결제가 무통장입금뿐이므로 이것이 주문 이후 가장 중요�
 
 ### 배지 · 상태 라벨
 - **개수 배지** `{components.count-badge}` — 액센트 원 + 종이색 숫자 9.5px/700 + 1.5px 종이색 링. 장바구니 아이콘에만.
-- **상태 라벨** `{components.status-label}` — **배지가 아니다.** 면 없는 11.5px/800/`.05em` 글자에 색만 다르다: 입금대기 `{colors.accent}` / 배송중·결제완료·배송준비 `{colors.ink}` / 배송완료·취소 `{colors.ink-muted}`. 액센트가 붙는 상태는 **입금대기 하나뿐**이다 — 구매자가 지금 무언가 해야 하는 유일한 상태이기 때문이다.
+- **상태 라벨** `{components.status-label}` — **배지가 아니다.** 면 없는 11.5px/800/`.05em` 글자에 색만 다르다: 입금대기 `{colors.accent}` / 배송중·결제완료·배송준비 `{colors.ink}` / 배송완료·취소 `{colors.ink-muted}`. `[근거: apps/api/app/orders/service.py#derive_sub_status·#derive_order_status가 내는 값은 awaiting_payment·preparing·shipping·delivered·canceled(+미사용 confirmed)다 — **`결제완료`는 표시 상태로 내려오지 않는다**]` 액센트가 붙는 상태는 **입금대기 하나뿐**이다 — 구매자가 지금 무언가 해야 하는 유일한 상태이기 때문이다.
 - **태그** `{components.tag}` — 9.5px/700/.09em, 2px 라운드. `품절`은 먹색 면, `구매 불가 · 품절`·`임시 정보`는 연한 벽돌 면 + 액센트 글자.
 
 ### 알림 문구 `{components.notice}`
