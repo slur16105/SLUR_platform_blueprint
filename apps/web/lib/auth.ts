@@ -30,11 +30,30 @@ export function setSessionCookies(res: NextResponse, access: string, refresh: st
   res.cookies.set(COOKIE_REFRESH, refresh, cookieOptions(60 * 60 * 24 * 14, REFRESH_PATH));
 }
 
+/** 세션 쿠키 소거.
+ *
+ *  🚨 `res.cookies.delete()`도 `res.cookies.set()`도 쓰면 안 된다 — ResponseCookies는
+ *  **이름만으로** 키를 잡는다. 같은 이름을 두 path로 지우려 하면 두 번째 호출이 첫 번째를
+ *  덮어써 Set-Cookie가 한 줄만 나간다. 실측으로 확인했다:
+ *    set() 3회(access · refresh@/api · refresh@/api/auth) → Set-Cookie 3줄이 나오지만
+ *    refresh는 `/api/auth` 한 줄뿐 → **Path=/api의 진짜 refresh 쿠키가 14일 살아남는다.**
+ *  그 쿠키가 남으면 로그아웃 후에도 다음 401에서 proxyWithRefresh가 회전시켜 세션이
+ *  되살아난다(정상 경로에선 백엔드가 토큰을 폐기해 죽은 쿠키지만, 상류 로그아웃이 실패하면
+ *  유효한 채로 남는다 — 그 실패는 지금 catch로 삼켜진다).
+ *
+ *  그래서 Set-Cookie 헤더를 직접 append한다. 이 경로만 path별 독립 소거를 보장한다. */
+function expireCookie(res: NextResponse, name: string, path: string, httpOnly: boolean) {
+  const parts = [`${name}=`, `Path=${path}`, "Max-Age=0", "SameSite=Lax"];
+  if (httpOnly) parts.push("HttpOnly");
+  if (secure) parts.push("Secure");
+  res.headers.append("Set-Cookie", parts.join("; "));
+}
+
 export function clearSessionCookies(res: NextResponse) {
-  res.cookies.delete(COOKIE_ACCESS);
-  res.cookies.delete({ name: COOKIE_REFRESH, path: REFRESH_PATH });
-  res.cookies.delete({ name: COOKIE_REFRESH, path: "/api/auth" }); // 1.6 시절 path 쿠키 마이그레이션 정리
-  res.cookies.delete(COOKIE_ROLE);
+  expireCookie(res, COOKIE_ACCESS, "/", true);
+  expireCookie(res, COOKIE_REFRESH, REFRESH_PATH, true);
+  expireCookie(res, COOKIE_REFRESH, "/api/auth", true); // 1.6 시절 path 쿠키 마이그레이션 정리
+  expireCookie(res, COOKIE_ROLE, "/", false); // UX 힌트 쿠키 — JS가 읽어야 하므로 httpOnly 아님
 }
 
 /* ─────────────────────────────────────────────
@@ -71,13 +90,29 @@ export async function fetchRoles(access: string): Promise<string[] | null> {
 export function assertSameOrigin(req: NextRequest): NextResponse | null {
   const origin = req.headers.get("origin");
   if (origin) {
-    const originHost = new URL(origin).host;
+    // Origin: null(샌드박스 iframe·일부 리다이렉트 경유)은 URL로 파싱되지 않는다.
+    // 던지게 두면 봉투 없는 500이 나가므로 파싱 실패는 곧 차단으로 본다 (fail-closed).
+    let originHost: string;
+    try {
+      originHost = new URL(origin).host;
+    } catch {
+      return NextResponse.json({ code: "forbidden", message: "허용되지 않은 요청입니다.", details: [] }, { status: 403 });
+    }
     const hosts = [req.headers.get("x-forwarded-host"), req.headers.get("host"), req.nextUrl.host].filter(Boolean);
     if (!hosts.includes(originHost)) {
       return NextResponse.json({ code: "forbidden", message: "허용되지 않은 요청입니다.", details: [] }, { status: 403 });
     }
   }
   return null;
+}
+
+/** 인증 경유 응답은 절대 캐시되면 안 된다. 이 경로로 나가는 본문에는 이름·이메일·주소·주문이
+ *  들어간다. Vary: Cookie까지 붙여 쿠키가 다른 사용자의 응답이 섞이지 않게 한다.
+ *  (공개 경로 lib/public-api.ts는 이미 no-store를 붙이고 있었고 여기만 비어 있었다.) */
+function noStore(res: NextResponse): NextResponse {
+  res.headers.set("Cache-Control", "no-store, private");
+  res.headers.set("Vary", "Cookie");
+  return res;
 }
 
 /** BFF 공통: access로 FastAPI 호출, 401(unauthorized)이면 refresh 회전 후 1회 재시도.
@@ -95,7 +130,17 @@ export async function proxyWithRefresh(
       cache: "no-store",
     });
 
-  let upstream = await call(access);
+  let upstream: Response;
+  try {
+    upstream = await call(access);
+  } catch {
+    // 상류에 닿지 못한 경우. proxyPublic과 같은 봉투로 통일한다 — 규약이 두 벌이면
+    // 클라이언트가 어떤 화면에서는 봉투를, 어떤 화면에서는 500 HTML을 받는다.
+    return noStore(NextResponse.json(
+      { code: "service_unavailable", message: "일시적인 오류입니다. 잠시 후 다시 시도해 주세요.", details: [] },
+      { status: 503 },
+    ));
+  }
   let rotated: { access_token: string; refresh_token: string } | null = null;
 
   if (upstream.status === 401) {
@@ -127,5 +172,5 @@ export async function proxyWithRefresh(
   }
   if (rotated) setSessionCookies(res, rotated.access_token, rotated.refresh_token);
   if (upstream.status === 401) clearSessionCookies(res); // 갱신 실패 — 클라이언트는 /login으로
-  return res;
+  return noStore(res);
 }
