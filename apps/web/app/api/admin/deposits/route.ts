@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { proxyWithRefresh } from "@/lib/auth";
+import { assertSameOrigin, proxyWithRefresh } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   // 입금대기 주문 목록 — page 기반 페이지네이션
@@ -8,7 +8,12 @@ export async function GET(req: NextRequest) {
   return proxyWithRefresh(req, `/api/v1/admin/orders/pending?page=${encodeURIComponent(page)}`, { method: "GET" });
 }
 
+// 상태를 바꾸는 POST는 assertSameOrigin을 먼저 태운다 (8.2가 세운 규약).
+// 검사가 없으면 임의 사이트의 폼 POST가 상류 401을 유발해 관리자를 강제 로그아웃시킬 수 있다.
 export async function POST(req: NextRequest) {
+  const forbidden = assertSameOrigin(req);
+  if (forbidden) return forbidden;
+
   // { order_id, note?, expected_grand_total } → 입금 확인 (FastAPI confirm-payment, 성공 시 204)
   // expected_grand_total: 모달에 표시된 금액 — 서버 잔여 활성 금액과 불일치하면 409 price_changed (과입금 확인 방지)
   const body = await req.json().catch(() => ({}));

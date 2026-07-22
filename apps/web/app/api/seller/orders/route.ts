@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { proxyWithRefresh } from "@/lib/auth";
+import { assertSameOrigin, proxyWithRefresh } from "@/lib/auth";
 
 const STATUSES = new Set(["preparing", "shipping", "delivered"]);
 const UUID_RE = /^[0-9a-f-]{36}$/;
@@ -15,7 +15,12 @@ export async function GET(req: NextRequest) {
   return proxyWithRefresh(req, `/api/v1/sellers/orders?status=${status}&page=${encodeURIComponent(page)}`, { method: "GET" });
 }
 
+// 상태를 바꾸는 POST는 assertSameOrigin을 먼저 태운다 (8.2가 세운 규약).
+// 검사가 없으면 임의 사이트의 폼 POST가 상류 401을 유발해 판매자를 강제 로그아웃시킬 수 있다.
 export async function POST(req: NextRequest) {
+  const forbidden = assertSameOrigin(req);
+  if (forbidden) return forbidden;
+
   // { action: "ship"|"deliver", sub_order_id, carrier?, tracking_number? }
   // ship → 택배사·송장 등록(배송중 전환), deliver → 배송완료 전환. 성공 시 204
   const body = await req.json().catch(() => ({}));

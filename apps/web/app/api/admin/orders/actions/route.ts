@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { proxyWithRefresh } from "@/lib/auth";
+import { assertSameOrigin, proxyWithRefresh } from "@/lib/auth";
 
 // 표준 UUID — 하이픈 위치·hex 검증, 대소문자 허용 (FastAPI 전달 전 소문자 정규화)
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -24,7 +24,12 @@ function cancelPayload(
   return payload;
 }
 
+// 상태를 바꾸는 POST는 assertSameOrigin을 먼저 태운다 (8.2가 세운 규약).
+// 검사가 없으면 임의 사이트의 폼 POST가 상류 401을 유발해 관리자를 강제 로그아웃시킬 수 있다.
 export async function POST(req: NextRequest) {
+  const forbidden = assertSameOrigin(req);
+  if (forbidden) return forbidden;
+
   // { action: "cancel_order"|"cancel_item"|"sub_transition"|"mark_refunded", ... } → FastAPI 개입 엔드포인트 디스패치
   const body = await req.json().catch(() => ({}));
 
