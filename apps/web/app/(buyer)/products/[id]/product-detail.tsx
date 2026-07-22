@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import BrandLabel from "../../brand-label";
 import OptionAxes, { type PublicVariant } from "../../option-axes";
 import SellerInfoSection, { type SellerInfoData } from "../../seller-info";
 import { BlockSkeleton, ErrorState, getPublicJson, type ApiFailure } from "../../buyer-feedback";
+import { addItem, getCart } from "../../cart-api";
+import { useCartCount } from "../../cart-count";
 import { formatWon } from "../../format";
 import type { ProductItem } from "../../product-card";
 
@@ -33,25 +35,32 @@ type ProductDetailData = ProductItem & {
    POST /orders/preview가 계산한다 (AD-12). 응답에 없는 값을 화면이 만들어내지 않는다. */
 const SHIPPING_NOTE = "배송비는 판매자마다 다르며 주문서에서 확인할 수 있습니다."; // [ASSUMPTION]
 
+/* 8.4 — 담기 결과는 CTA 근처의 인라인 한 줄이다. 토스트·모달·스낵바를 만들지 않는다 (AC 10).
+   두 사본 모두에 같은 노드를 넘기고 CSS display로 한쪽만 보인다. */
 function CtaPair({
   variant,
   disabled,
   onAdd,
   onBuy,
+  feedback,
 }: {
   variant: "bar" | "inline";
   disabled: boolean;
   onAdd: () => void;
   onBuy: () => void;
+  feedback?: React.ReactNode;
 }) {
   return (
-    <div className={variant === "bar" ? "b_cta_pair b_cta_bar" : "b_cta_pair m_inline"}>
-      <button type="button" className="b_btn i_ghost b_button_text" disabled={disabled} onClick={onAdd}>
-        장바구니 담기
-      </button>
-      <button type="button" className="b_btn m_solid b_button_text" disabled={disabled} onClick={onBuy}>
-        바로 구매
-      </button>
+    <div className={variant === "bar" ? "b_cta_slot b_cta_bar" : "b_cta_slot m_inline"}>
+      {feedback}
+      <div className="b_cta_pair">
+        <button type="button" className="b_btn i_ghost b_button_text" disabled={disabled} onClick={onAdd}>
+          장바구니 담기
+        </button>
+        <button type="button" className="b_btn m_solid b_button_text" disabled={disabled} onClick={onBuy}>
+          바로 구매
+        </button>
+      </div>
     </div>
   );
 }
@@ -68,6 +77,11 @@ export default function ProductDetail() {
   const [retry, setRetry] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
+  // 담기 — 제출 중에는 두 버튼이 함께 비활성이다(중복 제출 차단, UX-DR9)
+  const [pending, setPending] = useState<"stay" | "cart" | null>(null);
+  const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; message: string } | null>(null);
+  const { setCount } = useCartCount();
 
   // 진입 시 한 번만 읽는다 — 이후 갱신은 아래 handleVariant가 URL로 내보내는 방향뿐이다
   const [initialVariantId] = useState<string | null>(() => searchParams.get("variant"));
@@ -103,19 +117,74 @@ export default function ProductDetail() {
     [router, pathname],
   );
 
-  /* 8.4 접점 — 이 스토리는 버튼의 자리·문구·활성 판정·갈 곳의 규칙까지만 소유한다.
-     TODO(8.4): POST /api/v1/carts/items {variant_id, quantity} 를 BFF로 호출한다.
-       · 401이면 `/login?next=${encodeURIComponent(pathname + window.location.search)}`로 보낸다.
-         선택 조합이 ?variant에 있으므로 복귀만으로 복원된다(별도 저장소를 만들지 않는다).
-       · 8.3은 로그인 여부를 판정하지 않는다 — 쿠키 존재는 인증이 아니다 (AD-1). 401 처리는 호출자 몫이다.
-     TODO(8.4·8.5): `바로 구매`의 목적지는 여기서 정하지 않는다. 백엔드에 직구매 경로가 없어
-       (주문 생성이 cart_item_ids 기반) 담기를 거쳐야 하며, 그 설계는 8.4·8.5가 소유한다. */
+  /* ── 담기 (8.4 D8·D9) ────────────────────────────
+     담기 수량은 항상 1이다 — 상품상세에 수량 스테퍼를 만들지 않는다(수량은 장바구니가 소유한다).
+     같은 조합을 다시 담으면 서버가 합산하고 999에서 자른다. 화면이 합산을 흉내 내지 않는다.
+     `바로 구매`는 담기 후 /cart로 간다 — 백엔드에 단품 주문 경로가 없어(/orders는 cart_item_ids 기반,
+     /orders/preview는 장바구니 전체를 전제) /checkout 직행은 "이 상품만 산다"는 약속을 지킬 수 없다. */
+  const runAdd = useCallback(
+    async (variantId: string, then: "stay" | "cart") => {
+      setPending(then);
+      setFeedback(null);
+      const r = await addItem(variantId);
+      if (r.ok) {
+        // 배지는 낙관적 +1이 아니라 재조회한 서버 값으로 갱신한다 (D5)
+        const c = await getCart();
+        setCount(c.ok ? c.data.items.length : undefined);
+        setPending(null);
+        if (then === "cart") {
+          router.push("/cart");
+          return;
+        }
+        setFeedback({ kind: "ok", message: "장바구니에 담았습니다." });
+        return;
+      }
+      setPending(null);
+      if (r.error.code === "unauthorized") {
+        /* 🚨 쿠키를 읽어 미리 판정하지 않는다 — 401을 받고 나서 이동한다 (AD-1, R7).
+           선택 조합은 ?variant에 이미 있으므로 복귀만으로 복원되고, &add=1이 담기를 이어 준다.
+           next에는 자체 경로만 실린다 (8.2가 세운 검증을 우회하는 경로를 새로 만들지 않는다). */
+        const sp = new URLSearchParams(window.location.search);
+        sp.set("add", "1");
+        router.replace(`/login?next=${encodeURIComponent(`${pathname}?${sp.toString()}`)}`);
+        return;
+      }
+      setFeedback({ kind: "err", message: r.error.message });
+    },
+    [router, pathname, setCount],
+  );
+
   const handleAdd = useCallback(() => {
-    // 8.4가 담기 호출을 여기에 붙인다. 8.3은 API를 부르지 않는다.
-  }, []);
+    if (selectedVariantId) void runAdd(selectedVariantId, "stay");
+  }, [selectedVariantId, runAdd]);
   const handleBuy = useCallback(() => {
-    // 8.4·8.5가 목적지를 정한 뒤 여기에 붙인다.
-  }, []);
+    if (selectedVariantId) void runAdd(selectedVariantId, "cart");
+  }, [selectedVariantId, runAdd]);
+
+  /* 로그인 복귀 후의 자동 담기 — 한 번만 실행하고 즉시 add를 지운다 (D8).
+     쿼리를 지우지 않으면 새로고침·뒤로가기·북마크로 같은 담기가 반복된다. replace라 히스토리도 늘지 않는다.
+     🚨 ref로 가둔 이유는 StrictMode의 개발 모드 이중 마운트다.
+     🚨 variant가 없거나 그 조합이 구매 불가면 자동 실행하지 않고 버튼만 그대로 둔다. */
+  const autoAddRef = useRef(false);
+  useEffect(() => {
+    if (autoAddRef.current) return;
+    if (searchParams.get("add") !== "1") return;
+    if (!data) return; // 구매 가능 여부를 보려면 상세가 먼저 와야 한다
+    autoAddRef.current = true;
+
+    const stripped = new URLSearchParams(searchParams.toString());
+    stripped.delete("add");
+    const q = stripped.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+
+    const vid = searchParams.get("variant");
+    const target = vid ? data.variants.find((v) => v.id === vid) : undefined;
+    if (!target || !target.purchasable) return;
+    // 이 시점의 setState는 effect 본문이 아니라 타이머 뒤에서 일어난다
+    // (react-hooks/set-state-in-effect — 로딩 상태를 effect에서 세우지 않는다).
+    const t = setTimeout(() => void runAdd(target.id, "stay"), 0);
+    return () => clearTimeout(t);
+  }, [data, searchParams, pathname, router, runAdd]);
 
   if (loading) {
     return (
@@ -165,7 +234,18 @@ export default function ProductDetail() {
     : `${formatWon(data.price_from)}${priceVaries ? "부터" : ""}`; // [ASSUMPTION] `…원부터` 접미어
 
   const allSoldOut = data.variants.length > 0 && data.variants.every((v) => !v.purchasable);
-  const ctaDisabled = allSoldOut || selectedVariant === null || !selectedVariant.purchasable;
+  const ctaDisabled = allSoldOut || selectedVariant === null || !selectedVariant.purchasable || pending !== null;
+
+  const ctaFeedback = feedback ? (
+    <p className={`i_msg b_meta ${feedback.kind === "ok" ? "m_ok" : "m_err"}`} role="status">
+      {feedback.message}
+      {feedback.kind === "ok" ? (
+        <Link href="/cart" className="i_link">
+          장바구니 보기
+        </Link>
+      ) : null}
+    </p>
+  ) : null;
 
   return (
     <>
@@ -228,7 +308,7 @@ export default function ProductDetail() {
           </div>
 
           {/* ≥768에서만 보이는 사본 — 화면 밖으로 밀려나지 않도록 정보 칼럼 안으로 승격된다 */}
-          <CtaPair variant="inline" disabled={ctaDisabled} onAdd={handleAdd} onBuy={handleBuy} />
+          <CtaPair variant="inline" disabled={ctaDisabled} onAdd={handleAdd} onBuy={handleBuy} feedback={ctaFeedback} />
         </div>
 
         {/* 법적 고지 — ≥768에서도 우측 칼럼이 아니라 2단 아래 전체 폭 */}
@@ -238,7 +318,7 @@ export default function ProductDetail() {
       </div>
 
       {/* 하단 고정 CTA (<768) — DOM 순서상 콘텐츠(법적 고지 포함) 뒤에 둔다 (UX-DR6) */}
-      <CtaPair variant="bar" disabled={ctaDisabled} onAdd={handleAdd} onBuy={handleBuy} />
+      <CtaPair variant="bar" disabled={ctaDisabled} onAdd={handleAdd} onBuy={handleBuy} feedback={ctaFeedback} />
     </>
   );
 }

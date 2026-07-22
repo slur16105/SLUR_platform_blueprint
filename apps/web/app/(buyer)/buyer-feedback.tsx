@@ -11,8 +11,9 @@ import type { ErrorEnvelope } from "./auth-errors";
 /** 봉투가 없는 실패(fetch throw — 네트워크 단절). 서버가 문장을 못 주는 유일한 경우다. */
 export const NETWORK_MESSAGE = "연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
 
-/** 봉투에 message가 없을 때의 최후 문장. code를 대신 노출하지 않는다. */
-const GENERIC_MESSAGE = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+/** 봉투에 message가 없을 때의 최후 문장. code를 대신 노출하지 않는다.
+ *  8.4의 cart-api.ts가 같은 문장을 쓴다 — 두 벌이 되지 않게 여기서 export한다. */
+export const GENERIC_MESSAGE = "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
 export type ApiFailure = {
   /** 화면 분기용 — 렌더하지 않는다 */

@@ -363,6 +363,9 @@
 .b_amount_summary .i_value { color: var(--b-ink-strong); font-weight: 600; font-variant-numeric: tabular-nums; }
 /* 값이 0원이면 물러난다 — 줄 자체는 지우지 않는다 */
 .b_amount_summary .i_value.m_zero { color: var(--b-ink-muted); font-weight: 500; }
+/* 값이 미확정이면(장바구니의 배송비·도서산간, 8.4 D2) 같은 무게로 물러난다.
+   숫자가 아니므로 자릿수 정렬이 필요 없다. */
+.b_amount_summary .i_value.m_pending { color: var(--b-ink-muted); font-weight: 500; font-variant-numeric: normal; }
 .b_amount_summary .i_total {
   display: flex;
   align-items: baseline;
@@ -386,3 +389,111 @@
 .b_seller_pack .i_foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--b-pack-foot-line); }
 /* 구매 불가 묶음 — 숨기지 않고 표기한다 */
 .b_seller_pack.m_unavailable .i_items { color: var(--b-ink-unavailable); }
+.b_seller_pack.m_unavailable .b_brand_label { color: var(--b-ink-unavailable); }
+
+/* 태그 — 면 있는 아주 작은 라벨. 크기·굵기·자간은 type.css의 .b_tag가 갖는다.
+   구매 불가 묶음(8.4)과 8.6이 함께 쓰므로 여기 둔다. */
+.b_tag.m_unavailable {
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: var(--b-rounded-xs);
+  background: var(--b-accent-soft);
+  color: var(--b-accent);
+}
+
+/* ─────────────────────────────────────────────
+   공용 조작 부품 (8.4 신설 — 8.5·8.6이 다시 쓴다)
+   하단 고정 CTA 바 · 인라인 확인 줄 · 수량 스테퍼.
+   장바구니 전용 배치는 cart/cart.css에 둔다.
+   ───────────────────────────────────────────── */
+
+/* ── 하단 고정 CTA 바 ───────────────────────────
+   8.3이 browse.css에 만든 것을 여기로 승격했다 — 장바구니(8.4)·주문서(8.5)가 같은 바를 쓴다.
+   ≥768에서는 CSS로 사라진다(조건부 렌더가 아니다). DOM 순서상 콘텐츠 뒤에 둔다 (UX-DR6). */
+.b_cta_bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-sticky);
+  padding: var(--b-cta-bar-y) var(--b-gutter) var(--b-cta-bar-bottom);
+  border-top: 1px solid var(--b-hairline);
+  background: var(--b-paper);
+}
+/* 아래에 탭바가 이어 붙는 장바구니의 2단 예외 (UX-DR3).
+   홈 인디케이터 여백은 아래에 있는 탭바가 맡으므로 아래쪽 패딩이 13px이다. */
+.b_cta_bar.m_stack {
+  bottom: calc(var(--b-tabbar-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--b-cta-bar-y);
+}
+@media (min-width: 768px) {
+  .b_cta_bar { display: none; }
+}
+
+/* ── 인라인 확인 줄 (8.4 D7) ─────────────────────
+   파괴적 동작은 확인 후 실행하되 모달을 쓰지 않는다 (UX-DR16).
+   같은 자리에서 묻는 것이 두 규칙을 동시에 만족시키는 유일한 방법이다.
+   8.6의 `주문 취소` 확인도 이 규칙을 쓴다. */
+.b_confirm_row { display: flex; align-items: center; gap: var(--b-space-3); min-height: 44px; }
+.b_confirm_row .i_ask { color: var(--b-ink-secondary); }
+.b_confirm_row .i_btn {
+  min-height: 44px;
+  padding-inline: var(--b-space-1);
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.b_confirm_row .i_btn.m_yes { color: var(--b-accent); font-weight: 700; }
+.b_confirm_row .i_btn.m_no { color: var(--b-ink-quiet); }
+.b_confirm_row .i_btn:disabled { color: var(--b-disabled-ink); cursor: default; }
+
+/* ── 수량 스테퍼 (8.4) ──────────────────────────
+   시각 크기는 목업의 26px을 유지하고 히트 영역만 44×44로 넓힌다 (UX-DR7) —
+   투명한 ::before가 버튼 중심에서 밖으로 자란다. 서로 겹치지 않는다(중심 간격 54px).
+   🚨 `−`·`+`는 글자다. 인라인 SVG로 그리면 [data-surface="buyer"] svg의
+      stroke-width 전역 규칙을 물려받는다(위험 12). 목업도 글자다. */
+.b_stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--b-field-border);
+  border-radius: var(--b-rounded);
+  background: var(--b-paper);
+}
+.b_stepper .i_step {
+  position: relative;
+  display: flex;
+  flex: 0 0 26px;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: var(--b-surface-inset);
+  color: var(--b-ink-secondary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.b_stepper .i_step::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.b_stepper .i_step:disabled { background: var(--b-disabled-surface); color: var(--b-disabled-ink); cursor: default; }
+.b_stepper .i_qty {
+  display: flex;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  color: var(--b-ink-body);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

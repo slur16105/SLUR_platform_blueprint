@@ -4,7 +4,7 @@ baseline_commit: 10a2c4a6d0c8e4be60575ad6c9d6a4f2984e79b6
 
 # Story 8.4: 장바구니 (구매자 반응형 웹)
 
-Status: ready-for-dev
+Status: review
 
 > **선행 조건.** 이 스토리는 **8.2(로그인·`next` 복귀)와 8.3(상품상세·CTA 자리)이 끝난 뒤** 착수한다.
 > 8.3이 만드는 `products/[id]/product-detail.tsx`·`buyer-feedback.tsx`·`format.ts`·하단 고정 CTA 바 CSS가
@@ -339,106 +339,106 @@ CSS를 라우트 옆에 두고 컴포넌트가 임포트하는 것은 이 저장
 
 ## Tasks / Subtasks
 
-- [ ] **Task 0 — 착수 전 확인 (선행 산출물의 실제 상태)** (AC: 전부)
-  - [ ] 8.2·8.3이 머지됐는지 확인한다. `(buyer)/products/[id]/product-detail.tsx`·`buyer-feedback.tsx`가 없으면 **이 스토리를 시작하지 않는다**
-  - [ ] `formatWon`이 어디 있는지 확인한다 (`grep -rn "formatWon" apps/web/app`) — D12의 정리 규칙 적용
-  - [ ] `assertSameOrigin`이 `lib/auth.ts`에 있는지 확인한다 (8.2 산출물)
-  - [ ] 하단 고정 CTA 바 CSS가 8.3에 의해 `browse.css`에 만들어졌다면 **값을 복제하지 말고** `buyer.css`로 승격하고 `browse.css`의 선언을 지운다 — 8.5(주문서)도 같은 바를 쓴다. 승격 후 상품상세 렌더가 동일한지 눈으로 확인한다
+- [x] **Task 0 — 착수 전 확인 (선행 산출물의 실제 상태)** (AC: 전부)
+  - [x] 8.2·8.3이 머지됐는지 확인한다. `(buyer)/products/[id]/product-detail.tsx`·`buyer-feedback.tsx`가 없으면 **이 스토리를 시작하지 않는다**
+  - [x] `formatWon`이 어디 있는지 확인한다 (`grep -rn "formatWon" apps/web/app`) — D12의 정리 규칙 적용
+  - [x] `assertSameOrigin`이 `lib/auth.ts`에 있는지 확인한다 (8.2 산출물)
+  - [x] 하단 고정 CTA 바 CSS가 8.3에 의해 `browse.css`에 만들어졌다면 **값을 복제하지 말고** `buyer.css`로 승격하고 `browse.css`의 선언을 지운다 — 8.5(주문서)도 같은 바를 쓴다. 승격 후 상품상세 렌더가 동일한지 눈으로 확인한다
 
-- [ ] **Task 1 — BFF Route Handler 4개** (AC: 1, 4, 5, 10, 17)
-  - [ ] `app/api/carts/route.ts` — `GET` → `proxyWithRefresh(req, "/api/v1/carts", { method: "GET" })`
-  - [ ] `app/api/carts/items/route.ts` — `POST`. **`assertSameOrigin` 먼저**. 본문은 `{variant_id, quantity}`만 상류로 넘긴다(화이트리스트)
-  - [ ] `app/api/carts/items/[id]/route.ts` — `PATCH`(본문 `{quantity}`만) · `DELETE`. 둘 다 `assertSameOrigin` 먼저
-    - [ ] `ctx.params`는 **Promise다** — `await`. 36자 UUID 형식이 아니면 상류를 부르지 않고 `not_found` 404 봉투
-  - [ ] `lib/auth.ts`를 **수정하지 않는다** (import만)
-  - [ ] `proxyWithRefresh`가 돌려준 `NextResponse`를 **그대로 반환**한다 — 본문을 다시 감싸면 회전된 세션 쿠키가 유실된다
+- [x] **Task 1 — BFF Route Handler 4개** (AC: 1, 4, 5, 10, 17)
+  - [x] `app/api/carts/route.ts` — `GET` → `proxyWithRefresh(req, "/api/v1/carts", { method: "GET" })`
+  - [x] `app/api/carts/items/route.ts` — `POST`. **`assertSameOrigin` 먼저**. 본문은 `{variant_id, quantity}`만 상류로 넘긴다(화이트리스트)
+  - [x] `app/api/carts/items/[id]/route.ts` — `PATCH`(본문 `{quantity}`만) · `DELETE`. 둘 다 `assertSameOrigin` 먼저
+    - [x] `ctx.params`는 **Promise다** — `await`. 36자 UUID 형식이 아니면 상류를 부르지 않고 `not_found` 404 봉투
+  - [x] `lib/auth.ts`를 **수정하지 않는다** (import만)
+  - [x] `proxyWithRefresh`가 돌려준 `NextResponse`를 **그대로 반환**한다 — 본문을 다시 감싸면 회전된 세션 쿠키가 유실된다
 
-- [ ] **Task 2 — 클라이언트 API 래퍼와 배지 컨텍스트** (AC: 9, 15)
-  - [ ] `(buyer)/cart-api.ts` — `getCart()` · `addItem(variantId)` · `setQuantity(itemId, qty)` · `removeItem(itemId)`
-    - [ ] 반환은 `{ ok: true, data } | { ok: false, code, message }` 형태로 통일한다. **`code`는 분기에만, `message`는 표시에만**
-    - [ ] `DELETE`는 **204라 본문이 없다** — `res.json()`을 부르지 않는다
-    - [ ] fetch가 throw하면 `{ ok:false, code:"network", message:"연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요." }`
-    - [ ] 에러 봉투 타입은 새로 만들지 않는다 — 8.2의 `(buyer)/auth-errors.ts` 또는 8.3이 만든 타입을 재사용한다
-  - [ ] `(buyer)/cart-count.tsx` — `CartCountProvider` + `useCartCount()`(값 + setter)
-    - [ ] 마운트 시 `slur_role` 쿠키가 있을 때만 `getCart()` 1회. 401이면 `undefined`로 되돌리고 **리다이렉트하지 않는다**
-    - [ ] 값은 **`items.length`** (구매 불가 포함). 수량 합이 아니다
-  - [ ] `(buyer)/layout.tsx` — `children`을 프로바이더로 감싼다. `data-surface="buyer"` 래퍼·CSS 임포트는 손대지 않는다
-  - [ ] `(buyer)/buyer-icons.tsx` — `CartBadge`가 컨텍스트에서 값을 읽는다. **탭바·상단 내비·상단바의 `<CartBadge />` 호출부는 바꾸지 않는다**. `count` prop은 제거하거나 override로 남긴다(타입 변경이 tsc를 깨지 않게)
+- [x] **Task 2 — 클라이언트 API 래퍼와 배지 컨텍스트** (AC: 9, 15)
+  - [x] `(buyer)/cart-api.ts` — `getCart()` · `addItem(variantId)` · `setQuantity(itemId, qty)` · `removeItem(itemId)`
+    - [x] 반환은 `{ ok: true, data } | { ok: false, code, message }` 형태로 통일한다. **`code`는 분기에만, `message`는 표시에만**
+    - [x] `DELETE`는 **204라 본문이 없다** — `res.json()`을 부르지 않는다
+    - [x] fetch가 throw하면 `{ ok:false, code:"network", message:"연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요." }`
+    - [x] 에러 봉투 타입은 새로 만들지 않는다 — 8.2의 `(buyer)/auth-errors.ts` 또는 8.3이 만든 타입을 재사용한다
+  - [x] `(buyer)/cart-count.tsx` — `CartCountProvider` + `useCartCount()`(값 + setter)
+    - [x] 마운트 시 `slur_role` 쿠키가 있을 때만 `getCart()` 1회. 401이면 `undefined`로 되돌리고 **리다이렉트하지 않는다**
+    - [x] 값은 **`items.length`** (구매 불가 포함). 수량 합이 아니다
+  - [x] `(buyer)/layout.tsx` — `children`을 프로바이더로 감싼다. `data-surface="buyer"` 래퍼·CSS 임포트는 손대지 않는다
+  - [x] `(buyer)/buyer-icons.tsx` — `CartBadge`가 컨텍스트에서 값을 읽는다. **탭바·상단 내비·상단바의 `<CartBadge />` 호출부는 바꾸지 않는다**. `count` prop은 제거하거나 override로 남긴다(타입 변경이 tsc를 깨지 않게)
 
-- [ ] **Task 3 — 장바구니 화면 골격과 조회** (AC: 1, 2, 13, 15)
-  - [ ] `(buyer)/cart/page.tsx` — 8.1 자리표시를 **통째로 대체**. `BuyerShell tab="cart" showTabbar topbar={{ variant:"title", title:"장바구니" }}` 세 값은 그대로 둔다
-  - [ ] `cart-view.tsx` — `getCart()` 호출, 로딩/오류/빈 상태/정상 4갈래
-    - [ ] 로딩: **묶음 골격 skeleton**(중앙 스피너 금지). 8.3의 `buyer-feedback.tsx`를 재사용하고 없으면 그 파일에 묶음용 변형을 추가한다
-    - [ ] 401 → `router.replace("/login?next=%2Fcart")`
-    - [ ] 빈 장바구니 → `장바구니가 비어 있습니다.` + `쇼핑 계속하기`(→ `/`). 금액 요약·CTA 바를 렌더하지 않는다
-    - [ ] 성공 시 배지 컨텍스트에 `items.length`를 밀어 넣는다
-  - [ ] 묶음 만들기 — `brand_name` 키, 등장 순서 유지. `brand_name`이 빈 문자열인 묶음의 표시명은 `판매 종료`
-  - [ ] `cart-pack.tsx` — 8.1의 `<SellerPack>` 슬롯을 채운다: `headStart`=체크박스, `headEnd`=상태 태그 자리, `children`=항목 행들, `foot`=구매 불가 안내
-    - [ ] **`seller-pack.tsx`를 수정하지 않는다** — 슬롯으로 충분한지 먼저 확인하고, 부족하면 그 사실을 스토리에 적고 최소 변경만 한다
+- [x] **Task 3 — 장바구니 화면 골격과 조회** (AC: 1, 2, 13, 15)
+  - [x] `(buyer)/cart/page.tsx` — 8.1 자리표시를 **통째로 대체**. `BuyerShell tab="cart" showTabbar topbar={{ variant:"title", title:"장바구니" }}` 세 값은 그대로 둔다
+  - [x] `cart-view.tsx` — `getCart()` 호출, 로딩/오류/빈 상태/정상 4갈래
+    - [x] 로딩: **묶음 골격 skeleton**(중앙 스피너 금지). 8.3의 `buyer-feedback.tsx`를 재사용하고 없으면 그 파일에 묶음용 변형을 추가한다
+    - [x] 401 → `router.replace("/login?next=%2Fcart")`
+    - [x] 빈 장바구니 → `장바구니가 비어 있습니다.` + `쇼핑 계속하기`(→ `/`). 금액 요약·CTA 바를 렌더하지 않는다
+    - [x] 성공 시 배지 컨텍스트에 `items.length`를 밀어 넣는다
+  - [x] 묶음 만들기 — `brand_name` 키, 등장 순서 유지. `brand_name`이 빈 문자열인 묶음의 표시명은 `판매 종료`
+  - [x] `cart-pack.tsx` — 8.1의 `<SellerPack>` 슬롯을 채운다: `headStart`=체크박스, `headEnd`=상태 태그 자리, `children`=항목 행들, `foot`=구매 불가 안내
+    - [x] **`seller-pack.tsx`를 수정하지 않는다** — 슬롯으로 충분한지 먼저 확인하고, 부족하면 그 사실을 스토리에 적고 최소 변경만 한다
 
-- [ ] **Task 4 — 항목 행: 수량 스테퍼와 삭제** (AC: 4, 5, 6)
-  - [ ] 행 구성 — 사진 74px(없으면 종이 그늘 면) · 상품명(`b_product_name_row`) · 옵션(`b_meta`, 빈 값이면 `—`) · 행 금액(`b_price_item`, `final_price × quantity`) · 스테퍼 ↔ `삭제`
-    - [ ] 조작 행은 `.b_row`(최대 560px) 안에서 좌측 정렬 — 넓은 칼럼에서 `space-between`으로 500px 벌어지지 않게 한다 (UX-DR5)
-    - [ ] `<img>` 위에 `/* eslint-disable-next-line @next/next/no-img-element */` (lint 베이스라인 0 warnings)
-  - [ ] 스테퍼 — `−` `n` `+`. 1에서 `−` `disabled`, `MAX_CART_QTY`에서 `+` `disabled`, 구매 불가 항목은 둘 다 `disabled`
-    - [ ] 히트 영역 44×44 이상(시각 크기 26px은 유지하고 패딩으로 넓힌다)
-    - [ ] 낙관적 갱신 → 성공 시 `getCart()` 재조회 → 실패 시 직전 값 복원 + `message` + `새로고침`. **실패에는 재조회하지 않는다** (D6)
-    - [ ] in-flight 동안 **그 행만** 비활성
-  - [ ] 삭제 — 인라인 확인 줄(D7). `.b_confirm_row`는 `buyer.css`에 공용으로 둔다(8.6이 쓴다)
-    - [ ] 확인 줄 열림 시 포커스를 `삭제`로, `Esc`·`취소`로 닫으면 원래 버튼으로 되돌린다
-    - [ ] 한 번에 한 행만 확인 상태
-    - [ ] 성공 → 재조회 + 배지 갱신. 마지막 항목이면 빈 상태로 전환
-  - [ ] **스와이프 삭제·롱프레스 메뉴를 만들지 않는다** (UX-DR16)
+- [x] **Task 4 — 항목 행: 수량 스테퍼와 삭제** (AC: 4, 5, 6)
+  - [x] 행 구성 — 사진 74px(없으면 종이 그늘 면) · 상품명(`b_product_name_row`) · 옵션(`b_meta`, 빈 값이면 `—`) · 행 금액(`b_price_item`, `final_price × quantity`) · 스테퍼 ↔ `삭제`
+    - [x] 조작 행은 `.b_row`(최대 560px) 안에서 좌측 정렬 — 넓은 칼럼에서 `space-between`으로 500px 벌어지지 않게 한다 (UX-DR5)
+    - [x] `<img>` 위에 `/* eslint-disable-next-line @next/next/no-img-element */` (lint 베이스라인 0 warnings)
+  - [x] 스테퍼 — `−` `n` `+`. 1에서 `−` `disabled`, `MAX_CART_QTY`에서 `+` `disabled`, 구매 불가 항목은 둘 다 `disabled`
+    - [x] 히트 영역 44×44 이상(시각 크기 26px은 유지하고 패딩으로 넓힌다)
+    - [x] 낙관적 갱신 → 성공 시 `getCart()` 재조회 → 실패 시 직전 값 복원 + `message` + `새로고침`. **실패에는 재조회하지 않는다** (D6)
+    - [x] in-flight 동안 **그 행만** 비활성
+  - [x] 삭제 — 인라인 확인 줄(D7). `.b_confirm_row`는 `buyer.css`에 공용으로 둔다(8.6이 쓴다)
+    - [x] 확인 줄 열림 시 포커스를 `삭제`로, `Esc`·`취소`로 닫으면 원래 버튼으로 되돌린다
+    - [x] 한 번에 한 행만 확인 상태
+    - [x] 성공 → 재조회 + 배지 갱신. 마지막 항목이면 빈 상태로 전환
+  - [x] **스와이프 삭제·롱프레스 메뉴를 만들지 않는다** (UX-DR16)
 
-- [ ] **Task 5 — 구매 불가 표기와 체크박스** (AC: 6, 7)
-  - [ ] 항목 행 — 사진 `grayscale(.85) brightness(1.06)`, 글자 `--b-ink-unavailable`, 금액 취소선(`--b-strike-line`), 스테퍼 비활성
-  - [ ] 묶음 — **전부 불가일 때만** 헤더 `구매 불가 · 품절` 태그(`.b_tag` + `--b-accent-soft`/`--b-accent`) + 하단 `--b-accent-wash` 안내 상자
-  - [ ] 체크박스 — `disabled`. 가능 항목 ≥ 1이면 `checked`. `aria-label`로 상태를 말한다
-  - [ ] **재고 수량·품절 원인을 화면에 쓰지 않는다** — 응답에 없고(`purchasable` 단일 술어) 만들어내지 않는다 (AD-10)
-  - [ ] `판매 종료` 묶음도 같은 규칙을 탄다(항상 전부 불가)
+- [x] **Task 5 — 구매 불가 표기와 체크박스** (AC: 6, 7)
+  - [x] 항목 행 — 사진 `grayscale(.85) brightness(1.06)`, 글자 `--b-ink-unavailable`, 금액 취소선(`--b-strike-line`), 스테퍼 비활성
+  - [x] 묶음 — **전부 불가일 때만** 헤더 `구매 불가 · 품절` 태그(`.b_tag` + `--b-accent-soft`/`--b-accent`) + 하단 `--b-accent-wash` 안내 상자
+  - [x] 체크박스 — `disabled`. 가능 항목 ≥ 1이면 `checked`. `aria-label`로 상태를 말한다
+  - [x] **재고 수량·품절 원인을 화면에 쓰지 않는다** — 응답에 없고(`purchasable` 단일 술어) 만들어내지 않는다 (AD-10)
+  - [x] `판매 종료` 묶음도 같은 규칙을 탄다(항상 전부 불가)
 
-- [ ] **Task 6 — 금액 요약과 CTA** (AC: 3, 8, 14)
-  - [ ] `amount-summary.tsx` 수정 — `shippingFee`·`remoteAreaFee`가 `number | null`을 받고, `null`이면 값 자리에 문구(prop으로 받는다, 기본 `주문서에서 확인`)를 `--b-ink-muted`로 놓는다. **행을 조건부로 지우지 않는다**
-    - [ ] 합계 라벨도 prop으로 받는다(장바구니 `상품 금액 합계` / 주문서 `결제 예정 금액`) — 8.5가 같은 컴포넌트를 쓴다
-  - [ ] 요약 아래 `b_notice` 한 줄: `배송비는 판매자마다 다르며 배송지를 입력하면 주문서에서 확정됩니다.`
-  - [ ] CTA — `주문하기 (N건)`, N = 구매 가능 **항목 수**. 0건이면 `disabled`
-    - [ ] 클릭 시 `/checkout`으로 이동한다. **주문서 화면은 8.5가 만든다** — 없으면 404가 나므로 8.5 전에는 이 링크가 죽어 있음을 Completion Notes에 적는다
-    - [ ] 버튼을 **두 자리에 렌더**하고 CSS `display`로 전환한다(<768 고정 바 / ≥768 우측 칼럼). 상태는 `cart-view`가 갖고 두 사본에 같은 값을 넘긴다
-    - [ ] 고정 바는 DOM 순서상 **금액 요약 뒤**(콘텐츠 뒤)에 둔다
+- [x] **Task 6 — 금액 요약과 CTA** (AC: 3, 8, 14)
+  - [x] `amount-summary.tsx` 수정 — `shippingFee`·`remoteAreaFee`가 `number | null`을 받고, `null`이면 값 자리에 문구(prop으로 받는다, 기본 `주문서에서 확인`)를 `--b-ink-muted`로 놓는다. **행을 조건부로 지우지 않는다**
+    - [x] 합계 라벨도 prop으로 받는다(장바구니 `상품 금액 합계` / 주문서 `결제 예정 금액`) — 8.5가 같은 컴포넌트를 쓴다
+  - [x] 요약 아래 `b_notice` 한 줄: `배송비는 판매자마다 다르며 배송지를 입력하면 주문서에서 확정됩니다.`
+  - [x] CTA — `주문하기 (N건)`, N = 구매 가능 **항목 수**. 0건이면 `disabled`
+    - [x] 클릭 시 `/checkout`으로 이동한다. **주문서 화면은 8.5가 만든다** — 없으면 404가 나므로 8.5 전에는 이 링크가 죽어 있음을 Completion Notes에 적는다
+    - [x] 버튼을 **두 자리에 렌더**하고 CSS `display`로 전환한다(<768 고정 바 / ≥768 우측 칼럼). 상태는 `cart-view`가 갖고 두 사본에 같은 값을 넘긴다
+    - [x] 고정 바는 DOM 순서상 **금액 요약 뒤**(콘텐츠 뒤)에 둔다
 
-- [ ] **Task 7 — 반응형 배치** (AC: 14)
-  - [ ] `cart.css` — `<768` 한 칼럼 + 하단 CTA 바(`m_stack`, 패딩 `13px 20px 13px`) / `≥768` grid `62fr 34fr`, column-gap 4%
-  - [ ] `≥768` 우측 칼럼: 1px hairline 테두리 상자, `position: sticky; top: calc(var(--b-topbar-h) + var(--b-space-5))`
-  - [ ] sticky는 `묶음 수 >= 2`일 때만 — 컨테이너 `data-sticky="on"`
-  - [ ] `<768` 본문 하단 여백 = CTA 바 높이 + 탭바 높이. **8.1 셸(`.b_main[data-tabbar="on"]`)을 고치지 않고** 장바구니 페이지가 자기 여백을 더한다
-  - [ ] 묶음 좌우 여백: `<768`은 8.1 기본(`padding-inline: var(--b-gutter)`), `≥768`은 컨테이너가 갖고 묶음은 0
-  - [ ] 금액 요약 앞 8px 종이 접기 띠(`--b-paper-shade`)는 `<768`에서만 — 옆으로 놓인 2단에서는 쓰지 않는다(DESIGN.md 깊이 예외)
-  - [ ] `matchMedia`·`innerWidth`·`resize` 사용 0건
+- [x] **Task 7 — 반응형 배치** (AC: 14)
+  - [x] `cart.css` — `<768` 한 칼럼 + 하단 CTA 바(`m_stack`, 패딩 `13px 20px 13px`) / `≥768` grid `62fr 34fr`, column-gap 4%
+  - [x] `≥768` 우측 칼럼: 1px hairline 테두리 상자, `position: sticky; top: calc(var(--b-topbar-h) + var(--b-space-5))`
+  - [x] sticky는 `묶음 수 >= 2`일 때만 — 컨테이너 `data-sticky="on"`
+  - [x] `<768` 본문 하단 여백 = CTA 바 높이 + 탭바 높이. **8.1 셸(`.b_main[data-tabbar="on"]`)을 고치지 않고** 장바구니 페이지가 자기 여백을 더한다
+  - [x] 묶음 좌우 여백: `<768`은 8.1 기본(`padding-inline: var(--b-gutter)`), `≥768`은 컨테이너가 갖고 묶음은 0
+  - [x] 금액 요약 앞 8px 종이 접기 띠(`--b-paper-shade`)는 `<768`에서만 — 옆으로 놓인 2단에서는 쓰지 않는다(DESIGN.md 깊이 예외)
+  - [x] `matchMedia`·`innerWidth`·`resize` 사용 0건
 
-- [ ] **Task 8 — 상품상세의 담기·바로 구매** (AC: 10, 11, 12)
-  - [ ] `product-detail.tsx`(8.3) 수정 — `// TODO(8.4)` 주석 자리를 실제 호출로 바꾼다. **선택 상태·활성 판정·버튼 배치는 8.3의 것을 그대로 쓴다**
-  - [ ] `장바구니 담기` → `addItem(variantId)` (수량 1 고정). 제출 중 두 버튼 비활성
-  - [ ] 성공 → 인라인 `장바구니에 담았습니다.` + `장바구니 보기`(→ `/cart`) + 배지 갱신. **토스트·모달을 만들지 않는다**
-  - [ ] 401 → `router.replace("/login?next=" + encodeURIComponent(pathname + search + "&add=1"))`
-  - [ ] 마운트 시 `add=1`이면 담기 1회 실행 후 즉시 `router.replace`로 `add` 제거. `variant`가 없거나 구매 불가면 실행하지 않는다
-    - [ ] React StrictMode의 개발 모드 이중 마운트에서 **두 번 담기지 않도록** 실행 여부를 ref로 가둔다
-  - [ ] `바로 구매` → 담기 성공 후 `router.push("/cart")` (D9). `/checkout` 직행을 만들지 않는다
-  - [ ] `not_purchasable` 422 → 담기 실패 문구는 응답 `message`. 상세 데이터를 다시 불러 옵션 상태를 갱신할지는 구현자 판단(사용자 주도 재시도 수단만 있으면 된다)
+- [x] **Task 8 — 상품상세의 담기·바로 구매** (AC: 10, 11, 12)
+  - [x] `product-detail.tsx`(8.3) 수정 — `// TODO(8.4)` 주석 자리를 실제 호출로 바꾼다. **선택 상태·활성 판정·버튼 배치는 8.3의 것을 그대로 쓴다**
+  - [x] `장바구니 담기` → `addItem(variantId)` (수량 1 고정). 제출 중 두 버튼 비활성
+  - [x] 성공 → 인라인 `장바구니에 담았습니다.` + `장바구니 보기`(→ `/cart`) + 배지 갱신. **토스트·모달을 만들지 않는다**
+  - [x] 401 → `router.replace("/login?next=" + encodeURIComponent(pathname + search + "&add=1"))`
+  - [x] 마운트 시 `add=1`이면 담기 1회 실행 후 즉시 `router.replace`로 `add` 제거. `variant`가 없거나 구매 불가면 실행하지 않는다
+    - [x] React StrictMode의 개발 모드 이중 마운트에서 **두 번 담기지 않도록** 실행 여부를 ref로 가둔다
+  - [x] `바로 구매` → 담기 성공 후 `router.push("/cart")` (D9). `/checkout` 직행을 만들지 않는다
+  - [x] `not_purchasable` 422 → 담기 실패 문구는 응답 `message`. 상세 데이터를 다시 불러 옵션 상태를 갱신할지는 구현자 판단(사용자 주도 재시도 수단만 있으면 된다)
 
-- [ ] **Task 9 — 검증: 정적 규칙과 빌드** (AC: 16, 17, 18)
-  - [ ] `cd apps/web && npx tsc --noEmit` → 0
-  - [ ] `cd apps/web && npm run lint` → **0 errors · 0 warnings**
-  - [ ] `cd apps/web && npx next build` → 성공. 기존 라우트 URL이 그대로이고 신규는 `/api/carts/**` 셋뿐인지 확인
-  - [ ] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow" apps/web/app/\(buyer\)` → 0건
-  - [ ] `git diff --stat`에 `apps/api` **0건** · `package.json`·`package-lock.json` **0건** · `app/styles/slur/**` **0건** · `app/styles/buyer/**` **0건**
+- [x] **Task 9 — 검증: 정적 규칙과 빌드** (AC: 16, 17, 18)
+  - [x] `cd apps/web && npx tsc --noEmit` → 0
+  - [x] `cd apps/web && npm run lint` → **0 errors · 0 warnings**
+  - [x] `cd apps/web && npx next build` → 성공. 기존 라우트 URL이 그대로이고 신규는 `/api/carts/**` 셋뿐인지 확인
+  - [x] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow" apps/web/app/\(buyer\)` → 0건
+  - [x] `git diff --stat`에 `apps/api` **0건** · `package.json`·`package-lock.json` **0건** · `app/styles/slur/**` **0건** · `app/styles/buyer/**` **0건**
   - [ ] `cd apps/api && uv run pytest -q` → **환경이 있을 때만.** 이 머신에는 `uv`·`docker`가 없다. 실행하지 못했으면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — 통과했다고 쓰지 않는다
 
-- [ ] **Task 10 — 검증: 실데이터로 화면 확인** (AC: 1~15, 18)
-  - [ ] **데이터 확보** — 다음 순서로 시도하고 무엇을 썼는지 기록한다
+- [x] **Task 10 — 검증: 실데이터로 화면 확인** (AC: 1~15, 18)
+  - [x] **데이터 확보** — 다음 순서로 시도하고 무엇을 썼는지 기록한다
     1. 프로덕션 API를 `API_BASE_URL`로 가리켜 로컬 웹만 띄우고 **테스트 계정**으로 로그인한다. ⚠️ 이 스토리는 8.3과 달리 **쓰기(담기·수량 변경·삭제)를 한다** — 반드시 테스트 계정의 장바구니만 쓰고, 확인이 끝나면 **담은 항목을 전부 삭제한다**(R8: 테스트 데이터 즉시 정리)
     2. 실상품이 부족하면 판매자 계정으로 `/seller/products/new`에서 옵션 상품을 등록하고, `구매 불가` 케이스는 판매자 화면에서 해당 조합을 품절 처리해 만든다(4.1의 E2E 시나리오와 같은 방법)
     3. 둘 다 불가하면 `[ASSUMPTION]` **스크래치패드에** 응답 스키마를 흉내 내는 스텁 서버를 띄우고 `API_BASE_URL`을 거기로 돌린다 — 저장소에 남기지 않는다. 스텁으로만 확인한 항목은 그 사실을 함께 적는다
-  - [ ] **확인 케이스**
+  - [x] **확인 케이스**
     - 판매자 2인 이상이 섞인 장바구니 (묶음 분리·순서)
     - 한 묶음에 **가능 + 불가가 섞인** 경우 (헤더 태그가 붙지 **않고** 행만 흐려지는지 — D4)
     - 한 묶음이 **전부 불가**인 경우 (태그 + 안내 상자 + 체크 해제 + 합계 제외)
@@ -446,22 +446,22 @@ CSS를 라우트 옆에 두고 컴포넌트가 임포트하는 것은 이 저장
     - 이미지 없는 항목 · 옵션 없는 항목(`—`)
     - 수량 1(`−` 비활성) · 999(`+` 비활성)
     - 빈 장바구니
-  - [ ] **배지 vs CTA 카운트** — 구매 불가가 섞인 상태에서 배지 숫자 > CTA `(N건)`인지 확인하고 두 값을 기록한다
-  - [ ] 390 / 700 / 768 / 1280 네 폭에서 렌더 확인 — `<768` CTA 바 + 탭바 2단(마지막 묶음이 가려지지 않는지), `≥768` 62/34 + 우측 sticky + 고정 바·탭바 소멸, 묶음 1개일 때 sticky 없음
-  - [ ] **폭을 바꿔도** 열린 삭제 확인 줄·오류 문장이 유지되는지 확인
-  - [ ] 키보드만으로 완주 — 묶음 → 스테퍼 → 삭제 → 확인 줄 → CTA. 하단 고정 바가 콘텐츠보다 먼저 포커스되지 않는지, 확인 줄 열림 시 포커스가 옮겨가는지
-  - [ ] 먹색 포커스 링이 모든 새 컨트롤에 보이고 파랑이 0회인지 확인
-  - [ ] 결과를 Completion Notes에 기록한다 — 단위 테스트로 대체하지 않는다(`apps/web`에 테스트 프레임워크가 없고 도입하지 않는다)
+  - [x] **배지 vs CTA 카운트** — 구매 불가가 섞인 상태에서 배지 숫자 > CTA `(N건)`인지 확인하고 두 값을 기록한다
+  - [x] 390 / 700 / 768 / 1280 네 폭에서 렌더 확인 — `<768` CTA 바 + 탭바 2단(마지막 묶음이 가려지지 않는지), `≥768` 62/34 + 우측 sticky + 고정 바·탭바 소멸, 묶음 1개일 때 sticky 없음
+  - [x] **폭을 바꿔도** 열린 삭제 확인 줄·오류 문장이 유지되는지 확인
+  - [x] 키보드만으로 완주 — 묶음 → 스테퍼 → 삭제 → 확인 줄 → CTA. 하단 고정 바가 콘텐츠보다 먼저 포커스되지 않는지, 확인 줄 열림 시 포커스가 옮겨가는지
+  - [x] 먹색 포커스 링이 모든 새 컨트롤에 보이고 파랑이 0회인지 확인
+  - [x] 결과를 Completion Notes에 기록한다 — 단위 테스트로 대체하지 않는다(`apps/web`에 테스트 프레임워크가 없고 도입하지 않는다)
 
-- [ ] **Task 11 — 검증: 실패 경로와 담기 복귀** (AC: 4, 5, 10, 11, 12, 15)
-  - [ ] **수량 변경 실패** — 판매자 화면에서 해당 조합을 품절로 바꾼 뒤 `+`를 누른다 → 수량이 되돌아오고 `message` + `새로고침`이 뜨는지, **화면이 자동 재조회로 튀지 않는지** 확인 (D6 — 이 스토리가 갚는 부채)
-  - [ ] **상류 중단** (API를 끄고) — 조회·수량·삭제 각각에서 문장형 메시지 + 재시도 수단. **화면에 숫자·`code` 문자열이 없는지 확인**
-  - [ ] **세션 만료** — `slur_access`·`slur_refresh` 쿠키만 지우고(`slur_role`은 남긴 채) `/cart` 진입 → 미들웨어는 통과하지만 `GET`이 401 → `/login?next=%2Fcart`로 가는지 확인
-  - [ ] **비로그인 담기 → 복귀** — 로그아웃 상태로 상품상세에서 조합을 고르고 `장바구니 담기` → `/login?next=…&add=1` → 로그인 → 상세로 돌아와 **담기가 한 번만** 실행되고 URL에서 `add`가 사라지는지 확인
-    - [ ] 복귀 직후 **새로고침**해서 같은 담기가 반복되지 않는지 확인
-  - [ ] **바로 구매** — 담기 후 `/cart`로 가는지, 장바구니에 기존 항목이 있으면 그것도 함께 보이는지(약속을 어기지 않았는지) 확인
-  - [ ] **같은 조합 재담기** — 수량이 합산되는지(서버 동작) 확인. 합산 후 총량이 재고를 넘으면 장바구니에서 **구매 불가로 표시**되는 것이 정상임을 기록한다(4.1의 확정 policy)
-  - [ ] **테스트 데이터 정리** — 담은 항목·등록한 테스트 상품을 전부 지운다 (R8)
+- [x] **Task 11 — 검증: 실패 경로와 담기 복귀** (AC: 4, 5, 10, 11, 12, 15)
+  - [x] **수량 변경 실패** — 판매자 화면에서 해당 조합을 품절로 바꾼 뒤 `+`를 누른다 → 수량이 되돌아오고 `message` + `새로고침`이 뜨는지, **화면이 자동 재조회로 튀지 않는지** 확인 (D6 — 이 스토리가 갚는 부채)
+  - [x] **상류 중단** (API를 끄고) — 조회·수량·삭제 각각에서 문장형 메시지 + 재시도 수단. **화면에 숫자·`code` 문자열이 없는지 확인**
+  - [x] **세션 만료** — `slur_access`·`slur_refresh` 쿠키만 지우고(`slur_role`은 남긴 채) `/cart` 진입 → 미들웨어는 통과하지만 `GET`이 401 → `/login?next=%2Fcart`로 가는지 확인
+  - [x] **비로그인 담기 → 복귀** — 로그아웃 상태로 상품상세에서 조합을 고르고 `장바구니 담기` → `/login?next=…&add=1` → 로그인 → 상세로 돌아와 **담기가 한 번만** 실행되고 URL에서 `add`가 사라지는지 확인
+    - [x] 복귀 직후 **새로고침**해서 같은 담기가 반복되지 않는지 확인
+  - [x] **바로 구매** — 담기 후 `/cart`로 가는지, 장바구니에 기존 항목이 있으면 그것도 함께 보이는지(약속을 어기지 않았는지) 확인
+  - [x] **같은 조합 재담기** — 수량이 합산되는지(서버 동작) 확인. 합산 후 총량이 재고를 넘으면 장바구니에서 **구매 불가로 표시**되는 것이 정상임을 기록한다(4.1의 확정 policy)
+  - [x] **테스트 데이터 정리** — 담은 항목·등록한 테스트 상품을 전부 지운다 (R8)
 
 ## Dev Notes
 
@@ -693,22 +693,194 @@ CSS를 라우트 옆에 두고 컴포넌트가 임포트하는 것은 이 저장
 
 ### Agent Model Used
 
-(구현 시 기록)
+claude-opus-4-8[1m] (Claude Code)
 
 ### Debug Log References
 
-(구현 시 기록 — 스크래치패드 도구는 저장소에 남기지 않는다)
+스크래치패드 전용 도구 2개 — **저장소에 커밋하지 않았고 확인 후 프로세스(스텁·dev 서버·헤드리스 크롬)를 전부 종료했다.**
+
+| 도구 | 하는 일 |
+|---|---|
+| `cart-stub.mjs` | 장바구니 4개 + 상품상세 1개만 흉내 내는 Node 스텁(포트 8788). 응답 스키마·정렬·204·합산·999 캡은 `apps/api/app/carts/{schemas,service,router}.py`를 읽어 그대로 맞췄다. `/__mode`(full·single·empty·down·unauth) · `/__failpatch` · `/__delay` · `/__reset`로 실패·지연·빈 상태를 브라우저 재기동 없이 전환 |
+| `cart-drive.mjs` | 최소 CDP 드라이버(Node 22 내장 WebSocket). `Network.setCookie`로 `slur_role`을 심고, `Emulation.setDeviceMetricsOverride`로 390·1280을 강제하며, 클릭·Tab·Esc·리사이즈·computed style 조회를 한다 |
+
+로컬 웹은 `API_BASE_URL=http://localhost:8788 npx next dev -p 3010`으로 띄웠다 — **환경변수를 새로 만들지 않았고** 저장소 설정도 바꾸지 않았다.
 
 ### Completion Notes List
 
-(구현 시 기록 — 실행하지 못한 검증은 "미실행 + 사유"로 적는다. 프로덕션 데이터를 썼다면 정리 결과도 함께 적는다)
+**Task 0~11 구현 완료.** 미실행 2건은 아래 "미실행" 절에 따로 적었다.
+
+#### Task 0 — 선행 산출물의 실제 상태
+
+- 8.2(`4399ef7`)·8.3(`bd5a52e`) 모두 머지돼 있다. `product-detail.tsx`·`buyer-feedback.tsx`·`format.ts` 존재 확인.
+- **`formatWon`이 두 곳에 있었다** (`amount-summary.tsx` export + `format.ts`). D12대로 **`format.ts`를 정본**으로 두고 `amount-summary.tsx`가 `export { formatWon }`로 다시 내보내게 정리했다 — 기존 호출부(`product-card`·`product-detail`)는 한 줄도 바뀌지 않았다. 세 번째 구현은 만들지 않았다.
+- `assertSameOrigin`은 `lib/auth.ts`에 있다(8.2). **`lib/auth.ts` diff 0건** — import만 했다.
+- **하단 고정 CTA 바를 `browse.css` → `buyer.css`로 승격**하고 `browse.css`의 선언을 지웠다(값 복제 0건). 승격 후 상품상세를 1280/500에서 다시 확인: `≥768` 바 `none`·인라인 `block`, `<768` 바 `fixed; bottom: 0; padding: 13px 20px 20px` — **8.3과 동일**하다.
+  - 담기 결과 한 줄을 CTA 위에 놓기 위해 `CtaPair`가 `.b_cta_slot` 래퍼를 갖게 바뀌었고, 그에 맞춰 `.b_cta_pair.m_inline` → `.b_cta_slot.m_inline`으로 토글 셀렉터가 옮겨갔다. 두 사본 렌더·CSS display 전환이라는 8.3 D9의 구조는 그대로다.
+
+#### 데이터 확보 (Task 10) — 3번 경로를 썼다
+
+프로덕션 API 호스트가 저장소에 없고(서버 전용 환경변수), **이 스토리는 쓰기(담기·수량·삭제)를 하므로** 프로덕션 계정 장바구니를 건드리는 것이 R8상 더 위험하다. 그래서 **스크래치패드 스텁**(경로 3)으로 확인했다. **아래 화면 확인 결과는 전부 스텁 데이터 기준**이며, 실서버 응답으로의 재확인은 프로덕션 배포 후 한 번 필요하다(R3와 함께). 프로덕션 데이터를 만들지 않았으므로 **정리할 테스트 데이터도 없다.**
+
+#### 확인 케이스 (Task 10)
+
+스텁 장바구니 구성: 토림도예 2행(가능 1 + 불가 1) · 곳간 1행(전부 불가) · 온실 2행(수량 1 · 수량 999) · `variant_id: null` 1행.
+
+| 케이스 | 결과 |
+|---|---|
+| 판매자 2인 이상 묶음 | `토림도예:2 \| 곳간:1[dead] \| 온실:2 \| 판매 종료:1[dead]` — 응답 순서 그대로, 재정렬 0건 |
+| **가능+불가 혼재 묶음** (D4) | 토림도예에 **헤더 태그가 붙지 않고** 2번째 행만 흐림·취소선·스테퍼 비활성. 체크박스는 `checked` |
+| **전부 불가 묶음** | 곳간·판매 종료에 `구매 불가 · 품절` 태그 + `--b-accent-wash` 안내 상자 + 체크 해제. 합계에서 제외됨 |
+| `variant_id: null` | 브랜드 라벨 `판매 종료`, 상품명 `판매 종료된 상품`, 행 금액 `—` |
+| 이미지 없는 항목 | 같은 74px 종이 그늘 면으로 자리 유지 |
+| 옵션 없는 항목 | 옵션 줄에 `—` — 행 높이가 흔들리지 않는다 |
+| 수량 1 / 999 | 스테퍼 disabled 배열 `[true,false]` / `[false,true]` — 1에서 `−`, 999에서 `+`가 잠긴다. 구매 불가 행은 `[true,true]` |
+| 빈 장바구니 | `장바구니가 비어 있습니다.` + `쇼핑 계속하기`(→`/`). **금액 요약 0개 · CTA 바 0개 · 탭바는 유지 · 배지 미표시** |
+
+- 체크박스 4개 전부 `disabled`이고 `aria-label`이 `주문에 포함` / `구매 불가 — 주문에서 제외`다 (D3).
+- 금액 요약: `상품 금액 6,112,000원 / 배송비 주문서에서 확인 / 도서산간 추가 주문서에서 확인 / **상품 금액 합계** 6,112,000원` — **배송비 숫자 0건, 도서산간 줄 유지, 목업의 `결제 예정 금액` 미사용** (D2).
+- 요약 아래 한 줄: `배송비는 판매자마다 다르며 배송지를 입력하면 주문서에서 확정됩니다.`
+
+#### 배지 vs CTA 카운트 (AC 8)
+
+같은 화면에서 **배지 `6`(담긴 행 전체) vs CTA `주문하기 (3건)`(구매 가능 행)** — 두 값이 다른 것이 정상이며 화면에 "왜 다른가" 설명 장치를 두지 않았다. 항목 하나를 삭제하니 **배지 5 · CTA 2건**으로 함께 갱신됐다(새로고침 없이). 둘 다 수량 합이 아니라 행 수다(수량 999 항목이 1건으로 센다).
+
+#### 폭별 렌더 (390 / 700 / 768 / 1280)
+
+390·1280은 CDP `Emulation.setDeviceMetricsOverride`로 강제했다(헤드리스 크롬 500px 최소 폭 제약 우회 — 8.1의 학습).
+
+| 폭 | 확인 결과 |
+|---|---|
+| **390** | 한 칼럼 · 묶음이 화면 끝까지(`padding-inline: 20px`) · 금액 요약 앞 8px 종이 접기 띠 · 하단 `CTA 바(bottom: 56px)` 위 `탭바` **2단** |
+| **700** | 390과 같은 한 칼럼 · `.b_cart display: block` · CTA 바 `block`, `bottom: 56px` · 탭바 `flex` · 요약 띠 8px |
+| **768** | 2단 전환 · 우측 칼럼 1px hairline 상자 · CTA가 우측 칼럼 안으로 승격 · **고정 바·탭바 `none`** · 상단 내비 등장 |
+| **1280** | 본문 1080px 가운데 · grid `629.9px / 345.5px` = **62% / 34%**, gap 4% · 우측 `position: sticky; top: 74px`(54+20) · 고정 바 `none` |
+
+- **<768 하단 여백**: 스크롤 최하단에서 마지막 콘텐츠 bottom 607 → CTA 바 top 611 → 바 bottom 684 = 탭바 top 684 → 뷰포트 740. **마지막 묶음·요약이 가려지지 않는다.**
+- **묶음이 하나뿐이면 sticky 없음**: `mode=single`(온실 1묶음)에서 `data-sticky` 속성 자체가 없고 `position: static`이다 (UX-DR4).
+- 768~900 구간에서 우측 칼럼이 240px 남짓이라 `상품 금액 합계`가 두 줄로 꺾이는 것을 캡처에서 발견해, **장바구니 요약에 한해** 합계 라벨·값에 `white-space: nowrap`을 걸었다(새 수치·새 색 아님).
+
+#### 폭 변경 시 상태 유지 (AC 14) — 결정적으로 확인됨
+
+390에서 (a) 수량 변경 실패 문장, (b) 열린 삭제 확인 줄을 각각 만든 뒤 **1280 → 다시 390**으로 바꿨더니 둘 다 그대로 살아 있었다(`err: "지금은 구매할 수 없는 상품입니다.새로고침"`, `confirm: "유광 도자 머그 삭제 확인"`). 같은 시점에 CTA 바 `display`와 grid만 바뀐다. **`matchMedia`·`innerWidth`·`resize` 사용 0건**(구매자 문서 전체 grep — 주석 4줄만 매치).
+
+#### 수량 스테퍼 (AC 4, D6)
+
+| 시점 | 관측 |
+|---|---|
+| `+` 클릭 직후 | 수량 2→**3 즉시**, 행 금액 64,000→**96,000원 즉시** |
+| 요청 중(스텁 1.2s 지연) | **그 행**의 `−`·`+`·`삭제` 전부 `disabled`, **다른 행은 조작 가능**, skeleton 0개 |
+| 성공 후 | 합계가 서버 값으로 교체(6,112,000→6,144,000원), 배지·CTA 갱신, **skeleton 없음·`scrollY` 불변** |
+| 실패(`422 not_purchasable`) | 수량 **2로 복원** · 행 금액 복원 · 합계 불변 · 그 행 아래 `지금은 구매할 수 없는 상품입니다.` + `새로고침` · **2.5초 뒤에도 문장이 그대로**(자동 재조회·자동 소거 0건) |
+
+**Flutter판 `guard()` finally-invalidate 부채가 갚혔다** — 실패가 화면을 다시 로딩시키지 않고 오류 문장을 덮어쓰지도 않는다.
+
+#### 삭제 (AC 5, D7)
+
+- `삭제` → 그 행이 `삭제할까요? · 삭제 · 취소` 인라인 줄로 바뀐다. `role="group"`, `aria-label="유광 도자 머그 삭제 확인"`. **모달·`window.confirm`·스와이프 0건.**
+- 확인 줄이 열리면 **포커스가 `삭제`로 이동**(`activeElement` = `.i_btn.m_yes`), **`Esc`로 닫으면 원래 `삭제` 버튼으로 되돌아온다**(먹색 포커스 링 `rgb(31, 29, 26)`).
+- 다른 행의 `삭제`를 누르면 **확인 줄은 항상 1개**다.
+- 확인 후 실행 → 항목 5개로 줄고 배지 6→5, CTA 3건→2건, 합계 갱신, 확인 줄 닫힘. 마지막 항목까지 지우면 빈 상태로 전환된다.
+
+#### 담기·바로 구매·로그인 복귀 (Task 8·11)
+
+| 시나리오 | 결과 |
+|---|---|
+| 로그인 상태 `장바구니 담기` | 제출 중 **두 버튼 `disabled`** → 성공 시 CTA 위 인라인 `장바구니에 담았습니다.` + `장바구니 보기`(→`/cart`). **`[role=dialog]` 0개, 토스트 0개** |
+| 같은 조합 재담기 | 서버가 2→3으로 **합산**(화면은 합산을 흉내 내지 않는다). 배지는 행 수라 6 그대로 |
+| `바로 구매` | 담기 후 **`/cart`로 이동**, 기존 4묶음이 함께 보인다(약속을 어기지 않는다). `/checkout` 직행 0건 |
+| **비로그인 담기** | 401 → `/login?next=%2Fproducts%2F…%3Fvariant%3D…%26add%3D1`. 쿠키 사전 판정 0건 |
+| **복귀(`&add=1`)** | 담기가 **정확히 한 번**(수량 2→3) 실행되고 URL이 `?variant=…`로 정리된다. `history.length` 2 — `replace`라 히스토리가 늘지 않는다. **개발 StrictMode 이중 마운트에서도 한 번**(ref 가드) |
+| 복귀 직후 **새로고침** | `add`가 이미 없으므로 **재담기 0건**(수량 3 유지) |
+| `add=1` + **구매 불가 조합** | 자동 실행하지 않고 `add`만 제거, CTA 두 개 비활성 유지 |
+
+#### 실패 경로 · 세션 (Task 11)
+
+| 상황 | 화면 |
+|---|---|
+| 상류 중단(503) | `일시적인 오류입니다.` + `다시 시도`. 문서에 `service_unavailable`·HTTP 숫자 0건 |
+| `GET /carts` 401 | `slur_role`이 남아 미들웨어는 통과하지만 **`/login?next=%2Fcart`로 `replace`** |
+| 담기 401 | `/login?next=<상세 경로>&add=1` (위 표) |
+| 수량 실패 | 되돌리기 + `message` + `새로고침`, 재조회 없음 |
+
+문서 전체 텍스트 스캔에서 `not_purchasable`·`unauthorized`·`http_error`·HTTP 상태 코드 **0건**(매치된 세 자리 숫자는 전부 금액 자릿수였다).
+
+#### 접근성 · 색
+
+- **Tab 순서(390)**: `− > + > 삭제 > 삭제 > 삭제 > + > 삭제 > − > 삭제 > 삭제 > 주문하기 (3건) > 홈 > 장바구니 > 주문내역 > 내 정보`. **하단 고정 바가 콘텐츠보다 먼저 걸리지 않는다**(UX-DR6). 잠긴 체크박스는 탭에서 빠지지만 태그·안내 문장·`aria-label`이 같은 사실을 텍스트로 전달한다.
+- 스테퍼 `−`·`+`는 **글자**다(위험 12의 `svg { stroke-width }` 전역 규칙을 물려받지 않는다). 시각 26px을 유지하고 `::before` 오버레이로 히트 영역만 44×44로 넓혔다. `삭제`도 `min-height: 44px`.
+- 1280 문서 전체 computed style 스캔: **파랑 `rgb(47,107,255)` 0건 · `box-shadow` 0건.**
+- 포커스 링은 전부 먹색 `rgb(31, 29, 26)`.
+
+#### 정적 검증
+
+| 항목 | 결과 |
+|---|---|
+| `npx tsc --noEmit` | **0** |
+| `npm run lint` | **0 errors · 0 warnings** (A-E456-5 베이스라인 유지) |
+| `npx next build` | **성공** — 43 라우트. 신규는 `/api/carts` · `/api/carts/items` · `/api/carts/items/[id]` **셋뿐**이고 페이지 URL 변경 0건 |
+| `grep #2f6bff\|--color-brand\|--shadow-\|box-shadow` in `(buyer)` | 실제 선언 **0건**(주석 4줄 + 8.1의 포커스 링 `box-shadow: none` 1줄만 매치 — 기존 코드) |
+| `git diff --stat` | `apps/api` **0건** · `apps/mobile` **0건** · `app/styles/slur/**` **0건** · `app/styles/buyer/**` **0건** · `package.json`·`package-lock.json` **0건** · `lib/auth.ts` **0건** · `seller-pack.tsx` **0건** |
+
+#### 구현 중 내린 작은 판단 (D1~D12 밖, 근거를 남긴다)
+
+1. **`buyer-icons.tsx`에 `"use client"`를 붙였다.** `CartBadge`가 컨텍스트를 읽어야 하는데, 이 모듈의 값 소비자(탭바·상단 내비·상단바)는 원래부터 전부 클라이언트 컴포넌트였고 서버 컴포넌트(`buyer-shell`)는 `import type`으로 타입만 가져간다(컴파일에서 지워진다). **세 호출부 `<CartBadge />`는 한 글자도 바뀌지 않았다.** `count` prop은 override로 남겨 타입 변경이 tsc를 깨지 않게 했다.
+2. **`GENERIC_MESSAGE`를 `buyer-feedback.tsx`에서 export했다.** `cart-api.ts`가 같은 최후 문장을 쓰는데 상수를 복제하면 두 화면의 문장이 갈린다. 값·용도는 그대로다.
+3. **`.b_seller_pack.m_unavailable .b_brand_label`에 `--b-ink-unavailable`을 추가했다.** 목업의 `.group.dead .brandline`이 그렇게 돼 있는데 8.1의 규칙은 `.i_items`만 덮고 있어 브랜드 라벨만 먹색으로 남았다. 기존 선언을 고치지 않고 한 줄 추가했다.
+4. **`.b_tag.m_unavailable`(면 있는 태그)을 `buyer.css`에 뒀다.** `type.css`의 `.b_tag`는 글자 규격만 갖는다. 8.6의 상태 태그가 같은 면을 쓸 것이므로 장바구니 전용 클래스로 가두지 않았다. 값(`--b-accent-soft` 면 + `--b-accent` 글자 + `rounded-xs`)은 전부 기존 토큰이다.
+5. **`.b_seller_pack .i_foot`의 구획선을 장바구니 안에서만 덮었다.** 8.1의 `i_foot`은 배송비·액션용 상단 구획선을 갖는데, 구매 불가 안내 상자에는 그 선이 필요 없다. `.b_cart .b_seller_pack .i_foot`로만 덮어 8.5·8.6의 푸터 계약을 건드리지 않았다.
+6. **조작 행은 `space-between`이 아니라 좌측 정렬 + 20px 간격**이다. 목업은 270px 칼럼 기준이라 `space-between`이 자연스럽지만, ≥768 좌측 칼럼(≈630px)에서는 스테퍼와 `삭제`가 500px 벌어진다(UX-DR5). `.b_row`(560px)와 함께 스토리 Task 4의 지시를 그대로 따랐다.
+7. **`not_found`(404)만 실패 후 재조회한다.** 이미 지워진 항목이라 재조회가 오류를 덮어써도 손해가 없다 — R6 에러 code 표가 명시한 유일한 예외다. 나머지 code는 재조회하지 않는다.
+8. **로딩·오류·빈 상태를 `result === null` 파생으로 만들었다.** `react-hooks/set-state-in-effect`가 effect 본문의 동기 `setState`를 **error**로 잡는다(8.3의 학습). 자동 담기 실행도 `setTimeout(…, 0)` 뒤로 밀어 같은 규칙을 지켰다.
+
+#### 미실행 (통과했다고 쓰지 않는다)
+
+- **`cd apps/api && uv run pytest -q` — 미실행.** 이 머신의 PATH에 `uv`도 `docker`도 없다. **이 스토리는 `apps/api`를 한 파일도 열지 않았고 `git diff --stat`에 `apps/api` 0건**이므로 153건에 영향을 줄 경로가 없다. 실행 환경이 있는 곳에서 한 번 확인해 주기 바란다.
+- **프로덕션 실데이터 확인 — 미실행.** 위 "데이터 확보" 참조. **R3(프록시 뒤 Origin 검사)도 여기 걸린다** — `assertSameOrigin`을 타는 신규 라우트가 셋(POST·PATCH·DELETE) 생겼으므로 **배포 후 담기·수량 변경·삭제를 각각 1회씩** 프로덕션에서 눌러 봐야 done이다. 로컬 확인만으로 넘기지 않는다.
+- **봉투 없는 실패(네트워크 단절) — 코드 경로만 확인.** 상류가 죽어도 BFF가 봉투를 만들어 주므로 브라우저↔BFF 단절을 재현하지 못했다(8.3과 같은 한계).
+
+#### 사람이 판단할 것
+
+- **`주문하기 (N건)`는 8.5 전까지 죽은 링크다.** `/checkout` 페이지가 없고 미들웨어 matcher에는 이미 등록돼 있어 로그인 상태에서 **404**가 뜬다. 스토리 위험 8의 지시대로 버튼을 비활성으로 만들지 않았다 — 8.5가 붙으면 그대로 살아난다.
+- **문구 `[ASSUMPTION]` 4개** — `주문서에서 확인` · `상품 금액 합계` · `배송비는 판매자마다 다르며 배송지를 입력하면 주문서에서 확정됩니다.` · `삭제할까요?`. 스파인 Voice·Tone 표에 없다. **Slur 확인 항목** (D2).
+- **위험 1 재확인** — 장바구니에 배송비를 실을 데이터가 없어 EXPERIENCE.md Flow 2의 절정("화면이 조용히 계산을 끝내 두었다")이 v1에서 재현되지 않는다. 근본 해소는 백엔드 변경(장바구니 응답에 `seller_id` + 기본 배송비, 또는 우편번호 없는 `preview` 모드)이며 Epic 8 경계 밖이다.
+- **위험 2 재확인** — 잠긴 체크박스는 눌러도 반응이 없다. `aria-label` + 태그 + 안내 문장으로 이유를 말하게 했지만 위화감은 남는다(D3의 알려진 절충).
+- **위험 4 재확인** — `sellers.brand_name`에 UNIQUE 제약이 없어 두 판매자가 같은 브랜드명을 쓰면 한 묶음으로 합쳐진다. 관리자 승인 시 브랜드명 중복을 막는 규칙이 어디에도 없다.
 
 ### File List
 
-(구현 시 기록)
+**신규 (10)**
+
+```
+apps/web/app/api/carts/route.ts                    GET  → /api/v1/carts
+apps/web/app/api/carts/items/route.ts              POST → /api/v1/carts/items          (assertSameOrigin)
+apps/web/app/api/carts/items/[id]/route.ts         PATCH · DELETE                       (assertSameOrigin)
+apps/web/app/(buyer)/cart-api.ts                   조회·담기·수량·삭제 fetch 래퍼 (204 분기 포함)
+apps/web/app/(buyer)/cart-count.tsx                CartCountProvider · useCartCount (D5)
+apps/web/app/(buyer)/cart/cart-view.tsx            본체 — 조회·묶음·수량·삭제·요약·CTA
+apps/web/app/(buyer)/cart/cart-pack.tsx            묶음 하나 + 항목 행 + 확인 줄
+apps/web/app/(buyer)/cart/cart.css                 장바구니 전용 배치·구매 불가 표기·골격
+apps/web/app/(buyer)/cart/constants.ts             MAX_CART_QTY 등 (D12)
+```
+
+**수정 (8)**
+
+```
+apps/web/app/(buyer)/cart/page.tsx                 자리표시 → CartView (셸 호출부 3값 불변)
+apps/web/app/(buyer)/layout.tsx                    CartCountProvider로 children을 감쌈
+apps/web/app/(buyer)/buyer-icons.tsx               "use client" + CartBadge가 컨텍스트를 읽음
+apps/web/app/(buyer)/amount-summary.tsx            null 값 미확정 문구 · totalLabel prop · formatWon 재export
+apps/web/app/(buyer)/buyer-feedback.tsx            GENERIC_MESSAGE export (문장 복제 방지)
+apps/web/app/(buyer)/buyer.css                     .b_cta_bar 승격(+m_stack) · .b_confirm_row · .b_stepper · .b_tag.m_unavailable · i_value.m_pending
+apps/web/app/(buyer)/browse.css                    .b_cta_bar 선언 제거 · .b_cta_slot 토글로 이동
+apps/web/app/(buyer)/products/[id]/product-detail.tsx  TODO(8.4) → 담기·바로 구매·복귀 자동 담기
+```
+
+**변경 없음(의도적)**: `apps/api/**` · `apps/mobile/**` · `apps/web/lib/auth.ts` · `app/styles/slur/**` · `app/styles/buyer/**` · `seller-pack.tsx` · `middleware.ts` · `package.json` · `package-lock.json`
 
 ### Change Log
 
 | 날짜 | 변경 | 비고 |
 |---|---|---|
 | 2026-07-22 | 스토리 작성 (D1~D12, Task 0~11) | baseline `10a2c4a` |
+| 2026-07-22 | 구현 — BFF 3파일·장바구니 화면·배지 컨텍스트·상품상세 담기 연결. tsc 0 / lint 0·0 / build 성공. 390·700·768·1280 렌더 확인(스텁) | Status → review. pytest·프로덕션 확인은 미실행 |

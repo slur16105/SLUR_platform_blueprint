@@ -1,0 +1,162 @@
+/* ─────────────────────────────────────────────
+   장바구니 전용 배치 (8.4 D10)
+   공용 부품(하단 고정 CTA 바·인라인 확인 줄·수량 스테퍼·태그)은 buyer.css에 있다.
+   여기에는 이 화면만의 배치와 구매 불가 표기만 둔다.
+
+   🚨 --b-* 토큰과 .b_* 역할 클래스만 쓴다. 새 hex·새 px 스케일을 만들지 않는다 (UX-DR1).
+   🚨 box-shadow 선언 0건 (UX-DR12). 깊이는 8px 띠·1px hairline·테두리 상자로만 만든다.
+   🚨 폭 전환은 CSS만으로 한다 — matchMedia·resize 사용 0건 (AC 14).
+   ───────────────────────────────────────────── */
+
+/* < 768 : 한 칼럼. 묶음은 자기 좌우 여백(.b_seller_pack의 padding)을 그대로 쓰므로
+           컨테이너에 padding을 주지 않는다 — hairline이 화면 끝까지 그어져야 한다.
+   ≥ 768 : 좌 62 / 우 34, column-gap 4%. (62 + 34 + 4 = 100) */
+.b_cart {
+  width: 100%;
+  /* 하단 고정 CTA 바(13 + 46 + 13 + 1px 테두리)만큼. 탭바 높이는 셸이 이미 주고 있다. */
+  padding-bottom: 73px;
+}
+.b_cart .i_packs { min-width: 0; }
+
+@media (min-width: 768px) {
+  .b_cart {
+    display: grid;
+    grid-template-columns: 62fr 34fr;
+    column-gap: 4%;
+    align-items: start;
+    max-width: var(--b-content-max);
+    margin-inline: auto;
+    padding-block: var(--b-section-y);
+    padding-bottom: var(--b-section-y);
+    padding-inline: var(--b-gutter);
+  }
+  /* 여백은 컨테이너가 갖는다 — 묶음의 기본 규칙을 고치지 않고 장바구니 안에서만 덮는다 */
+  .b_cart .b_seller_pack { padding-inline: 0; }
+}
+
+/* ── 금액 요약 칼럼 ─────────────────────────────
+   < 768 : 묶음 목록과 8px 종이 접기 띠로 구획된다 (DESIGN.md 깊이 3수단 중 하나)
+   ≥ 768 : 1px hairline 테두리 상자 — 반응형 표가 "2단 우측 칼럼에 한해" 허용한 유일한 예외.
+           그림자는 여전히 금지다. */
+.b_cart .i_summary {
+  padding: var(--b-space-5) var(--b-gutter) var(--b-space-1);
+  border-top: var(--b-band) solid var(--b-paper-shade);
+}
+.b_cart .i_note { margin-top: var(--b-space-4); }
+.b_cart .i_cta_side { display: none; }
+/* 합계 줄은 접지 않는다 — 768~900 구간에서 우측 칼럼이 240px 남짓이라
+   `상품 금액 합계`가 두 줄로 꺾이면 21px 총액과 라벨이 어긋난다. */
+.b_cart .i_summary .i_total_label,
+.b_cart .i_summary .i_total_value { white-space: nowrap; }
+
+@media (min-width: 768px) {
+  .b_cart .i_summary {
+    padding: var(--b-space-5);
+    border: 1px solid var(--b-hairline);
+    border-radius: var(--b-rounded);
+  }
+  /* 묶음이 하나뿐이면 sticky를 걸지 않는다 (UX-DR4) — 판정은 cart-view가 data-sticky로 준다 */
+  .b_cart[data-sticky="on"] .i_summary {
+    position: sticky;
+    top: calc(var(--b-topbar-h) + var(--b-space-5));
+  }
+  .b_cart .i_cta_side { display: block; margin-top: var(--b-space-5); }
+}
+
+/* ── 항목 행 ────────────────────────────────────
+   사진 74px → 상품명 → 옵션 → 행 금액 → (스테퍼 ↔ 삭제) 순서. */
+.b_cart_item .i_thumb {
+  display: block;
+  flex: 0 0 74px;
+  width: 74px;
+  height: 74px;
+  overflow: hidden;
+  border: 1px solid var(--b-hairline);
+  border-radius: var(--b-rounded-sm);
+  /* 이미지가 없는 항목은 같은 크기의 종이 그늘 면으로 자리를 지킨다 (AC 2) */
+  background: var(--b-paper-shade);
+}
+.b_cart_item .i_img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.b_cart_item .i_info { flex: 1; min-width: 0; }
+.b_cart_item .i_name { margin-top: 5px; }
+.b_cart_item .i_option { margin-top: 4px; }
+.b_cart_item .i_price { margin-top: 9px; }
+
+/* 조작 행 — 칼럼이 아무리 넓어도 좌측 정렬이다.
+   space-between이면 ≥768 좌측 칼럼에서 스테퍼와 `삭제`가 500px 벌어진다 (UX-DR5). */
+.b_cart_item .i_ops {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--b-space-5);
+  margin-top: 5px;
+}
+
+/* `삭제` — 밑줄 텍스트. 시각은 11.5px 그대로 두고 히트 영역만 44px로 넓힌다 (UX-DR7). */
+.b_del {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--b-space-1);
+  border: none;
+  background: none;
+  color: var(--b-ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--b-strike-line);
+  cursor: pointer;
+}
+.b_del:disabled { color: var(--b-disabled-ink); cursor: default; }
+
+/* 행 단위 실패 문장 — 타이머로 자동 소거하지 않는다 (D6).
+   🚨 HTTP 코드·code 문자열을 여기에 쓰지 않는다. 문장은 봉투의 message 그대로다. */
+.b_cart_item .i_row_err { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.b_cart_item .i_refresh {
+  border: none;
+  background: none;
+  color: var(--b-ink);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ── 구매 불가 표기 (D4) ────────────────────────
+   진실 단위는 항목이다. 묶음이 통째로 회색이 되는 것은 그 묶음의 모든 항목이 불가일 때뿐이며,
+   그때도 색을 칠하는 주체는 아래의 행 규칙이다. */
+.b_cart_item[data-unavailable="true"] .i_thumb { filter: grayscale(.85) brightness(1.06); }
+.b_cart_item[data-unavailable="true"] .i_name,
+.b_cart_item[data-unavailable="true"] .i_option { color: var(--b-ink-unavailable); }
+.b_cart_item[data-unavailable="true"] .i_price {
+  color: var(--b-ink-unavailable);
+  font-weight: 600;
+  text-decoration: line-through;
+  text-decoration-color: var(--b-strike-line);
+}
+.b_cart_item[data-unavailable="true"] .b_stepper { opacity: .5; }
+
+/* 묶음 하단 안내 상자 — 묶음 전체가 빠질 때만 참인 문장이다.
+   SellerPack의 i_foot는 배송비·액션용 구획선을 갖고 있어 장바구니에서만 덮는다. */
+.b_cart .b_seller_pack .i_foot { display: block; margin-top: var(--b-space-3); padding-top: 0; border-top: none; }
+.b_deadnote {
+  padding: 9px 11px;
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-accent-wash);
+  color: var(--b-accent);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+/* ── 로딩 골격 ──────────────────────────────────
+   묶음 모양 그대로. 화면 중앙 스피너를 쓰지 않는다 (UX-DR9). */
+.b_cart_skeleton { padding: 18px var(--b-gutter); border-top: 1px solid var(--b-hairline); }
+.b_cart_skeleton .i_head { width: 92px; height: 11px; }
+.b_cart_skeleton .i_row { display: flex; gap: 12px; margin-top: 14px; max-width: var(--b-row-max); }
+.b_cart_skeleton .i_thumb { flex: 0 0 74px; width: 74px; height: 74px; }
+.b_cart_skeleton .i_lines { flex: 1; min-width: 0; }
+.b_cart_skeleton .i_line { height: 12px; margin-top: 6px; }
+.b_cart_skeleton .i_line.m_short { width: 40%; }
+.b_cart_skeleton .i_line.m_price { width: 28%; margin-top: 12px; }
+@media (min-width: 768px) {
+  .b_cart_skeleton { padding-inline: 0; }
+}

@@ -327,7 +327,9 @@
 /* ── CTA 두 자리 (D9) ──────────────────────────
    같은 버튼 쌍을 정보 칼럼 안과 하단 고정 바 두 곳에 렌더하고 CSS display로 전환한다.
    matchMedia로 조건부 렌더하면 폭이 바뀔 때 언마운트되어 선택 상태가 날아간다.
-   display:none인 쪽은 접근성 트리에서도 빠지므로 두 번 낭독되지 않는다. */
+   display:none인 쪽은 접근성 트리에서도 빠지므로 두 번 낭독되지 않는다.
+   🚨 .b_cta_bar(고정 바 자체)는 buyer.css로 승격했다 — 장바구니(8.4)·주문서(8.5)가 같이 쓴다.
+      여기에 값을 다시 선언하지 않는다. */
 .b_cta_pair { display: flex; gap: 9px; }
 .b_cta_pair .b_btn { flex: 1; }
 /* ghost는 1.4px 먹색 테두리 (DESIGN button-ghost). 비활성은 .b_btn:disabled가 받는다. */
@@ -337,18 +339,12 @@
   background: none;
   color: var(--b-ink);
 }
-.b_cta_bar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: var(--z-sticky);
-  padding: var(--b-cta-bar-y) var(--b-gutter) var(--b-cta-bar-bottom);
-  border-top: 1px solid var(--b-hairline);
-  background: var(--b-paper);
-}
-.b_cta_pair.m_inline { display: none; margin-top: var(--b-section-y); }
+/* 담기 결과 한 줄(8.4) — 토스트·모달을 만들지 않고 CTA 바로 위에 인라인으로 놓는다. */
+.b_cta_slot .i_msg { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.b_cta_slot .i_msg.m_ok { color: var(--b-ink-secondary); }
+.b_cta_slot .i_msg.m_err { color: var(--b-accent); }
+.b_cta_slot .i_msg .i_link { color: var(--b-ink); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.b_cta_slot.m_inline { display: none; margin-top: var(--b-section-y); }
 @media (min-width: 768px) {
-  .b_cta_bar { display: none; }
-  .b_cta_pair.m_inline { display: flex; }
+  .b_cta_slot.m_inline { display: block; }
 }

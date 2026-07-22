@@ -1,9 +1,17 @@
+"use client";
+
 /* 구매자 표면 아이콘 — 22px 인라인 SVG.
    아이콘 폰트·이모지·외부 CDN을 쓰지 않는다 (UX-DR16).
    선 굵기는 attribute가 아니라 CSS(stroke-width: var(--b-tab-stroke))로 준다 —
-   presentation attribute는 var()를 해석하지 않기 때문이다. */
+   presentation attribute는 var()를 해석하지 않기 때문이다.
+
+   "use client"는 CartBadge가 배지 컨텍스트를 읽기 때문에 붙는다 (8.4 D5).
+   값 소비자(탭바·상단 내비·상단바)는 원래부터 전부 클라이언트 컴포넌트였고,
+   서버 컴포넌트(buyer-shell)는 이 모듈에서 타입만 가져간다(import type — 컴파일에서 지워진다). */
 
 import type { ComponentType } from "react";
+
+import { useCartCount } from "./cart-count";
 
 export type BuyerTab = "home" | "cart" | "orders" | "me";
 
@@ -67,14 +75,17 @@ export function IconBack({ className }: IconProps) {
   );
 }
 
-/* 장바구니 개수 배지 — 슬롯만 만든다.
-   값(담긴 항목 수 전체, 구매 불가 포함)을 채우는 것은 8.4 소관이므로
-   count가 없으면 아무것도 그리지 않는다. */
+/* 장바구니 개수 배지 — 값은 (buyer) 레이아웃의 컨텍스트 하나가 소유한다 (8.4 D5).
+   담긴 항목 수 전체(구매 불가 포함)이며 수량의 합이 아니다.
+   값이 없으면(비로그인·조회 전·401) 아무것도 그리지 않는다.
+   count prop은 override로 남긴다 — 세 호출부는 prop 없이 부르고 있고 그대로 둔다. */
 export function CartBadge({ count }: { count?: number }) {
-  if (count === undefined || count <= 0) return null;
+  const { count: fromContext } = useCartCount();
+  const value = count ?? fromContext;
+  if (value === undefined || value <= 0) return null;
   return (
-    <span className="b_badge" aria-label={`장바구니 ${count}건`}>
-      {count}
+    <span className="b_badge" aria-label={`장바구니 ${value}건`}>
+      {value}
     </span>
   );
 }
