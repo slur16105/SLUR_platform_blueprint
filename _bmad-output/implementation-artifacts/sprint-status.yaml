@@ -154,7 +154,7 @@ action_items:
   - { id: A-E8-4, epic: 8, status: open, owner: "Claude→Slur", action: "apps/web 자동 단언 1스펙 프로토타입(화면 무관 명제 5개) 제시 → 채택 판단. 이번 에픽의 실버그 3건과 리뷰 지적 다수가 빌드를 통과하는 종류였다" }
   - { id: A-E8-5, epic: 8, status: open, owner: "Slur+Claude", action: "uv·docker 확보 → pytest 153 실측 1회 + 실 백엔드로 화면 1개 대조 + CLAUDE.md의 (149) 주석을 153으로 정정" }
   - { id: A-E8-6, epic: 8, status: done, owner: "Claude", action: "스토리 정정 규약 신설 + 소급 정정 — 8.6 D11·Completion Notes가 코드와 반대로 적혀 있던 것 해소(2026-07-22)" }
-  - { id: A-E8-7, epic: 8, status: open, owner: "Claude", action: "UX 스파인의 사실 주장 전수 대조 1회 + 근거를 파일:심볼로 병기하는 규약. 이번에 정정된 7건은 전수 대조가 아니라 우연히 걸린 것들이다" }
+  - { id: A-E8-7, epic: 8, status: done, owner: "Claude", action: "UX 스파인 전수 대조 완료(2026-07-22) — 사실 주장 90건 중 84건 대조, 불일치 15건 정정 + 파생 모순 7건, 근거 병기 37곳. 15건 중 3건이 앞선 정정의 미전파 잔여였다 — 정정 시 전체 재독이 규약이 되어야 한다" }
   - { id: A-E8-8, epic: 8, status: open, owner: "Slur", action: "부채 33건의 게이트 분류 승인 + [ASSUMPTION] 문구 8건 확인 + archive/* 태그 원격 푸시 판단(현재 원격 태그 0개, 커밋 c484141이 로컬에만 존재)" }
   - { id: A-E8-9, epic: 8, status: open, owner: "Slur", action: "brand_name 중복 승인 금지를 운영 규칙으로 명문화 — 코드 변경 0, 비용 0인데 어디에도 없다. 동명 브랜드 2팀이면 장바구니 묶음이 합쳐지고 배송비 2건이 1건처럼 보인다" }
 
