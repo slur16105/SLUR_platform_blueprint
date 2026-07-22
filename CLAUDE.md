@@ -12,7 +12,7 @@ SLUR 커머스 플랫폼 1호 — 운영자가 판매자를 직접 선별·초�
 
 ```bash
 # API (apps/api) — 로컬 Postgres는 docker compose up
-cd apps/api && uv run pytest -q          # 전체 테스트 (149)
+cd apps/api && uv run pytest -q          # 전체 테스트 (153 — 마지막 실측 2026-07-20, 커밋 20c6d45)
 uv run alembic upgrade head              # 마이그레이션
 # 웹 (apps/web)
 cd apps/web && npx tsc --noEmit && npm run lint
