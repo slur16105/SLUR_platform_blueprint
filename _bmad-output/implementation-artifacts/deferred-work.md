@@ -114,3 +114,19 @@
 - **`POST /api/v1/auth/kakao/native` 계열이 클라이언트 0인 백엔드 잔재가 된다** — Flutter 앱이 유일한 사용처였다. 라우터·서비스·`kakao_app_id` 설정·`KAKAO_APP_ID` 환경변수·**테스트 4건**이 딸려 있어 지우면 153 → 149가 되고 Epic 8 전체가 근거로 삼은 "테스트 153건 무변경"이 깨진다. Epic 8 완료 후 별도로 정리한다. **`railway.ts`의 `KAKAO_APP_ID` 선언만 먼저 빼면 회고 R1식 사고가 재현되므로** 백엔드 코드와 반드시 함께 정리한다
 - **`CLAUDE.md`의 `# 전체 테스트 (149)` 주석이 실제 153과 어긋나 있다** — A-E456-2·A-E456-6에서 테스트가 늘었는데 명령어 주석이 따라가지 않았다. Story 8.8이 같은 파일을 손대므로 그때 함께 고치는 것이 자연스럽다
 
+## Deferred from: Epic 8 코드 리뷰 (2026-07-22)
+
+보안·경계 리뷰와 회귀·정합성 리뷰 2종에서 나온 것 중, 즉시 고치지 않고 남긴 항목.
+즉시 고친 것(인증 BFF 캐시 헤더·쿠키 소거·로그아웃 CSRF·법적 고지 위치·구매 불가 텍스트 표기 등)은 커밋 `37d80a8` 이후에 있다.
+
+- **콘솔 BFF 9개 핸들러에 `assertSameOrigin`이 없다** (Epic 8 이전 코드) — `api/admin/{applications,categories,deposits,orders/actions,settings}`, `api/seller/orders`, `api/sellers/{apply,me,products}`. SameSite=Lax 덕에 권한 상승은 아니지만, 상류가 401을 주면 `proxyWithRefresh`가 `clearSessionCookies`를 호출해 **임의 사이트가 판매자·관리자를 강제 로그아웃**시킬 수 있다. Epic 8 신규 라우트 8개는 전부 통과했다. 9개를 한 번에 손대는 것은 콘솔 회귀 검증이 따로 필요해 분리한다
+- **`assertSameOrigin`이 공격자 제어 헤더 `x-forwarded-host`를 신뢰한다** — 실측상 `Origin: evil.com` + `x-forwarded-host: evil.com`으로 상류까지 통과한다. 다만 브라우저에서는 커스텀 헤더가 preflight를 유발하고 OPTIONS에 CORS 헤더가 없어 차단되므로 **현재 브라우저 경로로는 악용 불가**. `[확인 필요]` Railway 엣지가 클라이언트의 `x-forwarded-host`를 덮어쓰는지 — 통과시킨다면 유일한 CSRF 방어가 무력화된다. 프록시 동작 확인 후 신뢰 헤더 목록을 좁힐지 판단
+- **`/api/auth/signup`만 요청 본문을 통째로 상류에 넘긴다** — 장바구니·주문 BFF는 필드 화이트리스트를 쓴다. 현재 `SignupRequest`에 권한 필드가 없고 pydantic이 extra를 무시해 무해하나, 백엔드 스키마에 필드가 하나 느는 날 경계가 없다
+- **등재된 CSP 부채에 `cdn.jsdelivr.net`이 빠져 있다** — `app/layout.tsx`가 Pretendard CSS를 외부 CDN에서 로드한다(구매자 전 화면 포함). CSP 도입 시 `style-src`·`font-src` 누락으로 폰트가 조용히 깨진다. 제3자 스크립트 고지(오픈 게이트) 검토 범위에 폰트 CDN도 들어가는지 함께 판단
+- **`/api/products`의 `page`가 무검증 전달** — `/api/orders` GET은 정수 1~10000을 강제하는데 여기는 안 한다. 주입은 없고 상류가 422를 주므로 일관성 문제
+- **문구·상수 중복** — `"주문을 찾을 수 없습니다."` 4벌, `무통장입금` 2벌, `무료배송` 2벌, `쇼핑 계속하기` 링크 3벌, `OrdersLink` 2벌+인라인 1. 8.4가 `cart/constants.ts` 패턴을 세웠으나 8.5·8.6으로 이어지지 않았다. (`formatWon` 이중화는 재발하지 않았다 — 전 호출부가 `./format`을 쓴다)
+- **UUID 정규식 6벌** — `lib/public-api.ts`가 export하는데 임포트하는 곳은 1곳뿐이고 5곳이 같은 리터럴을 각자 적는다
+- **폼 필드 프리미티브 3벌** — `signup`·`checkout/address-form`의 `Field`와 `login`의 인라인 마크업이 라벨/`htmlFor`/`aria-describedby`/오류 한 줄이라는 같은 규약(UX-DR9)을 세 번 구현한다. 셋이 같은 CSS를 공유하므로 컴포넌트도 한 벌로 모을 수 있다
+- **콘솔에 실제로 간 변경이 문서화된 1건보다 많다** — 부채에는 아이콘·manifest만 예외로 적혀 있으나 실제로는 ⓐ `globals.css`의 `overflow-x: hidden → clip`(구매자 sticky를 살리는 수정인데 콘솔 문서에도 적용) ⓑ `/login`이 콘솔 파랑 폼에서 구매자 종이톤으로 교체 ⓒ `/no-role` 문구 변경·링크 추가. ⓐ~ⓒ 모두 EXPERIENCE의 라우트·IA 절이 사실상 승인한 결정이지만 "콘솔 무변경" 표현은 이제 정확하지 않다
+- **`login`·`signup`이 상단 내비에 활성 항목을 만들지 않는다** — 주문완료는 `tab="orders"`를 붙였는데 이 둘은 안 붙였다. EXPERIENCE의 "현재 위치 표시가 비는 화면이 있으면 안 된다"가 탐색 맥락 밖 화면(로그인·회원가입)에도 적용되는지 문서가 갈린다. `[확인 필요]`
+
