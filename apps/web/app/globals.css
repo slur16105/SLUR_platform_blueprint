@@ -17,7 +17,12 @@ html {
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  /* hidden이 아니라 clip이어야 한다. overflow-x: hidden은 body를 스크롤 컨테이너로
+     만들어 position: sticky 자손이 붙지 못한다 — 500px 스크롤 시 sticky 요소의
+     top이 -500이 된다(실측). clip은 같은 방식으로 잘라내되 스크롤 컨테이너를
+     만들지 않아 sticky가 살아난다. 구매자 화면의 상단바·2단 요약 칼럼이 여기에
+     걸려 있다. (2026-07-22, Story 8.5 구현 중 발견) */
+  overflow-x: clip;
 }
 
 body {
