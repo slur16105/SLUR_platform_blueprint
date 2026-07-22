@@ -1,5 +1,3 @@
-// 8.6이 목록(list)·묶음 취소(cancel)를 이 파일에 추가한다 — 새 파일을 만들지 않는다.
-
 /* 주문 API 클라이언트 래퍼 — 주문서(8.5)·주문완료(8.5)·주문내역/주문상세(8.6)가 함께 쓴다.
    그래서 checkout/ 안이 아니라 라우트 그룹 루트에 평평하게 둔다.
    page/layout/route가 아니므로 라우트를 만들지 않는다.
@@ -74,8 +72,40 @@ export type OrderCreateResponse = {
   deposit_due_at: string;
 };
 
-/* ── GET /api/v1/orders/{id} ───────────────────
-   8.5가 쓰는 필드는 넷뿐이다. 나머지(sub_orders·주소·금액 내역)는 8.6이 더한다. */
+/* ── GET /api/v1/orders?page=n ─────────────────
+   최신순(created_at DESC, id DESC). 응답에 **페이지 크기가 없다** — 화면은 누적 길이와 total만 비교한다 (D4).
+   ⚠️ OrderCard에 image_url이 없다. 주문 라인은 스냅샷이고 이미지는 스냅샷 대상이 아니다 —
+      사진 자리를 비워 두지 않고 아예 그리지 않는다 (D5, 위험 1).
+   ⚠️ sub_orders에 sub_order_id가 없다 — 목록에서는 취소할 수 없다(의도된 설계). */
+export type OrderCardSub = {
+  brand_name: string;
+  /** 묶음 상태. 목록은 브랜드명 나열에만 쓴다 (D3) */
+  display_status: string;
+};
+
+export type OrderCard = {
+  order_id: string;
+  /** UUID 뒤 8자리 대문자 — 🚨 클라 가공 금지 */
+  order_no: string;
+  /** ISO(UTC) */
+  created_at: string;
+  /** 대표 상태 — 서버 파생 (AD-12). 묶음 상태들로 클라이언트가 계산하지 않는다 */
+  display_status: string;
+  /** 활성 라인만 합산 (전-취소 주문은 원 주문 금액 폴백) */
+  grand_total: number;
+  /** 서버가 조립한 `유광 도자 머그 외 1건` — 클라가 "외 n건"을 만들지 않는다 */
+  title: string;
+  sub_orders: OrderCardSub[];
+};
+
+export type OrderListResponse = {
+  items: OrderCard[];
+  /** 전체 건수 — `더 보기` 판정의 유일한 기준 (누적 길이 < total) */
+  total: number;
+  page: number;
+};
+
+/* ── GET /api/v1/orders/{id} ─────────────────── */
 export type DepositInfo = {
   /** 잔여 활성분 — 부분 취소를 반영한 값이다 (5.1, 과입금 방지) */
   grand_total: number;
@@ -86,13 +116,71 @@ export type DepositInfo = {
   expired: boolean;
 };
 
+/** 주문 라인 — 스냅샷이다 (AD-7).
+ *  ⚠️ image_url도 variant_id도 없다. 사진을 그릴 경로가 존재하지 않는다 (D5, 위험 1). */
+export type OrderLineView = {
+  product_name: string;
+  /** 서버가 조립한다. 옵션이 없으면 "" */
+  option_text: string;
+  unit_price: number;
+  extra_price: number;
+  quantity: number;
+  line_total: number;
+  /** "ordered" | "canceled" — 라인 단위 부분 취소는 관리자 몫이다 (AD-6, D10) */
+  status: string;
+};
+
+export type OrderSubView = {
+  /** 취소 API의 키 */
+  sub_order_id: string;
+  brand_name: string;
+  /** 묶음 독립 상태 (FR-15) — 주문 전체로 뭉개지 않는다 */
+  display_status: string;
+  /** 배송중 전에는 null */
+  carrier: string | null;
+  /** FR-21 — 표시만. 추적 링크·외부 연동을 만들지 않는다 */
+  tracking_number: string | null;
+  /** 🚨 취소된 묶음도 원래 값 그대로 온다 (합계에서는 빠져 있다 — D10이 취소선으로 처리) */
+  shipping_fee: number;
+  remote_extra_fee: number;
+  /** 🚨 취소 버튼의 유일한 판정 근거 — 서버 파생 (AD-12). display_status로 자체 판단하지 않는다 (D2) */
+  cancellable: boolean;
+  items: OrderLineView[];
+};
+
 export type OrderDetailResponse = {
   order_id: string;
   /** UUID 뒤 8자리 대문자 — 🚨 클라 가공 금지 (위험 6) */
   order_no: string;
+  /** ISO(UTC) */
+  created_at: string;
+  /** 대표 상태 — 서버 파생 (AD-12) */
+  display_status: string;
+  recipient_name: string;
+  /** 🚨 숫자만 온다 (^\d{9,11}$). 하이픈은 표시 계층이 넣는다 (D11) */
+  recipient_phone: string;
+  postal_code: string;
+  address1: string;
+  /** 빈 문자열 가능 — 행을 지우지 않고 `—`로 자리를 지킨다 */
+  address2: string;
+  /** 빈 문자열 가능 */
+  order_note: string;
+  sub_orders: OrderSubView[];
+  item_total: number;
+  /** 🚨 기본 배송비 + 도서산간의 **합**이다. 분리 필드가 없어 도서산간 줄을 만들 수 없다 (D6, 위험 2) */
+  shipping_total: number;
   grand_total: number;
   /** 🚨 null이면 입금 안내 상자를 그리지 않는다. 상태 문자열로 분기하지 않는다 (AD-12, 5.1) */
   deposit_info: DepositInfo | null;
+};
+
+/* ── POST /api/v1/orders/sub-orders/{id}/cancel ──
+   🚨 응답에 갱신된 주문이 없다 — 화면을 맞추려면 GET /orders/{id} 재조회가 필수다 (D8). */
+export type SubOrderCancelResponse = {
+  /** 이번 호출에서 취소된 ordered 라인 수 (선취소분 제외) */
+  canceled_items: number;
+  /** 전 묶음 취소로 order 층까지 canceled 전이됐는지 */
+  order_canceled: boolean;
 };
 
 /* ── 실패 봉투 ─────────────────────────────────
@@ -170,6 +258,19 @@ export function createOrder(payload: OrderCreatePayload): Promise<OrderResult<Or
 /** 남의 주문·없는 주문은 404 not_found다(403이 아니다 — 존재 노출 방지). */
 export function getOrder(orderId: string): Promise<OrderResult<OrderDetailResponse>> {
   return request<OrderDetailResponse>(`/api/orders/${encodeURIComponent(orderId)}`);
+}
+
+/** 주문내역 한 페이지. page < 1 · page > 10000은 BFF가 422로 끊는다 (D4). */
+export function listOrders(page: number): Promise<OrderResult<OrderListResponse>> {
+  return request<OrderListResponse>(`/api/orders?page=${page}`);
+}
+
+/** 묶음 취소 — 🚨 본문을 보내지 않는다 (D7: 사유를 입력받지 않는다).
+ *  성공해도 갱신된 주문이 오지 않으므로 호출부가 getOrder로 재조회한다 (D8). */
+export function cancelSubOrder(subOrderId: string): Promise<OrderResult<SubOrderCancelResponse>> {
+  return request<SubOrderCancelResponse>(`/api/orders/sub-orders/${encodeURIComponent(subOrderId)}/cancel`, {
+    method: "POST",
+  });
 }
 
 /** 36자 표준 UUID인지 — 서버를 부르기 전에 ?order= 값을 걸러낸다 (AC 12). */

@@ -1,8 +1,23 @@
-// GET(주문내역)은 8.6이 이 파일에 추가한다 — 새 파일을 만들지 말고 export를 더한다.
-
 import { NextRequest } from "next/server";
 
 import { assertSameOrigin, proxyWithRefresh } from "@/lib/auth";
+
+/* 주문내역 BFF (8.6 D12).
+   같은 경로의 POST 옆에 export를 더한다 — 새 파일을 만들면 같은 경로에 두 라우트가 생겨 빌드가 깨진다.
+
+   🚨 GET에 assertSameOrigin을 붙이지 않는다. 읽기 요청에 CSRF 방어를 걸면 정상 내비게이션이 막힌다.
+   🚨 page는 정수 1~10000만 통과시킨다 — 백엔드의 Query 제약과 같은 범위이며, 형식이 어긋난 값으로
+      상류를 부르지 않는다. 화면은 페이지 크기를 알지 못하고 알 필요도 없다 (D4, AD-13). */
+export async function GET(req: NextRequest) {
+  const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
+  if (!Number.isInteger(page) || page < 1 || page > 10000) {
+    return Response.json(
+      { code: "validation_error", message: "요청 형식이 올바르지 않습니다.", details: [] },
+      { status: 422 },
+    );
+  }
+  return proxyWithRefresh(req, `/api/v1/orders?page=${page}`, { method: "GET" });
+}
 
 /* 주문 생성 BFF (8.5 D13).
    청약이 실제로 일어나는 자리다 — assertSameOrigin을 먼저 태운다.

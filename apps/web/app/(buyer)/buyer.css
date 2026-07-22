@@ -624,9 +624,9 @@
 .b_overlay .i_panel { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 
 /* ── 입금 안내 상자 (DESIGN deposit-box) ──────────
-   변형 둘 중 `placed`(주문완료)만 여기 있다. `detail`(주문상세)은 8.6이 자기 화면을 보며 더한다 —
-   렌더되지 않는 CSS를 미리 커밋하면 8.6이 "이미 있다"고 믿고 검증을 건너뛴다 (D11).
-   주문완료에서 가장 무거운 요소다: 1.5px 액센트 테두리 + 노치 캡션 + 27px 금액. */
+   변형 둘. `placed`(주문완료, 8.5)는 화면에서 가장 무거운 요소다: 1.5px 액센트 테두리 +
+   노치 캡션 + 27px 금액. `detail`(주문상세, 8.6)은 조용히 얹힌다 — 아래 m_detail 블록.
+   마크업은 하나이고 CSS만 갈린다 (8.6 D9). */
 .b_deposit_box {
   position: relative;
   width: 100%;
@@ -663,4 +663,165 @@
   font-size: 11.5px;
   line-height: 1.7;
   color: var(--b-ink-prose);
+}
+
+/* ─────────────────────────────────────────────
+   공용 부품 (8.6 신설)
+   입금 안내 `detail` 변형 · 라벨-값 행 · 송장 줄 · 취소선 · 취소 태그 · cancel 버튼 · 시각 은닉.
+   목록 전용 배치는 orders/orders.css, 상세 전용은 orders/[id]/detail.css에 둔다.
+   ───────────────────────────────────────────── */
+
+/* ── 입금 안내 · detail 변형 (UX-DR14, D9) ───────
+   accent-wash 면 + 1px accent-line + 5px 라운드 + 금액 20px. 노치 캡션이 아니라 안쪽 섹션 라벨이다.
+   "다시 들어왔을 때의 상기라서 조용히 얹혀야 한다"(DESIGN) — placed의 시각을 바꾸지 않는다.
+   금액 자리와 라벨을 한 줄에 세우기 위해 상자를 2열 그리드로 둔다(마크업은 placed와 같다). */
+.b_deposit_box.m_detail {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  padding: 15px 15px 14px;
+  border: 1px solid var(--b-accent-line);
+  border-radius: var(--b-rounded-md);
+  background: var(--b-accent-wash);
+}
+.b_deposit_box.m_detail .i_cap {
+  position: static;
+  grid-column: 1 / -1;
+  margin-bottom: 11px;
+  padding: 0;
+  background: none;
+  font-size: 10.5px;
+  letter-spacing: .16em;
+}
+.b_deposit_box.m_detail .i_amount_label {
+  grid-column: 1;
+  padding-bottom: 11px;
+  font-size: 12px;
+  color: var(--b-ink-secondary);
+}
+.b_deposit_box.m_detail .i_amount {
+  grid-column: 2;
+  margin-top: 0;
+  padding-bottom: 11px;
+  text-align: right;
+  /* type.css의 .b_deposit_amount는 27px이다 — 상세 변형만 여기서 덮는다.
+     app/styles/buyer/**를 수정하지 않는다는 8.1의 규약을 지킨다. */
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.b_deposit_box.m_detail .i_rows,
+.b_deposit_box.m_detail .i_expired,
+.b_deposit_box.m_detail .i_memo { grid-column: 1 / -1; }
+.b_deposit_box.m_detail .i_rows {
+  margin-top: 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--b-accent-line);
+}
+.b_deposit_box.m_detail .i_row { padding: 5px 0; }
+.b_deposit_box.m_detail .i_memo {
+  margin-top: 11px;
+  padding: 11px 0 0;
+  border-top: 1px solid var(--b-accent-line);
+  border-radius: 0;
+  background: none;
+  font-size: 11px;
+  color: var(--b-accent);
+}
+
+/* ── 라벨-값 행 ─────────────────────────────────
+   `수령인 / 김소연`처럼 사실을 인쇄하는 줄. 칼럼이 아무리 넓어도 560px 안에서 좌측 정렬이다
+   (.b_row와 함께 쓴다, UX-DR5). 값이 비어도 행을 지우지 않는다 — 화면이 `—`로 자리를 지킨다. */
+.b_kv_row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--b-space-3);
+  padding: 5px 0;
+}
+.b_kv_row .i_key { flex: 0 0 62px; font-size: 11.5px; color: var(--b-ink-label); }
+.b_kv_row .i_value { flex: 1; text-align: right; font-size: 12.5px; color: var(--b-ink-body); }
+
+/* ── 송장 줄 (FR-21) ────────────────────────────
+   🚨 번호 표시까지가 전부다 — 추적 링크·택배사 연동을 만들지 않는다. 그래서 <a>가 아니다. */
+.b_track {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--b-space-3);
+  max-width: var(--b-row-max);
+  padding: 10px 12px;
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-paper-shade);
+}
+.b_track .i_key { font-size: 11px; letter-spacing: .01em; color: var(--b-ink-label); }
+.b_track .i_value {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--b-ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 취소 표기 (D10) ────────────────────────────
+   색만으로 전달하지 않는다 — 취소선(형태) + `취소` 글자(텍스트) + 흐린색(색) 셋을 함께 쓴다.
+   🚨 위험 빨강을 도입하지 않는다. 이 팔레트에 빨강이 없다 (UX-DR8). */
+[data-surface="buyer"] .m_struck {
+  color: var(--b-ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--b-strike-line);
+}
+.b_tag.m_canceled {
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: var(--b-rounded-xs);
+  background: var(--b-paper-shade);
+  color: var(--b-ink-quiet);
+}
+
+/* ── cancel 버튼 (DESIGN button-cancel) ──────────
+   11.5px/700 · 1px field-border · 흰 면 · 3px 라운드. 🚨 빨강을 쓰지 않는다.
+   시각 크기는 목업의 값을 유지하고 히트 영역만 44px로 넓힌다 (UX-DR7) —
+   투명한 ::before가 버튼 높이 밖으로 자란다 (.b_stepper .i_step과 같은 방법). */
+.b_btn_cancel {
+  position: relative;
+  padding: 8px 14px;
+  border: 1px solid var(--b-field-border);
+  border-radius: var(--b-rounded-sm);
+  background: var(--b-field-surface);
+  color: var(--b-ink-body);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.b_btn_cancel::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.b_btn_cancel:disabled {
+  border-color: var(--b-disabled-border);
+  background: var(--b-disabled-surface);
+  color: var(--b-disabled-ink);
+  cursor: default;
+}
+
+/* ── 시각 은닉 ─────────────────────────────────
+   상태 라벨이 스크린리더에 **상태로** 전달되게 하는 접두 문구용이다 (UX-DR8, 접근성 바닥).
+   display:none·visibility:hidden은 낭독에서도 사라진다 — 잘라내기로 숨긴다. */
+.b_sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
 }

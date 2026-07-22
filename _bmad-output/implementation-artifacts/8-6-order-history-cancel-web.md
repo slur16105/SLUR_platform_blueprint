@@ -4,7 +4,7 @@ baseline_commit: a8d5da2c4270e4012c8ebffe2d325150b9c843d0
 
 # Story 8.6: 주문내역·주문상세·취소 (구매자 반응형 웹)
 
-Status: ready-for-dev
+Status: review
 
 > **선행 조건.** 이 스토리는 **8.5(주문서·주문완료)가 끝난 뒤** 착수한다.
 > 8.5가 만드는 `app/api/orders/route.ts`(POST) · `app/api/orders/[id]/route.ts`(GET) · `(buyer)/orders-api.ts` ·
@@ -331,81 +331,81 @@ apps/web/
 
 ## Tasks / Subtasks
 
-- [ ] **Task 0 — 착수 전 확인 (선행 산출물의 실제 상태)** (AC: 전부)
-  - [ ] `git pull` 후 **8.5의 산출물이 실제로 있는지** 확인한다 — `app/api/orders/route.ts`(POST) · `app/api/orders/[id]/route.ts`(GET) · `(buyer)/orders-api.ts` · `(buyer)/deposit-box.tsx` · `format.ts`의 `formatDepositDue`
-  - [ ] `orders-api.ts`의 실제 시그니처를 읽는다 — 반환 형태가 `{ok, data} | {ok, error}` 한 벌인지, `getOrder`가 어떤 타입을 내는지. **8.6은 그 형태를 따르고 두 번째 규약을 만들지 않는다**
-  - [ ] `deposit-box.tsx`의 props와 마크업을 읽는다 — `variant`가 이미 유니온인지, 금액 클래스가 무엇인지
-  - [ ] `buyer.css`의 `.b_confirm_row`·`.b_seller_pack`·`.b_amount_summary`·`.b_status_label` 실제 선언을 읽는다. **값을 다시 선언하지 않는다**
-  - [ ] `(buyer)/orders/page.tsx`가 아직 8.1의 자리표시인지 확인한다 (이 스토리가 통째로 대체한다)
-  - [ ] 8.5가 아직 진행 중이면 **착수하지 않는다** — 같은 파일 4개를 동시에 만지게 된다
+- [x] **Task 0 — 착수 전 확인 (선행 산출물의 실제 상태)** (AC: 전부)
+  - [x] `git pull` 후 **8.5의 산출물이 실제로 있는지** 확인한다 — `app/api/orders/route.ts`(POST) · `app/api/orders/[id]/route.ts`(GET) · `(buyer)/orders-api.ts` · `(buyer)/deposit-box.tsx` · `format.ts`의 `formatDepositDue`
+  - [x] `orders-api.ts`의 실제 시그니처를 읽는다 — 반환 형태가 `{ok, data} | {ok, error}` 한 벌인지, `getOrder`가 어떤 타입을 내는지. **8.6은 그 형태를 따르고 두 번째 규약을 만들지 않는다**
+  - [x] `deposit-box.tsx`의 props와 마크업을 읽는다 — `variant`가 이미 유니온인지, 금액 클래스가 무엇인지
+  - [x] `buyer.css`의 `.b_confirm_row`·`.b_seller_pack`·`.b_amount_summary`·`.b_status_label` 실제 선언을 읽는다. **값을 다시 선언하지 않는다**
+  - [x] `(buyer)/orders/page.tsx`가 아직 8.1의 자리표시인지 확인한다 (이 스토리가 통째로 대체한다)
+  - [x] 8.5가 아직 진행 중이면 **착수하지 않는다** — 같은 파일 4개를 동시에 만지게 된다
 
-- [ ] **Task 1 — BFF 라우트 (GET 추가 1건 + 신설 1건)** (AC: 1, 5, 9, 19)
-  - [ ] `app/api/orders/route.ts`에 **`GET` export를 추가**한다 → `proxyWithRefresh(req, "/api/v1/orders?page=" + page, { method: "GET" })`. 파일을 새로 만들지 않는다
-    - [ ] `page`는 쿼리에서 읽되 **정수만 통과**시킨다(`Number.isInteger` + `1 ≤ page ≤ 10000`). 아니면 상류를 부르지 않고 `validation_error` 422 봉투
-  - [ ] `app/api/orders/sub-orders/[id]/cancel/route.ts` 신설 — `POST`, **`assertSameOrigin(req)` 먼저**, `sub_order_id` UUID 형식 검사, 본문 없이 `proxyWithRefresh(req, \`/api/v1/orders/sub-orders/${id}/cancel\`, { method: "POST" })`
-  - [ ] `ctx.params`는 `await`한다 (Next 16)
-  - [ ] `proxyWithRefresh`의 응답을 **그대로 반환**한다 — 감싸지 않는다
-  - [ ] `lib/auth.ts`는 **import만 한다. 수정하지 않는다**
+- [x] **Task 1 — BFF 라우트 (GET 추가 1건 + 신설 1건)** (AC: 1, 5, 9, 19)
+  - [x] `app/api/orders/route.ts`에 **`GET` export를 추가**한다 → `proxyWithRefresh(req, "/api/v1/orders?page=" + page, { method: "GET" })`. 파일을 새로 만들지 않는다
+    - [x] `page`는 쿼리에서 읽되 **정수만 통과**시킨다(`Number.isInteger` + `1 ≤ page ≤ 10000`). 아니면 상류를 부르지 않고 `validation_error` 422 봉투
+  - [x] `app/api/orders/sub-orders/[id]/cancel/route.ts` 신설 — `POST`, **`assertSameOrigin(req)` 먼저**, `sub_order_id` UUID 형식 검사, 본문 없이 `proxyWithRefresh(req, \`/api/v1/orders/sub-orders/${id}/cancel\`, { method: "POST" })`
+  - [x] `ctx.params`는 `await`한다 (Next 16)
+  - [x] `proxyWithRefresh`의 응답을 **그대로 반환**한다 — 감싸지 않는다
+  - [x] `lib/auth.ts`는 **import만 한다. 수정하지 않는다**
 
-- [ ] **Task 2 — API 래퍼와 상태 표** (AC: 1, 2, 5, 9, 11)
-  - [ ] `orders-api.ts`에 `listOrders(page)` · `cancelSubOrder(subOrderId)` 추가 + 목록·상세 응답 타입. **8.5가 만든 request 헬퍼를 재사용**하고 두 번째를 만들지 않는다
-  - [ ] 타입은 **서버 계약 그대로** — 클라이언트가 필드를 더하지 않는다. `image_url`이 없다는 사실을 타입 주석으로 남긴다 (D5)
-  - [ ] `orders/order-status.ts` 신설 — D1의 표(`display_status` → `{ label, tone }`). 목록·상세가 함께 쓴다. **미지 값 폴백 포함**
-  - [ ] `format.ts`에 `formatOrderDate`·`formatOrderDateTime`·`formatPhone` 추가 (D11). `Asia/Seoul` 고정. **`formatDepositDue`·`formatWon`을 다시 만들지 않는다**
+- [x] **Task 2 — API 래퍼와 상태 표** (AC: 1, 2, 5, 9, 11)
+  - [x] `orders-api.ts`에 `listOrders(page)` · `cancelSubOrder(subOrderId)` 추가 + 목록·상세 응답 타입. **8.5가 만든 request 헬퍼를 재사용**하고 두 번째를 만들지 않는다
+  - [x] 타입은 **서버 계약 그대로** — 클라이언트가 필드를 더하지 않는다. `image_url`이 없다는 사실을 타입 주석으로 남긴다 (D5)
+  - [x] `orders/order-status.ts` 신설 — D1의 표(`display_status` → `{ label, tone }`). 목록·상세가 함께 쓴다. **미지 값 폴백 포함**
+  - [x] `format.ts`에 `formatOrderDate`·`formatOrderDateTime`·`formatPhone` 추가 (D11). `Asia/Seoul` 고정. **`formatDepositDue`·`formatWon`을 다시 만들지 않는다**
 
-- [ ] **Task 3 — 주문내역 화면** (AC: 1, 2, 3, 4, 16, 17)
-  - [ ] `orders/page.tsx` 대체 — `<BuyerShell tab="orders" showTabbar topbar={{ variant: "title", title: "주문내역" }}>` + `.b_container.m_read`
-  - [ ] `orders/orders-view.tsx` — 최초 로드는 **effect 안 async IIFE + `alive` 가드**(8.4의 형태 그대로). **effect 안에서 동기 `setState`를 하지 않는다** (`react-hooks/set-state-in-effect`가 lint error다)
-  - [ ] 행: 날짜(`2026.07.21`) · 대표 상태 라벨 · 주문번호 · 대표 상품명(`title`) · 브랜드 나열 · 총액. 행 전체가 `<Link href={`/orders/${order_id}`}>`이고 히트 영역 44px 이상
-  - [ ] 행 사이 1px hairline. 목업의 우측 셰브런은 CSS 도형으로 그리거나 생략한다 — **인라인 SVG를 새로 만들면 `[data-surface="buyer"] svg`의 stroke-width 전역 규칙을 물려받는다**(8.4 학습 12)
-  - [ ] `더 보기`(누적 < total) / `최근 주문부터 보입니다.`(끝) — **무한 스크롤 금지**. 진행 중 버튼 비활성 + `order_id` dedupe (D4)
-  - [ ] 빈 상태 `아직 주문이 없습니다.` + `쇼핑 계속하기`, 최초 로딩은 행 골격
-  - [ ] 401 → `router.replace("/login?next=%2Forders")`
+- [x] **Task 3 — 주문내역 화면** (AC: 1, 2, 3, 4, 16, 17)
+  - [x] `orders/page.tsx` 대체 — `<BuyerShell tab="orders" showTabbar topbar={{ variant: "title", title: "주문내역" }}>` + `.b_container.m_read`
+  - [x] `orders/orders-view.tsx` — 최초 로드는 **effect 안 async IIFE + `alive` 가드**(8.4의 형태 그대로). **effect 안에서 동기 `setState`를 하지 않는다** (`react-hooks/set-state-in-effect`가 lint error다)
+  - [x] 행: 날짜(`2026.07.21`) · 대표 상태 라벨 · 주문번호 · 대표 상품명(`title`) · 브랜드 나열 · 총액. 행 전체가 `<Link href={`/orders/${order_id}`}>`이고 히트 영역 44px 이상
+  - [x] 행 사이 1px hairline. 목업의 우측 셰브런은 CSS 도형으로 그리거나 생략한다 — **인라인 SVG를 새로 만들면 `[data-surface="buyer"] svg`의 stroke-width 전역 규칙을 물려받는다**(8.4 학습 12)
+  - [x] `더 보기`(누적 < total) / `최근 주문부터 보입니다.`(끝) — **무한 스크롤 금지**. 진행 중 버튼 비활성 + `order_id` dedupe (D4)
+  - [x] 빈 상태 `아직 주문이 없습니다.` + `쇼핑 계속하기`, 최초 로딩은 행 골격
+  - [x] 401 → `router.replace("/login?next=%2Forders")`
 
-- [ ] **Task 4 — 주문상세 골격과 조회** (AC: 5, 12, 13, 14, 16, 17)
-  - [ ] `orders/[id]/page.tsx` — `<BuyerShell tab="orders" topbar={{ variant: "back-title", title: "주문상세" }}>` (**`showTabbar` 없음**) + `.b_container.m_read`. `params`는 `await`
-  - [ ] `order-detail-view.tsx` — 조회·상태·핸들러 소유. 구획 순서: 주문번호·일시 → 입금 안내(있을 때) → 8px 띠 → `주문 상품 · 판매자별 N건` → 묶음들 → 8px 띠 → `배송 정보` → 8px 띠 → `결제 정보` → hairline → 하단 취소 안내
-  - [ ] 입금 안내는 `deposit_info` **객체의 존재로만** 분기하고 `<DepositBox variant="detail">`를 쓴다. `expired`면 경고 한 줄 (D9)
-  - [ ] 배송 정보 4행 — 빈 값은 `—`. 라벨-값 행은 `.b_row`(560px)
-  - [ ] 결제 정보 **3행 + 결제수단 줄** (D6). 합계는 20px 액센트. **도서산간 줄을 만들지 않는다**
-  - [ ] 하단 안내 `배송준비 전까지 판매자 묶음 단위로 취소할 수 있습니다.` — `b_notice`, 위 1px hairline. **항상 있다**
-  - [ ] 401 → `/login?next=%2Forders%2F<id>` / 404·비UUID → `주문을 찾을 수 없습니다.` + `주문내역 보기`
+- [x] **Task 4 — 주문상세 골격과 조회** (AC: 5, 12, 13, 14, 16, 17)
+  - [x] `orders/[id]/page.tsx` — `<BuyerShell tab="orders" topbar={{ variant: "back-title", title: "주문상세" }}>` (**`showTabbar` 없음**) + `.b_container.m_read`. `params`는 `await`
+  - [x] `order-detail-view.tsx` — 조회·상태·핸들러 소유. 구획 순서: 주문번호·일시 → 입금 안내(있을 때) → 8px 띠 → `주문 상품 · 판매자별 N건` → 묶음들 → 8px 띠 → `배송 정보` → 8px 띠 → `결제 정보` → hairline → 하단 취소 안내
+  - [x] 입금 안내는 `deposit_info` **객체의 존재로만** 분기하고 `<DepositBox variant="detail">`를 쓴다. `expired`면 경고 한 줄 (D9)
+  - [x] 배송 정보 4행 — 빈 값은 `—`. 라벨-값 행은 `.b_row`(560px)
+  - [x] 결제 정보 **3행 + 결제수단 줄** (D6). 합계는 20px 액센트. **도서산간 줄을 만들지 않는다**
+  - [x] 하단 안내 `배송준비 전까지 판매자 묶음 단위로 취소할 수 있습니다.` — `b_notice`, 위 1px hairline. **항상 있다**
+  - [x] 401 → `/login?next=%2Forders%2F<id>` / 404·비UUID → `주문을 찾을 수 없습니다.` + `주문내역 보기`
 
-- [ ] **Task 5 — 판매자 묶음 (상태·송장·취소)** (AC: 6, 7, 8, 15)
-  - [ ] `orders/[id]/order-pack.tsx` — 8.1의 `<SellerPack>` 슬롯을 채운다. **`seller-pack.tsx`를 수정하지 않는다**
+- [x] **Task 5 — 판매자 묶음 (상태·송장·취소)** (AC: 6, 7, 8, 15)
+  - [x] `orders/[id]/order-pack.tsx` — 8.1의 `<SellerPack>` 슬롯을 채운다. **`seller-pack.tsx`를 수정하지 않는다**
     - `headEnd` = 상태 라벨 / `children` = 상품 행 / `foot` = 배송비 + 액션
-  - [ ] 상품 행: 상품명 · 옵션(`option_text` 없으면 `—`) · `수량 n개` · `line_total`. **썸네일 없음** (D5)
-  - [ ] `item.status === "canceled"` 행 — 금액 취소선 + `취소` 태그. **숨기지 않는다** (D10)
-  - [ ] 송장 줄 — `tracking_number`가 있을 때만. `--b-paper-shade` 면 + 3px 라운드, `송장번호` / `${carrier} ${tracking_number}`. **링크 아님** (FR-21)
-  - [ ] 푸터 배송비 — `shipping_fee + remote_extra_fee`가 0이면 `무료배송`. 취소된 묶음이면 취소선
-  - [ ] 액션 — `cancellable`이면 `주문 취소`(cancel 버튼, 빨강 금지) / `canceled`면 아무것도 없음 / 그 밖이면 `배송준비 이후에는 취소할 수 없습니다.`
-  - [ ] **주문 전체에 걸리는 상태·진행바·전체 취소 버튼을 만들지 않는다** (FR-15·18)
+  - [x] 상품 행: 상품명 · 옵션(`option_text` 없으면 `—`) · `수량 n개` · `line_total`. **썸네일 없음** (D5)
+  - [x] `item.status === "canceled"` 행 — 금액 취소선 + `취소` 태그. **숨기지 않는다** (D10)
+  - [x] 송장 줄 — `tracking_number`가 있을 때만. `--b-paper-shade` 면 + 3px 라운드, `송장번호` / `${carrier} ${tracking_number}`. **링크 아님** (FR-21)
+  - [x] 푸터 배송비 — `shipping_fee + remote_extra_fee`가 0이면 `무료배송`. 취소된 묶음이면 취소선
+  - [x] 액션 — `cancellable`이면 `주문 취소`(cancel 버튼, 빨강 금지) / `canceled`면 아무것도 없음 / 그 밖이면 `배송준비 이후에는 취소할 수 없습니다.`
+  - [x] **주문 전체에 걸리는 상태·진행바·전체 취소 버튼을 만들지 않는다** (FR-15·18)
 
-- [ ] **Task 6 — 취소 실행과 실패 경로** (AC: 9, 10, 11)
-  - [ ] 인라인 확인 줄 — `.b_confirm_row` 재사용. `이 묶음을 취소할까요?` + `취소하기` + `아니요`. 한 번에 하나만 열린다 (D7)
-  - [ ] 확인 줄 열림 시 포커스를 `취소하기`로, `Esc`·`아니요`로 닫으면 원래 버튼으로. `role="group"` + `aria-label="<브랜드> 묶음 주문 취소 확인"`
-  - [ ] 실행 중 그 묶음의 버튼 비활성 + 중복 제출 차단. 스피너 없음
-  - [ ] 성공·`invalid_transition` → **조용한 재조회**. `not_found`·`unauthorized`·네트워크는 재조회하지 않는다 (D8)
-  - [ ] 🚨 오류 문장은 **재조회가 지우지 않는 별도 상태**(`packError`)에 담는다 — 8.4의 `rowError`와 같은 형태
-  - [ ] **HTTP 코드·`code` 문자열을 렌더하지 않는다**
+- [x] **Task 6 — 취소 실행과 실패 경로** (AC: 9, 10, 11)
+  - [x] 인라인 확인 줄 — `.b_confirm_row` 재사용. `이 묶음을 취소할까요?` + `취소하기` + `아니요`. 한 번에 하나만 열린다 (D7)
+  - [x] 확인 줄 열림 시 포커스를 `취소하기`로, `Esc`·`아니요`로 닫으면 원래 버튼으로. `role="group"` + `aria-label="<브랜드> 묶음 주문 취소 확인"`
+  - [x] 실행 중 그 묶음의 버튼 비활성 + 중복 제출 차단. 스피너 없음
+  - [x] 성공·`invalid_transition` → **조용한 재조회**. `not_found`·`unauthorized`·네트워크는 재조회하지 않는다 (D8)
+  - [x] 🚨 오류 문장은 **재조회가 지우지 않는 별도 상태**(`packError`)에 담는다 — 8.4의 `rowError`와 같은 형태
+  - [x] **HTTP 코드·`code` 문자열을 렌더하지 않는다**
 
-- [ ] **Task 7 — 입금 안내 `detail` 변형과 공용 CSS** (AC: 12, 18)
-  - [ ] `deposit-box.tsx`에 `variant: "detail"` 추가 — **복제하지 않는다** (D9)
-  - [ ] `buyer.css`에 `.b_deposit_box.m_detail`(accent-wash 면 + 1px accent-line + 5px 라운드 + 금액 20px) 추가. **`app/styles/buyer/**`를 수정하지 않는다**
-  - [ ] 공용 규칙만 `buyer.css`에: 라벨-값 행(`.b_kv_row`) · 송장 줄(`.b_track`) · 취소선(`.m_struck`). **목록 전용은 `orders.css`, 상세 전용은 `[id]/detail.css`**
-  - [ ] 스코프 없는 태그 셀렉터를 쓰지 않는다 — 격리의 근거는 임포트 위치가 아니라 셀렉터다 (8.1 학습)
+- [x] **Task 7 — 입금 안내 `detail` 변형과 공용 CSS** (AC: 12, 18)
+  - [x] `deposit-box.tsx`에 `variant: "detail"` 추가 — **복제하지 않는다** (D9)
+  - [x] `buyer.css`에 `.b_deposit_box.m_detail`(accent-wash 면 + 1px accent-line + 5px 라운드 + 금액 20px) 추가. **`app/styles/buyer/**`를 수정하지 않는다**
+  - [x] 공용 규칙만 `buyer.css`에: 라벨-값 행(`.b_kv_row`) · 송장 줄(`.b_track`) · 취소선(`.m_struck`). **목록 전용은 `orders.css`, 상세 전용은 `[id]/detail.css`**
+  - [x] 스코프 없는 태그 셀렉터를 쓰지 않는다 — 격리의 근거는 임포트 위치가 아니라 셀렉터다 (8.1 학습)
 
-- [ ] **Task 8 — 검증: 정적 규칙과 빌드** (AC: 18, 19, 20)
-  - [ ] `cd apps/web && npx tsc --noEmit` → 0
-  - [ ] `npm run lint` → **0 errors · 0 warnings** (A-E456-5 베이스라인 — 늘어나면 이 스토리가 깬 것)
-  - [ ] `npx next build` 성공 — `/orders/complete`와 `/orders/[id]`가 **둘 다** 라우트 목록에 나오는지 확인
-  - [ ] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow\|matchMedia\|innerWidth" app/\(buyer\)/orders` → 0건
-  - [ ] `git diff --stat`에 `apps/api` **0건** · `app/styles/slur/` 0건 · `app/styles/buyer/` 0건 · `package.json`/`package-lock.json` 0건
+- [x] **Task 8 — 검증: 정적 규칙과 빌드** (AC: 18, 19, 20)
+  - [x] `cd apps/web && npx tsc --noEmit` → 0
+  - [x] `npm run lint` → **0 errors · 0 warnings** (A-E456-5 베이스라인 — 늘어나면 이 스토리가 깬 것)
+  - [x] `npx next build` 성공 — `/orders/complete`와 `/orders/[id]`가 **둘 다** 라우트 목록에 나오는지 확인
+  - [x] `grep -rn "#2f6bff\|--color-brand\|--shadow-\|box-shadow\|matchMedia\|innerWidth" app/\(buyer\)/orders` → 0건
+  - [x] `git diff --stat`에 `apps/api` **0건** · `app/styles/slur/` 0건 · `app/styles/buyer/` 0건 · `package.json`/`package-lock.json` 0건
   - [ ] `cd apps/api && uv run pytest -q` → **환경이 있을 때만.** 이 머신에는 `uv`·`docker`가 없다. 실행하지 못했으면 Completion Notes에 **"미실행 + 사유"** 를 적는다 — **통과했다고 쓰지 않는다**(8.1이 세운 규약)
 
-- [ ] **Task 9 — 검증: 화면 확인 (데이터 확보 방법 포함)** (AC: 1~17, 20)
-  - [ ] 🚨 **여러 상태의 주문을 만들려면 스텁이 사실상 필수다.** 이 화면의 핵심(묶음마다 다른 상태·송장·취소 가능 여부·부분 취소)은 **실제로 그 상태의 데이터가 있어야만** 보인다. 실서버에서 그 상태들을 만들려면 관리자 입금 확인 → 판매자 배송 처리까지 거쳐야 하고, 이 머신에는 백엔드가 없다
-  - [ ] **1순위 — 스크래치패드 스텁.** `/api/orders`·`/api/orders/{id}`·`/api/orders/sub-orders/{id}/cancel`을 흉내 내는 작은 서버를 스크래치패드에 두고 `next dev`가 그쪽을 보게 한다. **저장소에 커밋하지 않는다.** 아래 8개 시나리오를 스텁 데이터로 만든다
+- [x] **Task 9 — 검증: 화면 확인 (데이터 확보 방법 포함)** (AC: 1~17, 20)
+  - [x] 🚨 **여러 상태의 주문을 만들려면 스텁이 사실상 필수다.** 이 화면의 핵심(묶음마다 다른 상태·송장·취소 가능 여부·부분 취소)은 **실제로 그 상태의 데이터가 있어야만** 보인다. 실서버에서 그 상태들을 만들려면 관리자 입금 확인 → 판매자 배송 처리까지 거쳐야 하고, 이 머신에는 백엔드가 없다
+  - [x] **1순위 — 스크래치패드 스텁.** `/api/orders`·`/api/orders/{id}`·`/api/orders/sub-orders/{id}/cancel`을 흉내 내는 작은 서버를 스크래치패드에 두고 `next dev`가 그쪽을 보게 한다. **저장소에 커밋하지 않는다.** 아래 8개 시나리오를 스텁 데이터로 만든다
     - ① 입금대기(묶음 2개, 둘 다 `cancellable`, `deposit_info` 있음) — 목업 그대로
     - ② **Flow 3** — 한 묶음 `preparing`(취소 불가) + 다른 묶음 `shipping`(송장 있음). `deposit_info` 없음
     - ③ 배송완료(전 묶음 `delivered`)
@@ -414,26 +414,26 @@ apps/web/
     - ⑥ `expired: true`인 입금대기
     - ⑦ 주문 0건(빈 상태) · ⑧ `total`이 페이지 크기보다 큰 목록(`더 보기`)
   - [ ] **2순위 — 프로덕션 실데이터.** 계정이 있으면 주문 1건으로 ①만 확인 가능하다. ②~⑤는 관리자·판매자 조작이 필요하다. **프로덕션에서 만든 테스트 주문은 반드시 정리한다** (R8)
-  - [ ] 390(또는 헤드리스 최소 500) / 700 / 768 / 1280 네 폭에서 두 화면 렌더 — 한 단 640px 유지, 목록에만 탭바, ≥768 상단 내비 `주문내역` 활성
-  - [ ] 폭을 390 ↔ 1280으로 **바꿔가며** 열린 확인 줄·오류 문장·`더 보기`로 쌓은 목록이 살아 있는지 확인 (AC 17)
-  - [ ] 키보드만으로 완주 — 목록 행 → 상세 → 묶음 → `주문 취소` → 확인 줄 → 재조회. 포커스 이동·`Esc` 복귀 확인
-  - [ ] 상태 라벨의 색을 **끄고**(그레이스케일 렌더 또는 개발자도구) 텍스트만으로 상태를 알 수 있는지 확인 (UX-DR8)
+  - [x] 390(또는 헤드리스 최소 500) / 700 / 768 / 1280 네 폭에서 두 화면 렌더 — 한 단 640px 유지, 목록에만 탭바, ≥768 상단 내비 `주문내역` 활성
+  - [x] 폭을 390 ↔ 1280으로 **바꿔가며** 열린 확인 줄·오류 문장·`더 보기`로 쌓은 목록이 살아 있는지 확인 (AC 17)
+  - [x] 키보드만으로 완주 — 목록 행 → 상세 → 묶음 → `주문 취소` → 확인 줄 → 재조회. 포커스 이동·`Esc` 복귀 확인
+  - [x] 상태 라벨의 색을 **끄고**(그레이스케일 렌더 또는 개발자도구) 텍스트만으로 상태를 알 수 있는지 확인 (UX-DR8)
 
-- [ ] **Task 10 — 검증: 취소 실패 경로** (AC: 10, 11)
-  - [ ] 스텁으로 `invalid_transition` 422를 만들고 — `message`가 문장 그대로 뜨는지, **재조회 후에도 문장이 남는지**, 상태가 서버 값으로 정정되는지 확인 (D8)
-  - [ ] `not_found` 404 → `주문내역 보기` / `unauthorized` 401 → `/login?next=%2Forders%2F<id>` 확인
-  - [ ] 네트워크 차단 상태에서 취소 → 확인 줄이 유지되고 문장이 뜨는지, 재조회로 화면이 날아가지 않는지
-  - [ ] **HTTP 코드·`code` 문자열이 화면에 한 번도 나타나지 않는지** 문서 전체 grep으로 확인(`422`·`invalid_transition`·`not_found`)
-  - [ ] 취소 성공 → **그 묶음만** 취소로 바뀌고 다른 묶음 상태가 그대로인지 (이 스토리의 가장 중요한 확인)
+- [x] **Task 10 — 검증: 취소 실패 경로** (AC: 10, 11)
+  - [x] 스텁으로 `invalid_transition` 422를 만들고 — `message`가 문장 그대로 뜨는지, **재조회 후에도 문장이 남는지**, 상태가 서버 값으로 정정되는지 확인 (D8)
+  - [x] `not_found` 404 → `주문내역 보기` / `unauthorized` 401 → `/login?next=%2Forders%2F<id>` 확인
+  - [x] 네트워크 차단 상태에서 취소 → 확인 줄이 유지되고 문장이 뜨는지, 재조회로 화면이 날아가지 않는지
+  - [x] **HTTP 코드·`code` 문자열이 화면에 한 번도 나타나지 않는지** 문서 전체 grep으로 확인(`422`·`invalid_transition`·`not_found`)
+  - [x] 취소 성공 → **그 묶음만** 취소로 바뀌고 다른 묶음 상태가 그대로인지 (이 스토리의 가장 중요한 확인)
 
 - [ ] **Task 11 — 검증: 프로덕션 (R3·R8)** (AC: 9, 19)
   - [ ] 배포 후 `/orders`·`/orders/{id}`가 프로덕션(Railway 프록시 뒤)에서 뜨는지, 비로그인 접근이 `/login?next=…`로 가는지 curl로 확인
   - [ ] **취소 BFF의 `assertSameOrigin`이 프록시 뒤에서 통과하는지** 실요청 1회로 확인 — 로컬만 보고 done으로 넘기지 않는다 (R3)
   - [ ] 프로덕션에서 취소를 실행했다면 **어떤 주문을 어떻게 정리했는지** Completion Notes에 적는다 (R8)
 
-- [ ] **Task 12 — 판매자·관리자 회귀 (눈으로)** (AC: 18)
-  - [ ] `/seller`·`/admin` 진입 → 색·레이아웃·**파랑 포커스 링**이 그대로인지 확인
-  - [ ] 구매자 두 화면에서 Tab 이동 → **먹색 링**이 모든 인터랙티브 요소에 보이고 파랑이 없는지 확인
+- [x] **Task 12 — 판매자·관리자 회귀 (눈으로)** (AC: 18)
+  - [x] `/seller`·`/admin` 진입 → 색·레이아웃·**파랑 포커스 링**이 그대로인지 확인
+  - [x] 구매자 두 화면에서 Tab 이동 → **먹색 링**이 모든 인터랙티브 요소에 보이고 파랑이 없는지 확인
 
 ## Dev Notes
 
@@ -716,21 +716,86 @@ apps/web/
 
 ### Agent Model Used
 
-(구현 시 기록)
+claude-opus-4-8[1m] (Claude Code)
 
 ### Debug Log References
 
-(구현 시 기록 — 스크래치패드 스텁 서버는 저장소에 남기지 않는다)
+- 스크래치패드 스텁(저장소 밖, 종료함): `scratchpad/s86/stub-api.mjs` — `GET /api/v1/orders?page=n`(페이지 크기 3, total 8) · `GET /api/v1/orders/{id}` · `POST /api/v1/orders/sub-orders/{id}/cancel`을 흉내 낸다. 취소는 **상태를 실제로 바꾸고** 백엔드의 파생(활성 라인만 합산 · 활성 라인이 없는 묶음은 배송비도 제외 · 전-취소 주문만 원 주문 금액 폴백 · `deposit_info.grand_total`은 잔여 활성분)을 축약 재현한다.
+  - `sub_order_id` 접두사로 실패 경로를 만든다: `aaaa…` 성공 / `bbbb…` `invalid_transition` 422 / `cccc…` `not_found` 404.
+  - 8개 시나리오 주문: ① 입금대기 2묶음(둘 다 `cancellable`, `deposit_info`) ② Flow 3(`preparing` 취소불가 + `shipping` 송장) ③ 배송완료 ④ 전체 취소 ⑤ 부분 취소(라인 혼재 + 취소된 묶음) ⑥ `expired: true` ⑦ 빈 목록(제어 엔드포인트로 토글) ⑧ `total(8) > 페이지 크기(3)`.
+- 실행: `API_BASE_URL=http://localhost:8099 npx next dev -p 3186` + 헤드리스 크롬 CDP(`Emulation.setDeviceMetricsOverride`로 폭 강제 — 헤드리스는 창 폭 최소 500px을 강제한다, 8.1의 학습). 미들웨어 통과용 `slur_role` 쿠키는 `Network.setCookie`로 심었다.
+- 스텁·개발 서버·크롬은 검증 후 전부 종료했고 **저장소에 남기지 않았다**(`git status`에 스크래치패드 파일 0건).
 
 ### Completion Notes List
 
-(구현 시 기록 — 실행하지 못한 검증은 "미실행 + 사유"로 적는다. 프로덕션에서 주문을 취소했다면 어떤 주문이었는지 함께 적는다)
+**빌드·정적 검증 (Task 8)**
+- `npx tsc --noEmit` → 0
+- `npm run lint` → **0 errors · 0 warnings** (A-E456-5 베이스라인 유지)
+- `npx next build` → 성공. 라우트 목록에 `/orders`(○) · **`/orders/[id]`(ƒ)** · **`/orders/complete`(○)** 가 **셋 다** 나온다 — 경로 경합 없음(정적이 동적을 이긴다). `/api/orders/sub-orders/[id]/cancel`(ƒ)도 등록됐다.
+- `grep -rn "#2f6bff|--color-brand|--shadow-|box-shadow|matchMedia|innerWidth|resize" app/(buyer)/orders` → 7건 전부 **주석**(금지 사실을 적어 둔 줄). 선언 0건. 새 CSS 두 파일에 hex 리터럴 0건.
+- `git diff --stat`: `apps/api` **0건** · `apps/mobile` **0건** · `app/styles/slur/` **0건** · `app/styles/buyer/` **0건** · `package.json`·`package-lock.json` **0건** · `lib/auth.ts` **0줄**. 마이그레이션 0건, 신규 백엔드 엔드포인트 0개.
+- `cd apps/api && uv run pytest -q` → **미실행.** 이 머신에 `uv`·`docker`가 없어 로컬 백엔드를 띄울 수 없다. 통과했다고 쓰지 않는다. 백엔드 무변경은 `git diff --stat`의 `apps/api` 0건으로만 주장한다.
+
+**화면 검증 (Task 9·10 — 실렌더)**
+- 폭 **390 / 700 / 768 / 1280** 네 폭에서 두 화면 렌더. 두 화면 모두 **본문 폭 640px 한 단**이 유지되고(1280에서도 `.b_orders`·`.b_order_detail` 폭 = 640) `scrollWidth == 뷰포트 폭`(가로 스크롤 0). 2단·하단 고정 CTA 바 없음.
+- `<768`: `/orders`에 탭바가 서고(`display: flex`) `/orders/[id]`에는 탭바가 **없다**. `≥768`: 둘 다 상단 내비로 바뀌고 **`주문내역`이 활성**(`data-active="true"`), 상세의 뒤로가기는 사라진다.
+- 목록: 날짜(`2026.07.21`) · 대표 상태 · 주문번호(`A1B2C3D4` 원문) · 대표 상품명 · 브랜드 나열(`토림도예 · 온실`) · 총액. 행 높이 161~162px(44px 크게 상회). 행 전체가 링크.
+  - 🚨 `created_at: 2026-06-28T23:40:00Z` → `2026.06.29`로 표시된다 — `Asia/Seoul` 고정이 실제로 하루 어긋남을 막고 있음을 확인.
+- `더 보기`: 3 → 6 → 8건 누적 후 `최근 주문부터 보입니다.`로 바뀐다. **390 ↔ 1280 폭 전환 후에도 누적 8건이 유지**(AC 17). 빈 목록은 `아직 주문이 없습니다.` + `쇼핑 계속하기`.
+- 상세 ①: 입금 안내 `detail` 변형(accent-wash 면 · 1px accent-line · 5px 라운드 · **금액 20px**, 계산된 `font-size: 20px` 확인) — 주문번호 바로 아래 최상단. 배송 정보 4행(빈 값은 `—`). 결제 정보 **3행 + `결제수단 · 무통장입금`**, 합계 20px 액센트(도서산간 줄 없음). 하단 안내 문장 항상 표시.
+- 상세 ② Flow 3: 토림도예 `배송준비`(버튼 없음 + `배송준비 이후에는 취소할 수 없습니다.`) + 온실 `배송중`(송장 줄 `CJ대한통운 1234-5678-9012`, `<a>` 0개 — 링크 아님). 입금 안내 상자 사라짐. 배송비 `6,000원`(기본 3,000 + 도서산간 3,000).
+- 상세 ④ 전체 취소: 두 묶음 다 `취소` 라벨, 라인 금액과 **묶음 배송비에 취소선**(`48,000원`·`배송비 3,000원`·`48,000원`·`배송비 2,500원`), 취소 버튼 0개 · 안내 문장 0개.
+- 상세 ⑤ 부분 취소: 한 묶음 안에서 `ordered` 라인은 그대로, `canceled` 라인만 취소선 + `취소` 태그(숨기지 않음). 다른 묶음은 통째로 `취소`.
+- 상세 ⑥: `기한이 지나 곧 자동 취소됩니다.` 표시.
+- 그레이스케일 렌더에서도 `입금대기`·`배송중`·`배송완료`가 **텍스트만으로** 구분된다 (UX-DR8).
+- 키보드: Tab 순서가 로고 → 상단 내비 4 → 주문 행들 / 상세는 → `주문 취소`까지 도달하고 **모든 컨트롤에 먹색 2px outline**(`rgb(31,29,26)`), `box-shadow: none`. 파랑 **0건**(구매자 두 화면 전체를 계산 스타일로 훑어 0).
+
+**취소 경로 (Task 6·10 — 이 스토리의 핵심)**
+- 확인 줄: `주문 취소` 자리가 `이 묶음을 취소할까요? · 취소하기 · 아니요`로 바뀌고 `role="group"` + `aria-label="토림도예 묶음 주문 취소 확인"`. 열리면 포커스가 `취소하기`로 옮겨가고, `Esc`·`아니요`로 닫으면 **원래 `주문 취소` 버튼으로 포커스 복귀**. 다른 묶음의 버튼을 누르면 이전 확인 줄이 닫힌다(**한 번에 하나**). 모달·`window.confirm` 0건.
+- 성공: **그 묶음만** `취소`로 바뀌고 다른 묶음은 `입금대기` 그대로. 합계·상품 금액·배송비·`deposit_info` 금액이 전부 **서버 재조회 값**으로 갱신(121,000 → 54,000). 취소된 묶음의 라인 금액·배송비에 취소선. 남은 취소 버튼 1개. **skeleton으로 되돌아가지 않음.**
+- `invalid_transition`: `배송준비가 시작된 주문은 직접 취소할 수 없습니다. 관리자에게 문의해 주세요.` 를 **문장 그대로** 그 묶음 자리에 표시하고 상세를 재조회했으며, **재조회 후에도 문장이 남아 있다**(D8의 `packError` 분리가 작동). 폭을 1280으로 바꿔도 문장이 살아 있다.
+- `not_found`: `주문을 찾을 수 없습니다.` + `주문내역 보기`(→ `/orders`).
+- 비UUID(`/orders/not-a-uuid`)·없는 주문 → 빈 화면이 아니라 `주문을 찾을 수 없습니다.` + `주문내역 보기`.
+- **HTTP 코드·`code` 문자열이 화면 어디에도 없다** — `document.body.innerText`에 `422`·`invalid_transition`·`not_found`·`unauthorized` 전부 0건.
+
+**판매자·관리자 회귀 (Task 12)**
+- `/admin/orders`·`/seller`에 `[data-surface="buyer"]`가 **새지 않는다**. 관리자 컨트롤의 **파랑 포커스 링**(`rgba(47,107,255,.3) box-shadow`)이 그대로다 — 구매자 먹색 링과 분리된 채 공존.
+
+**미실행 · 사람이 해야 할 일**
+- **Task 11(프로덕션 R3·R8) 미실행.** 커밋·푸시가 이 작업의 범위 밖이라 배포가 없었다. **취소 BFF는 `assertSameOrigin`을 타는 신규 POST**이므로 Railway 프록시 뒤 실요청 1회 확인이 남아 있다(R3). 프로덕션에서 취소를 실행한 적이 **없으므로 정리할 테스트 데이터도 없다**(R8).
+- **백엔드 테스트 153건 미실행** (사유는 위 Task 8 항목).
+
+**스토리와 어긋난 지점 · 알게 된 것**
+1. **D11의 `formatPhone` 10자리 규칙이 02 지역번호를 잘못 끊는다.** 규칙대로 10자리를 3-3-4로 끊으면 `0212345678` → `021-234-5678`이 된다(맞는 표기는 `02-1234-5678`). D11이 "구매자 연락처는 휴대폰"이라는 전제로 예외를 두지 않기로 확정했으므로 **명세대로 구현했고 바꾸지 않았다.** 서울 유선번호를 배송지 연락처로 적은 주문에서만 나타나는 표시 결함으로 기록한다.
+2. **위험 3(EXPERIENCE의 "결제완료 이후에도 취소 가능")은 여전히 참이 아니다.** 화면은 `cancellable`만 보므로 동작은 정확하지만, 실제 취소 창은 `입금대기` 동안뿐이다. 화면 문구(`배송준비 전까지…`)는 FR-18의 표현이라 그대로 뒀다. **Slur가 알아야 할 UX 계약 ↔ 백엔드 동작의 어긋남**이며 해소는 Epic 8 밖이다.
+3. **송장 줄의 자리.** `<SellerPack>`에 상품 행과 푸터 사이 슬롯이 없어 송장 줄이 목업(푸터 위)과 달리 **푸터 hairline 아래** 맨 위에 선다. 스토리 Task 5가 지시한 처리(`foot` 안에 세로로 쌓기)를 그대로 따랐고 prop을 새로 파지 않았다. 시각적으로는 구분선 한 줄 차이다.
+4. **주문상세에서만 `.b_seller_pack .i_foot`을 `display: block`으로 되돌렸다**(`detail.css` 안, 이 화면 스코프). 푸터에 송장 줄·안내 문장·오류 문장이 세로로 쌓여야 하는데 8.1의 한 줄 flex로는 불가능했다. `seller-pack.tsx`는 한 줄도 고치지 않았다.
+5. **입금 안내 `detail` 변형은 마크업을 공유하려고 상자를 2열 그리드로 뒀다.** 금액 라벨과 금액이 한 줄에 서야 하는데 8.5의 마크업이 둘을 형제로 쌓아 두었기 때문이다. `placed` 변형의 시각은 한 픽셀도 바뀌지 않는다(`m_detail`에만 걸린 규칙).
 
 ### File List
 
-(구현 시 기록)
+**신설**
+- `apps/web/app/api/orders/sub-orders/[id]/cancel/route.ts` — 취소 BFF(POST, `assertSameOrigin` + UUID 검사, 본문 없이 프록시)
+- `apps/web/app/(buyer)/orders/orders-view.tsx` — 주문내역 본체
+- `apps/web/app/(buyer)/orders/order-status.ts` — D1의 표(`display_status` → `{label, tone}`)
+- `apps/web/app/(buyer)/orders/orders.css` — 목록 전용 배치
+- `apps/web/app/(buyer)/orders/[id]/page.tsx` — 주문상세 라우트(셸 + `await params`)
+- `apps/web/app/(buyer)/orders/[id]/order-detail-view.tsx` — 상세 본체(조회·취소·오류 소유)
+- `apps/web/app/(buyer)/orders/[id]/order-pack.tsx` — 묶음 하나(상태·송장·배송비·취소·확인 줄)
+- `apps/web/app/(buyer)/orders/[id]/detail.css` — 상세 전용 배치
+
+**수정**
+- `apps/web/app/api/orders/route.ts` — 기존 POST 옆에 **`GET` export 추가**(page 정수 1~10000 검증)
+- `apps/web/app/(buyer)/orders/page.tsx` — 자리표시 → 목록(셸 호출 세 값 유지)
+- `apps/web/app/(buyer)/orders-api.ts` — `listOrders`·`cancelSubOrder` + 목록·상세·취소 응답 타입(기존 `request` 헬퍼 재사용)
+- `apps/web/app/(buyer)/format.ts` — `formatOrderDate`·`formatOrderDateTime`·`formatPhone`(`Asia/Seoul` 고정 파트 추출 공용화)
+- `apps/web/app/(buyer)/deposit-box.tsx` — `variant`에 `"detail"` 추가(복제 없음)
+- `apps/web/app/(buyer)/buyer.css` — `.b_deposit_box.m_detail` · `.b_kv_row` · `.b_track` · `.m_struck` · `.b_tag.m_canceled` · `.b_btn_cancel` · `.b_sr`
+
+**수정하지 않음(계약)**: `apps/api/**` · `apps/mobile/**` · `app/styles/slur/**` · `app/styles/buyer/**` · `lib/auth.ts` · `seller-pack.tsx` · `status-label.tsx` · `amount-summary.tsx` · `cart/**` · `checkout/**` · `middleware.ts` · `package.json`
 
 ### Change Log
 
 | 날짜 | 변경 | 비고 |
 |---|---|---|
+| 2026-07-22 | Story 8.6 구현 — 주문내역·주문상세·묶음 취소 | Task 0~10·12 완료, Task 11(프로덕션 R3·R8) 미실행. tsc 0 / lint 0 errors 0 warnings / build 성공. 390·700·768·1280 실렌더 검증, 스크래치패드 스텁 8시나리오 |

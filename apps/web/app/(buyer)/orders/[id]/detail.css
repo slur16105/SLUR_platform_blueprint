@@ -1,0 +1,117 @@
+/* ─────────────────────────────────────────────
+   주문상세 전용 배치 (8.6)
+   공용 부품(입금 안내 detail 변형·송장 줄·라벨-값 행·취소선·취소 버튼)은 buyer.css에 있다.
+   여기에는 이 화면만의 구획 배치만 둔다.
+
+   🚨 --b-* 토큰과 .b_* 역할 클래스만 쓴다. 새 hex·새 px 스케일을 만들지 않는다 (UX-DR1).
+   🚨 box-shadow 선언 0건 (UX-DR12). 깊이는 8px 종이 접기 띠와 1px hairline 둘로만 만든다.
+   🚨 **끝까지 한 단(최대 640px)** 이다 — 폭이 아무리 넓어도 2단으로 갈라지지 않고
+      하단 고정 CTA 바가 없다 (UX-DR4). 단 폭은 .b_container.m_read가 갖는다.
+   🚨 폭 전환은 CSS만으로 한다 — matchMedia·innerWidth·resize 사용 0건 (AC 17).
+   ───────────────────────────────────────────── */
+
+/* 좌우 여백은 구획과 묶음이 각자 갖는다 — 묶음 사이 hairline이 단 끝까지 그어져야 한다. */
+.b_order_detail { padding-inline: 0; }
+.b_order_detail .i_feedback { padding-inline: var(--b-gutter); }
+
+/* ── 주문번호 · 일시 ───────────────────────────── */
+.b_order_detail .i_head { padding: var(--b-space-5) var(--b-gutter) 18px; }
+.b_order_detail .i_head .i_no {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--b-ink);
+  font-variant-numeric: tabular-nums;
+}
+.b_order_detail .i_head .i_when {
+  margin-top: 6px;
+  font-size: 11.5px;
+  letter-spacing: .02em;
+  color: var(--b-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 입금 안내 상자 — 주문번호 바로 아래 최상단 (UX-DR14) */
+.b_order_detail .i_deposit { padding: 0 var(--b-gutter) var(--b-space-5); }
+
+/* ── 구획 ──────────────────────────────────────
+   성격이 다른 면 사이는 8px 종이 접기 띠, 같은 화면 안 다른 항목 사이는 1px hairline (UX-DR12). */
+.b_order_detail .i_sec {
+  padding: var(--b-section-y) var(--b-gutter);
+  border-top: var(--b-band) solid var(--b-paper-shade);
+}
+.b_order_detail .i_sec_h { margin-bottom: 13px; }
+
+/* 주문 상품 — 묶음이 자기 좌우 여백을 갖고 있으므로 구획이 좌우를 비운다 */
+.b_order_detail .i_sec.m_items { padding-inline: 0; padding-bottom: 0; }
+.b_order_detail .i_sec.m_items .i_sec_h { padding-inline: var(--b-gutter); margin-bottom: 2px; }
+
+/* ── 판매자 묶음 푸터 ───────────────────────────
+   8.1의 .i_foot은 한 줄 flex다. 주문상세는 송장 줄·안내 문장·오류 문장이 세로로 쌓이므로
+   이 화면 안에서만 블록으로 되돌린다 — seller-pack.tsx에 prop을 새로 파지 않는다. */
+.b_order_detail .b_seller_pack .i_foot { display: block; }
+.b_order_detail .i_foot_line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--b-space-2) var(--b-space-3);
+  min-height: 44px;
+}
+.b_order_detail .i_ship { font-size: 11.5px; color: var(--b-ink-label); }
+.b_order_detail .i_ship b { color: var(--b-ink-body); font-weight: 700; }
+.b_order_detail .i_ship.m_free { color: var(--b-ink-body); font-weight: 700; }
+.b_order_detail .i_no_cancel {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--b-ink-muted);
+}
+.b_order_detail .i_pack_err { max-width: var(--b-row-max); }
+.b_order_detail .i_pack_err .i_act { display: block; margin-top: 10px; }
+.b_order_detail .i_pack_err .i_act .b_btn { display: inline-flex; min-width: 140px; }
+/* 송장 줄은 푸터 맨 위에 선다 — 배송비·액션 줄과 겹치지 않게 아래 여백을 준다 */
+.b_order_detail .b_track { margin-bottom: var(--b-space-3); }
+
+/* ── 상품 행 (사진 없음 — D5) ───────────────────
+   상품명 · 옵션 · 수량 · 행 금액의 타이포 위계만으로 행을 세운다. */
+.b_order_line .i_option { margin-top: 4px; }
+.b_order_line .i_price_row {
+  display: flex;
+  align-items: center;
+  gap: var(--b-space-2);
+  margin-top: 8px;
+}
+
+/* ── 배송 정보 ────────────────────────────────── */
+.b_order_detail .i_kv { display: flex; flex-direction: column; }
+
+/* ── 결제 정보 ────────────────────────────────
+   3행 + 결제수단 한 줄. 도서산간 줄이 없다 (D6). */
+.b_order_detail .i_pay_way {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--b-space-3);
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--b-pack-foot-line);
+}
+.b_order_detail .i_pay_way .i_key { font-size: 11.5px; color: var(--b-ink-label); }
+.b_order_detail .i_pay_way .i_value { font-size: 12.5px; font-weight: 600; color: var(--b-ink-strong); }
+
+/* ── 하단 취소 안내 ─────────────────────────────
+   항상 있다 — 버튼이 있는 묶음과 없는 묶음이 왜 나란한지 설명한다 (UX-DR15). */
+.b_order_detail .i_tail {
+  padding: 16px var(--b-gutter) 24px;
+  border-top: 1px solid var(--b-hairline);
+}
+
+/* ── 블록 골격 ─────────────────────────────────
+   화면 중앙 스피너를 쓰지 않는다 (UX-DR9). 도착 시 지면이 튀지 않게 자리를 미리 잡는다. */
+.b_detail_skeleton { padding: var(--b-space-5) var(--b-gutter) var(--b-space-7); }
+.b_detail_skeleton .i_line { display: block; height: 13px; }
+.b_detail_skeleton .i_line.m_title { width: 45%; height: 20px; }
+.b_detail_skeleton .i_line.m_short { width: 32%; margin-top: 12px; }
+.b_detail_skeleton .i_box { display: block; height: 150px; margin-top: 22px; }
+.b_detail_skeleton .i_box.m_low { height: 96px; }

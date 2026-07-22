@@ -4,8 +4,8 @@
    DESIGN.md가 두 변형을 확정했다 —
      · placed(주문완료) : 종이 면 + 1.5px 액센트 테두리 + 노치 캡션 + 27px 금액. 화면에서 가장 무겁다.
      · detail(주문상세) : accent-wash 면 + 1px accent-line + 20px 금액. 조용히 얹힌다.
-   **8.5는 placed만 구현한다.** 렌더되지 않는 CSS를 미리 커밋하면 8.6이 "이미 있다"고 믿고
-   눈으로 검증하는 단계를 건너뛴다. 8.6이 variant에 "detail"을 더하고 CSS도 그때 붙인다.
+   8.6이 detail을 더했다 — **복제하지 않는다.** 두 변형은 같은 정보를 담고 무게만 다르며,
+   복제하면 계좌 문자열 처리·기한 포맷·expired 처리가 두 벌이 된다 (8.6 D9).
    두 변형이 하나의 컴포넌트라는 사실을 **파일 위치**((buyer) 루트)로 표현해 둔다.
 
    🚨 `예금주` 줄을 만들지 않는다. 백엔드에는 settings의 deposit_account **문자열 하나**뿐이고
@@ -21,8 +21,8 @@ const MEMO = "입금자명을 주문자 이름과 같게 해주세요."; // [ASS
 const EXPIRED_NOTE = "기한이 지나 곧 자동 취소됩니다."; // [ASSUMPTION]
 
 export type DepositBoxProps = {
-  /** 8.6이 "detail"을 더한다 */
-  variant: "placed";
+  /** placed = 주문완료(8.5) · detail = 주문상세(8.6). 마크업은 하나이고 CSS만 갈린다 */
+  variant: "placed" | "detail";
   amount: number;
   /** settings의 한 문자열 그대로 — 은행/번호/예금주로 쪼개지 않는다 */
   account: string;
