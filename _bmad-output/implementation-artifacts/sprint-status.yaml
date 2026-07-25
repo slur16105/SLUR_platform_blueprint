@@ -148,7 +148,7 @@ action_items:
   - { id: CC-1, epic: 8, status: in-progress, owner: "Claude+Slur", action: "구매자 반응형 웹 전환 — [완료] 코스 코렉션 제안 승인 · PRD·브리프·스파인 갱신(AD-14·NFR-7 신설) · bmad-ux 최초 실행(톤 B 매거진 Slur 선택, DESIGN.md·EXPERIENCE.md 확정) · epics.md UX-DR1~16 추출 + Epic 8 스토리 8건 정의(2026-07-21). [다음] bmad-create-story로 8.1부터 스토리 파일 생성 → 구현. 8.2는 역할 쿠키 buyer 도입 = 판매자·관리자 유일 회귀 지점이라 실기 확인 필수. Flutter는 8.8에서 태그 원격 푸시 확인 후 제거. PG(Epic 7)는 Epic 8 완료 후 착수 — 초안 7.4 Flutter 결제 플로우는 무효" }
 
 # Epic 8 회고 (2026-07-22) — epic-8-retro-2026-07-22.md
-  - { id: A-E8-1, epic: 8, status: open, owner: "Slur", action: "카카오 프로덕션 3자리 설정 — 콘솔 Redirect URI 2개 등록 + api KAKAO_REDIRECT_URIS + web 2변수(R1대로 --set 후 즉시 확인). 현재 프로덕션 카카오는 100% 실패. 실왕복 1회 성공까지" }
+  - { id: A-E8-1, epic: 8, status: done, owner: "Slur+Claude", action: "카카오 프로덕션 설정 완료(2026-07-26) — 콘솔 Web 플랫폼+Redirect URI 등록(Dan/헤르메스), Railway 변수 3개 --set(web KAKAO_REST_API_KEY·KAKAO_REDIRECT_URI, api KAKAO_REDIRECT_URIS, Dan이 ! 로 실행). 실왕복 1회 성공 확인. 추가로 콜백 리다이렉트 0.0.0.0 누출 버그(leave()의 new URL(dest,req.nextUrl)가 프록시 뒤 내부호스트로 샜음 → 상대경로 Location으로 수정) 배포(커밋 09d9536)·에러경로 실측 검증. Railway 변수 쓰기는 Claude 안전정책상 차단되어 Dan이 직접 --set" }
   - { id: A-E8-2, epic: 8, status: open, owner: "Slur(취합 Claude)", action: "프로덕션 R3 + 실기 검증 일괄 세션 = 8.1~8.7 done 게이트 = 8.8 착수 조건. 상태변경 BFF 6개 실요청·콘솔 회귀(실계정)·실데이터 렌더·실기기 PWA 설치·폭 드래그 상태 유지" }
   - { id: A-E8-3, epic: 8, status: done, owner: "Claude", action: "콘솔 BFF 9개 assertSameOrigin 부착 완료(POST 7·PUT 2, 콘솔 9화면 실동작 확인). x-forwarded-host는 프로덕션 실측으로 Railway 엣지가 차단함을 확인해 해소 — 프록시 구성 변경 시 재측정 필요" }
   - { id: A-E8-4, epic: 8, status: open, owner: "Claude→Slur", action: "apps/web 자동 단언 1스펙 프로토타입(화면 무관 명제 5개) 제시 → 채택 판단. 이번 에픽의 실버그 3건과 리뷰 지적 다수가 빌드를 통과하는 종류였다" }
@@ -157,4 +157,5 @@ action_items:
   - { id: A-E8-7, epic: 8, status: done, owner: "Claude", action: "UX 스파인 전수 대조 완료(2026-07-22) — 사실 주장 90건 중 84건 대조, 불일치 15건 정정 + 파생 모순 7건, 근거 병기 37곳. 15건 중 3건이 앞선 정정의 미전파 잔여였다 — 정정 시 전체 재독이 규약이 되어야 한다" }
   - { id: A-E8-8, epic: 8, status: open, owner: "Slur", action: "부채 33건의 게이트 분류 승인 + [ASSUMPTION] 문구 8건 확인 + archive/* 태그 원격 푸시 판단(현재 원격 태그 0개, 커밋 c484141이 로컬에만 존재)" }
   - { id: A-E8-9, epic: 8, status: open, owner: "Slur", action: "brand_name 중복 승인 금지를 운영 규칙으로 명문화 — 코드 변경 0, 비용 0인데 어디에도 없다. 동명 브랜드 2팀이면 장바구니 묶음이 합쳐지고 배송비 2건이 1건처럼 보인다" }
+  - { id: A-E8-10, epic: 8, status: done, owner: "Claude", action: "샘플 데이터 시딩(2026-07-26) — 데모 계정 demo-shop@slur.dev(admin+seller, bootstrap으로 admin 부여·자가 입점승인) 생성, 카테고리 3개 추가(포스터·의류·잡화), 브랜드 '샘플스토어'로 상품 10개 등록(품절 3건, loremflickr 실사진). ⚠️ 데모용 — 스톡 이미지 라이선스 불명, 오픈 전 실상품·실사진으로 교체(오픈 게이트). ②③ 실기 검증의 선행 데이터 확보" }
 
