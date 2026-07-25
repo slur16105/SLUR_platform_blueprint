@@ -30,13 +30,13 @@ export async function GET(req: NextRequest) {
   const cookieNext = req.cookies.get(COOKIE_OAUTH_NEXT)?.value;
 
   // 1) 사용자가 카카오에서 취소 — 조용히 돌아간다(문구 없음). 그 밖의 인가 오류는 고정 문장으로.
-  if (error) return leave(req, error === "access_denied" ? "/login" : "/login?e=kakao");
+  if (error) return leave(error === "access_denied" ? "/login" : "/login?e=kakao");
 
   // 2) state 검증 — 없거나 다르면 세션을 세우지 않는다
   if (!cookieState || !state || state.length > MAX_STATE || state !== cookieState) {
-    return leave(req, "/login?e=state");
+    return leave("/login?e=state");
   }
-  if (!code || code.length > MAX_CODE) return leave(req, "/login?e=kakao");
+  if (!code || code.length > MAX_CODE) return leave("/login?e=kakao");
 
   // 3) 기존 백엔드 엔드포인트로 교환 — 신규 엔드포인트 0건
   let kakaoStatus = 0;
@@ -51,31 +51,35 @@ export async function GET(req: NextRequest) {
     kakaoStatus = upstream.status;
     data = await upstream.json().catch(() => null);
   } catch {
-    return leave(req, "/login?e=kakao"); // 네트워크 예외
+    return leave("/login?e=kakao"); // 네트워크 예외
   }
 
   if (kakaoStatus < 200 || kakaoStatus >= 300 || !data?.access_token || !data.refresh_token) {
     // 인가 코드는 로그에 남기지 않는다 (R2) — 상태 코드와 백엔드 에러 code까지만
     console.error("kakao callback failed", { status: kakaoStatus, code: data?.code });
-    return leave(req, data?.code === "email_conflict" ? "/login?e=conflict" : "/login?e=kakao");
+    return leave(data?.code === "email_conflict" ? "/login?e=conflict" : "/login?e=kakao");
   }
 
   // 4) 역할 조회 — 실패 시 세션을 세우지 않고 되돌린다(조용한 강등 금지)
   const roles = await fetchRoles(data.access_token);
-  if (roles === null) return leave(req, "/login?e=kakao");
+  if (roles === null) return leave("/login?e=kakao");
   const role = resolveRole(roles);
 
   // 5) 복귀 — 소비 직전에 다시 자체 경로인지 확인한다
   const dest = safeNextPath(cookieNext) ?? roleHome(role);
-  const res = leave(req, dest);
+  const res = leave(dest);
   setSessionCookies(res, data.access_token, data.refresh_token);
   setRoleCookie(res, role);
   return res;
 }
 
-/** 어느 경로로 끝나든 state·next 쿠키를 소비 즉시 삭제하고 캐시를 막는다. */
-function leave(req: NextRequest, dest: string) {
-  const res = NextResponse.redirect(new URL(dest, req.nextUrl), 302);
+/** 어느 경로로 끝나든 state·next 쿠키를 소비 즉시 삭제하고 캐시를 막는다.
+ *  Location은 상대경로(자체 루트경로)로 준다 — dest는 항상 safeNextPath·roleHome·"/login…"이라
+ *  루트 상대경로다. 브라우저가 "실제로 접속한 공개 URL" 기준으로 해석하므로, 프록시(Railway)
+ *  뒤에서 req.nextUrl이 내부 호스트(0.0.0.0:8080)를 담아 리다이렉트가 0.0.0.0으로 새던 버그를
+ *  원천 차단한다. 절대 URL을 만들지 않아 x-forwarded-host 위조에도 영향받지 않는다. */
+function leave(dest: string) {
+  const res = new NextResponse(null, { status: 302, headers: { Location: dest } });
   res.cookies.delete({ name: COOKIE_OAUTH_STATE, path: OAUTH_COOKIE_PATH });
   res.cookies.delete({ name: COOKIE_OAUTH_NEXT, path: OAUTH_COOKIE_PATH });
   res.headers.set("Cache-Control", "no-store");
