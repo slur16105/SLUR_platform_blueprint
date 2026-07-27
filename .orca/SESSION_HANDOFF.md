@@ -1,12 +1,40 @@
 ---
-state: blocked
+state: ready
 owner: Claude + Dan
-updated_at: 2026-07-27
-active_workflow: Epic 9 구매자 홈 편성(시안 C) — 구현·3레이어 리뷰·수정 완료, origin/main push 완료(60e2e3f·234804d). Hub맥 도커 재배포 대기
-blocked_on: "실호스트 반영 대기 — 호스팅은 Railway가 아니라 Hub맥 도커(→Cloudflare 터널 raw-salon-redhead-touched.trycloudflare.com)다. GitHub push는 Hub맥을 자동 갱신하지 않으므로, Hub맥에서 git pull + docker compose up -d --build --wait(Alembic이 c3f1a2b9e4d7 적용)를 실행해야 Epic 9가 라이브에 반영된다. 재빌드 후에도 편성 데이터가 비어 홈은 서문형 폴백으로 뜬다 — 관리자(local-admin)로 편성 생성해야 C 지면이 보임. + Slur 결정 2건(편성 이미지 사전서명 업로드, 히어로 CTA·슬롯 제거 고지). 실기 검증(A-E8-2)도 잔존"
+updated_at: 2026-07-28
+active_workflow: Epic 9 편성 + 구매자 UI QA·일관성 수정 완료, origin/main push 완료(~39b93f2). Hub맥 재배포·실기 검증 대기
+blocked_on: "코드는 clean·origin 동기화 상태. 다음은 Dan 몫 — ① Hub맥 재배포(git pull + docker compose up -d --build --wait, Alembic c3f1a2b9e4d7 적용 + seed로 편성 데이터), 또는 자동배포 러너 설치(DEPLOY_HUBMAC.md). ② A-E8-2 실기 검증(Epic 8+9, manual-verification-checklist.md). ③ Slur 결정: 내 정보 2단 방향, 편성 이미지 사전서명 업로드, 히어로 CTA 고지. 오픈 게이트(PG 등) 잔존"
 ---
 
 # SLUR Platform Blueprint — 세션 핸드오프
+
+## 2026-07-28 — 구매자 UI QA·일관성 수정 + 로컬 검증 인프라
+
+Dan이 로컬 서버로 화면을 직접 눌러보며 발견한 문제를 순차 수정했다. **전부 커밋·push 완료(main↔origin 동기화, 트리 clean).** 실호스트(Hub맥)엔 아직 미반영 — 재배포 필요(위 blocked_on).
+
+### 고친 것 (커밋 cda9dcd~39b93f2)
+- **로그인 후 원래 페이지 복귀 안 됨(로컬)** — 세션 쿠키가 항상 `Secure`라 http://localhost에서 저장 안 돼 세션 미유지 → 보호 페이지가 로그인으로 튕겼다. `lib/auth.ts`·kakao/start에 `COOKIE_SECURE` env 오버라이드(미설정 시 NODE_ENV==production 유지 — 프로덕션 보안 불변), compose 기본 true, 로컬 `.env`에서만 false. 실측: 로그인 후 /me·/admin 200. (커밋 3ef946d)
+- **컨테이너 폭 제각각(1080/640/560)** — `.b_frame` 하나로 통일해 전 구매자 화면이 상단바·푸터와 같은 좌우 정렬선 공유. 한 단 화면은 안쪽 열(.b_col_read/form/confirm)로 글줄 제한. (03a4653)
+- **약관·개인정보처리방침** — 접근성 모달로(포커스 트랩·ESC·스크롤 잠금), 콘텐츠 단일 소스 `app/legal/policy-docs.tsx`, 독립 페이지는 딥링크 폴백 유지. `/me`의 중복 약관 링크는 제거(사업자정보·중개자고지는 FR-31/32로 유지). (03a4653·39b93f2)
+- **상품상세 이미지 sticky 제거** — ≥768에서 스크롤 시 이미지가 따라 내려와 아래 내용 덮던 문제. 일반 스크롤로. (cda9dcd)
+- **장바구니 재설계** — 상품 이미지·이름 클릭→상세(/products/{id}), 수량 스테퍼·삭제를 링크 바깥 우측(.i_actions)으로 분리(컨트롤 클릭이 네비게이션 유발 안 함), 행 grid 정돈. 기존 상태·플로우 보존. (39b93f2)
+- **로그인·가입 폼 가운데 정렬** / **데스크톱 페이지 타이틀 통일** / **장바구니 이중 hairline 제거**. (03a4653·39b93f2)
+- **내 정보 데스크톱 2단**(좌 계정·주문내역 / 우 사업자정보), 모바일 단일단 그대로. ⚠️ **Dan 확인 대기**: 우 칼럼이 더 길어 좌하단 여백 남음 — 이대로/좌우 스왑/가운데 한 단 중 선택(CSS만). (39b93f2)
+
+### 로컬 검증 인프라 (이 세션에서 세움)
+- **홈 히어로 데모 이미지** — Pexels 무료 스톡(스페클 스톤웨어 정물, 톤 B). 홈 전용 로컬 이미지 폴백 `_feature_image_url`(local 한정, 상품 데모와 분리). (846b63b·60bab68)
+- **편성 데모 seed** — `local_seed.py`에 히어로 1 + 슬롯 2. 카탈로그와 독립 멱등. `docker compose --profile tools run --build --rm seed`. (854c6cf)
+- **로컬 스택 기동 중**(이 개발 맥) — `docker compose up -d --build --wait`로 postgres·api·web 떠 있음. `.env`(gitignore, `COOKIE_SECURE=false` 포함) 새로 생성. 끄기: `docker compose down`(볼륨 유지)/`down -v`(폐기).
+
+### 자동 배포 (설치 대기)
+- **GitHub Actions 셀프호스트 러너** 워크플로 추가 — main push 시 Hub맥이 pull+재빌드. `.github/workflows/deploy-hubmac.yml`. **Hub맥에서 1회 설치 필요**(러너 등록·서비스화·리포변수 `HUBMAC_DEPLOY_DIR`) — `DEPLOY_HUBMAC.md`. 설치 전엔 push 시 잡이 대기 상태. (d27b73c)
+- 호스팅 정정: 실호스트는 Railway 아니라 **Hub맥 도커 → Cloudflare 임시 터널**. GitHub push는 Hub맥 자동 갱신 안 함(러너 설치 전까지 수동 pull+재빌드). (e04f646, 메모 hosting-setup)
+
+### 이 세션에서 못 한 것 / 남은 것
+- **화면을 실제로 못 봄** — 자동 브라우저가 localhost 차단, claude-in-chrome은 이번에 설치 보류. 그래서 시각 이슈는 Dan이 발견→수정하는 방식이었다. 다음에 브라우저 연결되면 선제 시각 QA 가능.
+- **미적용 폴리시(Dan 판단)**: /주문서·상품상세 데스크톱 타이틀 미부여(주문상세만 있음), 로그인·가입 모바일 눈썹+타이틀, 푸터 약관 링크 가운뎃점 구분자.
+
+---
 
 ## 2026-07-27 (저녁) — Epic 9 구매자 홈 편성(시안 C) 전 스택 구현 완료 · 로컬 커밋 60e2e3f
 

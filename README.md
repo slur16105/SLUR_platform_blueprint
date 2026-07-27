@@ -17,11 +17,110 @@ SLUR 플랫폼 1호의 목표는 단기 매출이 아니라, 판매자 입점부
 - 판매자·관리자용 Next.js 콘솔
 - Hub맥에서의 Docker 통합 실행과 메인맥 LAN 검토
 
+## 기능 안내
+
+전체 기능을 화면 단위로 정리합니다. 하나의 계정이 **구매자·판매자·관리자** 역할을 겸할 수 있으며, 구매자는 반응형 웹, 판매자·관리자는 같은 웹의 콘솔 영역에서 역할로 분기합니다.
+
+> **스크린샷 안내** — 아래 이미지들은 `docs/screenshots/`에 저장하면 채워집니다. 로컬 스택(`localhost:3000`)을 띄운 뒤 각 화면을 캡처해 아래 [촬영 가이드](#스크린샷-촬영-가이드)의 파일명으로 저장하세요. (데모 계정·시드는 [빠른 시작](#빠른-시작--hub맥-로컬-검증) 참고)
+
+### 구매자
+
+#### 홈 — 운영자 편성 지면
+![구매자 홈 — 편성 지면](docs/screenshots/buyer-home.png)
+- 운영자가 편성한 **히어로(이번 지면)** + **편성 슬롯**(고른 품목 묶음) + 카테고리 칩 + 전체 상품 그리드 + 푸터로 구성된 에디토리얼 홈.
+- 편성이 없으면 서문형(큐레이션 문구 + 상품 목록)으로 자동 폴백합니다.
+- 텍스트는 이미지 위에 얹지 않고 이미지 아래 블록에 둡니다(매거진 톤).
+
+#### 상품 상세
+![상품 상세](docs/screenshots/buyer-product-detail.png)
+- 이미지 갤러리(썸네일), 브랜드(판매자)명·상품명·가격·옵션.
+- 판매자 신원 정보와 배송비, **중개자 고지**(통신판매중개자 고지), 담기·바로 구매.
+- 품절은 숨기지 않고 채도↓·취소선으로 표기합니다.
+
+#### 장바구니
+![장바구니](docs/screenshots/buyer-cart.png)
+- **판매자 묶음**별로 그룹화되어 묶음별 배송비를 계산합니다.
+- 상품 이미지·이름을 누르면 상세로 이동하고, 수량 조절·삭제는 행 우측 컨트롤로 분리되어 있습니다.
+- 주문 가능 항목 수 기준의 금액 요약과 주문하기.
+
+#### 주문서 · 주문 완료
+![주문서](docs/screenshots/buyer-checkout.png)
+- 배송지 입력(다음 우편번호 검색), 무통장입금 안내, `주문하기` 위의 중개자 고지(규제 배치).
+- 주문 완료 화면에서 주문번호와 입금 계좌를 안내합니다(v1 무통장입금 흐름).
+
+#### 주문 내역 · 상세 · 취소
+![주문 내역](docs/screenshots/buyer-orders.png)
+- 주문 목록과 상세, 상태(입금대기·결제완료·배송준비·배송중 등) 표시.
+- 취소 가능 구간에서 구매자 취소, 취소된 묶음의 배송비 취소선 처리.
+
+#### 내 정보
+![내 정보](docs/screenshots/buyer-me.png)
+- 계정 정보, 주문 내역 진입, 로그아웃.
+- 사업자 정보·중개자 고지(법적 고지)를 계정 조회 실패와 무관하게 표시. 데스크톱은 2단 구성.
+
+#### 로그인 · 회원가입
+![로그인 · 약관 모달](docs/screenshots/buyer-login.png)
+- 이메일 로그인·가입과 **카카오 로그인**(웹 인가코드) 경계.
+- 회원가입 필수 약관 동의, **이용약관·개인정보처리방침은 모달**로 열림(전체 화면 이탈 없이 확인, 독립 페이지는 딥링크 폴백).
+
+### 판매자 콘솔
+
+#### 대시보드 · 상품 관리
+![판매자 상품 관리](docs/screenshots/seller-products.png)
+- 재고 임박 등 요약 대시보드.
+- 상품 등록·수정(옵션 조합·재고), 이미지 사전서명 업로드(Storage 키 비노출).
+
+#### 주문 관리
+![판매자 주문 관리](docs/screenshots/seller-orders.png)
+- 판매자 소유 묶음의 주문 확인과 배송 상태 처리(발송 등).
+
+### 관리자 콘솔
+
+#### 대시보드 · 입점 승인
+![관리자 입점 승인](docs/screenshots/admin-approvals.png)
+- 관리자 대시보드, 판매자 입점 신청 검토·승인(초청·선별 모델의 관문).
+
+#### 홈 편성 관리 (Epic 9)
+![관리자 홈 편성 관리](docs/screenshots/admin-home-curation.png)
+- 구매자 홈의 히어로·편성 슬롯을 직접 편성: 제목·문장·대표 이미지·노출 상품 묶음·순서·노출 기간·활성 토글.
+- 편성이 없으면 홈은 서문형으로 폴백합니다.
+
+#### 입금 확인 · 회원/판매자/상품/주문 조회 · 카테고리 · 설정
+![관리자 입금 확인](docs/screenshots/admin-deposits.png)
+- 무통장입금 수동 확인(입금 확인 시 배송 준비로 상태 전이).
+- 회원·판매자·상품·주문 조회(읽기 중심), 카테고리 생성·순서 관리, 입금 계좌 등 설정.
+
+### 공통 (전 역할)
+- **인증·RBAC**: JWT + bcrypt, 역할 판정은 FastAPI가 소유. 웹은 힌트 쿠키로 UX 분기만.
+- **주문 상태 전이**: 담기 → 주문 → 입금대기 → (관리자 입금확인) → 배송준비 → 배송중, 구간별 취소 규칙.
+- **디자인 시스템**: 슬러 시스템(slur-ux·slur-design), 매거진 톤 B, 전 구매자 화면 공통 컨테이너 폭·푸터.
+
+### 스크린샷 촬영 가이드
+
+로컬 스택을 띄우고(`docker compose up -d --build --wait` + `docker compose --profile tools run --build --rm seed`), 아래 계정으로 로그인해 각 화면을 캡처한 뒤 `docs/screenshots/`에 저장합니다. (권장 폭 ~1280px)
+
+| 파일명 | 화면 | 경로 | 계정 |
+| --- | --- | --- | --- |
+| `buyer-home.png` | 편성 홈 | `/` | 비로그인 |
+| `buyer-product-detail.png` | 상품 상세 | `/products/{id}` | 비로그인 |
+| `buyer-cart.png` | 장바구니 | `/cart` | 구매자 로그인 |
+| `buyer-checkout.png` | 주문서 | `/checkout` | 구매자 로그인 |
+| `buyer-orders.png` | 주문 내역 | `/orders` | 구매자 로그인 |
+| `buyer-me.png` | 내 정보 | `/me` | 구매자 로그인 |
+| `buyer-login.png` | 로그인(약관 모달) | `/login` | 비로그인 |
+| `seller-products.png` | 판매자 상품 관리 | `/seller` | `local-seller@example.com` |
+| `seller-orders.png` | 판매자 주문 관리 | `/seller` 주문 | `local-seller@example.com` |
+| `admin-approvals.png` | 입점 승인 | `/admin` | `local-admin@example.com` |
+| `admin-home-curation.png` | 홈 편성 관리 | `/admin/home` | `local-admin@example.com` |
+| `admin-deposits.png` | 입금 확인 | `/admin/deposits` | `local-admin@example.com` |
+
+> 로컬 계정 비밀번호와 시드 방법은 [빠른 시작](#빠른-시작--hub맥-로컬-검증)의 3단계를 참고하세요. 데모 계정: 관리자 `local-admin@example.com` / `local-admin-password-2026`, 판매자 `local-seller@example.com` / `local-seller-password-2026`.
+
 ## 아키텍처
 
 ```text
-구매자: Flutter 모바일 앱
-판매자·관리자: Next.js 웹
+구매자: Next.js 반응형 웹 (PWA)
+판매자·관리자: Next.js 웹 콘솔 (역할 분기)
                   │
                   ▼
             FastAPI API
@@ -32,7 +131,7 @@ SLUR 플랫폼 1호의 목표는 단기 매출이 아니라, 판매자 입점부
 ```
 
 - **FastAPI**가 인증, 권한, 상태 전이, 주문 로직의 유일한 소유자입니다.
-- 구매자 앱과 웹은 FastAPI API만 호출합니다.
+- 구매자·판매자·관리자 웹은 모두 FastAPI API만 호출합니다. (초기 Flutter 구매자 앱은 반응형 웹으로 전환됐으며 `apps/mobile`은 제거 예정)
 - **Supabase**는 향후 매니지드 PostgreSQL 및 Storage 연결 대상으로 두며, Supabase Auth·RLS·Edge Functions는 사용하지 않습니다.
 - 현재 사전 운영 검증의 기본 DB는 운영 Supabase와 분리된 **Docker PostgreSQL**입니다.
 
