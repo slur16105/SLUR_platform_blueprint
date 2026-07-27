@@ -44,6 +44,12 @@
     .i_feature p { margin: 4px 0 0; color: var(--color-text-secondary); font-size: 14px; }
     .i_flow { margin: 0; color: var(--color-text-secondary); font-size: 14px; }
     .i_flow b { color: var(--color-text-primary); font-weight: 700; }
+    .p_screenshot_grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .i_screenshot { margin: 0; overflow: hidden; border: 1px solid var(--color-border-subtle); border-radius: 12px; background: var(--color-surface-card); box-shadow: var(--shadow-sm); }
+    .i_screenshot img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--color-border-subtle); }
+    .i_screenshot figcaption { padding: 16px 18px 18px; }
+    .i_screenshot strong { display: block; font-size: 15px; letter-spacing: -.02em; }
+    .i_screenshot span { display: block; margin-top: 4px; color: var(--color-text-secondary); font-size: 13px; }
     .p_architecture { display: grid; padding: 28px; border: 1px solid var(--color-border-subtle); border-radius: 14px; background: var(--color-surface-card); box-shadow: var(--shadow-sm); grid-template-columns: 1.05fr .9fr; gap: 32px; }
     .i_arch_stack { display: flex; flex-direction: column; gap: 8px; }
     .i_arch_node { display: flex; min-height: 54px; padding: 12px 16px; border: 1px solid var(--color-border-default); border-radius: 8px; align-items: center; justify-content: space-between; background: var(--color-surface-card); gap: 16px; }
@@ -83,7 +89,7 @@
     .layout_footer { border-top: 1px solid var(--color-border-subtle); background: var(--color-surface-card); }
     .l_footer_inner { display: flex; width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0; align-items: center; justify-content: space-between; gap: 20px; color: var(--color-text-muted); font-size: 13px; }
     .l_footer_inner a { color: var(--color-text-secondary); font-weight: 700; }
-    @media (max-width: 760px) { .l_nav { display: none; } .page_main { padding-top: 28px; } .p_hero { grid-template-columns: 1fr; gap: 22px; } .p_section { margin-top: 52px; } .p_section_head, .i_feature, .p_architecture, .p_test_grid, .p_scope { grid-template-columns: 1fr; gap: 14px; } .p_security_grid { grid-template-columns: 1fr; } .p_account_row { grid-template-columns: 1fr; gap: 8px; } .p_steps { grid-template-columns: 1fr; } .l_footer_inner { align-items: flex-start; flex-direction: column; } }
+    @media (max-width: 760px) { .l_nav { display: none; } .page_main { padding-top: 28px; } .p_hero { grid-template-columns: 1fr; gap: 22px; } .p_section { margin-top: 52px; } .p_section_head, .i_feature, .p_architecture, .p_test_grid, .p_scope { grid-template-columns: 1fr; gap: 14px; } .p_screenshot_grid, .p_security_grid { grid-template-columns: 1fr; } .p_account_row { grid-template-columns: 1fr; gap: 8px; } .p_steps { grid-template-columns: 1fr; } .l_footer_inner { align-items: flex-start; flex-direction: column; } }
     @media print { .layout_header { position: static; } .p_hero { box-shadow: none; } .card, .p_architecture, .p_accounts { box-shadow: none; } .page_main { width: 100%; padding: 20px; } }
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .i_link { transition: none; } }
   </style>
@@ -94,6 +100,7 @@
       <a class="l_brand" href="/">SLUR <span>Platform Blueprint</span></a>
       <nav class="l_nav" aria-label="문서 탐색">
         <a href="#features">핵심 기능</a>
+        <a href="#screens">주요 화면</a>
         <a href="#security">보안 설계</a>
         <a href="#testing">검증</a>
         <a href="#accounts">테스트 계정</a>
@@ -150,9 +157,29 @@
       </div>
     </section>
 
+    <section class="p_section" id="screens" aria-labelledby="screens-title">
+      <div class="p_section_head">
+        <p class="p_kicker">02 · KEY SCREENS</p>
+        <div>
+          <h2 class="p_section_title" id="screens-title">구매 흐름의 주요 화면</h2>
+          <p class="p_section_desc">외부 Docker 데모에서 실제 로컬 시드 카탈로그를 렌더링해 캡처했습니다. 탐색부터 상품 정보 확인과 구매 진입까지의 흐름을 보여줍니다.</p>
+        </div>
+      </div>
+      <div class="p_screenshot_grid">
+        <figure class="i_screenshot">
+          <img src="/submission-assets/screenshots/buyer-home.png" alt="SLUR 구매자 홈 화면. 전체, 문구, 생활 카테고리 필터와 로컬 시드 상품 6개, 가격과 품절 상태가 보인다.">
+          <figcaption><strong>상품 탐색</strong><span>카테고리 필터와 판매 상태, 가격을 한 화면에서 확인한다.</span></figcaption>
+        </figure>
+        <figure class="i_screenshot">
+          <img src="/submission-assets/screenshots/buyer-product-detail.png" alt="SLUR 상품 상세 화면. 유리 머그의 판매자 정보, 가격, 장바구니 담기와 바로 구매 버튼, 통신판매 중개 고지가 보인다.">
+          <figcaption><strong>상품 상세·구매 진입</strong><span>판매자 고지와 배송비 안내를 확인한 뒤 장바구니 또는 바로 구매로 진행한다.</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section class="p_section" aria-labelledby="architecture-title">
       <div class="p_section_head">
-        <p class="p_kicker">02 · ARCHITECTURE</p>
+        <p class="p_kicker">03 · ARCHITECTURE</p>
         <div><h2 class="p_section_title" id="architecture-title">FastAPI를 유일한 권한 판단 지점으로 둔 구조</h2><p class="p_section_desc">프런트엔드는 화면과 BFF를 담당하고, 인증·권한·상태 전이·주문 규칙은 서버 API가 소유합니다.</p></div>
       </div>
       <div class="p_architecture">
@@ -176,7 +203,7 @@
 
     <section class="p_section" id="security" aria-labelledby="security-title">
       <div class="p_section_head">
-        <p class="p_kicker">03 · SECURITY</p>
+        <p class="p_kicker">04 · SECURITY</p>
         <div><h2 class="p_section_title" id="security-title">인증 정보와 상태 변경을 경계별로 방어</h2><p class="p_section_desc">아래 내용은 현재 구현의 보안 설계입니다. 실사용자 외부 판매는 별도의 오픈 게이트를 완료하기 전까지 허용하지 않습니다.</p></div>
       </div>
       <div class="p_security_grid">
@@ -191,7 +218,7 @@
 
     <section class="p_section" id="testing" aria-labelledby="testing-title">
       <div class="p_section_head">
-        <p class="p_kicker">04 · VERIFICATION</p>
+        <p class="p_kicker">05 · VERIFICATION</p>
         <div><h2 class="p_section_title" id="testing-title">구성부터 서비스 응답까지의 통합 확인</h2><p class="p_section_desc">제출 시점의 Docker 검증 명령을 실제 실행해 Compose 구성, DB 준비, API health, 웹 루트와 카테고리 BFF 응답을 확인했습니다.</p></div>
       </div>
       <div class="p_test_grid">
@@ -215,7 +242,7 @@
 
     <section class="p_section" id="accounts" aria-labelledby="accounts-title">
       <div class="p_section_head">
-        <p class="p_kicker">05 · DEMO ACCOUNTS</p>
+        <p class="p_kicker">06 · DEMO ACCOUNTS</p>
         <div><h2 class="p_section_title" id="accounts-title">로컬 데모 전용 테스트 계정</h2><p class="p_section_desc">아래 계정은 <code>docker compose --profile tools run --rm seed</code>가 만든 Docker Postgres에서만 사용합니다. 공개된 고정 비밀번호이므로 운영·개인 계정에는 절대 사용하지 않습니다.</p></div>
       </div>
       <div class="p_accounts" role="table" aria-label="로컬 데모 테스트 계정">
