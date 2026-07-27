@@ -154,9 +154,8 @@
   }
   .b_detail .i_media {
     grid-area: media;
-    position: sticky;
-    /* 54px 상단바를 피한다 */
-    top: calc(var(--b-topbar-h) + var(--b-space-5));
+    /* 이미지는 페이지와 함께 스크롤한다. (이전엔 sticky로 고정했으나 스크롤 시 이미지가
+       따라 내려와 아래 정보·고지를 덮는 것처럼 보여 제거 — 2026-07-27 Slur 요청) */
   }
   .b_detail .i_info { grid-area: info; padding-top: 0; }
   .b_detail .i_legal { grid-area: legal; margin-top: var(--b-space-7); }
