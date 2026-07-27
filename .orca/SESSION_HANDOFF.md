@@ -2,8 +2,8 @@
 state: blocked
 owner: Claude + Dan
 updated_at: 2026-07-27
-active_workflow: Epic 9 구매자 홈 편성(시안 C) — 구현·3레이어 리뷰·수정 완료, 로컬 커밋 60e2e3f. push 대기
-blocked_on: "push 결정 — push 시 Railway 자동배포 + 프로덕션 Supabase에 마이그레이션 c3f1a2b9e4d7(home_features·home_feature_items 2테이블) 실행된다. + Slur 결정 2건(편성 대표 이미지 사전서명 업로드 구현 여부, 히어로 CTA·슬롯 '모두 보기' 제거 고지). 실기 검증(A-E8-2)도 잔존"
+active_workflow: Epic 9 구매자 홈 편성(시안 C) — 구현·3레이어 리뷰·수정 완료, origin/main push 완료(60e2e3f·234804d). Hub맥 도커 재배포 대기
+blocked_on: "실호스트 반영 대기 — 호스팅은 Railway가 아니라 Hub맥 도커(→Cloudflare 터널 raw-salon-redhead-touched.trycloudflare.com)다. GitHub push는 Hub맥을 자동 갱신하지 않으므로, Hub맥에서 git pull + docker compose up -d --build --wait(Alembic이 c3f1a2b9e4d7 적용)를 실행해야 Epic 9가 라이브에 반영된다. 재빌드 후에도 편성 데이터가 비어 홈은 서문형 폴백으로 뜬다 — 관리자(local-admin)로 편성 생성해야 C 지면이 보임. + Slur 결정 2건(편성 이미지 사전서명 업로드, 히어로 CTA·슬롯 제거 고지). 실기 검증(A-E8-2)도 잔존"
 ---
 
 # SLUR Platform Blueprint — 세션 핸드오프
@@ -23,8 +23,15 @@ Dan이 시안 **C(운영자 편성)** 선택 + Q0(EQL 스크린샷 정본)·Q3(�
 - `apps/web` **tsc --noEmit·lint 클린**.
 - 로컬 DB는 docker `slur-pg`(colima) 컨테이너에서 `alembic upgrade head` 통과로 마이그레이션 검증. **불필요 시 `docker rm -f slur-pg`.**
 
+### 실호스트(Hub맥) 반영 — 아직 안 됨 ⚠️
+**호스팅은 Railway가 아니라 Hub맥 도커(→Cloudflare 터널 `raw-salon-redhead-touched.trycloudflare.com`)로 이전됐다.** origin/main push는 완료됐으나(60e2e3f·234804d) **GitHub push는 Hub맥을 자동 갱신하지 않는다** — 2026-07-27 저녁 시점 라이브 홈은 여전히 옛 서문형("골라온 것들을 천천히 봅니다")이다. 반영하려면 **Hub맥에서**:
+```
+git pull
+docker compose up -d --build --wait   # web·api 재빌드 + Alembic이 c3f1a2b9e4d7(2테이블) 적용
+```
+새 테이블 2개는 추가만이라 로컬 Postgres 기존 데이터 무영향. **재빌드 후에도 홈은 서문형 폴백으로 뜬다** — 편성 데이터가 비어 hero=null이라 의도된 폴백. C 지면을 보려면 관리자(`local-admin@…`)로 로그인 → 홈 편성 관리에서 히어로+슬롯 생성. (편성 seed는 아직 `local_seed.py`에 없음 — 필요 시 추가 검토.)
+
 ### Dan 결정 필요 (다음 세션 입구)
-1. **push 여부** — `git push origin main`(HTTP/1.1) 하면 **Railway 자동배포 + 프로덕션 Supabase에 마이그레이션 c3f1a2b9e4d7가 실행**(pre-deploy alembic)된다. 새 테이블 2개는 기존 데이터 무영향(추가만)이나, 프로덕션 스키마 변경이므로 승인 후 진행. **Claude 안전정책상 push는 미실행 — Dan 확인 대기.**
 2. **편성 대표 이미지 사전서명 업로드** — 현재 관리자 폼은 Storage 경로 텍스트 입력(내부 테스트엔 충분). 사전서명 업로드는 판매자 전용이라 관리자용 신설 필요. deferred-work에 오픈 게이트 후보로 등재. 구현 시점 판단.
 3. **히어로 CTA '지면 보기'·슬롯 '모두 보기' 제거 고지** — 시안엔 있으나 목적지(지면 상세 페이지)가 데이터·PRD 화면목록에 없어 제거(감사 "정당" 판정). 지면 상세가 필요하면 별도 스토리.
 
