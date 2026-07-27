@@ -4,7 +4,10 @@ import { COOKIE_OAUTH_NEXT, COOKIE_OAUTH_STATE, OAUTH_COOKIE_PATH, assertSameOri
 import { safeNextPath } from "@/lib/nav";
 
 const KAKAO_AUTHORIZE = "https://kauth.kakao.com/oauth/authorize";
-const secure = process.env.NODE_ENV === "production";
+// lib/auth.ts와 동일 규칙 — 로컬 http 검증에서는 COOKIE_SECURE=false로 끈다(미설정 시 NODE_ENV==production).
+const secure = process.env.COOKIE_SECURE != null
+  ? process.env.COOKIE_SECURE === "true"
+  : process.env.NODE_ENV === "production";
 
 /* 카카오 인가 시작 (D4).
    GET 링크가 아니라 POST인 이유: GET이면 제3자가 <img src="/api/auth/kakao/start">로

@@ -19,7 +19,12 @@ export const COOKIE_OAUTH_STATE = "slur_oauth_state";
 export const COOKIE_OAUTH_NEXT = "slur_oauth_next";
 export const OAUTH_COOKIE_PATH = "/api/auth/kakao";
 
-const secure = process.env.NODE_ENV === "production";
+// 프로덕션·HTTPS 터널은 Secure 필수. 단 로컬 http Docker 검증(http://localhost·http LAN)에서는
+// 브라우저가 Secure 쿠키를 저장하지 않아 로그인 세션이 잡히지 않으므로 COOKIE_SECURE=false로 끌 수 있게 한다.
+// 미설정 시 기존 동작(NODE_ENV==production)을 그대로 유지 — 프로덕션 보안은 약화되지 않는다.
+const secure = process.env.COOKIE_SECURE != null
+  ? process.env.COOKIE_SECURE === "true"
+  : process.env.NODE_ENV === "production";
 
 export function cookieOptions(maxAgeSec: number, path = "/") {
   return { httpOnly: true, secure, sameSite: "lax" as const, maxAge: maxAgeSec, path };
