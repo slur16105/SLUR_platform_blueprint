@@ -1,0 +1,53 @@
+name: Deploy to Hub맥
+
+# main에 push되면 Hub맥의 셀프호스트 러너가 실제 배포 디렉토리에서
+# 최신 코드로 재빌드한다(compose가 Alembic 마이그레이션까지 적용).
+# 러너 설치·리포 변수 설정은 DEPLOY_HUBMAC.md 참고. 러너가 없으면 잡은 대기 상태로 남는다.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "배포 후 데모 카탈로그/편성 seed 실행 (idempotent)"
+        type: boolean
+        default: false
+
+# 배포가 겹치지 않게 직렬화한다. 진행 중 배포는 취소하지 않고 끝까지 둔다.
+concurrency:
+  group: hubmac-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Hub맥 러너 등록 시 붙인 라벨(hub-mac)로 이 잡을 그 머신에 고정한다.
+    runs-on: [self-hosted, hub-mac]
+    steps:
+      - name: 배포 디렉토리 확인
+        run: |
+          if [ -z "${{ vars.HUBMAC_DEPLOY_DIR }}" ]; then
+            echo "::error::리포 변수 HUBMAC_DEPLOY_DIR 가 없습니다. Settings > Secrets and variables > Actions > Variables 에서 Hub맥의 리포 경로(.env가 있는 클론)로 설정하세요."
+            exit 1
+          fi
+          echo "배포 대상: ${{ vars.HUBMAC_DEPLOY_DIR }}"
+
+      - name: 최신 main 반영
+        working-directory: ${{ vars.HUBMAC_DEPLOY_DIR }}
+        run: |
+          git fetch origin main
+          git reset --hard origin/main   # 배포 호스트는 항상 원격 main과 정확히 일치시킨다(.env 등 gitignore 파일은 보존)
+          echo "현재 커밋: $(git rev-parse --short HEAD)"
+
+      - name: 재빌드 + 마이그레이션 (docker compose)
+        working-directory: ${{ vars.HUBMAC_DEPLOY_DIR }}
+        run: docker compose up -d --build --wait   # migrate(Alembic head) → api → web. --wait로 헬스체크 실패 시 잡도 실패
+
+      - name: (선택) 데모 seed
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.seed }}
+        working-directory: ${{ vars.HUBMAC_DEPLOY_DIR }}
+        run: docker compose --profile tools run --rm seed
+
+      - name: 스택 상태
+        working-directory: ${{ vars.HUBMAC_DEPLOY_DIR }}
+        run: docker compose ps
