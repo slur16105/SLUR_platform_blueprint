@@ -46,7 +46,7 @@ jobs:
       - name: (선택) 데모 seed
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.seed }}
         working-directory: ${{ vars.HUBMAC_DEPLOY_DIR }}
-        run: docker compose --profile tools run --rm seed
+        run: docker compose --profile tools run --build --rm seed   # --build: seed는 tools 프로파일이라 up --build로 재빌드되지 않음
 
       - name: 스택 상태
         working-directory: ${{ vars.HUBMAC_DEPLOY_DIR }}
