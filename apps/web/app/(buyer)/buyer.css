@@ -53,8 +53,9 @@
 .b_frame { width: 100%; max-width: var(--b-content-max); margin-inline: auto; }
 /* 안쪽 열 — 행이 스스로 gutter를 갖는 화면(주문내역·내정보·주문상세). 좌측 정렬. */
 .b_col_read { width: 100%; max-width: var(--b-read-max); }
-/* 안쪽 열 — 스스로 gutter가 필요한 화면(로그인·회원가입). 좌측 정렬 + gutter. */
-.b_col_form { width: 100%; max-width: var(--b-read-max); padding-inline: var(--b-gutter); }
+/* 안쪽 열 — 로그인·회원가입. **가운데 정렬**(오너 결정 2026-07-27) + gutter.
+   폼은 채워야 할 화면이 아니라 하나의 과업이므로 넓은 화면에서 지면 가운데에 앉힌다. */
+.b_col_form { width: 100%; max-width: var(--b-read-max); margin-inline: auto; padding-inline: var(--b-gutter); }
 /* 안쪽 열 — 가운데 정렬 확인 화면(주문완료). 좁은 폭 + gutter. 로고 중앙 상단바와 축을 맞춘다. */
 .b_col_confirm { width: 100%; max-width: var(--b-narrow-max); margin-inline: auto; padding-inline: var(--b-gutter); }
 

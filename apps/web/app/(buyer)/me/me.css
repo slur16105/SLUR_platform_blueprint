@@ -11,10 +11,31 @@
       전 인터랙티브 요소를 이미 덮으므로 여기서 다시 선언하지 않는다.
    ───────────────────────────────────────────── */
 
-/* 구획의 좌우 여백은 각 구획이 갖는다 — 8px 띠와 hairline이 열 폭 끝까지 그어져야 한다
-   (장바구니 묶음·주문서 상품 구획과 같은 방법). 읽기 폭 상한 640px은 안쪽 열 .b_col_read가 준다
-   (UX-DR4 · 오너 확정 2026-07-27 — 바깥 틀 .b_frame이 상단바와 정렬선을 공유한다). */
-.b_me { padding-inline: 0; }
+/* 구획의 좌우 여백은 각 구획이 갖는다 — 8px 띠와 hairline이 칼럼 끝까지 그어져야 한다
+   (장바구니 묶음·주문서 상품 구획과 같은 방법). 바깥 틀 .b_frame이 상단바와 정렬선을 공유한다.
+   <768 : 한 단 스택(계정 → 메뉴 → 사업자정보 → 로그아웃). .i_rail은 투명 묶음일 뿐이다. */
+.b_me { display: block; padding-inline: 0; }
+
+/* ── 데스크톱 2단 (오너 요청 2026-07-27) ──────────────────
+   한 단 640이 남기던 오른쪽 여백을 계정 페이지답게 채운다.
+   좌: 계정+메뉴 레일 · 우: 사업자 정보 · 아래 전체 폭: 로그아웃.
+   DESIGN §반응형 "2단 우측 칼럼" 규칙을 따른다 — 8px 접기 띠는 세로 스택 장치이므로
+   옆으로 놓인 우측 칼럼에서는 쓰지 않고(아래에서 끈다), 깊이는 hairline·점선 상자로만 만든다.
+   좌측 정렬선은 그대로 상단바·머리글과 맞춘다(가운데로 밀지 않는다). */
+@media (min-width: 768px) {
+  .b_me {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 560px);
+    grid-template-areas:
+      "rail detail"
+      "logout logout";
+    column-gap: var(--b-space-7);
+    align-items: start;
+  }
+  .b_me .i_rail { grid-area: rail; }
+  .b_me .i_detail { grid-area: detail; }
+  .b_me .i_logout_sec { grid-area: logout; }
+}
 .b_me .i_sec { padding: var(--b-section-y) var(--b-gutter); }
 
 /* ── 계정 ─────────────────────────────────────
@@ -67,6 +88,11 @@
 /* ── 사업자 정보 (FR-31, UX-DR10) ────────────────
    위는 8px 띠. 라벨 + `임시 정보` 태그가 한 줄, 그 아래 점선 상자에 6행. */
 .b_me .i_biz_sec { border-top: var(--b-band) solid var(--b-paper-shade); }
+/* ≥768 우측 칼럼 — 위에 아무것도 없으므로 접기 띠를 끄고 레일 첫 구획(계정, space-6)과 위를 맞춘다.
+   깊이는 안쪽 점선 상자로만 만든다(DESIGN 2단 우측 칼럼 규칙 — 8px 띠는 세로 스택 전용). */
+@media (min-width: 768px) {
+  .b_me .i_biz_sec { border-top: none; padding-top: var(--b-space-6); }
+}
 .b_me .i_biz_head {
   display: flex;
   align-items: center;

@@ -10,7 +10,12 @@
    D3 — 체크박스는 조작이 아니라 상태 표시다(disabled). POST /orders/preview에 항목 선택
         파라미터가 없어 부분 선택은 주문서 금액과 어긋난다. 세 상태(전부·일부·전무)를
         각각 체크·부분 선택·빈 칸으로 표시하고 aria-label이 같은 사실을 말한다.
-   D7 — 삭제는 인라인 확인 줄이다. 모달·window.confirm·스와이프 삭제를 만들지 않는다. */
+   D7 — 삭제는 인라인 확인 줄이다. 모달·window.confirm·스와이프 삭제를 만들지 않는다.
+   D8 (오너 재설계 2026-07-27) — 행은 [사진+상품·옵션·가격 = 상세로 가는 링크] … [우측: 수량 + 삭제]다.
+        수량 스테퍼·삭제는 링크의 **자손이 아니라 형제**이므로 컨트롤 클릭이 상세 이동을 트리거하지 않는다
+        (stopPropagation 불필요). 판매 종료 항목(product_id 없음)은 링크 없이 그린다. */
+
+import Link from "next/link";
 
 import SellerPack from "../seller-pack";
 import { formatWon } from "../format";
@@ -62,30 +67,47 @@ function CartRow({
   // 합계는 절대 더하지 않는다: purchasable_total을 그대로 쓴다.
   const lineTotal = item.final_price === null ? null : item.final_price * qty;
 
-  return (
-    <div className="i_item b_cart_item" data-unavailable={dead ? "true" : undefined}>
+  /* 사진 + 상품명·옵션·가격 — 상세로 가는 클릭 대상. alt는 비운다(상품명이 링크 안 텍스트로 이미 낭독된다).
+     판매 종료(product_id 없음)는 이동할 상세가 없으므로 링크로 감싸지 않는다. */
+  const main = (
+    <>
       <span className="i_thumb">
         {item.image_url ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img className="i_img" src={item.image_url} alt={item.product_name} loading="lazy" decoding="async" />
+          <img className="i_img" src={item.image_url} alt="" loading="lazy" decoding="async" />
         ) : null}
       </span>
-      <div className="i_info">
-        <p className="b_product_name_row i_name">{item.product_name}</p>
+      <span className="i_info">
+        <span className="b_product_name_row i_name">{item.product_name}</span>
         {/* 옵션이 없는 조합은 `—`로 자리를 지킨다 — 행 높이가 흔들리지 않게 (AC 1) */}
-        <p className="b_meta i_option">{item.option_text || "—"}</p>
+        <span className="b_meta i_option">{item.option_text || "—"}</span>
         {/* 🚨 색만으로 상태를 전달하지 않는다 (EXPERIENCE) — 회색조·취소선 옆에 글자가 함께 선다.
             묶음 헤더 태그는 묶음 전체가 불가일 때만 나오므로 섞인 묶음은 이 행 태그가 유일한 단서다. */}
         {dead ? (
-          <p className="i_flag">
+          <span className="i_flag">
             <span className="b_tag m_unavailable">{DEAD_PACK_TAG}</span>
-          </p>
+          </span>
         ) : null}
-        <p className="b_price_item i_price">{lineTotal === null ? "—" : formatWon(lineTotal)}</p>
+        <span className="b_price_item i_price">{lineTotal === null ? "—" : formatWon(lineTotal)}</span>
+      </span>
+    </>
+  );
 
+  return (
+    <div className="i_item b_cart_item" data-unavailable={dead ? "true" : undefined}>
+      {item.product_id ? (
+        <Link className="i_main" href={`/products/${item.product_id}`}>
+          {main}
+        </Link>
+      ) : (
+        <div className="i_main">{main}</div>
+      )}
+
+      {/* 우측 컨트롤 — 링크 밖 형제. 스테퍼·삭제 클릭은 상세로 이동시키지 않는다. */}
+      <div className="i_actions">
         {confirming ? (
           <div
-            className="b_confirm_row i_ops b_row"
+            className="b_confirm_row"
             role="group"
             aria-label={`${item.product_name} 삭제 확인`}
             onKeyDown={(e) => {
@@ -110,7 +132,7 @@ function CartRow({
             </button>
           </div>
         ) : (
-          <div className="i_ops b_row">
+          <>
             <div className="b_stepper" role="group" aria-label={`${item.product_name} 수량`}>
               {/* 수량 1에서 `−`는 비활성이다 — 삭제와 구분한다 (AC 4) */}
               <button
@@ -143,18 +165,19 @@ function CartRow({
             >
               삭제
             </button>
-          </div>
+          </>
         )}
-
-        {error ? (
-          <p className="b_err_msg i_row_err" role="status">
-            {error}
-            <button type="button" className="i_refresh" onClick={h.onRefresh}>
-              새로고침
-            </button>
-          </p>
-        ) : null}
       </div>
+
+      {/* 행 실패 문장 — 항상 행 맨 아래 전체 폭 */}
+      {error ? (
+        <p className="b_err_msg i_row_err" role="status">
+          {error}
+          <button type="button" className="i_refresh" onClick={h.onRefresh}>
+            새로고침
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 }
