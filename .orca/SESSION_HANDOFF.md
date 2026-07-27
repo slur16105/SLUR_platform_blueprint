@@ -2,11 +2,41 @@
 state: blocked
 owner: Claude + Dan
 updated_at: 2026-07-27
-active_workflow: BMad UX Update — 구매자 홈 재설계 시안 3안 제출 완료, Dan 선택 대기
-blocked_on: "Dan의 시안 선택(Q1) + Q0·Q2~Q5 결정. 그 전 세션의 실기 검증(A-E8-2)도 그대로 남아 있다"
+active_workflow: Epic 9 구매자 홈 편성(시안 C) — 구현·3레이어 리뷰·수정 완료, 로컬 커밋 60e2e3f. push 대기
+blocked_on: "push 결정 — push 시 Railway 자동배포 + 프로덕션 Supabase에 마이그레이션 c3f1a2b9e4d7(home_features·home_feature_items 2테이블) 실행된다. + Slur 결정 2건(편성 대표 이미지 사전서명 업로드 구현 여부, 히어로 CTA·슬롯 '모두 보기' 제거 고지). 실기 검증(A-E8-2)도 잔존"
 ---
 
 # SLUR Platform Blueprint — 세션 핸드오프
+
+## 2026-07-27 (저녁) — Epic 9 구매자 홈 편성(시안 C) 전 스택 구현 완료 · 로컬 커밋 60e2e3f
+
+Dan이 시안 **C(운영자 편성)** 선택 + Q0(EQL 스크린샷 정본)·Q3(푸터 전 구매자 화면 공통)·Q4(스크롤 복원)·"지금 바로 구현" 확정. 각 분야 전문가를 병렬로 돌려 문서·백엔드·프론트·리뷰·수정을 한 세션에 완주했다.
+
+### 완료한 것 (커밋 60e2e3f · 40파일 +2554/-38)
+- **스파인/문서** (Slur 승인): ARCHITECTURE-SPINE ERD 18→20테이블(AD-9 승인 각주·Capability F9) · epics Epic 9 + 스토리 9.1~9.4 · PRD 홈=편성지면·관리자 "홈 편성 관리"·FR-36 · DESIGN b_hero/b_feature/b_strip/b_footer · EXPERIENCE 홈 IA·푸터 전면화·스크롤 복원 · UX 구현스펙 home-c-spec.md · EQL 정본 imports/pc.jpg
+- **백엔드** (apps/api): home 도메인(models/schemas/service/router) HomeFeature+HomeFeatureItem · 마이그레이션 **c3f1a2b9e4d7**(단일 head) · 공개 GET /api/v1/home · 관리자 CRUD /api/v1/admin/home/features(admin 전용)
+- **프론트** (apps/web): 구매자 홈 재설계(전면 히어로→편성 슬롯 5:7→가로 스트립→카테고리칩→상품그리드→푸터, hero=null 서문형 폴백) · 푸터 전 구매자 화면 공통 · 상품상세→뒤로 스크롤 복원 · 관리자 편성 화면(CRUD·상품 묶음 선택기·순서·기간·활성 토글)
+- **3-레이어 적대 리뷰**(Blind/EdgeCase/Acceptance) → 확정 결함 **11건 수정**: 푸터·CTA 겹침(중개자 고지 가림), 관리자 카테고리 필터 죽음, 히어로 issue_no 미표시, 백엔드 ends_at 검증, hidden 상품 차단, display_order 자동배정, move 401, KST tz, 스크롤 탭 구분, 다활성 히어로 안내, item_count 보정
+
+### 검증 (실측)
+- `apps/api` **pytest 165 passed / 1 failed** — 실패 1건은 Epic 9 무관 기존 env 이슈(`test_public_products.py::test_local_without_supabase_storage_uses_local_demo_image` — `.env`의 실제 SUPABASE_URL이 monkeypatch 무력화). 홈 편성 테스트 12건 전부 통과.
+- `apps/web` **tsc --noEmit·lint 클린**.
+- 로컬 DB는 docker `slur-pg`(colima) 컨테이너에서 `alembic upgrade head` 통과로 마이그레이션 검증. **불필요 시 `docker rm -f slur-pg`.**
+
+### Dan 결정 필요 (다음 세션 입구)
+1. **push 여부** — `git push origin main`(HTTP/1.1) 하면 **Railway 자동배포 + 프로덕션 Supabase에 마이그레이션 c3f1a2b9e4d7가 실행**(pre-deploy alembic)된다. 새 테이블 2개는 기존 데이터 무영향(추가만)이나, 프로덕션 스키마 변경이므로 승인 후 진행. **Claude 안전정책상 push는 미실행 — Dan 확인 대기.**
+2. **편성 대표 이미지 사전서명 업로드** — 현재 관리자 폼은 Storage 경로 텍스트 입력(내부 테스트엔 충분). 사전서명 업로드는 판매자 전용이라 관리자용 신설 필요. deferred-work에 오픈 게이트 후보로 등재. 구현 시점 판단.
+3. **히어로 CTA '지면 보기'·슬롯 '모두 보기' 제거 고지** — 시안엔 있으나 목적지(지면 상세 페이지)가 데이터·PRD 화면목록에 없어 제거(감사 "정당" 판정). 지면 상세가 필요하면 별도 스토리.
+
+### 이번에 하지 않은 것 (의도)
+- push 미실행(위 1). 앱(apps/mobile) 무변경. 범위 밖 기능(검색·리뷰·찜·쿠폰·알림) 0건. 오버레이 텍스트 0건.
+- 관리자 상품 키워드 검색 — 관리자 상품 API 부재로 공개 목록 필터로 대체(부분충족, deferred 등재).
+
+### 다음 액션
+1. Dan이 push 승인 → `git push origin main` → Railway 배포·프로덕션 마이그레이션 확인 → 세션 정리(main·origin 동기화).
+2. **A-E8-2 실기 검증**(아래 ③)은 여전히 잔존 — Epic 9 편성 화면도 함께 실기 확인 대상에 추가(관리자 편성 생성 → 구매자 홈 노출 왕복).
+
+---
 
 ## 2026-07-27 (오후) — BMad UX Update · 구매자 홈 재설계 시안 3안
 

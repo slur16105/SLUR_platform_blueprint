@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-15
-last_updated: 2026-07-22  # 8.7 구현 완료 — 8.1~8.7 코드 완료, 실기 검증·8.8 대기
+last_updated: 2026-07-27  # Epic 9 구매자 홈 편성(시안 C) 전 스택 구현·리뷰·수정 완료(커밋 60e2e3f) — push·실기 대기
 project: SLUR_platform_blueprint
 project_key: NOKEY
 tracking_system: file-system
@@ -123,6 +123,14 @@ development_status:
   8-7-me-and-pwa: in-progress         # 내 정보 + PWA 기반 (FR-31·33, NFR-7)
   8-8-flutter-archive-remove: ready-for-dev # Flutter 보관·제거 (Q2/A — 태그 원격 푸시 확인 후에만, 마지막)
   epic-8-retrospective: optional
+
+  # Epic 9: 구매자 홈 편성 (시안 C · Editorial Home) — FR-36. 2026-07-27 전 스택 구현·3레이어 리뷰·수정 완료, 로컬 커밋 60e2e3f. push·실기 대기
+  epic-9: in-progress
+  9-1-home-feature-model: review             # 편성 데이터 모델·마이그레이션 (home_features·home_feature_items, c3f1a2b9e4d7)
+  9-2-admin-home-curation: review            # 관리자 홈 편성 화면 (CRUD·상품 묶음 선택기·순서·기간·활성)
+  9-3-public-home-feed-api: review           # 공개 편성 조회 API (GET /api/v1/home, 품절 sold_out·hidden 제외)
+  9-4-buyer-home-redesign: review            # 구매자 홈 재설계 (히어로·슬롯·스트립·전면 푸터·스크롤 복원·서문형 폴백)
+  epic-9-retrospective: optional
 
 # Epic 1 회고 (2026-07-16) — Epic 2부터 적용. 스토리 작성·구현 시 이 목록을 먼저 읽는다.
 action_items:
