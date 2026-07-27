@@ -1,12 +1,72 @@
 ---
-state: ready
+state: blocked
 owner: Claude + Dan
 updated_at: 2026-07-27
-active_workflow: Hub맥 Docker 사전 운영 검증 환경 완료 — Dan의 LAN UI·실기 검증 대기
-blocked_on: "Dan의 실기 검증(콘솔 회귀·주문 플로우·PWA) 및 오픈 게이트 판단만 남음"
+active_workflow: BMad UX Update — 구매자 홈 재설계 시안 3안 제출 완료, Dan 선택 대기
+blocked_on: "Dan의 시안 선택(Q1) + Q0·Q2~Q5 결정. 그 전 세션의 실기 검증(A-E8-2)도 그대로 남아 있다"
 ---
 
 # SLUR Platform Blueprint — 세션 핸드오프
+
+## 2026-07-27 (오후) — BMad UX Update · 구매자 홈 재설계 시안 3안
+
+**대상은 구매자 홈 `/` 한 화면이다. 앱 소스는 한 줄도 수정하지 않았다.** 산출물은 기존 UX 런 폴더의
+`.working/` 아래에만 쌓았고, `DESIGN.md`·`EXPERIENCE.md` 스파인은 **아직 갱신하지 않았다** — Dan 선택 후 Finalize에서 한 번에 넣는다.
+
+`_bmad-output/planning-artifacts/ux-designs/ux-SLUR_platform_blueprint-2026-07-21/.working/`
+
+| 파일 | 내용 |
+|---|---|
+| `home-compare.html` | **여기서 시작** — 3안 요약 카드 + 결정 사항 6건 |
+| `home-a-preface.html` | 시안 A · 서문 — 큐레이션 자리를 **카테고리**가 채운다. 새 데이터·API·관리자 화면 **0건** |
+| `home-b-invitation.html` | 시안 B · 초대 — 큐레이션 자리를 **브랜드(판매자)**가 채운다. 브랜드별 공개 조회 1건 |
+| `home-c-feature.html` | 시안 C · 편성 — **운영자 편성 슬롯**. 새 테이블 1 + 관리자 편성 화면 1 (**PRD 화면 목록 밖**) |
+| `HOME-COMPARISON.md` | 차이·장단점·SLUR 적합성·구현비용·스파인 반영 예정 항목 |
+| `home-shared.css` | 3안 공통 지면 (토큰 이름을 실코드 `--b-*`와 1:1로 맞췄다) |
+
+브라우저에서 `file://`로 바로 열린다. **네 HTML은 `home-shared.css`를 함께 쓰므로 옮길 때 다섯 파일을 같이 옮긴다.**
+외부 리소스·JavaScript 0건, 사진 자리는 CSS 색면이다.
+
+### 검증 결과 (실측)
+
+헤드리스 크롬으로 390px·1280px 렌더 후 **좌측 정렬선을 DOM 실측**했다. 그 과정에서 결함 2건을 잡아 수정했다.
+
+- **`.b_strip`의 `scroll-snap-type`이 적재 직후 컨테이너를 좌측 패딩만큼 자동 스크롤**시켜, 첫 카드가 다른 요소의 정렬선에서 32px 어긋났다 → 스냅 제거. **스크린샷만 봤으면 놓쳤을 종류다.**
+- 시안 B 히어로 2단 그리드에 `padding-inline`이 없어 이미지가 상단바·그리드보다 32px 왼쪽에 섰다 → gutter 부여.
+- 수정 후 전 요소 좌측 정렬선 **132px(@1280) · 21px(@390)** 일치 확인. 의도된 예외는 C 히어로와 모바일 히어로의 full-bleed 이미지뿐이다.
+
+### Dan 결정 필요 (이게 다음 세션의 입구다)
+
+| # | 결정 |
+|---|---|
+| **Q0** | 참고 사이트(`wch.eqlstore.com/main`)가 **클라이언트 렌더링이라 자동 열람으로는 푸터만 회수됐다.** 히어로·기획전 구성은 관찰이 아니라 에디토리얼 커머스 일반 문법으로 대체 설계했다. 실화면 스크린샷을 `imports/`에 넣을지, 이대로 확정할지 |
+| **Q1** | **A · B · C 중 선택** (또는 조합). 나머지 결정이 전부 여기 걸린다 |
+| **Q2** | B 선택 시 B-1(소개 문장 없음, 필드 추가 0) / **B-2(브랜드 한 줄 소개 필드 추가 — ERD 변경이라 승인 필요)** |
+| **Q3** | **홈에 푸터를 둘 것인가** — 지금 구매자 표면에 푸터가 없다(법적 고지는 `/me`). IA 표에도 푸터 행이 없다 |
+| **Q4** | 홈이 2~4배 길어진다 — 상품상세에서 뒤로 왔을 때 **스크롤 복원**을 할지 |
+| **Q5** | B 선택 시 **팀 노출 순서** (승인일 역순 / 운영자 지정 / 무작위) |
+
+### 다음 액션
+
+1. Dan이 Q1(+Q0) 결정 → `bmad-ux` **Update 모드 Finalize**로 `DESIGN.md`(홈 히어로·큐레이션 섹션·스트립·푸터 컴포넌트)와 `EXPERIENCE.md`(홈 IA·섹션 빈 상태) 갱신
+2. 그 뒤 `bmad-create-story`로 홈 재설계 스토리 생성 → 구현
+3. C 선택 시에만 `epics.md`·PRD 화면 목록 개정이 선행한다
+
+### 이번 작업에서 하지 않은 것 (의도적)
+
+- 앱 소스 수정 0건. `apps/web`·`apps/api` 모두 손대지 않았다
+- `DESIGN.md`·`EXPERIENCE.md` 스파인 갱신 — 선택 전에 넣으면 되돌려야 한다
+- PRD 화면 목록 밖 기능 추가 0건. **검색·리뷰·별점·찜·쿠폰·알림은 3안 어디에도 그리지 않았다** (참고 사이트 상단에는 검색이 있으나 v1 제외 목록이라 뺐다)
+
+### ⚠️ 표준 시작 스크립트 실패 (이번 범위 밖 — 고치지 않았다)
+
+`scripts/orca_next_session.py`가 터미널 제목 `None`으로 **TypeError**를 내며 실패한다고 Dan이 보고했다.
+이번 세션은 스크립트를 우회해 수동으로 진행했다.
+
+- **원인 지점: `scripts/orca_next_session.py:66`** — `terminal.get("title", "")`의 기본값은 **키가 없을 때만** 적용된다.
+  Orca가 `"title": null`을 내려주면 `None`이 그대로 반환되고 `"BMAD" in None`에서 `TypeError: argument of type 'NoneType' is not iterable`가 난다.
+- `status` 서브커맨드는 이번에 정상 동작했다(터미널 목록이 비어 있어 그 줄을 타지 않았다). 재현 경로는 BMAD 터미널이 살아 있을 때다.
+- **고치지 않았다** — 이번 UX 산출물 작업의 범위 밖이라는 지시에 따랐다. 수정한다면 `terminal.get("title") or ""` 한 줄이다.
 
 ## 2026-07-27 — Hub맥 Docker 사전 운영 검증 환경
 
@@ -62,7 +122,7 @@ blocked_on: "Dan의 실기 검증(콘솔 회귀·주문 플로우·PWA) 및 오�
 **Epic 8(구매자 반응형 웹) 코드가 전부 프로덕션에서 돌고 있다.** 8.1~8.7 코드 완료, **카카오 로그인·샘플 데이터까지 실동작**. 남은 건 ③ 실기 검증(→ 8.1~8.7 done) → **8.8(Flutter 제거)**.
 
 - 프로덕션: `https://web-production-abfe1.up.railway.app` (카카오 로그인 정상)
-- `main`과 `origin/main` 동기(커밋 `09d9536` 배포됨), 이 변경 커밋 후 작업 트리 clean 유지 필요
+- 2026-07-27 UX 시안 산출물 커밋·push 후 `main`과 `origin/main`은 동기화됐다. 작업 트리는 clean 유지 필요
 - Epic 8 액션: A-E8-1·3·6·7·10 완료, A-E8-4 프로토타입 제출, **잔여 Dan: A-E8-2(③)·8·9 + A-E8-5(uv/docker)**
 - 부채 33건 중 3건 해소
 

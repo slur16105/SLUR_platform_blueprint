@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLUR 홈 시안 B — 초대 (Invitation)</title>
+<link rel="stylesheet" href="home-shared.css">
+<style>
+/* ── 시안 B 전용 ────────────────────────────────
+   브랜드가 지면의 단위다. 히어로는 한 팀의 대표 품목 한 점,
+   큐레이션 자리는 카테고리가 아니라 초대한 팀별 묶음이 채운다.
+   "브랜드명이 상품명보다 먼저 읽힌다"는 이 시스템의 지문을 홈의 구조로 증명한다. */
+
+/* 히어로 — 이미지 한 점 + 옆(아래)의 캡션 블록. 글자를 이미지 위에 얹지 않는다. */
+.p_hero { padding-block: 0 0; }
+.p_hero .i_grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+.p_hero .i_media { height: 300px; background: var(--ph-2); }
+.p_hero .i_body { padding: 26px var(--b-gutter) 34px; }
+@media (min-width: 768px) {
+  /* 좌측 정렬선을 상단바·그리드와 같은 132px에 맞춘다 — padding-inline을 빼면
+     이미지가 다른 모든 요소보다 32px 왼쪽에 서고, 렌더 실측에서 그 어긋남이 확인됐다. */
+  .p_hero .i_grid { width: 100%; max-width: var(--b-content-max); margin-inline: auto; padding: 46px var(--b-gutter) 40px; grid-template-columns: 1fr 1fr; align-items: center; gap: 0 44px; }
+  .p_hero .i_media { height: 460px; border-radius: var(--b-rounded); }
+  .p_hero .i_body { padding: 0; }
+}
+.p_hero .i_brand { display: block; margin-top: 12px; font-size: 15px; font-weight: 800; letter-spacing: .18em; color: var(--b-ink); }
+.p_hero .i_name { margin-top: 12px; }
+.p_hero .i_lede { max-width: 30em; margin-top: 14px; }
+.p_hero .i_price { display: block; margin-top: 18px; }
+.p_hero .i_acts { display: flex; gap: 9px; margin-top: 22px; }
+
+/* 초대한 팀 — 브랜드 한 팀이 한 섹션이다 */
+.p_team { padding-block: 32px 6px; }
+.p_team .i_head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--b-hairline); }
+.p_team .i_brand { font-size: 16px; font-weight: 800; letter-spacing: .17em; color: var(--b-ink); }
+.p_team .i_count { margin-left: 9px; font-size: 11.5px; font-weight: 600; color: var(--b-ink-muted); font-variant-numeric: tabular-nums; }
+.p_team .i_more { font-size: 11.5px; font-weight: 700; color: var(--b-accent); white-space: nowrap; }
+.p_team .i_more::after { content: " →"; }
+.p_team .i_items { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: var(--b-grid-gap-x); row-gap: var(--b-grid-gap-y); margin-top: 20px; align-items: start; }
+.p_team .i_items .i_thumb { height: 128px; }
+@media (min-width: 768px) { .p_team .i_items .i_thumb { height: 224px; } }
+
+.p_all { padding-block: 30px 40px; }
+.p_all .i_head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 18px; }
+</style>
+</head>
+<body>
+
+<div class="mock_bar">
+  <div class="i_in">
+    <span class="i_kicker">SLUR 홈 재설계 시안</span>
+    <nav class="i_switch">
+      <a class="i_link" href="home-a-preface.html">A 서문</a>
+      <a class="i_link" data-current="true" href="home-b-invitation.html">B 초대</a>
+      <a class="i_link" href="home-c-feature.html">C 편성</a>
+      <a class="i_link" href="home-compare.html">비교표</a>
+    </nav>
+    <p class="i_note">
+      <strong>B · 초대</strong> — 지면의 단위가 <strong>브랜드(판매자)</strong>다. 히어로는 한 팀의 대표 품목 한 점,
+      큐레이션 자리는 초대한 팀별 묶음이 채운다. 새 DB 필드 0건, <strong>브랜드별 공개 조회 수단 1건</strong>이 필요하다.
+    </p>
+  </div>
+</div>
+
+<div class="mock_frame">
+<div class="b_surface" data-surface="buyer">
+
+  <!-- ══ 헤더 ══ -->
+  <header class="b_topbar">
+    <div class="b_container i_in">
+      <a class="b_logo" href="#">SLUR</a>
+      <nav class="b_topnav" aria-label="주요 메뉴">
+        <a class="i_item" data-active="true" href="#">홈</a>
+        <a class="i_item" href="#">장바구니<span class="b_badge">2</span></a>
+        <a class="i_item" href="#">주문내역</a>
+        <a class="i_item" href="#">내 정보</a>
+      </nav>
+      <a class="i_cart" href="#" aria-label="장바구니 2건">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3.6 8.6h16.8l-1.4 11.2a1 1 0 0 1-1 .9H6a1 1 0 0 1-1-.9L3.6 8.6Z"/>
+          <path d="M8.5 8.6a3.5 3.5 0 0 1 7 0"/>
+        </svg>
+        <span class="b_badge">2</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="b_main">
+
+    <!-- ══ 히어로 — 한 팀, 한 품목 ══ -->
+    <section class="p_hero" aria-labelledby="hero-b">
+      <div class="i_grid">
+        <div class="i_media" role="img" aria-label="원목 스툴 사진"></div>
+        <div class="i_body">
+          <p class="b_eyebrow">이번에 초대한 팀</p>
+          <p class="i_brand">무드 서플라이</p>
+          <h1 class="b_title i_name" id="hero-b">원목 스툴</h1>
+          <p class="b_body i_lede">
+            같은 나무를 20년 다뤄 온 두 사람이 만드는 팀입니다. 앉는 자리의 높이를 먼저 정하고
+            나머지를 거기에 맞춘다고 했습니다.
+          </p>
+          <p class="b_price_hero i_price">168,000원</p>
+          <p class="i_acts">
+            <a class="b_btn m_solid b_button_text" href="#">이 상품 보기</a>
+            <a class="b_btn b_button_text" href="#">팀의 다른 품목</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="b_band" role="presentation"></div>
+
+    <!-- ══ 카테고리 칩 ══ -->
+    <div class="b_chips">
+      <div class="b_container i_scroll">
+        <button class="b_chip b_control" type="button" aria-pressed="true">전체</button>
+        <button class="b_chip b_control" type="button" aria-pressed="false">리빙</button>
+        <button class="b_chip b_control" type="button" aria-pressed="false">문구</button>
+        <button class="b_chip b_control" type="button" aria-pressed="false">포스터</button>
+        <button class="b_chip b_control" type="button" aria-pressed="false">의류</button>
+        <button class="b_chip b_control" type="button" aria-pressed="false">잡화</button>
+      </div>
+    </div>
+
+    <!-- ══ 큐레이션 — 팀별 묶음 ══ -->
+    <section class="b_container p_team" aria-labelledby="team-b1">
+      <div class="i_head">
+        <span>
+          <span class="i_brand" id="team-b1">오브제 스튜디오</span>
+          <span class="i_count">3</span>
+        </span>
+        <a class="i_more" href="#">이 팀 전체 보기</a>
+      </div>
+      <div class="i_items">
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-1)"></span>
+          <span class="b_product_name_card i_name">무광 세라믹 머그</span>
+          <span class="b_price_card i_price">32,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-5)"></span>
+          <span class="b_product_name_card i_name">황동 촛대</span>
+          <span class="b_price_card i_price">54,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-3)"></span>
+          <span class="b_product_name_card i_name">각진 유리 화병</span>
+          <span class="b_price_card i_price">39,000원</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="b_container p_team" aria-labelledby="team-b2">
+      <div class="i_head">
+        <span>
+          <span class="i_brand" id="team-b2">한지공방 결</span>
+          <span class="i_count">3</span>
+        </span>
+        <a class="i_more" href="#">이 팀 전체 보기</a>
+      </div>
+      <div class="i_items">
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-8)"></span>
+          <span class="b_product_name_card i_name">닥지 램프</span>
+          <span class="b_price_card i_price">132,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-6)"></span>
+          <span class="b_product_name_card i_name">한지 문진</span>
+          <span class="b_price_card i_price">46,000원</span>
+        </a>
+        <a class="b_card" href="#" data-soldout="true">
+          <span class="i_thumb" style="background: var(--ph-4)"><span class="b_tag i_soldout">품절</span></span>
+          <span class="b_product_name_card i_name">한지 편지지 세트</span>
+          <span class="b_price_card i_price">21,000원</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="b_container p_team" aria-labelledby="team-b3">
+      <div class="i_head">
+        <span>
+          <span class="i_brand" id="team-b3">노트 앤 페이퍼</span>
+          <span class="i_count">3</span>
+        </span>
+        <a class="i_more" href="#">이 팀 전체 보기</a>
+      </div>
+      <div class="i_items">
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-3)"></span>
+          <span class="b_product_name_card i_name">아카이브 노트 A5</span>
+          <span class="b_price_card i_price">18,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-7)"></span>
+          <span class="b_product_name_card i_name">레터프레스 카드 6종</span>
+          <span class="b_price_card i_price">12,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-2)"></span>
+          <span class="b_product_name_card i_name">마름모 스티커 세트</span>
+          <span class="b_price_card i_price">9,000원</span>
+        </a>
+      </div>
+    </section>
+
+    <div class="b_band" role="presentation"></div>
+
+    <!-- ══ 전체 상품 그리드 ══ -->
+    <section class="b_container p_all" aria-labelledby="all-b">
+      <div class="i_head">
+        <span class="b_section_label" id="all-b">전체 상품</span>
+        <span class="b_meta">12개</span>
+      </div>
+      <div class="b_grid b_products">
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-1)"></span>
+          <span class="b_brand_label i_brand">오브제 스튜디오</span>
+          <span class="b_product_name_card i_name">무광 세라믹 머그</span>
+          <span class="b_price_card i_price">32,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-3)"></span>
+          <span class="b_brand_label i_brand">노트 앤 페이퍼</span>
+          <span class="b_product_name_card i_name">아카이브 노트 A5</span>
+          <span class="b_price_card i_price">18,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-6)"></span>
+          <span class="b_brand_label i_brand">한지공방 결</span>
+          <span class="b_product_name_card i_name">한지 문진</span>
+          <span class="b_price_card i_price">46,000원</span>
+        </a>
+        <a class="b_card" href="#" data-soldout="true">
+          <span class="i_thumb" style="background: var(--ph-4)"><span class="b_tag i_soldout">품절</span></span>
+          <span class="b_brand_label i_brand">무드 서플라이</span>
+          <span class="b_product_name_card i_name">리넨 테이블보</span>
+          <span class="b_price_card i_price">78,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-5)"></span>
+          <span class="b_brand_label i_brand">오브제 스튜디오</span>
+          <span class="b_product_name_card i_name">황동 촛대</span>
+          <span class="b_price_card i_price">54,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-7)"></span>
+          <span class="b_brand_label i_brand">노트 앤 페이퍼</span>
+          <span class="b_product_name_card i_name">레터프레스 카드 6종</span>
+          <span class="b_price_card i_price">12,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-2)"></span>
+          <span class="b_brand_label i_brand">무드 서플라이</span>
+          <span class="b_product_name_card i_name">원목 스툴</span>
+          <span class="b_price_card i_price">168,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-8)"></span>
+          <span class="b_brand_label i_brand">한지공방 결</span>
+          <span class="b_product_name_card i_name">닥지 램프</span>
+          <span class="b_price_card i_price">132,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-3)"></span>
+          <span class="b_brand_label i_brand">오브제 스튜디오</span>
+          <span class="b_product_name_card i_name">각진 유리 화병</span>
+          <span class="b_price_card i_price">39,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-7)"></span>
+          <span class="b_brand_label i_brand">노트 앤 페이퍼</span>
+          <span class="b_product_name_card i_name">마름모 스티커 세트</span>
+          <span class="b_price_card i_price">9,000원</span>
+        </a>
+        <a class="b_card" href="#" data-soldout="true">
+          <span class="i_thumb" style="background: var(--ph-4)"><span class="b_tag i_soldout">품절</span></span>
+          <span class="b_brand_label i_brand">한지공방 결</span>
+          <span class="b_product_name_card i_name">한지 편지지 세트</span>
+          <span class="b_price_card i_price">21,000원</span>
+        </a>
+        <a class="b_card" href="#">
+          <span class="i_thumb" style="background: var(--ph-2)"></span>
+          <span class="b_brand_label i_brand">무드 서플라이</span>
+          <span class="b_product_name_card i_name">무명 쿠션 커버</span>
+          <span class="b_price_card i_price">44,000원</span>
+        </a>
+      </div>
+      <div class="b_more">
+        <button class="b_btn b_button_text" type="button">더 보기</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ══ 푸터 — 3안 공통 ══ -->
+  <footer class="b_footer">
+    <div class="b_container i_in">
+      <p class="i_mark">SLUR</p>
+      <nav class="i_links" aria-label="정책 문서">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">사업자 정보</a>
+      </nav>
+      <div class="i_company">
+        <p>(주)슬러 · 대표 OOO · 사업자등록번호 000-00-00000 · 통신판매업 신고 제0000-서울-0000호</p>
+        <p>서울특별시 OO구 OO로 00 · 0000-0000 · contact@slur.example</p>
+        <p class="b_notice i_broker">(주)슬러는 통신판매중개자이며 통신판매의 당사자가 아닙니다. 상품, 상품정보, 거래에 관한 의무와 책임은 판매자에게 있습니다.</p>
+        <p class="i_copy">© SLUR</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ══ 하단 탭바 — <768에서만 ══ -->
+  <nav class="b_tabbar" aria-label="주요 메뉴">
+    <a class="b_tab" data-active="true" href="#">
+      <span class="i_icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 11.2 12 3.8l8.8 7.4"/><path d="M5.6 9.6V20h12.8V9.6"/></svg></span>
+      <span class="b_tab_label">홈</span>
+    </a>
+    <a class="b_tab" href="#">
+      <span class="i_icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 8.6h16.8l-1.4 11.2a1 1 0 0 1-1 .9H6a1 1 0 0 1-1-.9L3.6 8.6Z"/><path d="M8.5 8.6a3.5 3.5 0 0 1 7 0"/></svg><span class="b_badge">2</span></span>
+      <span class="b_tab_label">장바구니</span>
+    </a>
+    <a class="b_tab" href="#">
+      <span class="i_icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.8" y="3" width="14.4" height="18" rx="2"/><path d="M8.4 8.4h7.2"/><path d="M8.4 12h7.2"/><path d="M8.4 15.6h4"/></svg></span>
+      <span class="b_tab_label">주문내역</span>
+    </a>
+    <a class="b_tab" href="#">
+      <span class="i_icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 20.6c0-3.8 3.2-6.2 7.2-6.2s7.2 2.4 7.2 6.2"/></svg></span>
+      <span class="b_tab_label">내 정보</span>
+    </a>
+  </nav>
+
+</div>
+</div>
+
+</body>
+</html>

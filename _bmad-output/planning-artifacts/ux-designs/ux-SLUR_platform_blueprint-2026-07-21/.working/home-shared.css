@@ -1,0 +1,232 @@
+/* ─────────────────────────────────────────────────────────────
+   SLUR 구매자 홈 재설계 시안 — 공통 지면 (A·B·C가 함께 쓴다)
+
+   이 파일은 목업 전용이다. 값의 정본은 DESIGN.md 프론트매터이며
+   여기 토큰 이름은 실코드(apps/web/app/styles/buyer/tokens.css)와 1:1로 맞춰
+   시안이 채택되면 그대로 옮겨 갈 수 있게 했다.
+
+   규칙 (DESIGN.md · slur-ux):
+   - 외부 리소스 0 · JavaScript 0. 사진은 CSS 색면으로 대신한다.
+   - box-shadow 0. 깊이는 8px 종이 접기 띠 · 1px hairline · 테두리 상자 셋뿐.
+   - 브랜드 파랑 #2f6bff 없음. 유채색은 액센트 벽돌빛 #8c4a32 하나.
+   - 네이밍은 slur-ux 문법: 블록 b_* / 내부 요소 i_* / 수정자 m_* / 상태 data-*.
+   ───────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #d5d3cf;
+  font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  color: #1f1d1a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════ 목업 크롬 — 제품 표면이 아니다 ══════════ */
+
+.mock_bar { position: sticky; top: 0; z-index: 90; border-bottom: 1px solid #b9b6b1; background: #efedea; }
+.mock_bar .i_in { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 16px; max-width: 1160px; margin: 0 auto; padding: 11px 20px; }
+.mock_bar .i_kicker { font-size: 10px; font-weight: 800; letter-spacing: .18em; color: #6f6b66; }
+.mock_bar .i_switch { display: flex; gap: 6px; margin-left: auto; }
+.mock_bar .i_link { padding: 5px 11px; border: 1px solid #c3bfb9; border-radius: 3px; background: #f8f7f5; font-size: 11.5px; font-weight: 700; color: #3c3934; text-decoration: none; }
+.mock_bar .i_link[data-current="true"] { border-color: #1f1d1a; background: #1f1d1a; color: #f8f7f5; }
+.mock_bar .i_note { flex: 1 1 100%; font-size: 11.5px; line-height: 1.7; color: #55514c; }
+
+/* 실제 뷰포트를 그대로 쓴다 — 창 폭을 끌어 반응형을 확인한다 */
+.mock_frame { max-width: 1160px; margin: 0 auto; border-inline: 1px solid #c3bfb9; }
+
+/* ══════════ 구매자 표면 토큰 ══════════ */
+
+[data-surface="buyer"] {
+  --b-paper: #faf8f4;
+  --b-paper-shade: #f2eee6;
+  --b-ink: #1f1d1a;
+  --b-ink-strong: #2c2a26;
+  --b-ink-body: #3c3934;
+  --b-ink-prose: #4d4942;
+  --b-ink-secondary: #6a645c;
+  --b-ink-quiet: #7d7a75;
+  --b-ink-label: #8e8b85;
+  --b-ink-muted: #9c968c;
+  --b-hairline: #e3ded4;
+  --b-accent: #8c4a32;
+  --b-accent-soft: #f1e5df;
+  --b-accent-wash: #faf1ec;
+  --b-accent-line: #ecd9d0;
+  --b-field-border: #ded8cc;
+  --b-strike-line: #c9c3b9;
+  --b-surface-inset: #f7f4ee;
+  --b-product-name: #605b53;
+
+  --b-gutter: 20px;
+  --b-section-y: 22px;
+  --b-band: 8px;
+  --b-grid-gap-x: 14px;
+  --b-grid-gap-y: 26px;
+  --b-topbar-h: 54px;
+  --b-tabbar-h: 56px;
+
+  --b-rounded-xs: 2px;
+  --b-rounded-sm: 3px;
+  --b-rounded: 4px;
+  --b-rounded-full: 999px;
+
+  --b-content-max: 1080px;
+  --b-tab-stroke: 1.4px;
+
+  /* 사진 자리 — 따뜻한 저채도 색면. 실제 구현에서는 main_image_url이 들어온다. */
+  --ph-1: #e9d7c6;
+  --ph-2: #ded4c4;
+  --ph-3: #e0dacd;
+  --ph-4: #e5e3d9;
+  --ph-5: #e7ddcb;
+  --ph-6: #dedad3;
+  --ph-7: #e3d6c8;
+  --ph-8: #dcd8ce;
+}
+
+@media (min-width: 768px) {
+  [data-surface="buyer"] { --b-gutter: 32px; --b-grid-gap-x: 20px; --b-grid-gap-y: 36px; }
+}
+
+.b_surface { display: flex; min-height: 100dvh; flex-direction: column; background: var(--b-paper); color: var(--b-ink); font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; }
+[data-surface="buyer"] svg { stroke-width: var(--b-tab-stroke); }
+[data-surface="buyer"] a { color: inherit; text-decoration: none; }
+
+/* ══════════ 활자 역할 클래스 (type.css와 같은 이름) ══════════ */
+
+.b_logo { font-size: 19px; font-weight: 800; letter-spacing: .22em; line-height: 1; }
+.b_brand_label { font-size: 11px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; color: var(--b-ink); }
+.b_brand_label.m_pack { font-size: 10.5px; letter-spacing: .14em; }
+.b_brand_label.m_detail { font-size: 11.5px; letter-spacing: .17em; }
+.b_eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .2em; line-height: 1.2; color: var(--b-accent); }
+.b_section_label { font-size: 10.5px; font-weight: 800; letter-spacing: .16em; line-height: 1.2; color: var(--b-ink-label); }
+.b_display { font-size: 25px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.32; }
+.b_title { font-size: 23px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.3; }
+.b_title_sm { font-size: 20px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.4; }
+.b_body { font-size: 13px; font-weight: 400; line-height: 1.85; color: var(--b-ink-prose); }
+.b_control { font-size: 12.5px; font-weight: 600; }
+.b_meta { font-size: 11.5px; font-weight: 400; color: var(--b-ink-muted); }
+.b_notice { font-size: 11px; font-weight: 400; line-height: 1.75; color: var(--b-ink-quiet); }
+.b_tab_label { font-size: 10.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
+.b_button_text { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+.b_price_card { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--b-ink); }
+.b_price_hero { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.b_product_name_card { font-size: 13px; font-weight: 400; line-height: 1.4; color: var(--b-product-name); }
+.b_tag { font-size: 9.5px; font-weight: 700; letter-spacing: .09em; }
+
+/* ══════════ 컨테이너 · 그리드 ══════════ */
+
+.b_container { width: 100%; padding-inline: var(--b-gutter); }
+@media (min-width: 768px) { .b_container { max-width: var(--b-content-max); margin-inline: auto; } }
+.b_section { padding-block: var(--b-section-y); }
+.b_band { height: var(--b-band); background: var(--b-paper-shade); }
+
+.b_grid { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: var(--b-grid-gap-x); row-gap: var(--b-grid-gap-y); align-items: start; }
+@media (min-width: 640px) { .b_grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ══════════ 상단바 · 상단 내비 ══════════ */
+
+.b_topbar { position: sticky; top: 0; z-index: 40; flex: 0 0 var(--b-topbar-h); height: var(--b-topbar-h); border-bottom: 1px solid var(--b-hairline); background: var(--b-paper); }
+.b_topbar .i_in { display: flex; height: 100%; align-items: center; justify-content: space-between; gap: 12px; }
+.b_topbar .i_cart { position: relative; display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; margin-right: -8px; color: var(--b-ink); }
+.b_badge { position: absolute; top: 4px; right: 4px; display: inline-flex; min-width: 16px; height: 16px; align-items: center; justify-content: center; padding-inline: 4px; border: 1.5px solid var(--b-paper); border-radius: var(--b-rounded-full); background: var(--b-accent); color: var(--b-paper); font-size: 9.5px; font-weight: 700; letter-spacing: 0; }
+
+.b_topnav { display: none; }
+@media (min-width: 768px) {
+  .b_topnav { display: flex; gap: 26px; }
+  .b_topnav .i_item { position: relative; font-size: 13px; font-weight: 600; color: var(--b-ink-secondary); }
+  .b_topnav .i_item[data-active="true"] { font-weight: 800; color: var(--b-ink); }
+  .b_topnav .i_item .b_badge { position: static; margin-left: 5px; border: 0; }
+}
+
+/* ══════════ 하단 탭바 — ≥768에서 사라진다 ══════════ */
+
+.b_tabbar { position: fixed; right: 0; bottom: 0; left: 0; z-index: 40; display: flex; height: var(--b-tabbar-h); border-top: 1px solid var(--b-hairline); background: var(--b-paper); }
+.b_tab { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--b-ink-muted); }
+.b_tab[data-active="true"] { color: var(--b-ink); --b-tab-stroke: 1.9px; }
+.b_tab[data-active="true"] .b_tab_label { font-weight: 800; }
+.b_tab .i_icon { position: relative; display: inline-flex; }
+@media (min-width: 768px) { .b_tabbar { display: none; } }
+
+/* 탭바가 고정이라 본문 끝에 자리를 비워 준다 — 푸터가 탭바에 가리지 않는다 */
+.b_main { flex: 1 0 auto; }
+.b_surface { padding-bottom: var(--b-tabbar-h); }
+@media (min-width: 768px) { .b_surface { padding-bottom: 0; } }
+
+/* ══════════ 카테고리 칩 ══════════ */
+
+.b_chips { position: relative; border-block: 1px solid var(--b-hairline); background: var(--b-paper); }
+.b_chips .i_scroll { display: flex; gap: 7px; padding-block: 12px 13px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.b_chips .i_scroll::-webkit-scrollbar { display: none; }
+.b_chips::after { content: ""; position: absolute; inset: 0 0 0 auto; width: 34px; background: linear-gradient(90deg, transparent, var(--b-paper) 72%); pointer-events: none; }
+@media (min-width: 768px) { .b_chips::after { display: none; } }
+.b_chip { flex: 0 0 auto; padding: 6px 13px; border: 1px solid var(--b-field-border); border-radius: var(--b-rounded-full); background: none; color: var(--b-ink-secondary); cursor: pointer; }
+.b_chip[aria-pressed="true"] { border-color: var(--b-ink); background: var(--b-ink); color: var(--b-paper); font-weight: 700; }
+
+/* ══════════ 상품 카드 ══════════ */
+
+.b_card { display: block; }
+.b_card .i_thumb { position: relative; display: block; overflow: hidden; border-radius: var(--b-rounded); background: var(--b-paper-shade); }
+.b_card .i_soldout { position: absolute; top: 9px; left: 9px; padding: 3px 7px; border-radius: var(--b-rounded-xs); background: var(--b-ink); color: var(--b-paper); }
+.b_card .i_brand { display: block; margin-top: 11px; }
+.b_card .i_name { display: block; margin-top: 7px; }
+.b_card .i_price { display: block; margin-top: 7px; }
+.b_card[data-soldout="true"] .i_thumb { filter: saturate(.45) brightness(1.04); }
+.b_card[data-soldout="true"] .i_brand { color: var(--b-ink-quiet); }
+.b_card[data-soldout="true"] .i_name { color: var(--b-ink-muted); }
+.b_card[data-soldout="true"] .i_price { color: var(--b-ink-muted); font-weight: 600; text-decoration: line-through; text-decoration-color: var(--b-strike-line); }
+
+/* 어긋난 리듬 그리드 — 균일한 격자는 상점이고, 어긋난 격자가 지면이다 */
+.b_products > .b_card:nth-child(6n + 1) .i_thumb { height: 212px; }
+.b_products > .b_card:nth-child(6n + 2) .i_thumb { height: 168px; }
+.b_products > .b_card:nth-child(6n + 3) .i_thumb { height: 200px; }
+.b_products > .b_card:nth-child(6n + 4) .i_thumb { height: 176px; }
+.b_products > .b_card:nth-child(6n + 5) .i_thumb { height: 216px; }
+.b_products > .b_card:nth-child(6n) .i_thumb { height: 160px; }
+@media (min-width: 768px) {
+  .b_products > .b_card:nth-child(6n + 1) .i_thumb { height: 250px; }
+  .b_products > .b_card:nth-child(6n + 2) .i_thumb { height: 208px; }
+  .b_products > .b_card:nth-child(6n + 3) .i_thumb { height: 236px; }
+  .b_products > .b_card:nth-child(6n + 4) .i_thumb { height: 214px; }
+  .b_products > .b_card:nth-child(6n + 5) .i_thumb { height: 258px; }
+  .b_products > .b_card:nth-child(6n) .i_thumb { height: 200px; }
+}
+
+/* ══════════ 가로 스트립 (큐레이션 섹션 공용) ══════════ */
+
+/* 🚨 scroll-snap을 걸지 않는다. 스냅 지점이 스크롤포트 시작에 맞춰지면서 적재 직후
+   컨테이너가 좌측 패딩만큼 스스로 스크롤해, 첫 카드가 다른 요소의 좌측 정렬선(132px)에서
+   32px 어긋난다. 렌더 검증에서 실측으로 확인한 결함이다. */
+.b_strip { display: flex; gap: 14px; padding-inline: var(--b-gutter); overflow-x: auto; scrollbar-width: none; }
+.b_strip::-webkit-scrollbar { display: none; }
+.b_strip > .b_card { flex: 0 0 46%; }
+.b_strip > .b_card .i_thumb { height: 190px; }
+@media (min-width: 768px) {
+  .b_strip { max-width: var(--b-content-max); margin-inline: auto; gap: 20px; }
+  .b_strip > .b_card { flex: 0 0 calc((100% - 40px) / 3); }
+  .b_strip > .b_card .i_thumb { height: 232px; }
+}
+
+/* ══════════ 더 보기 · 섹션 머리 ══════════ */
+
+.b_more { display: flex; justify-content: center; padding-top: 26px; }
+.b_btn { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; padding-inline: 22px; border: 1.4px solid var(--b-ink); border-radius: var(--b-rounded); background: none; color: var(--b-ink); cursor: pointer; }
+.b_btn.m_solid { border-color: var(--b-ink); background: var(--b-ink); color: var(--b-paper); }
+.b_btn.m_small { min-height: 38px; padding-inline: 14px; border-width: 1.4px; font-size: 12px; font-weight: 700; }
+
+.b_sec_head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-inline: var(--b-gutter); padding-bottom: 14px; }
+@media (min-width: 768px) { .b_sec_head { max-width: var(--b-content-max); margin-inline: auto; } }
+.b_sec_head .i_more { font-size: 11.5px; font-weight: 700; color: var(--b-accent); white-space: nowrap; }
+.b_sec_head .i_more::after { content: " →"; }
+
+/* ══════════ 푸터 — 3안 공통 ══════════ */
+
+.b_footer { border-top: 1px solid var(--b-hairline); background: var(--b-paper); }
+.b_footer .i_in { padding-block: 28px 34px; }
+.b_footer .i_mark { font-size: 13px; font-weight: 800; letter-spacing: .22em; color: var(--b-ink); }
+.b_footer .i_links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
+.b_footer .i_links a { font-size: 12px; font-weight: 600; color: var(--b-ink-secondary); }
+.b_footer .i_company { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--b-hairline); }
+.b_footer .i_company p { font-size: 11px; line-height: 1.85; color: var(--b-ink-quiet); }
+.b_footer .i_broker { margin-top: 12px; }
+.b_footer .i_copy { margin-top: 14px; font-size: 10.5px; letter-spacing: .04em; color: var(--b-ink-muted); }
