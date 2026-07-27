@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.errors import AppError
 from app.home.models import HomeFeature, HomeFeatureItem
 from app.products import service as products_service
@@ -18,6 +19,18 @@ from app.products.models import Product, Variant
 from app.sellers.models import Seller
 
 logger = logging.getLogger("slur.home")
+
+
+def _feature_image_url(image_path: str | None) -> str | None:
+    """편성 지면 이미지 URL. 로컬(Storage 미연결) 검증에서는 Web이 제공하는 홈 전용 데모 히어로를 쓴다.
+    products._image_url는 상품 데모 이미지를 돌려주므로 홈은 별도 자산으로 분리한다.
+    production에서 Storage 설정 누락을 이미지 fallback으로 숨기지 않는다(local 한정)."""
+    if not image_path:
+        return None
+    settings = get_settings()
+    if not settings.supabase_url.rstrip("/"):
+        return "/local-home-images/hero.svg" if settings.environment == "local" else None
+    return products_service._image_url(image_path)
 
 
 # ── 공개 조회 ────────────────────────────────────────────────────────
@@ -104,7 +117,7 @@ async def get_home(session: AsyncSession) -> dict:
             "issue_label": feature.issue_label,
             "title": feature.title,
             "lead_text": feature.lead_text,
-            "image_url": products_service._image_url(feature.image_path) if feature.image_path else None,
+            "image_url": _feature_image_url(feature.image_path),
             "layout": feature.layout,
             "items": cards,
         }

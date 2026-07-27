@@ -55,6 +55,8 @@ HERO = {
     "issue_label": "2026.07",
     "lead_text": "Hub맥에서 편성 흐름을 검증하는 로컬 데모 지면입니다. 골라온 것들을 천천히 봅니다.",
     "display_order": 0,
+    # 로컬은 Storage 미연결이라 값 자체는 표시에 쓰이지 않는다(홈 전용 데모 이미지로 매핑). production에서는 실제 Storage 경로.
+    "image_path": "home/hero-demo.jpg",
 }
 # 슬롯: (레이아웃, 제목, 리드, 노출순서, 카테고리, 담을 상품 수)
 SLOTS = (
