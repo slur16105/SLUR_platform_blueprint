@@ -29,7 +29,7 @@ def _feature_image_url(image_path: str | None) -> str | None:
         return None
     settings = get_settings()
     if not settings.supabase_url.rstrip("/"):
-        return "/local-home-images/hero.svg" if settings.environment == "local" else None
+        return "/local-home-images/hero.jpg" if settings.environment == "local" else None
     return products_service._image_url(image_path)
 
 
