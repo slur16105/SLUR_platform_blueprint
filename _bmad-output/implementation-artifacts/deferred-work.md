@@ -131,3 +131,12 @@
 - **`login`·`signup`이 상단 내비에 활성 항목을 만들지 않는다** — 주문완료는 `tab="orders"`를 붙였는데 이 둘은 안 붙였다. EXPERIENCE의 "현재 위치 표시가 비는 화면이 있으면 안 된다"가 탐색 맥락 밖 화면(로그인·회원가입)에도 적용되는지 문서가 갈린다. `[확인 필요]`
 - 🚨 **백엔드 `kakao_redirect_uris` 기본값이 실제 콜백 경로와 다르다** — `apps/api/app/core/config.py:32`의 기본값은 `http://localhost:3000/auth/kakao/callback`인데, 웹의 실제 콜백 라우트는 `/api/auth/kakao/callback`이다(`app/api/auth/kakao/callback/route.ts`). **`/api`가 빠져 있다.** 즉 환경변수를 설정하지 않으면 **프로덕션뿐 아니라 로컬 개발에서도 카카오 로그인이 401로 떨어진다.** Story 1.3 시절 앱 기준으로 정해진 기본값이 웹 BFF 경로와 어긋난 것이다. 해법은 둘 중 하나: (a) 기본값을 `/api/auth/kakao/callback`으로 고친다(백엔드 1줄, Epic 8 경계 밖이라 미실행) (b) 로컬에서도 `KAKAO_REDIRECT_URIS`를 반드시 설정한다. **(a)가 맞다** — 기본값이 어떤 환경에서도 맞지 않는 값이면 기본값이 아니다
 
+## Deferred from: Epic 9 구매자 홈 편성 (2026-07-27)
+
+3-레이어 리뷰(Blind Hunter·Edge Case Hunter·Acceptance Auditor)에서 나온 것 중 즉시 고치지 않고 남긴 항목.
+즉시 고친 것(푸터·CTA 겹침, 관리자 카테고리 필터, 히어로 issue_no, ends_at 검증, hidden 상품 차단, display_order 자동배정, move 401, KST tz, 스크롤 복원 탭 구분, 다활성 히어로 안내, item_count 보정 — 11건)은 이 세션 커밋에 있다.
+
+- 🚧 **[Slur 승인 대기] 편성 대표 이미지가 사전서명 업로드가 아니라 경로 텍스트 입력이다** — Story 9.1 AC는 "대표 이미지는 상품 이미지와 같은 방식으로 FastAPI 사전서명 URL 경유 업로드(클라이언트에 Storage 키 없음)"를 요구하나, 관리자 편성 폼(`apps/web/app/(console)/admin/home/feature-form.tsx`)은 운영자가 Storage 경로를 직접 타이핑하는 텍스트 입력으로 구현됐다. 사유: 기존 사전서명 업로드(`apps/api/app/products/storage.py:create_signed_upload`)는 **판매자 전용**(`seller_id` 네임스페이스, 경로 정규식 `{seller_id}/{uuid}.ext`, 엔드포인트 `/sellers/products/images/presign` 판매자 인증)이라, 편성(관리자 소유·seller_id 없음)에 붙이려면 새 관리자 presign 엔드포인트 + storage 함수 변형 + 경로 정규식/검증 + 프론트 업로드 UI가 필요한 별도 소작업이다. **내부 테스트 단계에서는 경로 입력으로 기능은 완주**하며, 실서비스 오픈 전(또는 운영자 UX 피드백 시) 관리자 사전서명 업로드를 구현할지 Slur 판단. **오픈 게이트 후보.**
+- **[Slur 사후 고지] 히어로 CTA `지면 보기`·슬롯 `모두 보기` 링크를 시안에서 제거했다** — UX 시안 C(§3.2·§3.3, HOME-COMPARISON §100)에는 있으나 구현에서 뺐다. 사유: `FeatureOut` 데이터 계약에 목적지(href) 필드가 없고 "지면 상세" 페이지가 PRD 화면 목록 밖이라 죽은 링크가 된다. Acceptance Auditor 판정 "AC 위반 아님(정당)" — Story 9.4 AC는 히어로를 제목·문장·대표 이미지로만 열거하고, 슬롯은 묶음 카드만 요구한다(카드 자체가 상세로 가는 길). 설계된 시각 요소를 뺀 편차이므로 무성 생략이 아니라 고지 대상. 지면 상세/전량 보기 페이지가 필요하면 별도 스토리.
+- **관리자 상품 키워드 검색 부재 (부분충족)** — Story 9.2 AC/Dev Notes는 "상품을 검색해 묶음에 추가"를 요구하나, 관리자 전용 상품 목록/검색 API가 부재해(`products/router.py`에 admin 핸들러 0건) 편성 폼은 공개 `GET /api/products`를 카테고리 필터 + 페이지네이션으로만 쓴다(키워드 검색 없음). 공개 목록이 hidden을 이미 제외하므로 "숨김 상품은 후보에 안 뜸" 조건은 오히려 안전하게 충족된다. 관리자 상품 검색 API 도입은 별도 스토리(블루프린트 추출 또는 운영 피드백 후).
+

@@ -6,10 +6,13 @@
    흐린 글자 + 가격 취소선. 색과 텍스트를 항상 함께 쓰며, 눌러서 상세로 들어갈 수 있다 —
    어떤 조합이 남았는지 볼 수 있어야 하기 때문이다. */
 
+"use client";
+
 import Link from "next/link";
 
 import BrandLabel from "./brand-label";
 import { formatWon } from "./format";
+import { armHomeScroll } from "./home-scroll";
 
 /** GET /api/v1/products의 items[] 한 항목 (PublicProductItem). */
 export type ProductItem = {
@@ -19,7 +22,9 @@ export type ProductItem = {
   price_from: number;
   main_image_url: string | null;
   sold_out: boolean;
-  category_id: string;
+  /** 상품목록 응답에만 있다. 편성(/api/home)의 품목 카드에는 없으므로 선택값이다 —
+   *  카드 렌더에는 쓰이지 않는다(칩/카테고리 상태는 product-list가 URL로 관리). */
+  category_id?: string;
 };
 
 export default function ProductCard({ item }: { item: ProductItem }) {
@@ -28,6 +33,9 @@ export default function ProductCard({ item }: { item: ProductItem }) {
       href={`/products/${item.id}`}
       className="b_card"
       data-soldout={item.sold_out ? "true" : undefined}
+      /* 상세로 떠나기 직전 홈 스크롤 위치를 저장·무장한다 — 뒤로 오면 복원된다 (9.4 Q4).
+         홈이 아닌 곳에서는 이 카드를 쓰지 않으므로 홈 전용 복원을 여기서 무장해도 안전하다. */
+      onClick={armHomeScroll}
     >
       <span className="i_thumb">
         {item.main_image_url ? (

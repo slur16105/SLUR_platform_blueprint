@@ -113,6 +113,7 @@ graph TD
 - **Binds:** all (프로세스 규칙)
 - **Prevents:** AI가 단독으로 스키마를 변경해 설계 통제가 무너지는 것
 - **Rule:** 스키마 변경(신규 테이블·컬럼 변경·Alembic 마이그레이션 작성)은 초안 제시 → Slur 승인 후에만 적용한다.
+- **History:** 구매자 홈 편성(시안 C) `home_features`·`home_feature_items` 2테이블은 이 게이트를 거쳐 Slur 승인(2026-07-27) — 컬럼 상세는 마이그레이션 초안에서 확정.
 
 ### AD-10 — 구매 가능 판정은 단일 술어
 
@@ -214,7 +215,7 @@ Alembic 마이그레이션은 Railway pre-deploy 단계에서 실행한다.
 | 미입금 자동취소 배치 | FastAPI 프로세스 내 스케줄러(APScheduler) 주기 실행 — 전이는 AD-3 함수를 `system` 역할로 호출. 별도 워커·큐 도입 금지 (단일 인스턴스 전제; 인스턴스 확장 시 재설계 항목) |
 | 도서산간 판정 데이터 | `remote_area_zips` 참조 테이블 — 우체국/택배사 공개 우편번호 목록으로 시드, 관리자가 갱신 |
 
-### ERD — 18개 테이블 (Slur 승인 · 2026-07-15)
+### ERD — 20개 테이블 (Slur 승인 · 2026-07-15 · home 편성 2테이블 추가 2026-07-27)
 
 ```mermaid
 erDiagram
@@ -236,11 +237,14 @@ erDiagram
     orders ||--o{ order_events : ""
     order_items ||--o{ cancellations : ""
     users ||--o{ refresh_tokens : ""
+    home_features ||--o{ home_feature_items : ""
+    products ||--o{ home_feature_items : ""
 ```
 
 - 옵션 축 이름(최대 2개)은 `products`에, 조합 값·추가금액·재고·판매상태는 `variants` 행에 — 판매자 조합 표 UX와 1:1.
 - `orders`는 결제 상태(입금대기→결제완료), `sub_orders`는 판매자별 배송 상태, `order_items`는 스냅샷+취소 상태 (AD-6, AD-7).
 - 관계선이 없는 독립 테이블 2개: `settings`(관리자 설정: 입금 계좌 등), `remote_area_zips`(도서산간 우편번호).
+- `home_features`는 구매자 홈 편성 지면(운영자 편성, 시안 C) — 히어로 활성 1건 + 슬롯 N건. `home_feature_items`는 편성 지면↔상품 다대다 묶음(feature 삭제·상품 삭제 시 CASCADE). 홈 노출은 편성 데이터로만 결정되고 도메인 로직에 하드코딩하지 않는다 (AD-13 연장).
 - 컬럼 상세는 마이그레이션 초안에서 확정한다 (AD-9 게이트).
 
 ## Capability → Architecture Map
@@ -255,6 +259,7 @@ erDiagram
 | F6 판매자 화면 (FR-24~26) | Next.js + app/{products,orders} | AD-2 |
 | F7 관리자 (FR-27~30) | app/admin | AD-3, AD-6, AD-9 |
 | F8 법적 고지 (FR-31~33) | Next.js 정적(푸터·약관·`/me`) + sellers 노출 API | AD-1, AD-14 |
+| F9 구매자 홈 편성 (시안 C) | `home_features`/`home_feature_items` 테이블 + 공개 편성 조회 API + 관리자 편성 화면 | AD-9, AD-12, AD-13 |
 
 ## Deferred
 

@@ -10,7 +10,7 @@ import "./checkout.css";
    주문서의 소속은 장바구니라고 EXPERIENCE.md IA 표가 확정했다. */
 export default function CheckoutPage() {
   return (
-    <BuyerShell tab="cart" topbar={{ variant: "back-title", title: "주문서" }}>
+    <BuyerShell tab="cart" ctaBar topbar={{ variant: "back-title", title: "주문서" }}>
       <CheckoutView />
     </BuyerShell>
   );

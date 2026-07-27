@@ -43,7 +43,14 @@ type Snapshot = {
   error: ApiFailure | null;
 };
 
-export default function ProductList() {
+/* 지면 머리 두 형태 (9.4):
+   · "preface"  — 큐레이션 서문("골라온 것들을 천천히 봅니다"). 활성 히어로가 없어
+                  홈이 서문형(A안)으로 폴백할 때, 그리고 이 목록을 단독으로 쓰던 기존 형태.
+   · "catalog"  — 편성 지면(히어로/슬롯)이 위에 서면 이 그리드는 `전체 상품` 라벨 + 개수로
+                  받는다. 서문은 히어로가 이미 말했으므로 반복하지 않는다. */
+export type ProductListHeading = "preface" | "catalog";
+
+export default function ProductList({ heading = "preface" }: { heading?: ProductListHeading }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -161,13 +168,23 @@ export default function ProductList() {
         <CategoryChips categories={categories} selected={category} onSelect={select} />
       ) : null}
 
-      <div className="b_container b_section">
-        <p className="b_eyebrow i_eyebrow">큐레이션</p>
-        <h1 className="b_display i_display">
-          골라온 것들을
-          <br />
-          천천히 봅니다
-        </h1>
+      <div className={heading === "catalog" ? "b_container p_all" : "b_container b_section"}>
+        {heading === "catalog" ? (
+          <div className="i_head">
+            <span className="b_section_label">전체 상품</span>
+            {/* 개수는 로딩 뒤에만 — 골격 단계에서 `0개`를 보이지 않는다 */}
+            {!loading ? <span className="b_meta">{total}개</span> : null}
+          </div>
+        ) : (
+          <>
+            <p className="b_eyebrow i_eyebrow">큐레이션</p>
+            <h1 className="b_display i_display">
+              골라온 것들을
+              <br />
+              천천히 봅니다
+            </h1>
+          </>
+        )}
 
         {loading ? <GridSkeleton /> : null}
 

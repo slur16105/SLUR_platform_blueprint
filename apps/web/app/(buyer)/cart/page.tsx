@@ -9,7 +9,7 @@ import "./cart.css";
       EXPERIENCE.md IA 표가 확정한 것이다. 여기를 바꾸면 8.1의 AC 1·2가 깨진다. */
 export default function CartPage() {
   return (
-    <BuyerShell tab="cart" showTabbar topbar={{ variant: "title", title: "장바구니" }}>
+    <BuyerShell tab="cart" showTabbar ctaBar topbar={{ variant: "title", title: "장바구니" }}>
       <CartView />
     </BuyerShell>
   );

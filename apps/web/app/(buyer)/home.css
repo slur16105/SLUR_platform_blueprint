@@ -1,0 +1,106 @@
+/* ─────────────────────────────────────────────
+   HOME — 구매자 홈 편성 지면 전용 스타일 (시안 C · 9.4)
+
+   정본: DESIGN.md(홈 편성 지면 여백 · b_hero/b_feature/b_strip) + home-c-spec.md.
+   기준선 목업: .working/home-c-feature.html · home-shared.css (토큰 이름 1:1).
+
+   🚨 값을 새로 만들지 않는다 — 색은 --b-* 토큰, 활자는 type.css의 .b_* 역할 클래스,
+      컨테이너·그리드는 buyer.css의 .b_container/.b_grid다. 이 파일은 편성 섹션의
+      배치(그리드·여백·썸네일 높이)만 얹는다.
+   🚨 box-shadow 0. 깊이는 8px 접기 띠(.b_band) · 1px hairline · 테두리 상자 셋뿐.
+   🚨 이미지 위 텍스트/오버레이 금지 — 표제는 이미지 아래 .i_body 블록.
+   🚨 .b_strip에 scroll-snap을 걸지 않는다(적재 직후 좌측 패딩만큼 자가 스크롤하는 실측 결함).
+   브레이크포인트는 슬러 시스템 값(sm 640 / md 768)을 px 리터럴로 적는다.
+   home hero 블록 이름은 browse.css의 상품상세 갤러리 .b_hero와 충돌하지 않도록
+   목업과 같은 페이지 섹션 이름(.p_hero/.p_feature/.p_slot/.p_all)을 쓴다.
+   ───────────────────────────────────────────── */
+
+/* ══════════ 8px 종이 접기 띠 ══════════
+   섹션 사이 구획(위 구획 강도 3). 히어로 뒤 · 편성 슬롯1 뒤 · 편성 슬롯2 뒤에만 선다.
+   칩(자체 hairline)과 그리드 사이에는 두지 않는다(이중선 금지). */
+.b_band { height: var(--b-band); background: var(--b-paper-shade); }
+
+/* ══════════ 히어로 (§3.2) ══════════
+   전면 이미지 + 그 아래 표제 블록. 이미지는 좌우 gutter를 무시하고 지면 폭을 꽉 채우되,
+   ≥768에서는 본문 최대 폭(1080px)까지만 차고 그 너머로 펼치지 않는다(DESIGN §402). */
+.p_hero .i_media {
+  height: 320px;
+  overflow: hidden;
+  background: var(--b-paper-shade); /* image_url이 null이어도 같은 높이로 자리를 지킨다 */
+}
+.p_hero .i_media .i_img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.p_hero .i_body { padding-block: 24px 34px; }
+.p_hero .i_issue { display: flex; align-items: baseline; gap: 12px; }
+.p_hero .i_issue .i_no {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  line-height: 1.2;
+  color: var(--b-ink-label);
+  font-variant-numeric: tabular-nums;
+}
+.p_hero .i_title { margin-top: 13px; }
+.p_hero .i_lede { max-width: 32em; margin-top: 16px; }
+@media (min-width: 768px) {
+  .p_hero .i_media { height: 480px; max-width: var(--b-content-max); margin-inline: auto; }
+  .p_hero .i_body { padding-block: 32px 46px; }
+  .p_hero .i_title { font-size: 38px; line-height: 1.26; }
+}
+
+/* ══════════ 편성 슬롯 1 — 비대칭 5:7 (§3.3) ══════════ */
+.p_feature { padding-block: 34px; }
+.p_feature .i_split { display: grid; grid-template-columns: 1fr; gap: 22px; }
+.p_feature .i_prose .i_kicker { display: block; }
+.p_feature .i_prose .i_head { margin-top: 12px; }
+.p_feature .i_prose .i_text { margin-top: 14px; }
+.p_feature .i_picks {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: var(--b-grid-gap-x);
+  row-gap: var(--b-grid-gap-y);
+  align-items: start;
+}
+/* 편성 카드 썸네일 높이 — 균일 격자와 달리 편성 슬롯은 고정 높이(리듬 없음) */
+.p_feature .i_picks .b_card .i_thumb { height: 190px; }
+@media (min-width: 768px) {
+  .p_feature .i_split { grid-template-columns: 5fr 7fr; gap: 44px; align-items: start; }
+  .p_feature .i_picks .b_card .i_thumb { height: 268px; }
+}
+
+/* ══════════ 편성 슬롯 2 — 가로 스트립 (§3.4) ══════════ */
+.p_slot { padding-block: 30px 8px; }
+.p_slot .i_line { padding-inline: var(--b-gutter); padding-bottom: 16px; }
+.p_slot .i_line .i_text { max-width: 30em; margin-top: 10px; }
+@media (min-width: 768px) {
+  .p_slot .i_line { max-width: var(--b-content-max); margin-inline: auto; }
+}
+
+/* 가로 스트립 — flex 가로 스크롤. 카드 폭 <768 46%(약 2.2장) / ≥768 3열분.
+   🚨 scroll-snap-type 금지 · 우측 페이드 없음(칩과 다르다). */
+.b_strip {
+  display: flex;
+  gap: 14px;
+  padding-inline: var(--b-gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.b_strip::-webkit-scrollbar { display: none; }
+.b_strip > .b_card { flex: 0 0 46%; }
+.b_strip > .b_card .i_thumb { height: 190px; }
+@media (min-width: 768px) {
+  .b_strip { max-width: var(--b-content-max); margin-inline: auto; gap: 20px; }
+  .b_strip > .b_card { flex: 0 0 calc((100% - 40px) / 3); }
+  .b_strip > .b_card .i_thumb { height: 232px; }
+}
+
+/* ══════════ 전체 상품 그리드 지면 머리 (§3.6) ══════════
+   편성 지면이 위에 서면 그리드는 `전체 상품` 라벨 + 개수로 받는다(서문형 폴백이면 이 머리 없음).
+   그리드·카드·리듬·`더 보기`는 browse.css가 소유한다 — 여기서 다시 선언하지 않는다. */
+.p_all { padding-block: 30px 40px; }
+.p_all .i_head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 18px;
+}

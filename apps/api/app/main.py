@@ -12,6 +12,8 @@ from app.carts.router import router as carts_router
 from app.core.config import get_settings
 from app.core.db import engine
 from app.core.errors import AppError, CODE_SERVICE_UNAVAILABLE, register_error_handlers
+from app.home.router import admin_router as home_admin_router
+from app.home.router import router as home_router
 from app.orders.router import router as orders_router
 from app.products.router import router as products_router
 from app.sellers.router import router as sellers_router
@@ -70,3 +72,5 @@ app.include_router(products_router, prefix=API_V1)
 app.include_router(carts_router, prefix=API_V1)
 app.include_router(orders_router, prefix=API_V1)
 app.include_router(admin_router, prefix=API_V1)
+app.include_router(home_router, prefix=API_V1)
+app.include_router(home_admin_router, prefix=API_V1)

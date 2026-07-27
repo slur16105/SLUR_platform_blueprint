@@ -17,7 +17,7 @@ import "../../browse.css";
    경계가 없으면 tsc·lint는 통과하고 next build만 깨진다. */
 export default function ProductDetailPage() {
   return (
-    <BuyerShell tab="home" topbar={{ variant: "back-title", showCart: true }}>
+    <BuyerShell tab="home" ctaBar topbar={{ variant: "back-title", showCart: true }}>
       <Suspense
         fallback={
           <div className="b_container b_detail">

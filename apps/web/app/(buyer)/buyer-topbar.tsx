@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { CartBadge, IconBack, IconCart, type BuyerTab } from "./buyer-icons";
 import BuyerTopnav from "./buyer-topnav";
 import { useCartCount } from "./cart-count";
+import { disarmHomeScroll } from "./home-scroll";
 
 export type BuyerTopbarVariant = "logo" | "logo-center" | "back-title" | "title";
 
@@ -44,7 +45,7 @@ export default function BuyerTopbar({
           ) : null}
 
           {variant === "logo" || variant === "logo-center" ? (
-            <Link href="/" className="b_logo i_brand">
+            <Link href="/" className="b_logo i_brand" onClick={disarmHomeScroll}>
               SLUR
             </Link>
           ) : title ? (
@@ -68,7 +69,7 @@ export default function BuyerTopbar({
 
         {/* ≥ 768 — 로고 + 상단 내비로 수렴 */}
         <div className="i_wide">
-          <Link href="/" className="b_logo">
+          <Link href="/" className="b_logo" onClick={disarmHomeScroll}>
             SLUR
           </Link>
           <BuyerTopnav tab={tab} />

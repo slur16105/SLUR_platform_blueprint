@@ -834,3 +834,35 @@
   overflow: hidden;
   white-space: nowrap;
 }
+
+/* ── 푸터 (전 구매자 화면 공통, Q3 · DESIGN §푸터) ─────────────
+   셸이 <main> 뒤에 걸어 모든 구매자 화면 하단에 세운다. b_main이 flex:1로 자라
+   푸터를 항상 바닥으로 민다. 워드마크 → 정책 링크 → 회사정보·중개자 고지 순.
+   깊이 장치는 hairline 하나뿐 — 면·그림자 없음. */
+.b_footer { border-top: 1px solid var(--b-hairline); background: var(--b-paper); }
+.b_footer .i_in { padding-block: 28px 34px; }
+.b_footer .i_mark { font-size: 13px; font-weight: 800; letter-spacing: .22em; line-height: 1; color: var(--b-ink); }
+.b_footer .i_links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
+.b_footer .i_links a { font-size: 12px; font-weight: 600; color: var(--b-ink-secondary); }
+.b_footer .i_company { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--b-hairline); }
+.b_footer .i_company p { font-size: 11px; line-height: 1.85; color: var(--b-ink-quiet); }
+.b_footer .i_broker { margin-top: 12px; }
+.b_footer .i_temp { margin-top: 8px; }
+.b_footer .i_copy { margin-top: 14px; font-size: 10.5px; letter-spacing: .04em; color: var(--b-ink-muted); }
+/* <768 하단 고정 탭바가 서는 화면에서만 그 높이만큼 아래를 비워 푸터 끝이 탭바에 가리지 않게 한다.
+   ≥768에서는 탭바가 사라지므로 0. env()는 safe-area 없는 뷰포트에서 0으로 평가된다(8.7과 같은 규약). */
+.b_footer[data-tabbar="on"] { padding-bottom: calc(var(--b-tabbar-h) + env(safe-area-inset-bottom, 0px)); }
+/* <768 하단 고정 CTA 바(.b_cta_bar)가 서는 화면에서만 그 바 높이만큼 아래를 비워
+   법정 고지(회사정보·중개자 고지·저작권)가 CTA 바에 가리지 않게 한다. 세 화면의 예약값
+   (browse 79 · cart 73 · checkout 92) 중 최대치로 넉넉히 잡는다.
+   상품상세·주문서는 바가 바닥에, 장바구니는 바가 탭바 위 2단이라 탭바 예약에 더해진다. */
+.b_footer[data-cta="on"] { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+.b_footer[data-tabbar="on"][data-cta="on"] {
+  padding-bottom: calc(var(--b-tabbar-h) + 92px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  /* ≥768에서는 탭바·CTA 바 모두 사라지므로 예약 불필요. */
+  .b_footer[data-tabbar="on"],
+  .b_footer[data-cta="on"],
+  .b_footer[data-tabbar="on"][data-cta="on"] { padding-bottom: 0; }
+}
