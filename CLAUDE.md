@@ -18,7 +18,8 @@ uv run alembic upgrade head              # 마이그레이션
 cd apps/web && npx tsc --noEmit && npm run lint
 # 앱 (apps/mobile)
 cd apps/mobile && flutter analyze && flutter run
-# 배포: main push → Railway 자동 (pre-deploy alembic)
+# Hub맥 로컬 테스트: docker compose up -d --build --wait (API·web·Postgres·Alembic)
+# Railway는 기존 배포 검증 환경이며, 종료 결정 전까지 유지한다. 상세: LOCAL_DOCKER.md
 ```
 
 ## 확정 문서 (여기서 시작)
@@ -39,7 +40,7 @@ cd apps/mobile && flutter analyze && flutter run
 - 구매자: Flutter 모바일 앱 (Android 먼저, iOS는 이후). 판매자·관리자: Next.js PC 웹 단일 앱에서 Role 분기.
 - 계정 모델: 단일 계정 + 역할(구매자/판매자/관리자 중복 보유 가능).
 - 결제: v1 개발·내부 테스트는 무통장입금(관리자 수동 확인). **PG 연동이 실서비스 오픈의 선행 조건** — PG 전에 실제 외부 구매자를 받지 않는다 (에스크로·지급대행 규제 회피의 전제).
-- 배포: Railway. Next.js CSS는 슬러 시스템 (`slur-ux`·`slur-design` 스킬 적용).
+- Hub맥 테스트 배포: Docker Compose(API·web·로컬 Postgres). Railway는 종료 결정 전까지 기존 배포 검증 환경으로만 유지한다. Next.js CSS는 슬러 시스템 (`slur-ux`·`slur-design` 스킬 적용).
 
 ## 작업 규칙
 

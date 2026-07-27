@@ -1,12 +1,20 @@
 ---
 state: ready
 owner: Claude + Dan
-updated_at: 2026-07-26
-active_workflow: 없음 — 카카오 로그인·샘플 데이터 완료. 8.1~8.7 done 게이트(실기 검증 ③) Dan 대기
-blocked_on: "Dan의 실기 검증(③ 콘솔 회귀·주문 플로우·PWA)만 남음 — 이게 8.8 착수 조건"
+updated_at: 2026-07-27
+active_workflow: Hub맥 Docker 사전 운영 검증 환경 완료 — Dan의 LAN UI·실기 검증 대기
+blocked_on: "Dan의 실기 검증(콘솔 회귀·주문 플로우·PWA) 및 오픈 게이트 판단만 남음"
 ---
 
 # SLUR Platform Blueprint — 세션 핸드오프
+
+## 2026-07-27 — Hub맥 Docker 사전 운영 검증 환경
+
+- Hub맥 Docker Compose로 Postgres → Alembic → FastAPI → Next.js 통합 기동을 구성하고 `npm run test` 통과.
+- 운영 Supabase와 분리된 로컬 Postgres를 기본 DB로 유지. `.env.example`, `LOCAL_DOCKER.md`, 루트 `README.md`를 추가.
+- `seed` 도구 프로필로 로컬 데모 카테고리 2개·상품 6개를 멱등 생성. Supabase Storage 미연결 시 포함된 로컬 이미지 fallback을 사용.
+- 같은 Wi‑Fi 메인맥에서 `http://slur-hub.local:3000` 또는 Hub맥 LAN IP의 `:3000`으로 Web BFF·카탈로그 응답 확인.
+- Railway·Supabase 운영 데이터 및 비밀값은 변경하지 않음.
 
 ## 2026-07-26 세션에서 완료한 것 (이전 ①②는 여기서 닫혔다)
 
@@ -72,10 +80,9 @@ blocked_on: "Dan의 실기 검증(③ 콘솔 회귀·주문 플로우·PWA)만 �
 
 ## 환경 제약 (머신마다 다름 — 확인하고 시작할 것)
 
-- `apps/web`에 테스트 프레임워크 없음 → `tsc`·`lint`·`build`·헤드리스 렌더·프로덕션 curl로 검증
-- **2026-07-26 이 머신(miny332)**: `railway` CLI 있음·로그인됨(프로젝트 `slur-platform`/production 링크), `apps/web` node_modules 있어 `next dev` 로컬 기동 가능. **단 `railway variables --set`(쓰기)·`--list`(읽기)는 Claude 안전정책 classifier가 차단** → Railway 변수 변경은 Dan이 `!` 로 직접.
-- **`uv`·`docker`(실행)·`flutter` CLI 없음**(추정 유지) → `apps/api` pytest·로컬 백엔드 불가. 로컬 웹은 `API_BASE_URL=<프로덕션 api>`로 프로덕션 API에 붙여 검증(스토리 8.3 방식). 프로덕션 API: `https://api-production-8bfb.up.railway.app`
-- 프로덕션 admin 부여 경로: `railway run --service api uv run python -m app.auth.bootstrap <email>` (이번에 실사용)
+- Hub맥에 Docker Desktop 29.6.2 설치 완료. `docker compose up -d --build --wait`로 API·web·로컬 Postgres·Alembic을 함께 기동할 수 있다. 상세: `LOCAL_DOCKER.md`.
+- 로컬 데모 카탈로그는 `docker compose --profile tools run --rm seed`로 생성한다. 운영 Supabase 데이터에는 연결·복사·수정하지 않는다.
+- 화면 검증은 Hub맥의 실제 브라우저 또는 같은 Wi‑Fi 메인맥에서 `http://slur-hub.local:3000`으로 수행한다. 자동 브라우저 도구는 private localhost 접속이 차단된다.
 - push는 HTTP/1.1로 설정돼 있다(HTTP/2에서 500)
 
 ## 세션 종료 시 반드시 갱신할 항목

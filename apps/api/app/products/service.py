@@ -290,8 +290,14 @@ async def update_product(session: AsyncSession, seller_id: uuid.UUID, product_id
     return product
 
 
-def _image_url(path: str) -> str:
-    base = get_settings().supabase_url
+def _image_url(path: str) -> str | None:
+    base = get_settings().supabase_url.rstrip("/")
+    # 로컬 검증처럼 Storage를 연결하지 않은 환경에서는 브라우저가 깨진 `/storage/...` 상대 경로를
+    # 요청하지 않게 한다. 카드·상세는 null/빈 배열의 이미지 자리를 이미 지원한다.
+    if not base:
+        # Hub맥 로컬 검증에서는 Web 컨테이너가 제공하는 정적 데모 이미지를 쓴다.
+        # production에서 Storage 설정 누락을 이미지 fallback으로 숨기지 않는다.
+        return "/local-product-images/local-demo.jpg" if get_settings().environment == "local" else None
     return f"{base}/storage/v1/object/public/product-images/{path}"
 
 
@@ -339,12 +345,13 @@ async def get_public_product(session: AsyncSession, product_id: uuid.UUID) -> di
     images = (await get_product_images(session, [product.id])).get(product.id, [])
     variants = (await get_variants(session, [product.id])).get(product.id, [])
     seller = await session.get(Seller, product.seller_id)
+    image_urls = [url for i in images if (url := _image_url(i.path)) is not None]
     return {
         "id": product.id, "name": product.name, "category_id": product.category_id,
         "brand_name": seller.brand_name if seller else "",
         "description": product.description,
-        "main_image_url": _image_url(images[0].path) if images else None,
-        "image_urls": [_image_url(i.path) for i in images],
+        "main_image_url": image_urls[0] if image_urls else None,
+        "image_urls": image_urls,
         "seller_info": {  # 법정 신원정보 (FR-32) — 판매자 부재는 비정상 데이터, 빈 값 방어
             "brand_name": seller.brand_name if seller else "",
             "company_name": seller.company_name if seller else "",

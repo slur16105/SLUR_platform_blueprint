@@ -5,6 +5,19 @@ import pytest
 from tests.helpers import _admin_token, _auth, _category, _product_body, _seller_with_prefix
 
 
+def test_local_without_supabase_storage_uses_local_demo_image(monkeypatch):
+    """로컬 시드 상품은 Storage 없이도 Web이 직접 제공하는 데모 이미지를 쓴다."""
+    from app.core.config import get_settings
+    from app.products.service import _image_url
+
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    get_settings.cache_clear()
+    try:
+        assert _image_url("00000000-0000-0000-0000-000000000000/example.jpg") == "/local-product-images/local-demo.jpg"
+    finally:
+        get_settings.cache_clear()
+
+
 async def _setup(client):
     admin_t = await _admin_token(client)
     cid = await _category(client, admin_t, name="공개조회")

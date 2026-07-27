@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">SLUR 로컬 데모 카탈로그</title>
+  <desc id="desc">문구와 생활 소품을 담은 편집숍 스타일 정물 일러스트</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#efe9df"/>
+      <stop offset="1" stop-color="#ddd1c3"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#faf7f1"/>
+      <stop offset="1" stop-color="#e6ddcf"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#50473f" flood-opacity=".17"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <circle cx="1058" cy="116" r="256" fill="#c5d0be" opacity=".72"/>
+  <circle cx="102" cy="818" r="224" fill="#c7725e" opacity=".4"/>
+  <g filter="url(#shadow)">
+    <path d="M138 204h419l-44 370H94z" fill="#393936"/>
+    <path d="M115 574h398l-20 61H95z" fill="#222522"/>
+    <rect x="180" y="243" width="328" height="280" rx="7" fill="url(#paper)"/>
+    <path d="M206 299h278M206 339h230M206 379h252M206 419h196" stroke="#b8aa9b" stroke-width="11" stroke-linecap="round" opacity=".82"/>
+    <rect x="252" y="140" width="285" height="184" rx="8" fill="#bd6653" transform="rotate(8 252 140)"/>
+    <path d="M285 182h214M285 219h164" stroke="#f8eee2" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="M719 220c0-57 47-104 104-104s104 47 104 104v214c0 74-60 134-134 134h-50c-38 0-69-31-69-69V263c0-24 20-43 45-43z" fill="#bbd3cf"/>
+    <path d="M921 250c97-22 131 142 21 172" fill="none" stroke="#bbd3cf" stroke-width="29" stroke-linecap="round"/>
+    <path d="M750 166c-21 72 1 124 74 124s97-56 76-132" fill="#eff5ef" opacity=".55"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="628" y="578" width="272" height="185" rx="14" fill="#aa7965" transform="rotate(-6 628 578)"/>
+    <path d="M660 633c72-28 142 57 211-6M650 685c72-28 142 57 211-6" fill="none" stroke="#dfc0a9" stroke-width="19" stroke-linecap="round" opacity=".88"/>
+    <circle cx="987" cy="659" r="99" fill="#e8ded0"/>
+    <circle cx="987" cy="659" r="74" fill="#c7725e"/>
+    <circle cx="987" cy="659" r="42" fill="#efded0"/>
+  </g>
+  <path d="M0 790C291 704 428 875 684 810s364 16 516-28v118H0z" fill="#f5f0e8" opacity=".72"/>
+</svg>
