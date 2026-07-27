@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SLUR Platform Blueprint 과제 제출 안내 — 핵심 기능, 보안 설계, 검증 범위 및 로컬 데모 계정">
+  <title>SLUR Platform Blueprint — 제출 안내</title>
+  <style>
+    :root { --color-text-primary: #14171a; --color-text-secondary: #4d545b; --color-text-muted: #6b737b; --color-surface-page: #f7f8f8; --color-surface-card: #ffffff; --color-surface-sunken: #eef0f1; --color-surface-inverse: #14171a; --color-border-subtle: #e2e5e7; --color-border-default: #cbcfd3; --color-brand: #2f6bff; --color-brand-hover: #1d54e6; --color-brand-soft: #eef4ff; --color-on-brand: #ffffff; --color-success: #16a34a; --color-success-soft: #ecfdf3; --color-warning: #d97706; --color-warning-soft: #fff7ed; --color-danger: #dc2626; --color-danger-soft: #fef2f2; --font-sans: "Pretendard Variable", "Pretendard", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; --shadow-sm: 0 1px 2px rgba(20, 23, 26, .06), 0 3px 10px rgba(20, 23, 26, .04); --shadow-lg: 0 20px 48px rgba(20, 23, 26, .1); }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--color-surface-page); font-family: var(--font-sans); font-size: 16px; line-height: 1.6; color: var(--color-text-primary); }
+    a { color: inherit; }
+    a:focus-visible, summary:focus-visible { outline: 3px solid rgba(47, 107, 255, .35); outline-offset: 3px; }
+    .layout_header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--color-border-subtle); background: rgba(247, 248, 248, .92); backdrop-filter: blur(10px); }
+    .l_inner { display: flex; width: min(1120px, calc(100% - 40px)); min-height: 64px; margin: 0 auto; align-items: center; justify-content: space-between; gap: 24px; }
+    .l_brand { font-size: 14px; font-weight: 700; letter-spacing: -.01em; text-decoration: none; }
+    .l_brand span { color: var(--color-brand); }
+    .l_nav { display: flex; align-items: center; gap: 18px; color: var(--color-text-secondary); font-size: 13px; font-weight: 600; }
+    .l_nav a { text-decoration: none; }
+    .l_nav a:hover { color: var(--color-brand); }
+    .page_main { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 64px 0 96px; }
+    .p_hero { display: grid; margin-bottom: 36px; padding: clamp(32px, 6vw, 72px); border-radius: 20px; background: var(--color-surface-inverse); color: #fff; box-shadow: var(--shadow-lg); grid-template-columns: minmax(0, 1fr) minmax(240px, 340px); gap: 40px; }
+    .p_eyebrow { margin: 0 0 12px; color: #8fb4ff; font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+    .p_title { max-width: 720px; margin: 0; font-size: clamp(34px, 5vw, 58px); font-weight: 700; letter-spacing: -.045em; line-height: 1.08; text-wrap: pretty; }
+    .p_intro { max-width: 660px; margin: 22px 0 0; color: #d9dfe5; font-size: 18px; line-height: 1.7; text-wrap: pretty; }
+    .p_hero_side { display: flex; padding-top: 8px; flex-direction: column; justify-content: flex-end; gap: 16px; }
+    .badge { display: inline-flex; width: fit-content; padding: 6px 10px; border-radius: 999px; background: rgba(143, 180, 255, .16); color: #dce8ff; font-size: 12px; font-weight: 700; }
+    .i_link { display: inline-flex; min-height: 46px; padding: 0 16px; border-radius: 8px; background: #fff; align-items: center; justify-content: center; color: #14171a; font-size: 14px; font-weight: 700; text-decoration: none; transition: background .16s ease, transform .16s ease; }
+    .i_link:hover { background: #eef4ff; transform: translateY(-1px); }
+    .p_notice { display: grid; margin-bottom: 64px; padding: 20px 22px; border: 1px solid #f0d8b5; border-radius: 12px; background: var(--color-warning-soft); grid-template-columns: 28px minmax(0, 1fr); gap: 14px; }
+    .p_notice strong { display: block; margin-bottom: 3px; color: #8e4e05; font-size: 14px; }
+    .p_notice p { margin: 0; color: #6e4b20; font-size: 14px; }
+    .i_notice_mark { display: grid; width: 24px; height: 24px; border-radius: 50%; background: var(--color-warning); place-items: center; color: #fff; font-size: 14px; font-weight: 800; }
+    .p_section { margin-top: 72px; scroll-margin-top: 88px; }
+    .p_section_head { display: grid; margin-bottom: 26px; grid-template-columns: 148px minmax(0, 1fr); gap: 24px; }
+    .p_kicker { margin: 4px 0 0; color: var(--color-brand); font-size: 13px; font-weight: 800; letter-spacing: .07em; }
+    .p_section_title { margin: 0; font-size: clamp(25px, 3vw, 34px); letter-spacing: -.035em; line-height: 1.25; text-wrap: pretty; }
+    .p_section_desc { max-width: 680px; margin: 10px 0 0; color: var(--color-text-secondary); text-wrap: pretty; }
+    .p_feature_list { border-top: 1px solid var(--color-border-default); }
+    .i_feature { display: grid; padding: 26px 0; border-bottom: 1px solid var(--color-border-subtle); grid-template-columns: 138px minmax(0, 1fr) minmax(220px, 330px); gap: 24px; }
+    .i_role { color: var(--color-text-muted); font-size: 13px; font-weight: 700; }
+    .i_feature h3 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .i_feature p { margin: 4px 0 0; color: var(--color-text-secondary); font-size: 14px; }
+    .i_flow { margin: 0; color: var(--color-text-secondary); font-size: 14px; }
+    .i_flow b { color: var(--color-text-primary); font-weight: 700; }
+    .p_architecture { display: grid; padding: 28px; border: 1px solid var(--color-border-subtle); border-radius: 14px; background: var(--color-surface-card); box-shadow: var(--shadow-sm); grid-template-columns: 1.05fr .9fr; gap: 32px; }
+    .i_arch_stack { display: flex; flex-direction: column; gap: 8px; }
+    .i_arch_node { display: flex; min-height: 54px; padding: 12px 16px; border: 1px solid var(--color-border-default); border-radius: 8px; align-items: center; justify-content: space-between; background: var(--color-surface-card); gap: 16px; }
+    .i_arch_node b { font-size: 15px; }
+    .i_arch_node span { color: var(--color-text-muted); font-size: 13px; text-align: right; }
+    .i_arch_arrow { height: 15px; margin-left: 24px; border-left: 1px solid var(--color-border-default); }
+    .i_arch_note { margin: 0; color: var(--color-text-secondary); font-size: 15px; }
+    .i_arch_note strong { color: var(--color-text-primary); }
+    .i_arch_points { margin: 18px 0 0; padding: 0; list-style: none; }
+    .i_arch_points li { position: relative; padding: 9px 0 9px 18px; border-bottom: 1px solid var(--color-border-subtle); color: var(--color-text-secondary); font-size: 14px; }
+    .i_arch_points li::before { position: absolute; top: 18px; left: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--color-brand); content: ""; }
+    .p_security_grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card { padding: 24px; border: 1px solid var(--color-border-subtle); border-radius: 12px; background: var(--color-surface-card); box-shadow: var(--shadow-sm); }
+    .card h3 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+    .card p { margin: 8px 0 0; color: var(--color-text-secondary); font-size: 14px; }
+    .card code { padding: 1px 4px; border-radius: 4px; background: var(--color-surface-sunken); color: var(--color-text-primary); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+    .p_test_grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 16px; }
+    .p_command { margin: 18px 0 0; padding: 14px 16px; border-radius: 8px; background: #171a1e; overflow-x: auto; color: #edf2f7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; }
+    .p_check_list { margin: 18px 0 0; padding: 0; list-style: none; }
+    .p_check_list li { position: relative; padding: 7px 0 7px 24px; color: var(--color-text-secondary); font-size: 14px; }
+    .p_check_list li::before { position: absolute; left: 0; color: var(--color-success); content: "✓"; font-weight: 800; }
+    .p_test_stamp { display: inline-flex; margin-top: 18px; padding: 6px 9px; border-radius: 6px; background: var(--color-success-soft); color: #167238; font-size: 12px; font-weight: 700; }
+    .p_accounts { overflow: hidden; border: 1px solid var(--color-border-default); border-radius: 12px; background: var(--color-surface-card); box-shadow: var(--shadow-sm); }
+    .p_account_row { display: grid; padding: 20px 24px; border-bottom: 1px solid var(--color-border-subtle); grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+    .p_account_row:last-child { border-bottom: 0; }
+    .i_account_role { color: var(--color-brand); font-size: 13px; font-weight: 800; }
+    .i_account_data { color: var(--color-text-secondary); font-size: 14px; }
+    .i_account_data code { display: block; margin-top: 3px; color: var(--color-text-primary); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; }
+    .p_steps { display: grid; margin: 0; padding: 0; list-style: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .p_steps li { padding: 18px; border-radius: 10px; background: var(--color-surface-sunken); }
+    .p_steps b { display: block; margin-bottom: 6px; color: var(--color-brand); font-size: 13px; }
+    .p_steps span { color: var(--color-text-secondary); font-size: 14px; }
+    .p_scope { display: grid; padding: 26px; border: 1px solid #f1d1d1; border-radius: 12px; background: var(--color-danger-soft); grid-template-columns: 150px minmax(0, 1fr); gap: 20px; }
+    .p_scope h2 { margin: 0; color: #a42222; font-size: 18px; }
+    .p_scope ul { margin: 0; padding-left: 18px; color: #713333; font-size: 14px; }
+    .p_scope li + li { margin-top: 5px; }
+    .layout_footer { border-top: 1px solid var(--color-border-subtle); background: var(--color-surface-card); }
+    .l_footer_inner { display: flex; width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0; align-items: center; justify-content: space-between; gap: 20px; color: var(--color-text-muted); font-size: 13px; }
+    .l_footer_inner a { color: var(--color-text-secondary); font-weight: 700; }
+    @media (max-width: 760px) { .l_nav { display: none; } .page_main { padding-top: 28px; } .p_hero { grid-template-columns: 1fr; gap: 22px; } .p_section { margin-top: 52px; } .p_section_head, .i_feature, .p_architecture, .p_test_grid, .p_scope { grid-template-columns: 1fr; gap: 14px; } .p_security_grid { grid-template-columns: 1fr; } .p_account_row { grid-template-columns: 1fr; gap: 8px; } .p_steps { grid-template-columns: 1fr; } .l_footer_inner { align-items: flex-start; flex-direction: column; } }
+    @media print { .layout_header { position: static; } .p_hero { box-shadow: none; } .card, .p_architecture, .p_accounts { box-shadow: none; } .page_main { width: 100%; padding: 20px; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .i_link { transition: none; } }
+  </style>
+</head>
+<body>
+  <header class="layout_header">
+    <div class="l_inner">
+      <a class="l_brand" href="/">SLUR <span>Platform Blueprint</span></a>
+      <nav class="l_nav" aria-label="문서 탐색">
+        <a href="#features">핵심 기능</a>
+        <a href="#security">보안 설계</a>
+        <a href="#testing">검증</a>
+        <a href="#accounts">테스트 계정</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page_main">
+    <section class="p_hero" aria-labelledby="page-title">
+      <div>
+        <p class="p_eyebrow">ASSIGNMENT SUBMISSION · 2026</p>
+        <h1 class="p_title" id="page-title">판매자·운영자가 함께 완주하는 큐레이션 커머스</h1>
+        <p class="p_intro">SLUR Platform Blueprint는 운영자가 판매자를 선별·초청하는 디자인 편집숍 모델을 바탕으로, 입점부터 상품·장바구니·주문·운영 처리까지의 실제 서비스 흐름을 구현한 프로젝트입니다.</p>
+      </div>
+      <div class="p_hero_side">
+        <span class="badge">FastAPI · Next.js · PostgreSQL</span>
+        <a class="i_link" href="/">현재 데모 열기 <span aria-hidden="true">↗</span></a>
+        <a class="i_link" href="https://github.com/slur16105/SLUR_platform_blueprint">GitHub 저장소 보기 <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    <aside class="p_notice" aria-label="데모 환경 안내">
+      <span class="i_notice_mark" aria-hidden="true">!</span>
+      <div>
+        <strong>외부 데모는 Hub맥의 Docker 기반 로컬 검증 환경입니다.</strong>
+        <p>운영 Supabase 데이터와 분리된 Postgres 및 로컬 데모 카탈로그를 사용합니다. URL은 임시 터널이므로 Hub맥과 Docker가 실행 중인 동안에만 접속할 수 있습니다.</p>
+      </div>
+    </aside>
+
+    <section class="p_section" id="features" aria-labelledby="features-title">
+      <div class="p_section_head">
+        <p class="p_kicker">01 · FEATURES</p>
+        <div>
+          <h2 class="p_section_title" id="features-title">역할별로 끊기지 않는 커머스 흐름</h2>
+          <p class="p_section_desc">한 계정이 구매자·판매자·관리자 역할을 가질 수 있으며, 권한과 상태 전이는 FastAPI에서 일관되게 판단합니다.</p>
+        </div>
+      </div>
+      <div class="p_feature_list">
+        <article class="i_feature">
+          <p class="i_role">구매자</p>
+          <div><h3>탐색, 장바구니, 주문</h3><p>카테고리와 상품을 탐색하고, 옵션·재고를 확인한 뒤 장바구니와 주문 흐름을 진행합니다. 무통장입금 확인 기반의 주문·배송·취소 상태를 제공합니다.</p></div>
+          <p class="i_flow"><b>흐름</b><br>상품 탐색 → 장바구니 → 주문 미리보기 → 주문 생성 → 주문내역·취소</p>
+        </article>
+        <article class="i_feature">
+          <p class="i_role">판매자</p>
+          <div><h3>입점 신청부터 재고·배송 관리</h3><p>판매자 신청과 관리자 승인을 거쳐 판매자 프로필을 만들고, 상품·옵션 조합·재고·배송비를 관리합니다. 주문을 확인해 배송·배송완료 상태로 전이합니다.</p></div>
+          <p class="i_flow"><b>흐름</b><br>입점 신청 → 승인 → 상품 등록 → 재고 관리 → 주문 처리</p>
+        </article>
+        <article class="i_feature">
+          <p class="i_role">관리자</p>
+          <div><h3>승인, 카탈로그, 주문 운영</h3><p>판매자 입점 신청을 심사하고, 카테고리와 운영 설정을 관리합니다. 입금 확인, 주문 상태 변경, 취소·환불 처리 및 회원·판매자 조회를 제공합니다.</p></div>
+          <p class="i_flow"><b>흐름</b><br>입점 심사 → 카테고리 운영 → 입금 확인 → 주문·취소 관리</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="p_section" aria-labelledby="architecture-title">
+      <div class="p_section_head">
+        <p class="p_kicker">02 · ARCHITECTURE</p>
+        <div><h2 class="p_section_title" id="architecture-title">FastAPI를 유일한 권한 판단 지점으로 둔 구조</h2><p class="p_section_desc">프런트엔드는 화면과 BFF를 담당하고, 인증·권한·상태 전이·주문 규칙은 서버 API가 소유합니다.</p></div>
+      </div>
+      <div class="p_architecture">
+        <div class="i_arch_stack" aria-label="서비스 구성도">
+          <div class="i_arch_node"><b>Next.js 웹</b><span>구매자 · 판매자 · 관리자<br>역할별 화면 및 BFF</span></div>
+          <div class="i_arch_arrow" aria-hidden="true"></div>
+          <div class="i_arch_node"><b>FastAPI</b><span>인증 · RBAC · 주문 상태 전이<br>도메인 규칙의 단일 소유자</span></div>
+          <div class="i_arch_arrow" aria-hidden="true"></div>
+          <div class="i_arch_node"><b>PostgreSQL / Storage</b><span>로컬 검증 DB 분리<br>운영 전환 대상</span></div>
+        </div>
+        <div>
+          <p class="i_arch_note"><strong>분리 원칙:</strong> Supabase는 향후 매니지드 PostgreSQL과 Storage 대상으로만 두며, Supabase Auth·RLS·Edge Functions에 비즈니스 규칙을 분산하지 않습니다.</p>
+          <ul class="i_arch_points">
+            <li>역할 쿠키는 화면 라우팅 힌트일 뿐, 권한 상승 근거가 아닙니다.</li>
+            <li>실제 접근 권한은 FastAPI의 JWT claim과 역할 의존성에서 다시 판정합니다.</li>
+            <li>로컬 시더도 공개·관리·판매자 API를 호출해 실제 권한과 도메인 규칙을 통과합니다.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="p_section" id="security" aria-labelledby="security-title">
+      <div class="p_section_head">
+        <p class="p_kicker">03 · SECURITY</p>
+        <div><h2 class="p_section_title" id="security-title">인증 정보와 상태 변경을 경계별로 방어</h2><p class="p_section_desc">아래 내용은 현재 구현의 보안 설계입니다. 실사용자 외부 판매는 별도의 오픈 게이트를 완료하기 전까지 허용하지 않습니다.</p></div>
+      </div>
+      <div class="p_security_grid">
+        <article class="card"><h3>비밀번호와 로그인 실패</h3><p>비밀번호는 <code>Argon2id</code>로 해시합니다. 존재하지 않는 계정도 더미 해시 검증을 수행하고, 이메일 부재와 비밀번호 불일치를 같은 401 응답으로 처리해 계정 존재·타이밍 노출을 줄입니다.</p></article>
+        <article class="card"><h3>JWT와 세션 회전</h3><p>Access JWT는 issuer·subject·만료 시간을 검증하며 기본 수명은 30분입니다. Refresh token은 원문이 아닌 SHA-256 해시를 저장하고, 조건부 갱신으로 1회 사용 후 회전·폐기됩니다.</p></article>
+        <article class="card"><h3>역할 기반 접근 제어</h3><p>JWT의 역할 claim을 FastAPI <code>require_role</code> 의존성이 판독합니다. 프런트의 역할 힌트가 변조되더라도 서버의 실제 권한 판정을 우회할 수 없습니다.</p></article>
+        <article class="card"><h3>상태 변경 요청 방어</h3><p>웹 BFF의 상태 변경 POST·PUT 요청은 same-origin을 확인합니다. 인증 BFF에는 캐시 금지 헤더를 적용하고, 로그아웃은 refresh 쿠키 경로를 모두 소거하도록 검증합니다.</p></article>
+        <article class="card"><h3>카카오 계정 연결 정책</h3><p>카카오는 신원 확인에만 사용하고 토큰은 FastAPI가 발급합니다. 기존 이메일 계정과의 자동 연결을 금지해 계정 선점·탈취 위험을 막으며, 콜백 URI는 서버 allowlist로도 확인합니다.</p></article>
+        <article class="card"><h3>환경변수와 데이터 경계</h3><p><code>JWT_SECRET</code>과 DB 연결은 환경변수로만 주입합니다. 현재 Docker 데모 DB는 운영 데이터와 분리되어 있으며, 로컬 시더는 <code>ENVIRONMENT=local</code> 및 Docker Postgres에서만 실행됩니다.</p></article>
+      </div>
+    </section>
+
+    <section class="p_section" id="testing" aria-labelledby="testing-title">
+      <div class="p_section_head">
+        <p class="p_kicker">04 · VERIFICATION</p>
+        <div><h2 class="p_section_title" id="testing-title">구성부터 서비스 응답까지의 통합 확인</h2><p class="p_section_desc">제출 시점의 Docker 검증 명령을 실제 실행해 Compose 구성, DB 준비, API health, 웹 루트와 카테고리 BFF 응답을 확인했습니다.</p></div>
+      </div>
+      <div class="p_test_grid">
+        <article class="card">
+          <h3>통합 검증 명령</h3>
+          <pre class="p_command"><code>npm run test</code></pre>
+          <ul class="p_check_list">
+            <li>Docker Compose 구성 유효성 검사</li>
+            <li>PostgreSQL → Alembic migration → FastAPI → Next.js 준비 대기</li>
+            <li><code>/api/v1/health</code> DB 연결 확인</li>
+            <li>웹 루트 및 <code>/api/products/categories</code> BFF 응답 확인</li>
+          </ul>
+          <span class="p_test_stamp">2026-07-27 · npm run test 통과</span>
+        </article>
+        <article class="card">
+          <h3>추가 검증 경계</h3>
+          <p>API 도메인 테스트는 <code>apps/api</code>에서 <code>uv run pytest -q</code>로 분리합니다. 웹 BFF의 세션 소거·Origin 가드·캐시 금지·중개자 고지 순서는 Node 기반 검사로 회귀를 방지합니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="p_section" id="accounts" aria-labelledby="accounts-title">
+      <div class="p_section_head">
+        <p class="p_kicker">05 · DEMO ACCOUNTS</p>
+        <div><h2 class="p_section_title" id="accounts-title">로컬 데모 전용 테스트 계정</h2><p class="p_section_desc">아래 계정은 <code>docker compose --profile tools run --rm seed</code>가 만든 Docker Postgres에서만 사용합니다. 공개된 고정 비밀번호이므로 운영·개인 계정에는 절대 사용하지 않습니다.</p></div>
+      </div>
+      <div class="p_accounts" role="table" aria-label="로컬 데모 테스트 계정">
+        <div class="p_account_row" role="row"><div class="i_account_role" role="cell">관리자</div><div class="i_account_data" role="cell">이메일<code>local-admin@example.com</code></div><div class="i_account_data" role="cell">비밀번호<code>local-admin-password-2026</code></div></div>
+        <div class="p_account_row" role="row"><div class="i_account_role" role="cell">판매자</div><div class="i_account_data" role="cell">이메일<code>local-seller@example.com</code></div><div class="i_account_data" role="cell">비밀번호<code>local-seller-password-2026</code></div></div>
+      </div>
+      <ol class="p_steps" aria-label="데모 실행 순서" style="margin-top: 16px;">
+        <li><b>01 · 기동</b><span><code>cp .env.example .env</code> 후 로컬용 랜덤 비밀값을 넣고 <code>docker compose up -d --build --wait</code>를 실행합니다.</span></li>
+        <li><b>02 · 시드</b><span><code>docker compose --profile tools run --rm seed</code>로 카테고리 2개와 상품 6개, 관리·판매자 계정을 만듭니다.</span></li>
+        <li><b>03 · 확인</b><span>웹은 <code>http://localhost:3000</code>에서 열고, 역할별 로그인 후 각 운영 흐름을 확인합니다.</span></li>
+      </ol>
+    </section>
+
+    <section class="p_section" aria-labelledby="scope-title">
+      <div class="p_scope">
+        <h2 id="scope-title">실서비스 오픈 전<br>남은 게이트</h2>
+        <ul>
+          <li>PG 결제 연동</li>
+          <li>사업자 실정보와 법률 고지 검토</li>
+          <li>배송·도서산간 정책의 공식 기준 대조</li>
+          <li>실제 Supabase PostgreSQL·Storage 전환 검증</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="layout_footer">
+    <div class="l_footer_inner">
+      <span>SLUR Platform Blueprint · 제출 안내 문서</span>
+      <a href="https://github.com/slur16105/SLUR_platform_blueprint">공개 GitHub 저장소 ↗</a>
+    </div>
+  </footer>
+</body>
+</html>
