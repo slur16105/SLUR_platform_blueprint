@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { MSG, mapFieldErrors, type ErrorEnvelope, type FieldErrors } from "../auth-errors";
 import { useCartCount } from "../cart-count";
+import PolicyLink from "../legal/policy-link";
 import { roleHome } from "@/lib/nav";
 
 const FIELDS = ["email", "password", "name", "phone"] as const;
@@ -147,10 +147,11 @@ export default function SignupForm({ next }: { next: string | null }) {
               <i className="i_req">[필수]</i> 이용약관에 동의합니다
             </span>
           </label>
-          {/* 새 탭으로 연다 — 절반 채운 폼에서 나가면 입력이 날아간다 (D2) */}
-          <Link className="b_view" href="/terms" target="_blank" rel="noopener">
+          {/* 모달로 연다 — 절반 채운 폼을 떠나지 않으므로 입력이 보존된다(새 탭보다 낫다, D2).
+              JS 미탑재·새 탭이면 /terms 페이지로 이동(폴백). */}
+          <PolicyLink kind="terms" className="b_view">
             <span>보기</span>
-          </Link>
+          </PolicyLink>
         </div>
         <div className="b_term">
           <label className="i_check">
@@ -164,9 +165,9 @@ export default function SignupForm({ next }: { next: string | null }) {
               <i className="i_req">[필수]</i> 개인정보 수집·이용에 동의합니다
             </span>
           </label>
-          <Link className="b_view" href="/privacy" target="_blank" rel="noopener">
+          <PolicyLink kind="privacy" className="b_view">
             <span>보기</span>
-          </Link>
+          </PolicyLink>
         </div>
       </div>
 

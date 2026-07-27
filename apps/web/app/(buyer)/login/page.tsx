@@ -23,8 +23,11 @@ export default async function LoginPage({
 
   return (
     <BuyerShell topbar={{ variant: "logo-center" }}>
-      <div className="b_container m_read b_auth">
-        <LoginForm next={next} notice={notice} />
+      {/* 바깥 틀은 상단바·푸터와 정렬선을 공유하고(.b_frame), 폼 폭(640, gutter)은 안쪽 열이 갖는다. */}
+      <div className="b_frame">
+        <div className="b_col_form b_auth">
+          <LoginForm next={next} notice={notice} />
+        </div>
       </div>
     </BuyerShell>
   );

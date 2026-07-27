@@ -18,8 +18,10 @@ export default async function SignupPage({
 
   return (
     <BuyerShell topbar={{ variant: "back-title", title: "회원가입" }}>
-      <div className="b_container m_read b_auth">
-        <SignupForm next={next} />
+      <div className="b_frame">
+        <div className="b_col_form b_auth">
+          <SignupForm next={next} />
+        </div>
       </div>
     </BuyerShell>
   );

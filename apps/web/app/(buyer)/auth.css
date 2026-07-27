@@ -6,7 +6,8 @@
    값은 --b-* 토큰 · 타이포는 type.css 역할 클래스. hex 리터럴 0건.
    ───────────────────────────────────────────── */
 
-/* 폼 지면 — 640px 한 단(.b_container.m_read)이 폭을 정하고 여기서 리듬만 준다 */
+/* 폼 지면 — 폭(640, gutter)은 안쪽 열 .b_col_form이 정하고(바깥 틀 .b_frame은 상단바와 정렬선 공유),
+   여기서는 세로 리듬만 준다 (오너 확정 2026-07-27, 이전 .b_container.m_read 대체) */
 .b_auth { padding-block: 26px 44px; }
 .b_authform { display: block; }
 /* 마지막 필드는 버튼과의 간격을 폼이 직접 정한다 */

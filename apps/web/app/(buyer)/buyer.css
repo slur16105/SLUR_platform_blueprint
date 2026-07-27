@@ -42,10 +42,21 @@
 @media (min-width: 768px) {
   .b_container { max-width: var(--b-content-max); margin-inline: auto; }
 }
-/* 읽는 화면(주문내역·주문상세·내 정보·로그인·회원가입) */
-.b_container.m_read { max-width: var(--b-read-max); margin-inline: auto; }
-/* 주문완료 */
-.b_container.m_narrow { max-width: var(--b-narrow-max); margin-inline: auto; }
+/* ── 바깥 틀 통일 (오너 확정 2026-07-27) ────────────────────────────
+   전 구매자 화면의 페이지 틀이 상단바·푸터·홈·목록·상세·장바구니·주문서와 **같은 좌우 정렬선**
+   (--b-content-max)을 공유한다. 한 단(읽기/확인) 화면은 이 틀 안에서 **안쪽 열**로만 글줄 폭을
+   좁힌다 — 바깥 정렬선은 유지되고 글줄만 좁아진다. 이전의 .b_container.m_read/.m_narrow
+   (640/560을 **가운데 정렬**해 상단바와 좌측 정렬선이 어긋나던 것)을 대체한다.
+   🚨 틀은 padding-inline이 0이다: 안쪽 행이 스스로 gutter를 갖는 화면(주문내역·내정보·주문상세)과
+      gutter를 안쪽 열이 갖는 화면(로그인·회원가입·주문완료) 모두, 상단바(내부에서 gutter를 갖는
+      .b_container)와 정확히 같은 지점에서 콘텐츠가 시작하게 하기 위함이다. */
+.b_frame { width: 100%; max-width: var(--b-content-max); margin-inline: auto; }
+/* 안쪽 열 — 행이 스스로 gutter를 갖는 화면(주문내역·내정보·주문상세). 좌측 정렬. */
+.b_col_read { width: 100%; max-width: var(--b-read-max); }
+/* 안쪽 열 — 스스로 gutter가 필요한 화면(로그인·회원가입). 좌측 정렬 + gutter. */
+.b_col_form { width: 100%; max-width: var(--b-read-max); padding-inline: var(--b-gutter); }
+/* 안쪽 열 — 가운데 정렬 확인 화면(주문완료). 좁은 폭 + gutter. 로고 중앙 상단바와 축을 맞춘다. */
+.b_col_confirm { width: 100%; max-width: var(--b-narrow-max); margin-inline: auto; padding-inline: var(--b-gutter); }
 
 /* 라벨-값 행·항목 조작 행 — 칼럼이 아무리 넓어도 560px 안에서 좌측 정렬 */
 .b_row { width: 100%; max-width: var(--b-row-max); }
@@ -866,3 +877,102 @@
   .b_footer[data-cta="on"],
   .b_footer[data-tabbar="on"][data-cta="on"] { padding-bottom: 0; }
 }
+
+/* ─────────────────────────────────────────────
+   화면 머리 (BuyerPageHeading) — 데스크톱 제목 통일
+   <768: 상단바 제목이 그 역할을 하므로 감춘다.
+   ≥768: 상단바가 로고+내비로 수렴하며 화면 제목이 사라지는 자리를 채운다.
+   장바구니·주문내역·주문상세·내 정보가 같은 머리를 공유해 데스크톱 제목 처리가 통일된다.
+   깊이 장치 없음(선·면·그림자 0) — 여백과 활자만으로 선다. 좌우 정렬선은 gutter로 콘텐츠와 맞춘다.
+   ───────────────────────────────────────────── */
+.b_page_heading { display: none; }
+@media (min-width: 768px) {
+  .b_page_heading { display: block; padding: var(--b-space-7) var(--b-gutter) var(--b-space-5); }
+  /* 장바구니처럼 본문 폭이 1080px인 화면 — 콘텐츠와 같은 축에 앉힌다(그 외는 부모 640px 컨테이너 폭). */
+  .b_page_heading.m_wide { max-width: var(--b-content-max); margin-inline: auto; }
+}
+
+/* ─────────────────────────────────────────────
+   정책 읽기 모달 (약관·개인정보처리방침) — PolicyProvider가 마운트한다.
+   접근성(role=dialog·aria-modal·포커스 트랩·ESC·스크롤 잠금)은 JS가, 배치·톤은 여기가.
+   <768 전체 화면 시트 · ≥768 가운데 패널. 🚨 그림자 금지 — 1px hairline과 종이 면으로 가른다.
+   우편번호 오버레이(.b_overlay)와 같은 관용을 따르되, 긴 본문 스크롤에 맞춰 .i_body가 스크롤한다.
+   ───────────────────────────────────────────── */
+.b_modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  background: var(--b-paper);
+}
+/* < 768에서는 다이얼로그가 곧 화면이다 — 두 폭에서 같은 DOM을 쓰기 위한 배치 */
+.b_modal .i_dialog { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.b_modal .i_head {
+  display: flex;
+  flex: 0 0 var(--b-topbar-h);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--b-topbar-h);
+  padding-inline: var(--b-gutter);
+  border-bottom: 1px solid var(--b-hairline);
+}
+.b_modal .i_head .i_title { color: var(--b-ink); }
+/* 닫기는 글자 ×다 — 인라인 SVG는 [data-surface="buyer"] svg의 stroke-width 전역 규칙을 물려받는다. */
+.b_modal .i_close {
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -11px;
+  border: none;
+  background: none;
+  color: var(--b-ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.b_modal .i_body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--b-space-6) var(--b-gutter) var(--b-space-7); }
+@media (min-width: 768px) {
+  .b_modal {
+    align-items: center;
+    justify-content: center;
+    padding: var(--b-space-7);
+    /* 새 hex를 만들지 않는다 — 먹색 토큰에서 파생시킨 반투명 면이다 (.b_overlay와 같다). */
+    background: color-mix(in srgb, var(--b-ink) 34%, transparent);
+  }
+  .b_modal .i_dialog {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: 640px;
+    height: min(720px, 100%);
+    border: 1px solid var(--b-hairline);
+    border-radius: var(--b-rounded);
+    background: var(--b-paper);
+    overflow: hidden;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   정책 문서 본문 (.b_policy) — /terms·/privacy와 같은 마크업(policy-docs.tsx)을 buyer 톤으로 다시 입힌다.
+   전역 slur 스타일(.alert·기본 태그)을 buyer 스코프에서 덮는다(특이도 [data-surface] .b_policy … 로 이긴다).
+   🚨 새 hex 없음 — 색은 --b-* 토큰, 크기는 이 지면의 활자 위계를 따른다.
+   ───────────────────────────────────────────── */
+[data-surface="buyer"] .b_policy { display: flex; flex-direction: column; gap: var(--b-space-6); color: var(--b-ink-prose); }
+[data-surface="buyer"] .b_policy .p_title { font-size: 20px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.4; color: var(--b-ink); }
+[data-surface="buyer"] .b_policy .p_meta { margin-top: 7px; font-size: 11.5px; color: var(--b-ink-muted); }
+[data-surface="buyer"] .b_policy .p_section { display: flex; flex-direction: column; gap: var(--b-space-3); }
+[data-surface="buyer"] .b_policy .p_section h2 { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; color: var(--b-ink-strong); }
+[data-surface="buyer"] .b_policy .p_section p { font-size: 13px; line-height: 1.85; color: var(--b-ink-prose); }
+[data-surface="buyer"] .b_policy .p_section ol,
+[data-surface="buyer"] .b_policy .p_section ul { display: flex; flex-direction: column; gap: 8px; margin: 0; padding-left: 19px; }
+[data-surface="buyer"] .b_policy .p_section li { font-size: 13px; line-height: 1.8; color: var(--b-ink-prose); }
+[data-surface="buyer"] .b_policy .p_section strong { font-weight: 700; color: var(--b-ink-strong); }
+/* 초안 경고 — 액센트 톤 안내 상자(빨강 없음). 구매자 결제 안내와 같은 accent-wash 처리. */
+[data-surface="buyer"] .b_policy .alert.m_warning { display: block; padding: 11px 13px; border: 1px solid var(--b-accent-line); border-radius: var(--b-rounded); background: var(--b-accent-wash); }
+[data-surface="buyer"] .b_policy .alert.m_warning .i_body { display: flex; flex-direction: column; gap: 4px; }
+[data-surface="buyer"] .b_policy .alert.m_warning .i_title { display: block; font-size: 11.5px; font-weight: 700; color: var(--b-accent); }
+[data-surface="buyer"] .b_policy .alert.m_warning .i_text { display: block; font-size: 11.5px; line-height: 1.6; color: var(--b-ink-secondary); }

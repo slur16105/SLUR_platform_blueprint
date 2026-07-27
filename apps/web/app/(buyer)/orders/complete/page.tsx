@@ -17,19 +17,23 @@ import "./complete.css";
 export default function OrderCompletePage() {
   return (
     <BuyerShell tab="orders" topbar={{ variant: "logo-center" }}>
-      <Suspense
-        fallback={
-          <div className="b_container m_narrow b_complete">
-            <div className="b_complete_skeleton" aria-hidden="true">
-              <span className="i_line m_title b_skeleton" />
-              <span className="i_line m_short b_skeleton" />
-              <span className="i_box b_skeleton" />
+      {/* 바깥 틀은 상단바·푸터와 정렬선을 공유하고(.b_frame), 좁은 확인 폭(560, 가운데)은
+          안쪽 열 .b_col_confirm이 갖는다 (오너 확정 2026-07-27, 이전 .b_container.m_narrow 대체). */}
+      <div className="b_frame">
+        <Suspense
+          fallback={
+            <div className="b_complete b_col_confirm">
+              <div className="b_complete_skeleton" aria-hidden="true">
+                <span className="i_line m_title b_skeleton" />
+                <span className="i_line m_short b_skeleton" />
+                <span className="i_box b_skeleton" />
+              </div>
             </div>
-          </div>
-        }
-      >
-        <CompleteView />
-      </Suspense>
+          }
+        >
+          <CompleteView />
+        </Suspense>
+      </div>
     </BuyerShell>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { COMPANY } from "@/app/config/company";
 import BuyerShell from "../buyer-shell";
+import BuyerPageHeading from "../buyer-page-heading";
 import { BrokerNotice } from "../seller-info";
 import AccountCard from "./account-card";
 import LogoutLink from "./logout-link";
@@ -23,7 +24,8 @@ import "./me.css";
    🚨 셸 호출 형태(tab="me" · showTabbar · topbar.variant="title")를 바꾸지 않는다 —
       8.1이 탭 활성 판정에 쓴다. 상단바는 **좌측 정렬** `내 정보`다(목업은 중앙 정렬이지만
       EXPERIENCE §IA가 좌측 정렬로 확정했고 DESIGN/EXPERIENCE가 목업을 이긴다, AD-14).
-   🚨 .b_container.m_read(640px)를 빼지 않는다 — UX-DR4의 "끝까지 한 단"이 이 클래스에 걸려 있다.
+   바깥 틀 .b_frame은 상단바·푸터와 같은 정렬선(content-max)을 공유하고, "끝까지 한 단"의 읽기 폭
+   (640, UX-DR4)은 안쪽 열 .b_col_read가 좌측 정렬로 갖는다 (오너 확정 2026-07-27, m_read 대체).
    🚨 회원정보 수정·배송지 관리·찜·전화번호 표시를 붙이지 않는다 (v1 밖, EXPERIENCE §IA 확정). */
 
 /** 사업자 정보 6항목 (UX-DR10). 🚨 값은 전부 COMPANY 상수에서 온다 — 화면 코드에
@@ -50,7 +52,9 @@ const MENU: ReadonlyArray<{ href: string; label: string }> = [
 export default function MePage() {
   return (
     <BuyerShell tab="me" showTabbar topbar={{ variant: "title", title: "내 정보" }}>
-      <div className="b_me b_container m_read">
+      <div className="b_frame">
+        <div className="b_me b_col_read">
+          <BuyerPageHeading title="내 정보" />
         {/* 계정 — 유일한 API 의존 구획 */}
         <section className="i_sec i_acct_sec" aria-labelledby="me_h_acct">
           <AccountCard headingId="me_h_acct" />
@@ -92,9 +96,10 @@ export default function MePage() {
           <BrokerNotice className="i_broker" />
         </section>
 
-        {/* 로그아웃 — 약한 텍스트 버튼. 위 1px hairline. 빨강·경고색을 쓰지 않는다. */}
-        <div className="i_logout_sec">
-          <LogoutLink />
+          {/* 로그아웃 — 약한 텍스트 버튼. 위 1px hairline. 빨강·경고색을 쓰지 않는다. */}
+          <div className="i_logout_sec">
+            <LogoutLink />
+          </div>
         </div>
       </div>
     </BuyerShell>

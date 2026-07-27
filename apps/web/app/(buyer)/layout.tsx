@@ -5,6 +5,7 @@ import "./buyer.css";
 import type { Metadata, Viewport } from "next";
 
 import { CartCountProvider } from "./cart-count";
+import { PolicyProvider } from "./legal/policy-modal";
 
 /* theme-color · iOS standalone 메타는 **구매자 문서에만** 실린다 (8.7 D6·D9).
 
@@ -44,7 +45,9 @@ export default function BuyerLayout({
 }>) {
   return (
     <div className="b_surface" data-surface="buyer">
-      <CartCountProvider>{children}</CartCountProvider>
+      <CartCountProvider>
+        <PolicyProvider>{children}</PolicyProvider>
+      </CartCountProvider>
     </div>
   );
 }

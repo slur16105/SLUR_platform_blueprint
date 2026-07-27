@@ -17,6 +17,10 @@
   padding-bottom: 73px;
 }
 .b_cart .i_packs { min-width: 0; }
+/* 첫 묶음(또는 골격)의 top hairline을 지운다 — 상단바 hairline과 겹쳐 이중선이 되던 것을 없애고,
+   주문내역·주문상세·내 정보와 같이 헤더 아래 첫 항목이 선 없이 시작하도록 통일한다.
+   묶음 사이 hairline(.b_seller_pack + .b_seller_pack)은 그대로 유지된다. */
+.b_cart .i_packs > :first-child { border-top: none; }
 
 @media (min-width: 768px) {
   .b_cart {

@@ -1,4 +1,5 @@
 import BuyerShell from "../buyer-shell";
+import BuyerPageHeading from "../buyer-page-heading";
 import CartView from "./cart-view";
 import "./cart.css";
 
@@ -10,6 +11,7 @@ import "./cart.css";
 export default function CartPage() {
   return (
     <BuyerShell tab="cart" showTabbar ctaBar topbar={{ variant: "title", title: "장바구니" }}>
+      <BuyerPageHeading title="장바구니" wide />
       <CartView />
     </BuyerShell>
   );

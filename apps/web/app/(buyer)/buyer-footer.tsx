@@ -1,6 +1,5 @@
-import Link from "next/link";
-
 import { BROKER_NOTICE, COMPANY } from "@/app/config/company";
+import PolicyLink from "./legal/policy-link";
 
 /* 구매자 푸터 `b_footer` — 전 구매자 화면 공통 (Q3, DESIGN §푸터).
    법정 고지가 스크롤 끝에서 항상 서도록 셸(buyer-shell)이 모든 구매자 화면 하단에 건다 —
@@ -23,8 +22,9 @@ export default function BuyerFooter({ tabbar = false, cta = false }: { tabbar?: 
       <div className="b_container i_in">
         <p className="i_mark">SLUR</p>
         <nav className="i_links" aria-label="정책 문서">
-          <Link href="/terms">이용약관</Link>
-          <Link href="/privacy">개인정보처리방침</Link>
+          {/* 클릭 시 모달로 가로챈다(맥락 유지). JS 미탑재·새 탭이면 /terms·/privacy로 이동(폴백). */}
+          <PolicyLink kind="terms">이용약관</PolicyLink>
+          <PolicyLink kind="privacy">개인정보처리방침</PolicyLink>
         </nav>
         <div className="i_company">
           <p>

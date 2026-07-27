@@ -70,7 +70,7 @@ export default function CompleteView() {
   /* order 파라미터가 없거나 UUID 형식이 아니면 빈 화면이 아니라 안내를 낸다 (AC 12) */
   if (!valid) {
     return (
-      <div className="b_container m_narrow b_complete">
+      <div className="b_complete b_col_confirm">
         <EmptyState message={NOT_FOUND} action={<OrdersLink />} />
       </div>
     );
@@ -78,7 +78,7 @@ export default function CompleteView() {
 
   if (result === null) {
     return (
-      <div className="b_container m_narrow b_complete">
+      <div className="b_complete b_col_confirm">
         <div className="b_complete_skeleton" aria-hidden="true">
           <span className="i_line m_title b_skeleton" />
           <span className="i_line m_short b_skeleton" />
@@ -91,7 +91,7 @@ export default function CompleteView() {
   if (result.error || !result.data) {
     const notFound = result.error?.code === "not_found";
     return (
-      <div className="b_container m_narrow b_complete">
+      <div className="b_complete b_col_confirm">
         {notFound ? (
           <EmptyState message={NOT_FOUND} action={<OrdersLink />} />
         ) : (
@@ -105,7 +105,7 @@ export default function CompleteView() {
   const deposit = order.deposit_info;
 
   return (
-    <div className="b_container m_narrow b_complete">
+    <div className="b_complete b_col_confirm">
       <span className="i_mark" aria-hidden="true" />
       <h1 className="b_title_sm i_heading">{HEADING}</h1>
 

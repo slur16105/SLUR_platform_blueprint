@@ -1,4 +1,5 @@
 import BuyerShell from "../../buyer-shell";
+import BuyerPageHeading from "../../buyer-page-heading";
 import OrderDetailView from "./order-detail-view";
 import "./detail.css";
 
@@ -13,8 +14,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   return (
     <BuyerShell tab="orders" topbar={{ variant: "back-title", title: "주문상세" }}>
-      <div className="b_container m_read b_order_detail">
-        <OrderDetailView orderId={id} />
+      <div className="b_frame">
+        <div className="b_col_read b_order_detail">
+          <BuyerPageHeading title="주문상세" />
+          <OrderDetailView orderId={id} />
+        </div>
       </div>
     </BuyerShell>
   );
