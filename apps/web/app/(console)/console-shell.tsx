@@ -107,7 +107,7 @@ export default function ConsoleShell({
 
       <div className="console_main">
         <header className="console_topbar">
-          <button className="l_menu" type="button" aria-label="메뉴 열기" onClick={() => setOpen((v) => !v)}>
+          <button className="l_menu btn m_icon" type="button" aria-label="메뉴 열기" onClick={() => setOpen((v) => !v)}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M2 4h12M2 8h12M2 12h12" strokeLinecap="round" /></svg>
           </button>
           <span className="l_crumb">{role === "seller" ? "판매자 콘솔" : "관리자 콘솔"}</span>
