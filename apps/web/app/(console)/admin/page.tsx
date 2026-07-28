@@ -90,10 +90,14 @@ export default function AdminDashboard() {
             {queue.map((q) => (
               <Link key={q.href} href={q.href} className="i_qcard"
                 data-alert={q.count && q.count > 0 ? "" : undefined}>
-                <span className="i_qlabel">{q.label}</span>
-                <span className="i_qcount">{q.count === null ? "–" : q.count.toLocaleString()}</span>
-                <span className="i_qhint">{q.hint}</span>
-                <span className="i_qgo">처리하기 →</span>
+                <span className="i_qmain">
+                  <span className="i_qlabel">{q.label}</span>
+                  <span className="i_qhint">{q.hint}</span>
+                </span>
+                <span className="i_qval">
+                  <span className="i_qcount">{q.count === null ? "–" : q.count.toLocaleString()}</span>
+                  <span className="i_qgo">처리하기 →</span>
+                </span>
               </Link>
             ))}
           </div>
