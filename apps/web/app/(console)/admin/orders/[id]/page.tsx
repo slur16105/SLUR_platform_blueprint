@@ -77,7 +77,7 @@ type Action =
 
 const RESP_LABEL: Record<string, string> = { buyer: "구매자 귀책", seller: "판매자 귀책", admin: "운영자 귀책" };
 const ROLE_LABEL: Record<string, string> = { buyer: "구매자", seller: "판매자", admin: "관리자", system: "시스템" };
-const ENTITY_LABEL: Record<string, string> = { order: "주문", sub_order: "묶음", order_item: "라인" };
+const ENTITY_LABEL: Record<string, string> = { order: "주문", sub_order: "판매자 묶음", order_item: "품목" };
 // 타임라인은 표시 상태 외에 내부 상태(pending_payment 등)도 지나간다 — 표기만 보강
 const EVENT_STATUS: Record<string, string> = { ...STATUS_LABEL, pending_payment: "입금대기", paid: "결제완료", ordered: "주문" };
 // 표준 UUID — 하이픈 위치·hex 검증, 대소문자 허용 (소문자 정규화는 BFF가 담당)
@@ -253,7 +253,7 @@ export default function AdminOrderDetail() {
           `주문 ${detail.order_no} 전체 취소 처리되었습니다.`);
       } else {
         submitAction({ action: "cancel_item", order_item_id: action.item.order_item_id, ...common },
-          `${action.item.product_name} 라인 취소 처리되었습니다.`);
+          `${action.item.product_name} 품목을 취소 처리했습니다.`);
       }
       return;
     }
@@ -284,7 +284,7 @@ export default function AdminOrderDetail() {
 
   const modalTitle = action === null ? "" : {
     cancel_order: "주문 전체 취소",
-    cancel_item: "라인 취소",
+    cancel_item: "품목 취소",
     ship: "배송중 처리",
     deliver: "배송완료 처리",
     refunded: "환불 완료 기록",
@@ -342,6 +342,7 @@ export default function AdminOrderDetail() {
             <section className="card p_sub" key={sub.sub_order_id}>
               <div className="i_head">
                 <div className="i_brand_wrap">
+                  <span className="i_sub_label">판매자 묶음</span>
                   <strong className="i_brand">{sub.brand_name}</strong>
                   <span className={statusBadgeClass(sub.display_status)}>{statusLabel(sub.display_status)}</span>
                 </div>
@@ -372,7 +373,7 @@ export default function AdminOrderDetail() {
                         <span className="badge m_small m_danger">취소</span>
                       ) : (
                         <button className="btn m_small m_ghost m_line_cancel" type="button"
-                          onClick={() => openAction({ kind: "cancel_item", sub, item: line })}>라인 취소</button>
+                          onClick={() => openAction({ kind: "cancel_item", sub, item: line })}>품목 취소</button>
                       )}
                     </div>
                     {line.cancellation && (
@@ -440,10 +441,10 @@ export default function AdminOrderDetail() {
             </div>
             <div className="i_body">
               {action.kind === "cancel_order" && (
-                <p className="i_text">주문의 모든 활성 라인을 취소하고 주문을 취소 상태로 전환합니다. 처리 후에는 되돌릴 수 없습니다.</p>
+                <p className="i_text">주문의 모든 활성 품목을 취소하고 주문을 취소 상태로 전환합니다. 처리 후에는 되돌릴 수 없습니다.</p>
               )}
               {action.kind === "cancel_item" && (
-                <p className="i_text">아래 라인을 취소합니다. 배송 상태와 무관하게 처리되며, 되돌릴 수 없습니다.</p>
+                <p className="i_text">아래 품목을 취소합니다. 배송 상태와 무관하게 처리되며, 되돌릴 수 없습니다.</p>
               )}
               {action.kind === "ship" && (
                 <p className="i_text">이 묶음을 배송중으로 강제 전환합니다. 택배사와 송장번호는 필수입니다.</p>

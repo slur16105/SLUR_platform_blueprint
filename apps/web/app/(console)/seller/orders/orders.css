@@ -29,7 +29,7 @@
 .page_seller_orders .i_line[data-state="canceled"] .i_line_qty { color: var(--color-text-muted); text-decoration: line-through; }
 .page_seller_orders .i_line_option { font-size: var(--text-xs); color: var(--color-text-secondary); }
 .page_seller_orders .i_line_qty { font-variant-numeric: tabular-nums; }
-.page_seller_orders .i_fee { display: block; font-size: var(--text-xs); white-space: nowrap; }
+.page_seller_orders .i_fee { display: block; font-size: var(--text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .page_seller_orders .i_carrier { display: block; }
 .page_seller_orders .i_tracking { display: block; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-secondary); }
 .page_seller_orders .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }

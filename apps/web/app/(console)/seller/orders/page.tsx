@@ -250,8 +250,8 @@ function SellerOrdersInner() {
                 <th>배송지·요청사항</th>
                 <th>주문 상품</th>
                 <th className="m_num">배송비</th>
-                {tab !== "preparing" && <th>송장</th>}
-                {tab !== "delivered" && <th aria-label="처리"></th>}
+                {tab !== "preparing" && <th>송장 정보</th>}
+                {tab !== "delivered" && <th>처리</th>}
               </tr>
             </thead>
             <tbody>

@@ -222,7 +222,7 @@ export default function AdminSettings() {
                 );
               })}
             </dl>
-            <p className="i_hint">수치 변경은 DB에서 합니다.</p>
+            <p className="i_hint">이 수치는 이 화면에서 바꿀 수 없습니다 — 변경은 서버에서 직접 처리합니다.</p>
           </section>
           <section className="card p_card">
             <h2 className="i_title">카테고리</h2>

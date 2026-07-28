@@ -66,7 +66,7 @@ export default function SellerProducts() {
               )}
               <div className="i_info">
                 <strong className="i_name">{p.name}</strong>
-                <span className="i_meta">{p.base_price.toLocaleString()}원 · 재고 {stock} · <span className="badge" data-state={p.status}>{STATUS_LABEL[p.status]}</span></span>
+                <span className="i_meta">{p.base_price.toLocaleString()}원 · 재고 {stock.toLocaleString()}개 · <span className="badge" data-state={p.status}>{STATUS_LABEL[p.status]}</span></span>
               </div>
               <div className="i_actions">
                 {p.status !== "active" && <button className="btn m_small m_primary" type="button" onClick={() => setStatus(p, "active")}>판매 재개</button>}

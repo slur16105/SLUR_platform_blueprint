@@ -22,7 +22,8 @@
 
 /* 묶음 카드 */
 .page_admin_order_detail .p_sub .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; }
-.page_admin_order_detail .i_brand_wrap { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin_order_detail .i_brand_wrap { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; }
+.page_admin_order_detail .i_sub_label { font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_order_detail .i_brand { font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 .page_admin_order_detail .i_head_side { display: flex; align-items: center; gap: var(--space-8); }
 .page_admin_order_detail .i_tracking { font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-secondary); }

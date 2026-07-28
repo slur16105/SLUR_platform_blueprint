@@ -145,7 +145,7 @@ export default function AdminHomeFeatures() {
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {multiActiveHero && (
         <div className="alert m_inline m_warning" role="alert">
-          활성 히어로는 1건만 노출됩니다 — display_order가 가장 낮은 히어로가 홈에 나옵니다. 아래 <strong>노출 중</strong> 표시를 확인하세요.
+          활성 히어로는 1건만 노출됩니다 — 노출 순서 값이 가장 낮은 히어로가 홈에 나옵니다. 아래 <strong>노출 중</strong> 표시를 확인하세요.
         </div>
       )}
       {loading ? (

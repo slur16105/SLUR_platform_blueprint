@@ -2,6 +2,7 @@
 .page_product_new .p_panel { display: flex; width: 100%; max-width: 560px; height: fit-content; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
 .page_product_new .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 .page_product_new .p_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_product_new .i_req { color: var(--color-danger); }
 .page_product_new .input_text.m_textarea { height: auto; padding: var(--space-12); resize: vertical; }
 .page_product_new .i_file { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_product_new .i_previews { display: flex; gap: var(--space-8); overflow-x: auto; }
@@ -13,5 +14,6 @@
 .page_product_new .i_axes .btn { grid-column: 1 / -1; }
 .page_product_new .i_grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .page_product_new .i_grid th { padding: var(--space-8); border-bottom: 1px solid var(--color-border-default); color: var(--color-text-muted); font-weight: var(--weight-medium); text-align: left; }
+.page_product_new .i_grid th.m_num { text-align: right; }
 .page_product_new .i_grid td { padding: var(--space-4) var(--space-8); border-bottom: 1px solid var(--color-border-subtle); }
-.page_product_new .i_grid .input_text.m_small { width: 90px; height: 2rem; }
+.page_product_new .i_grid .input_text.m_small { width: 90px; height: 2rem; text-align: right; font-variant-numeric: tabular-nums; }

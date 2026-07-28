@@ -149,7 +149,7 @@ export default function NewProductPage() {
         <div className="page_product_new">
         <div className="card p_panel">
           <h1 className="p_title">상품이 등록됐습니다</h1>
-          <p className="p_desc">즉시 노출 상태입니다. 옵션·재고 관리 기능은 곧 추가됩니다.</p>
+          <p className="p_desc">지금 바로 노출되는 판매중 상태입니다. 등록 후 옵션·재고를 수정하는 기능은 준비 중입니다.</p>
           <a className="btn m_primary" href="/seller">판매자 센터로</a>
         </div>
         </div>
@@ -163,26 +163,30 @@ export default function NewProductPage() {
       <form className="card p_panel" onSubmit={submit}>
         {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
         <div className="field">
-          <label className="i_label" htmlFor="name">상품명</label>
+          <label className="i_label" htmlFor="name">상품명 <span className="i_req">*</span></label>
           <input id="name" className="input_text" maxLength={100} required value={name} onChange={(e) => setName(e.target.value)} />
+          <span className="i_help">최대 100자</span>
         </div>
         <div className="field">
-          <label className="i_label" htmlFor="price">기본 가격 (원)</label>
+          <label className="i_label" htmlFor="price">기본 가격 <span className="i_req">*</span></label>
           <input id="price" className="input_text" type="number" min={0} step={1} required value={price} onChange={(e) => setPrice(e.target.value)} />
+          <span className="i_help">원 단위 정수. 옵션별 추가금액은 아래에서 설정합니다.</span>
         </div>
         <div className="field">
-          <label className="i_label" htmlFor="category">카테고리</label>
+          <label className="i_label" htmlFor="category">카테고리 <span className="i_req">*</span></label>
           <select id="category" className="input_text" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div className="field">
-          <label className="i_label" htmlFor="description">상세 설명</label>
+          <label className="i_label" htmlFor="description">상세 설명 <span className="i_req">*</span></label>
           <textarea id="description" className="input_text m_textarea" rows={6} maxLength={5000} required
             value={description} onChange={(e) => setDescription(e.target.value)} />
+          <span className="i_help">최대 5,000자</span>
         </div>
         <div className="field">
-          <span className="i_label">이미지 (첫 장이 대표, 최대 11장)</span>
+          <span className="i_label">상품 이미지 <span className="i_req">*</span></span>
+          <span className="i_help">첫 번째 장이 대표 이미지가 됩니다. 대표 포함 최대 11장, JPG·PNG·WebP.</span>
           <input className="i_file" type="file" accept="image/jpeg,image/png,image/webp" multiple
             onChange={(e) => { addImages(e.target.files); e.target.value = ""; }} />
           {images.length > 0 && (
@@ -206,10 +210,12 @@ export default function NewProductPage() {
           <div className="field">
             <label className="i_label" htmlFor="stock">재고 수량</label>
             <input id="stock" className="input_text" type="number" min={0} step={1} value={stock} onChange={(e) => setStock(e.target.value)} />
+            <span className="i_help">판매 가능 수량. 0이면 품절로 표시됩니다.</span>
           </div>
         )}
         {useOptions && (
           <div className="p_options">
+            <p className="p_desc">옵션 값을 콤마(,)로 구분해 입력한 뒤 &lsquo;조합 만들기&rsquo;를 누르면 아래 표에서 조합별 추가금액·재고를 설정할 수 있습니다. (조합 최대 100개)</p>
             <div className="i_axes">
               <input className="input_text" placeholder="옵션 1 이름 (예: 색상)" maxLength={20} value={axis1.name} onChange={(e) => setAxis1((a) => ({ ...a, name: e.target.value }))} />
               <input className="input_text" placeholder="값 (콤마 구분: 블랙,화이트)" maxLength={200} value={axis1.values} onChange={(e) => setAxis1((a) => ({ ...a, values: e.target.value }))} />
@@ -220,7 +226,7 @@ export default function NewProductPage() {
             {rows.length > 0 && (
               <table className="i_grid">
                 <thead>
-                  <tr><th>{axis1.name.trim() || "옵션1"}</th>{axis2.values.trim() && <th>{axis2.name.trim() || "옵션2"}</th>}<th>추가금액</th><th>재고</th><th>판매</th></tr>
+                  <tr><th>{axis1.name.trim() || "옵션1"}</th>{axis2.values.trim() && <th>{axis2.name.trim() || "옵션2"}</th>}<th className="m_num">추가금액</th><th className="m_num">재고</th><th>판매 여부</th></tr>
                 </thead>
                 <tbody>
                   {rows.map((r, i) => (
