@@ -6,6 +6,10 @@ SLUR 플랫폼 1호의 목표는 단기 매출이 아니라, 판매자 입점부
 
 > 현재 상태: v1 구현 완료 후 **자체 서버(Docker) 기반 사전 운영 검증** 단계입니다. PG 연동, 사업자 실정보·법률 검토 등 실제 외부 판매 오픈 게이트는 별도로 남아 있습니다.
 
+> **🔗 라이브 데모**: <https://results-reply-shark-confidentiality.trycloudflare.com/>
+>
+> 외부에서 바로 열어볼 수 있는 데모입니다(Cloudflare Quick Tunnel로 자체 서버를 노출). 서버와 터널이 실행 중일 때만 접속되며, **임시 주소라 재시작 시 바뀔 수 있습니다.**
+
 ## 무엇을 검증하나요?
 
 - 단일 계정 기반의 구매자·판매자·관리자 역할 모델
@@ -224,7 +228,8 @@ docker compose --profile tools run --rm seed
 
 | 대상 | 주소 |
 | --- | --- |
-| 웹 | <http://localhost:3000> |
+| 외부 접속 (임시 터널) | <https://results-reply-shark-confidentiality.trycloudflare.com/> |
+| 웹 (로컬) | <http://localhost:3000> |
 | API health | <http://localhost:8000/api/v1/health> |
 | 같은 Wi‑Fi의 다른 기기 | `http://<서버-LAN-IP>:3000` |
 
