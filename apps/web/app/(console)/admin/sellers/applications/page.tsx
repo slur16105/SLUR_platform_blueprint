@@ -27,6 +27,7 @@ type Application = {
 export default function SellerApplications() {
   const router = useRouter();
   const [items, setItems] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true); // 최초 로드·탭 전환 완료 전 빈 문구 깜빡임 방지
   const [status, setStatus] = useState("pending");
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -36,6 +37,7 @@ export default function SellerApplications() {
   const load = useCallback(async (s: string) => {
     setNotice(null);
     setError(null);
+    setLoading(true);
     try {
       const res = await fetch(`/api/admin/applications?status=${s}`);
       if (res.status === 401) return void router.replace("/login");
@@ -48,6 +50,8 @@ export default function SellerApplications() {
       setItems(data.items ?? []);
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
+    } finally {
+      setLoading(false);
     }
   }, [router]);
 
@@ -99,13 +103,17 @@ export default function SellerApplications() {
         </div>
         {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
         {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-        {items.length === 0 && <p className="p_empty">해당 상태의 신청이 없습니다.</p>}
-        <ul className="p_list">
+        {loading ? (
+          <p className="p_empty">불러오는 중…</p>
+        ) : items.length === 0 ? (
+          <p className="p_empty">해당 상태의 신청이 없습니다.</p>
+        ) : null}
+        {!loading && <ul className="p_list">
           {items.map((a) => (
             <li className="card p_item" key={a.id}>
               <div className="i_head">
                 <strong className="i_brand">{a.brand_name}</strong>
-                <span className="badge">{a.company_name}</span>
+                <span className="i_company">{a.company_name}</span>
               </div>
               <p className="i_intro">{a.brand_intro}</p>
               <dl className="i_meta">
@@ -136,7 +144,7 @@ export default function SellerApplications() {
               )}
             </li>
           ))}
-        </ul>
+        </ul>}
       </div>
     </ConsoleShell>
   );

@@ -329,15 +329,7 @@ export default function AdminOrderDetail() {
             )}
           </section>
 
-          <section className="card p_address">
-            <h2 className="i_title">배송지</h2>
-            <dl className="i_meta">
-              <div><dt>수령인</dt><dd>{detail.recipient_name} ({detail.recipient_phone})</dd></div>
-              <div><dt>주소</dt><dd>[{detail.postal_code}] {detail.address1} {detail.address2}</dd></div>
-              {detail.order_note && <div><dt>요청사항</dt><dd>{detail.order_note}</dd></div>}
-            </dl>
-          </section>
-
+          <div className="i_work">
           {detail.sub_orders.map((sub) => (
             <section className="card p_sub" key={sub.sub_order_id}>
               <div className="i_head">
@@ -400,15 +392,27 @@ export default function AdminOrderDetail() {
               </div>
             </section>
           ))}
+          </div>
 
-          <section className="card p_amounts">
-            <h2 className="i_title">금액 요약</h2>
-            <dl className="i_rows">
-              <div><dt>상품 금액</dt><dd>{detail.item_total.toLocaleString()}원</dd></div>
-              <div><dt>배송비</dt><dd>{detail.shipping_total.toLocaleString()}원</dd></div>
-              <div className="m_total"><dt>총 결제 금액</dt><dd>{detail.grand_total.toLocaleString()}원</dd></div>
-            </dl>
-          </section>
+          <aside className="i_aside">
+            <section className="card p_address">
+              <h2 className="i_title">배송지</h2>
+              <dl className="i_meta">
+                <div><dt>수령인</dt><dd>{detail.recipient_name} ({detail.recipient_phone})</dd></div>
+                <div><dt>주소</dt><dd>[{detail.postal_code}] {detail.address1} {detail.address2}</dd></div>
+                {detail.order_note && <div><dt>요청사항</dt><dd>{detail.order_note}</dd></div>}
+              </dl>
+            </section>
+
+            <section className="card p_amounts">
+              <h2 className="i_title">금액 요약</h2>
+              <dl className="i_rows">
+                <div><dt>상품 금액</dt><dd>{detail.item_total.toLocaleString()}원</dd></div>
+                <div><dt>배송비</dt><dd>{detail.shipping_total.toLocaleString()}원</dd></div>
+                <div className="m_total"><dt>총 결제 금액</dt><dd>{detail.grand_total.toLocaleString()}원</dd></div>
+              </dl>
+            </section>
+          </aside>
 
           <section className="card p_timeline">
             <h2 className="i_title">타임라인</h2>

@@ -83,6 +83,7 @@ export default function AdminLookup() {
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState<StatusFilter>("");
   const [items, setItems] = useState<UserRow[] | SellerRow[] | ProductRow[]>([]);
+  const [loading, setLoading] = useState(true); // 최초 로드·탭 전환 완료 전 빈 문구 깜빡임 방지
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
   const [page, setPage] = useState(1);
@@ -93,6 +94,7 @@ export default function AdminLookup() {
   const load = useCallback(async (t: Tab, query: string, cat: string, st: StatusFilter, p: number) => {
     const gen = ++loadSeq.current;
     setError(null);
+    setLoading(true);
     try {
       const sp = new URLSearchParams({ tab: t, page: String(p) });
       if (query) sp.set("q", query);
@@ -122,6 +124,8 @@ export default function AdminLookup() {
       setTotal(totalCount);
     } catch {
       if (gen === loadSeq.current) setError("네트워크 연결을 확인해 주세요.");
+    } finally {
+      if (gen === loadSeq.current) setLoading(false);
     }
   }, [router]);
 
@@ -154,6 +158,7 @@ export default function AdminLookup() {
     setItems([]);
     setTotal(0);
     setError(null);
+    setLoading(true); // 탭 전환 직후 리스트를 비우므로 로더로 덮어 빈 문구 깜빡임 방지
   }
 
   function submitSearch() {
@@ -211,7 +216,9 @@ export default function AdminLookup() {
         <button className="btn m_primary" type="submit">검색</button>
       </form>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-      {items.length === 0 ? (
+      {loading ? (
+        <p className="p_empty">불러오는 중…</p>
+      ) : items.length === 0 ? (
         <p className="p_empty">{emptyLabel[tab]}</p>
       ) : (
         <div className={tab === "sellers" ? "table_wrap m_scroll" : "table_wrap"}>

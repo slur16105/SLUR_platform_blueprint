@@ -15,6 +15,7 @@ const IMG_BASE = "https://ytzjlgqeezsvjkypeebq.supabase.co/storage/v1/object/pub
 export default function SellerProducts() {
   const router = useRouter();
   const [items, setItems] = useState<Product[]>([]);
+  const [loaded, setLoaded] = useState(false); // 최초 fetch 완료 전엔 빈 상태 대신 로딩 표시 (거짓 "상품 없음" 깜빡임 방지)
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -26,6 +27,8 @@ export default function SellerProducts() {
       setItems(await res.json());
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
+    } finally {
+      setLoaded(true); // 성공·실패·리다이렉트 무관하게 최초 로드 종료 표시
     }
   }, [router]);
 
@@ -54,29 +57,55 @@ export default function SellerProducts() {
     >
       <div className="page_seller_products">
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-      {items.length === 0 && <p className="p_empty">등록된 상품이 없습니다.</p>}
-      <ul className="p_list">
-        {items.map((p) => {
-          const stock = p.variants.reduce((sum, v) => sum + v.stock, 0);
-          return (
-            <li className="card p_item" key={p.id}>
-              {p.images[0] && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img className="i_thumb" src={`${IMG_BASE}${p.images[0].path}`} alt="" />
-              )}
-              <div className="i_info">
-                <strong className="i_name">{p.name}</strong>
-                <span className="i_meta">{p.base_price.toLocaleString()}원 · 재고 {stock.toLocaleString()}개 · <span className="badge" data-state={p.status}>{STATUS_LABEL[p.status]}</span></span>
-              </div>
-              <div className="i_actions">
-                {p.status !== "active" && <button className="btn m_small m_primary" type="button" onClick={() => setStatus(p, "active")}>판매 재개</button>}
-                {p.status === "active" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "soldout")}>품절 처리</button>}
-                {p.status !== "hidden" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "hidden")}>숨기기</button>}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {!loaded ? (
+        <p className="p_empty" role="status">불러오는 중…</p>
+      ) : items.length === 0 ? (
+        <p className="p_empty">등록된 상품이 없습니다.</p>
+      ) : (
+        <div className="table_wrap">
+          <div className="table_scroll"><table className="table_data">
+            <thead>
+              <tr>
+                <th>상품</th>
+                <th className="m_num">가격</th>
+                <th className="m_num">재고</th>
+                <th>상태</th>
+                <th>처리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((p) => {
+                const stock = p.variants.reduce((sum, v) => sum + v.stock, 0);
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      <div className="i_prod">
+                        {p.images[0] ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img className="i_thumb" src={`${IMG_BASE}${p.images[0].path}`} alt="" />
+                        ) : (
+                          <span className="i_thumb m_empty" aria-hidden="true" />
+                        )}
+                        <strong className="i_name">{p.name}</strong>
+                      </div>
+                    </td>
+                    <td className="m_num">{p.base_price.toLocaleString()}원</td>
+                    <td className="m_num">{stock.toLocaleString()}개</td>
+                    <td><span className="badge" data-state={p.status}>{STATUS_LABEL[p.status]}</span></td>
+                    <td>
+                      <div className="i_actions">
+                        {p.status !== "active" && <button className="btn m_small m_primary" type="button" onClick={() => setStatus(p, "active")}>판매 재개</button>}
+                        {p.status === "active" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "soldout")}>품절 처리</button>}
+                        {p.status !== "hidden" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "hidden")}>숨기기</button>}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table></div>
+        </div>
+      )}
       </div>
     </ConsoleShell>
   );

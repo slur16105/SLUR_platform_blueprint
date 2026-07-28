@@ -30,6 +30,7 @@ function shortUuid(id: string) {
 export default function AdminDeposits() {
   const router = useRouter();
   const [items, setItems] = useState<PendingOrder[]>([]);
+  const [loading, setLoading] = useState(true); // 최초 로드 완료 전 빈 문구 깜빡임 방지
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
   const [page, setPage] = useState(1);
@@ -53,6 +54,7 @@ export default function AdminDeposits() {
   const load = useCallback(async (p: number) => {
     const gen = ++loadSeq.current;
     setError(null);
+    setLoading(true);
     setNotice(null); // 목록 재조회 시 토스트 초기화
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     try {
@@ -75,6 +77,8 @@ export default function AdminDeposits() {
       setTotal(t);
     } catch {
       if (gen === loadSeq.current) setError("네트워크 연결을 확인해 주세요.");
+    } finally {
+      if (gen === loadSeq.current) setLoading(false);
     }
   }, [router]);
 
@@ -179,7 +183,9 @@ export default function AdminDeposits() {
       <div className="page_admin_deposits">
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-      {items.length === 0 ? (
+      {loading ? (
+        <p className="p_empty">불러오는 중…</p>
+      ) : items.length === 0 ? (
         <p className="p_empty">입금대기 주문이 없습니다.</p>
       ) : (
         <div className="table_wrap">

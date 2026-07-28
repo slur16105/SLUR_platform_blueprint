@@ -1,5 +1,23 @@
 /* 관리자 주문 상세 (개입) — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
-.page_admin_order_detail { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
+/* 와이드: 2컬럼(좌 작업 2fr / 우 참조 1fr). 헤더바·타임라인·알림은 풀폭(1/-1). */
+.page_admin_order_detail { flex: 1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; gap: var(--space-16); }
+/* 알림·로더·헤더·타임라인·모달은 그리드 전체 폭을 차지한다 */
+.page_admin_order_detail > .alert,
+.page_admin_order_detail > .p_loading,
+.page_admin_order_detail > .p_summary,
+.page_admin_order_detail > .p_timeline,
+.page_admin_order_detail > .modal_dialog { grid-column: 1 / -1; }
+/* 좌: 작업 영역(판매자 묶음 목록) */
+.page_admin_order_detail .i_work { grid-column: 1; display: flex; flex-direction: column; gap: var(--space-16); min-width: 0; }
+/* 우: 참조 사이드바(배송지·금액) — 상단바(3.5rem) 아래에 sticky */
+.page_admin_order_detail .i_aside { grid-column: 2; align-self: start; position: sticky; top: calc(3.5rem + var(--space-16)); display: flex; flex-direction: column; gap: var(--space-16); min-width: 0; }
+/* 좁은 화면: 1컬럼 스택 + sticky 해제 */
+@media (max-width: 768px) {
+  .page_admin_order_detail { grid-template-columns: minmax(0, 1fr); }
+  .page_admin_order_detail .i_work,
+  .page_admin_order_detail .i_aside { grid-column: 1; }
+  .page_admin_order_detail .i_aside { position: static; top: auto; }
+}
 .page_admin_order_detail .p_head { display: flex; align-items: center; justify-content: space-between; }
 .page_admin_order_detail .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
 .page_admin_order_detail .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }

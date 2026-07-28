@@ -3,8 +3,9 @@
 .page_admin .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
 .page_admin .p_list { display: flex; flex-direction: column; gap: var(--space-12); }
 .page_admin .p_item { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
-.page_admin .i_head { display: flex; align-items: center; gap: var(--space-8); }
+.page_admin .i_head { display: flex; align-items: baseline; gap: var(--space-8); }
 .page_admin .i_brand { font-size: var(--text-lg); color: var(--color-text-primary); }
+.page_admin .i_company { color: var(--color-text-secondary); font-size: var(--text-sm); }
 .page_admin .i_intro { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_admin .i_meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4) var(--space-16); font-size: var(--text-sm); }
 .page_admin .i_meta dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
