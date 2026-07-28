@@ -72,6 +72,20 @@ SLUR 플랫폼 1호의 목표는 단기 매출이 아니라, 판매자 입점부
 - 이메일 로그인·가입과 **카카오 로그인**(웹 인가코드) 경계.
 - 회원가입 필수 약관 동의, **이용약관·개인정보처리방침은 모달**로 열림(전체 화면 이탈 없이 확인, 독립 페이지는 딥링크 폴백).
 
+### 모바일 뷰 (구매자)
+
+구매자 표면은 모바일 퍼스트/PWA다. 같은 화면의 모바일 뷰(하단 탭바 포함):
+
+<p>
+  <img src="docs/screenshots/buyer-home-mobile.png" width="200" alt="홈" />
+  <img src="docs/screenshots/buyer-product-detail-mobile.png" width="200" alt="상품 상세" />
+  <img src="docs/screenshots/buyer-cart-mobile.png" width="200" alt="장바구니" />
+  <img src="docs/screenshots/buyer-checkout-mobile.png" width="200" alt="주문서" />
+  <img src="docs/screenshots/buyer-orders-mobile.png" width="200" alt="주문 내역" />
+  <img src="docs/screenshots/buyer-me-mobile.png" width="200" alt="내 정보" />
+  <img src="docs/screenshots/buyer-login-mobile.png" width="200" alt="로그인" />
+</p>
+
 ### 판매자 콘솔
 
 #### 대시보드 · 상품 관리

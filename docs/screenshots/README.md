@@ -21,4 +21,6 @@
 
 계정 비밀번호: 관리자 `local-admin@example.com` / `local-admin-password-2026`, 판매자 `local-seller@example.com` / `local-seller-password-2026`.
 
+구매자 화면의 모바일 뷰는 같은 이름에 `-mobile.png` 접미사로 저장합니다(예: `buyer-home-mobile.png`). 뷰포트 390px, 하단 탭바 포함.
+
 참고: `apps/web/public/submission-assets/screenshots/`의 기존 캡처 2장은 홈 편성(Epic 9) 반영 전 화면이라 최신이 아닙니다 — 새로 촬영을 권장합니다.
