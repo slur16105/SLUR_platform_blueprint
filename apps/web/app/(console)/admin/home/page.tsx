@@ -154,7 +154,7 @@ export default function AdminHomeFeatures() {
         <p className="p_empty">편성이 없습니다 — 첫 편성을 만들어 보세요.</p>
       ) : (
         <div className="table_wrap">
-          <table className="table_data">
+          <div className="table_scroll"><table className="table_data">
             <thead>
               <tr>
                 <th>구분</th>
@@ -217,7 +217,7 @@ export default function AdminHomeFeatures() {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
       </div>

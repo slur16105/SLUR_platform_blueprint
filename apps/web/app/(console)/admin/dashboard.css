@@ -22,12 +22,7 @@
 .page_admin_dash .i_time { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_dash .i_email { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_dash .p_empty { padding: var(--space-24); text-align: center; color: var(--color-text-muted); }
-/* 최근 주문 테이블 — 좁은 화면에서 가로 스크롤(내용 잘림 방지). 세로는 잘리지 않게 x만 auto.
-   임의 min-width 대신 셀을 nowrap → 테이블이 콘텐츠 기반 자연 너비로 커지고, 좁을 때만 스크롤.
-   스택된 i_time·i_email은 display:block이라 그대로 아랫줄로 내려간다(영향 없음). */
-.page_admin_dash .p_recent .table_wrap { overflow-x: auto; }
-.page_admin_dash .p_recent .table_data th,
-.page_admin_dash .p_recent .table_data td { white-space: nowrap; }
+/* 최근 주문 테이블 가로 스크롤은 공용 .table_scroll(styles/slur/components/table.css)이 담당한다. */
 
 /* ══ 모바일: 큐 카드 좌우 구성으로 높이 축소 ══ */
 @media (max-width: 768px) {

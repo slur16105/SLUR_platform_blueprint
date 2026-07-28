@@ -160,7 +160,7 @@ function AdminOrdersInner() {
         <p className="p_empty">{appliedQ || status ? "조건에 맞는 주문이 없습니다." : "주문이 없습니다."}</p>
       ) : (
         <div className="table_wrap">
-          <table className="table_data">
+          <div className="table_scroll"><table className="table_data">
             <thead>
               <tr>
                 <th>주문번호</th>
@@ -202,7 +202,7 @@ function AdminOrdersInner() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           <div className="i_foot">
             <span className="i_count">총 {total}건</span>
             <div className="i_btn_wrap">

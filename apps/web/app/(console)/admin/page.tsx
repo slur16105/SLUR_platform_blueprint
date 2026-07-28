@@ -114,7 +114,7 @@ export default function AdminDashboard() {
             <p className="p_empty">최근 주문이 없습니다.</p>
           ) : (
             <div className="table_wrap">
-              <table className="table_data">
+              <div className="table_scroll"><table className="table_data">
                 <thead>
                   <tr>
                     <th>주문번호</th>
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           )}
         </section>

@@ -6,6 +6,10 @@
    ───────────────────────────────────────────── */
 
 .table_wrap { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-12); background: var(--color-surface-card); overflow: hidden; box-shadow: var(--shadow-sm); }
+/* 좁은 화면 가로 스크롤 — 테이블만 감싼다(푸터 i_foot는 밖에 남아 페이지네이션에 영향 없음).
+   셀은 nowrap → 콘텐츠 기반 자연 너비로 서고, 폭이 좁을 때만 스크롤. */
+.table_scroll { overflow-x: auto; }
+.table_scroll .table_data th, .table_scroll .table_data td { white-space: nowrap; }
 .table_wrap .i_foot { display: flex; align-items: center; justify-content: space-between; padding: var(--space-12) var(--space-16); border-top: 1px solid var(--color-border-subtle); }
 .table_wrap .i_count { font-size: var(--text-xs); color: var(--color-text-muted); }
 .table_wrap .i_btn_wrap { display: flex; gap: var(--space-4); }

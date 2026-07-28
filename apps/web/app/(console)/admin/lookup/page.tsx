@@ -216,7 +216,7 @@ export default function AdminLookup() {
       ) : (
         <div className={tab === "sellers" ? "table_wrap m_scroll" : "table_wrap"}>
           {tab === "users" && (
-            <table className="table_data">
+            <div className="table_scroll"><table className="table_data">
               <thead>
                 <tr>
                   <th>이메일</th>
@@ -248,7 +248,7 @@ export default function AdminLookup() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
           {tab === "sellers" && (
             <table className="table_data m_wide">
@@ -285,7 +285,7 @@ export default function AdminLookup() {
             </table>
           )}
           {tab === "products" && (
-            <table className="table_data">
+            <div className="table_scroll"><table className="table_data">
               <thead>
                 <tr>
                   <th>상품명</th>
@@ -308,7 +308,7 @@ export default function AdminLookup() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
           <div className="i_foot">
             <span className="i_count">총 {total}건</span>
