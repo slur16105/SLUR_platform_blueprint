@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./lookup.css";
 
 type Tab = "users" | "sellers" | "products";
@@ -175,15 +175,15 @@ export default function AdminLookup() {
   };
 
   return (
-    <main className="page_admin_lookup">
-      <header className="p_head">
-        <h1 className="p_title">조회</h1>
-        <div className="p_head_actions">
-          <button className="btn m_small m_ghost" type="button" onClick={() => load(tab, appliedQ, categoryId, status, page)}>새로고침</button>
-          <a className="btn m_small m_ghost" href="/admin">← 관리자 홈</a>
-          <LogoutButton />
-        </div>
-      </header>
+    <ConsoleShell
+      role="admin"
+      title="회원·판매자 조회"
+      description="회원·판매자·상품을 검색하고 상세를 확인합니다."
+      actions={
+        <button className="btn m_small m_ghost" type="button" onClick={() => load(tab, appliedQ, categoryId, status, page)}>새로고침</button>
+      }
+    >
+      <div className="page_admin_lookup">
       <nav className="p_tabs">
         {TABS.map((t) => (
           <button key={t.key} type="button"
@@ -322,6 +322,7 @@ export default function AdminLookup() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

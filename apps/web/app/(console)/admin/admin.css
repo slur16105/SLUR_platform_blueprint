@@ -1,6 +1,4 @@
-.page_admin { display: flex; max-width: 720px; flex: 1; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
-.page_admin .p_head { display: flex; align-items: center; justify-content: space-between; }
-.page_admin .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
 .page_admin .p_tabs { display: flex; gap: var(--space-8); }
 .page_admin .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
 .page_admin .p_list { display: flex; flex-direction: column; gap: var(--space-12); }

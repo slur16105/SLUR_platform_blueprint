@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import { STATUS_LABEL, statusBadgeClass, statusLabel } from "../status";
 import "./detail.css";
 
@@ -291,15 +291,17 @@ export default function AdminOrderDetail() {
   }[action.kind];
 
   return (
-    <main className="page_admin_order_detail">
-      <header className="p_head">
-        <h1 className="p_title">주문 상세</h1>
-        <div className="p_head_actions">
+    <ConsoleShell
+      role="admin"
+      title="주문 상세"
+      actions={
+        <>
           <button className="btn m_small m_ghost" type="button" onClick={() => load()}>새로고침</button>
           <Link className="btn m_small m_ghost" href="/admin/orders">← 주문 검색</Link>
-          <LogoutButton />
-        </div>
-      </header>
+        </>
+      }
+    >
+      <div className="page_admin_order_detail">
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {loading && <p className="p_loading" role="status">불러오는 중…</p>}
@@ -522,6 +524,7 @@ export default function AdminOrderDetail() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

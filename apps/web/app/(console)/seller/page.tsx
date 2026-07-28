@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./seller.css";
 
 type Profile = {
@@ -107,17 +107,16 @@ export default function SellerHome() {
     }
   }
 
-  if (!profile) return null;
+  if (!profile)
+    return (
+      <ConsoleShell role="seller" title="판매자 센터">
+        <p className="p_loading" role="status">불러오는 중…</p>
+      </ConsoleShell>
+    );
 
   return (
-    <main className="page_seller">
-      <header className="p_head">
-        <div>
-          <h1 className="p_title">{profile.brand_name}</h1>
-          <p className="p_desc">{profile.company_name} · 판매자 센터</p>
-        </div>
-        <LogoutButton />
-      </header>
+    <ConsoleShell role="seller" title={profile.brand_name} description={`${profile.company_name} · 판매자 센터`}>
+      <div className="page_seller">
       <section className="p_dashboard" aria-label="대시보드">
         {dashError ? (
           <div className="alert m_inline m_danger" role="alert">
@@ -179,6 +178,7 @@ export default function SellerHome() {
         <a className="btn m_primary" href="/seller/products">내 상품 관리</a>
         <a className="btn m_primary" href="/seller/orders">주문 관리</a>
       </nav>
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

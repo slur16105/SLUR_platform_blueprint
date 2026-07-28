@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
 import "./home.css";
 
 type Kind = "hero" | "slot";
@@ -232,26 +231,19 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
   const candLastPage = Math.max(1, Math.ceil(candTotal / 20));
 
   if (loading) {
-    return <main className="page_admin_home"><p className="p_empty" role="status">불러오는 중…</p></main>;
+    return <div className="page_admin_home"><p className="p_empty" role="status">불러오는 중…</p></div>;
   }
   if (loadError) {
     return (
-      <main className="page_admin_home">
+      <div className="page_admin_home">
         <div className="alert m_inline m_danger" role="alert">{loadError}</div>
         <nav className="p_tabs"><Link className="btn m_small m_ghost" href="/admin/home">← 편성 목록</Link></nav>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="page_admin_home">
-      <header className="p_head">
-        <h1 className="p_title">{isEdit ? "편성 수정" : "새 편성"}</h1>
-        <div className="p_head_actions">
-          <Link className="btn m_small m_ghost" href="/admin/home">← 편성 목록</Link>
-          <LogoutButton />
-        </div>
-      </header>
+    <div className="page_admin_home">
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       <form className="p_form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
         <fieldset className="card p_fieldset">
@@ -427,6 +419,6 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
           </div>
         </div>
       </form>
-    </main>
+    </div>
   );
 }

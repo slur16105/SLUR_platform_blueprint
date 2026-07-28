@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./new.css";
 
 type Category = { id: string; name: string };
@@ -144,20 +145,22 @@ export default function NewProductPage() {
 
   if (done) {
     return (
-      <main className="page_product_new">
+      <ConsoleShell role="seller" title="상품 등록">
+        <div className="page_product_new">
         <div className="card p_panel">
           <h1 className="p_title">상품이 등록됐습니다</h1>
           <p className="p_desc">즉시 노출 상태입니다. 옵션·재고 관리 기능은 곧 추가됩니다.</p>
           <a className="btn m_primary" href="/seller">판매자 센터로</a>
         </div>
-      </main>
+        </div>
+      </ConsoleShell>
     );
   }
 
   return (
-    <main className="page_product_new">
+    <ConsoleShell role="seller" title="상품 등록">
+      <div className="page_product_new">
       <form className="card p_panel" onSubmit={submit}>
-        <h1 className="p_title">상품 등록</h1>
         {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
         <div className="field">
           <label className="i_label" htmlFor="name">상품명</label>
@@ -239,6 +242,7 @@ export default function NewProductPage() {
         )}
         <button className="btn m_primary m_large" type="submit" disabled={busy || images.length === 0 || (useOptions && rows.length === 0)}>등록하기</button>
       </form>
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

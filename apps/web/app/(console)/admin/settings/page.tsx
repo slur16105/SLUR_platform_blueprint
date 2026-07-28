@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./settings.css";
 
 type Setting = { key: string; value: string; description: string; updated_at?: string | null };
@@ -166,17 +166,15 @@ export default function AdminSettings() {
   }
 
   return (
-    <main className="page_admin_settings">
-      <header className="p_head">
-        <h1 className="p_title">설정</h1>
-        <div className="p_head_actions">
-          <button className="btn m_small m_ghost" type="button" onClick={load}>새로고침</button>
-          <LogoutButton />
-        </div>
-      </header>
-      <nav className="p_tabs">
-        <a className="btn m_small m_ghost" href="/admin">← 관리자 홈</a>
-      </nav>
+    <ConsoleShell
+      role="admin"
+      title="설정"
+      description="무통장입금 계좌와 운영 수치를 확인·변경합니다."
+      actions={
+        <button className="btn m_small m_ghost" type="button" onClick={load}>새로고침</button>
+      }
+    >
+      <div className="page_admin_settings">
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {loading ? (
         <p className="p_empty">설정을 불러오는 중…</p>
@@ -257,6 +255,7 @@ export default function AdminSettings() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

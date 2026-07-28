@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import CategoryPanel from "./category-panel";
 import "./admin.css";
 
@@ -79,21 +78,13 @@ export default function AdminHome() {
   }
 
   return (
-    <main className="page_admin">
-      <header className="p_head">
-        <h1 className="p_title">SLUR 관리자</h1>
-        <LogoutButton />
-      </header>
+    <ConsoleShell role="admin" title="관리자 홈" description="입점 신청과 카테고리를 관리합니다.">
+      <div className="page_admin">
       <div className="p_tabs">
         <button type="button" className={`btn m_small${tab === "applications" ? " m_primary" : " m_ghost"}`}
           onClick={() => setTab("applications")}>입점 신청</button>
         <button type="button" className={`btn m_small${tab === "categories" ? " m_primary" : " m_ghost"}`}
           onClick={() => setTab("categories")}>카테고리</button>
-        <a className="btn m_small m_ghost" href="/admin/deposits">입금 확인</a>
-        <Link className="btn m_small m_ghost" href="/admin/orders">주문 관리</Link>
-        <Link className="btn m_small m_ghost" href="/admin/home">홈 편성</Link>
-        <a className="btn m_small m_ghost" href="/admin/lookup">조회</a>
-        <a className="btn m_small m_ghost" href="/admin/settings">설정</a>
       </div>
       {tab === "categories" ? <CategoryPanel /> : <>
       <div className="p_tabs">
@@ -146,6 +137,7 @@ export default function AdminHome() {
         ))}
       </ul>
       </>}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

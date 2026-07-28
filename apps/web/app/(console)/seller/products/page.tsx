@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./list.css";
 
 type Variant = { stock: number; is_active: boolean };
@@ -46,11 +47,12 @@ export default function SellerProducts() {
   }
 
   return (
-    <main className="page_seller_products">
-      <header className="p_head">
-        <h1 className="p_title">내 상품</h1>
-        <a className="btn m_primary" href="/seller/products/new">상품 등록</a>
-      </header>
+    <ConsoleShell
+      role="seller"
+      title="상품 관리"
+      actions={<a className="btn m_primary" href="/seller/products/new">상품 등록</a>}
+    >
+      <div className="page_seller_products">
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {items.length === 0 && <p className="p_empty">등록된 상품이 없습니다.</p>}
       <ul className="p_list">
@@ -75,7 +77,7 @@ export default function SellerProducts() {
           );
         })}
       </ul>
-      <a className="p_back" href="/seller">← 판매자 센터</a>
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./deposits.css";
 
 type PendingOrder = {
@@ -168,17 +168,15 @@ export default function AdminDeposits() {
   const lastPage = Math.max(1, Math.ceil(total / size));
 
   return (
-    <main className="page_admin_deposits">
-      <header className="p_head">
-        <h1 className="p_title">입금 확인</h1>
-        <div className="p_head_actions">
-          <button className="btn m_small m_ghost" type="button" onClick={() => load(page)}>새로고침</button>
-          <LogoutButton />
-        </div>
-      </header>
-      <nav className="p_tabs">
-        <a className="btn m_small m_ghost" href="/admin">← 관리자 홈</a>
-      </nav>
+    <ConsoleShell
+      role="admin"
+      title="입금 확인"
+      description="입금대기 주문을 확인하고 결제완료로 처리합니다."
+      actions={
+        <button className="btn m_small m_ghost" type="button" onClick={() => load(page)}>새로고침</button>
+      }
+    >
+      <div className="page_admin_deposits">
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {items.length === 0 ? (
@@ -269,6 +267,7 @@ export default function AdminDeposits() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

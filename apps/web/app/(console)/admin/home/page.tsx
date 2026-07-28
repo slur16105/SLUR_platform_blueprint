@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./home.css";
 
 type Feature = {
@@ -130,19 +130,18 @@ export default function AdminHomeFeatures() {
   const multiActiveHero = activeHeroes.length >= 2;
 
   return (
-    <main className="page_admin_home">
-      <header className="p_head">
-        <h1 className="p_title">홈 편성</h1>
-        <div className="p_head_actions">
+    <ConsoleShell
+      role="admin"
+      title="홈 편성"
+      description="구매자 홈 화면에 노출되는 히어로·슬롯 편성입니다. 노출 순서·기간·활성 여부를 관리합니다."
+      actions={
+        <>
+          <Link className="btn m_small m_primary" href="/admin/home/new">새 편성</Link>
           <button className="btn m_small m_ghost" type="button" onClick={load}>새로고침</button>
-          <a className="btn m_small m_ghost" href="/admin">← 관리자 홈</a>
-          <LogoutButton />
-        </div>
-      </header>
-      <nav className="p_tabs">
-        <Link className="btn m_small m_primary" href="/admin/home/new">새 편성</Link>
-      </nav>
-      <p className="p_hint">구매자 홈 화면에 노출되는 히어로·슬롯 편성입니다. 노출 순서·기간·활성 여부를 관리합니다.</p>
+        </>
+      }
+    >
+      <div className="page_admin_home">
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {multiActiveHero && (
         <div className="alert m_inline m_warning" role="alert">
@@ -221,6 +220,7 @@ export default function AdminHomeFeatures() {
           </table>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }

@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import "./orders.css";
 
 type OrderLine = {
@@ -222,15 +222,12 @@ function SellerOrdersInner() {
   const lastPage = Math.max(1, Math.ceil(total / size));
 
   return (
-    <main className="page_seller_orders">
-      <header className="p_head">
-        <h1 className="p_title">주문 관리</h1>
-        <div className="p_head_actions">
-          <button className="btn m_small m_ghost" type="button" onClick={() => load(tab, page)}>새로고침</button>
-          <a className="btn m_small m_ghost" href="/seller">← 판매자 센터</a>
-          <LogoutButton />
-        </div>
-      </header>
+    <ConsoleShell
+      role="seller"
+      title="주문 관리"
+      actions={<button className="btn m_small m_ghost" type="button" onClick={() => load(tab, page)}>새로고침</button>}
+    >
+      <div className="page_seller_orders">
       <nav className="p_tabs" aria-label="배송 상태">
         {TABS.map((t) => (
           <button className="i_tab" type="button" key={t.key}
@@ -403,14 +400,21 @@ function SellerOrdersInner() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }
 
 export default function SellerOrders() {
   // useSearchParams는 프리렌더 시 Suspense 경계가 필요 (Next 16 규약)
   return (
-    <Suspense fallback={<main className="page_seller_orders"><p className="p_loading" role="status">불러오는 중…</p></main>}>
+    <Suspense
+      fallback={
+        <ConsoleShell role="seller" title="주문 관리">
+          <div className="page_seller_orders"><p className="p_loading" role="status">불러오는 중…</p></div>
+        </ConsoleShell>
+      }
+    >
       <SellerOrdersInner />
     </Suspense>
   );
