@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // giftpop 정적 사본(반입 자산) — 앱 소스가 아니므로 린트 제외
+    "public/giftpop-buyer/**",
+    "public/giftpop-admin/**",
   ]),
 ]);
 

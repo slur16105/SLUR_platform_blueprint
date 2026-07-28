@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import SiteFooter from "@/app/site-footer";
 import "./apply.css";
 
 type AppStatus = { status: string; brand_name: string; rejection_reason: string | null } | null;
@@ -67,26 +68,33 @@ export default function ApplyPage() {
 
   if (existing && existing.status === "pending") {
     return (
-      <main className="page_apply">
-        <div className="p_panel card">
-          <h1 className="p_title">심사 중입니다</h1>
-          <p className="p_desc">신청서를 검토하고 있어요. 결과는 담당자가 연락드립니다.</p>
-        </div>
-      </main>
+      <>
+        <main className="page_apply">
+          <div className="p_panel card">
+            <h1 className="p_title">심사 중입니다</h1>
+            <p className="p_desc">신청서를 검토하고 있어요. 결과는 담당자가 연락드립니다.</p>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
     );
   }
   if (existing && existing.status === "approved") {
     return (
-      <main className="page_apply">
-        <div className="p_panel card">
-          <h1 className="p_title">입점이 승인되었습니다</h1>
-          <p className="p_desc">다시 로그인하면 판매자 센터를 이용할 수 있습니다.</p>
-        </div>
-      </main>
+      <>
+        <main className="page_apply">
+          <div className="p_panel card">
+            <h1 className="p_title">입점이 승인되었습니다</h1>
+            <p className="p_desc">다시 로그인하면 판매자 센터를 이용할 수 있습니다.</p>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
     );
   }
 
   return (
+    <>
     <main className="page_apply">
       <form className="p_panel card" onSubmit={submit}>
         <h1 className="p_title">입점 신청</h1>
@@ -119,5 +127,7 @@ export default function ApplyPage() {
         </button>
       </form>
     </main>
+      <SiteFooter />
+    </>
   );
 }

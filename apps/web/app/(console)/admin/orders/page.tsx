@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import LogoutButton from "@/app/logout-button";
+import ConsoleShell from "@/app/(console)/console-shell";
 import { statusBadgeClass, statusLabel } from "./status";
 import "./orders.css";
 
@@ -130,15 +130,15 @@ function AdminOrdersInner() {
   const lastPage = Math.max(1, Math.ceil(total / size));
 
   return (
-    <main className="page_admin_orders">
-      <header className="p_head">
-        <h1 className="p_title">주문 관리</h1>
-        <div className="p_head_actions">
-          <button className="btn m_small m_ghost" type="button" onClick={() => load(appliedQ, status, page)}>새로고침</button>
-          <a className="btn m_small m_ghost" href="/admin">← 관리자 홈</a>
-          <LogoutButton />
-        </div>
-      </header>
+    <ConsoleShell
+      role="admin"
+      title="주문 관리"
+      description="전체 주문을 조회하고 상태를 처리합니다."
+      actions={
+        <button className="btn m_small m_ghost" type="button" onClick={() => load(appliedQ, status, page)}>새로고침</button>
+      }
+    >
+      <div className="page_admin_orders">
       <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input className="input_text" type="search" maxLength={100} value={q}
           placeholder="주문번호(8자/전체)·주문자 이름·이메일·브랜드 (2자 이상)"
@@ -209,14 +209,21 @@ function AdminOrdersInner() {
           </div>
         </div>
       )}
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }
 
 export default function AdminOrders() {
   // useSearchParams는 프리렌더 시 Suspense 경계가 필요 (Next 16 규약)
   return (
-    <Suspense fallback={<main className="page_admin_orders"><p className="p_empty" role="status">불러오는 중…</p></main>}>
+    <Suspense
+      fallback={
+        <ConsoleShell role="admin" title="주문 관리">
+          <div className="page_admin_orders"><p className="p_empty" role="status">불러오는 중…</p></div>
+        </ConsoleShell>
+      }
+    >
       <AdminOrdersInner />
     </Suspense>
   );

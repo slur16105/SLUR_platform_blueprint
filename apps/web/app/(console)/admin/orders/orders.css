@@ -1,12 +1,10 @@
-/* 관리자 주문 검색 — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
-.page_admin_orders { display: flex; max-width: 1280px; flex: 1; margin: 0 auto; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
-.page_admin_orders .p_head { display: flex; align-items: center; justify-content: space-between; }
-.page_admin_orders .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
-.page_admin_orders .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+/* 관리자 주문 검색 — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당)
+   레이아웃(사이드바·풀폭·패딩)은 ConsoleShell이 담당 — 여기는 콘텐츠만. */
+.page_admin_orders { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
 .page_admin_orders .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
 
 /* 검색 폼 */
-.page_admin_orders .p_search { display: flex; gap: var(--space-8); }
+.page_admin_orders .p_search { display: flex; gap: var(--space-8); flex-wrap: wrap; }
 .page_admin_orders .p_search .input_text[type="search"] { flex: 1; max-width: 420px; }
 .page_admin_orders .p_search .m_select { width: 160px; }
 

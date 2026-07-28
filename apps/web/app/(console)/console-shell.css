@@ -1,0 +1,50 @@
+/* 콘솔 셸 — 슬러 시맨틱 토큰만 사용. 하드코딩 색·간격 없음.
+   사이드바 다크는 --color-surface-inverse(라이트=진회색, 다크=밝은면)라 테마 자동 대응. */
+
+.console_shell { display: flex; flex: 1; align-items: stretch; min-width: 0; }
+
+/* ── 사이드바 ── */
+.console_side {
+  flex: none; width: 15rem; align-self: flex-start; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+  background: var(--color-surface-inverse); color: var(--color-text-inverse);
+}
+.console_side .l_brand { display: flex; align-items: center; gap: var(--space-8); height: 3.5rem; padding: 0 var(--space-20); flex: none; border-bottom: 1px solid color-mix(in srgb, var(--color-text-inverse) 12%, transparent); }
+.console_side .l_brand b { font-size: var(--text-lg); font-weight: var(--weight-bold); letter-spacing: .12em; }
+.console_side .l_brand span { font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: .08em; padding: 2px var(--space-4); border-radius: var(--radius-4); background: color-mix(in srgb, var(--color-text-inverse) 12%, transparent); }
+.console_side .l_nav { padding: var(--space-12) var(--space-8); display: flex; flex-direction: column; gap: 2px; }
+.console_side .l_link { display: flex; align-items: center; gap: var(--space-12); padding: var(--space-8) var(--space-12); border-radius: var(--radius-8); color: color-mix(in srgb, var(--color-text-inverse) 82%, transparent); font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.console_side .l_link:hover { background: color-mix(in srgb, var(--color-text-inverse) 8%, transparent); color: var(--color-text-inverse); }
+.console_side .l_link[data-on] { background: var(--color-brand); color: var(--color-on-brand); font-weight: var(--weight-semibold); }
+.console_side .l_link .i_ic { width: 1rem; height: 1rem; flex: none; display: inline-flex; }
+.console_side .l_link .i_ic svg { width: 100%; height: 100%; }
+
+/* ── 본문 영역 ── */
+.console_main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.console_topbar { position: sticky; top: 0; z-index: var(--z-sticky); height: 3.5rem; display: flex; align-items: center; gap: var(--space-12); padding: 0 var(--space-24); background: var(--color-surface-card); border-bottom: 1px solid var(--color-border-subtle); }
+.console_topbar .l_crumb { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-muted); }
+.console_topbar .l_top_actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-8); }
+.console_topbar .l_menu { display: none; width: 2.25rem; height: 2.25rem; align-items: center; justify-content: center; border: 1px solid var(--color-border-default); border-radius: var(--radius-8); background: var(--color-surface-card); color: var(--color-text-secondary); cursor: pointer; }
+.console_topbar .l_menu svg { width: 1rem; height: 1rem; }
+
+.console_body { flex: 1; padding: var(--space-24); display: flex; flex-direction: column; gap: var(--space-16); }
+.console_body .l_page_head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-16); flex-wrap: wrap; }
+.console_body .l_h1 { font-size: var(--text-2xl); font-weight: var(--weight-bold); letter-spacing: -0.01em; color: var(--color-text-primary); }
+.console_body .l_desc { margin-top: var(--space-4); font-size: var(--text-sm); color: var(--color-text-muted); }
+.console_body .l_actions { display: flex; align-items: center; gap: var(--space-8); }
+
+/* 스크림 */
+.console_scrim { display: none; }
+
+/* ── 반응형: 사이드바 오프캔버스 ── */
+@media (max-width: 1024px) {
+  .console_topbar .l_menu { display: inline-flex; }
+  .console_side { position: fixed; left: 0; top: 0; z-index: var(--z-modal); height: 100vh; transform: translateX(-100%); transition: transform var(--duration-base) var(--ease-standard); box-shadow: var(--shadow-lg); }
+  .console_side[data-open] { transform: none; }
+  .console_scrim { display: block; position: fixed; inset: 0; z-index: var(--z-overlay); background: color-mix(in srgb, var(--color-surface-inverse) 45%, transparent); opacity: 0; pointer-events: none; transition: opacity var(--duration-base) var(--ease-standard); }
+  .console_scrim[data-open] { opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 640px) {
+  .console_body { padding: var(--space-16); }
+  .console_topbar { padding: 0 var(--space-16); }
+}
