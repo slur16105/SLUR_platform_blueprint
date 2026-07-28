@@ -43,13 +43,19 @@ function shortUuid(id: string) {
 }
 
 function AdminOrdersInner() {
+  const sp = useSearchParams();
   // 조회 화면 "주문 이력" 링크에서 ?q=이메일 로 진입 시 초기 검색어로 자동 조회 (2~100자 아니면 무시)
-  const rawQ = (useSearchParams().get("q") ?? "").trim();
+  const rawQ = (sp.get("q") ?? "").trim();
   const initialQ = rawQ.length >= 2 && rawQ.length <= 100 ? rawQ : "";
+  // 대시보드 처리 대기 큐 딥링크(?status=preparing 등)로 진입 시 초기 상태 필터. 유효값만 수용.
+  const rawStatus = sp.get("status") ?? "";
+  const initialStatus: StatusFilter = STATUS_OPTIONS.some((o) => o.value === rawStatus && o.value !== "")
+    ? (rawStatus as StatusFilter)
+    : "";
   const router = useRouter();
   const [q, setQ] = useState(initialQ); // 입력 중 값
   const [appliedQ, setAppliedQ] = useState(initialQ); // 실제 조회에 쓰인 값
-  const [status, setStatus] = useState<StatusFilter>("");
+  const [status, setStatus] = useState<StatusFilter>(initialStatus);
   const [items, setItems] = useState<OrderCard[]>([]);
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님

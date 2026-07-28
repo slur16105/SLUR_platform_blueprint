@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
+import CategoryPanel from "../category-panel";
 import "./settings.css";
 
 type Setting = { key: string; value: string; description: string; updated_at?: string | null };
@@ -169,7 +170,7 @@ export default function AdminSettings() {
     <ConsoleShell
       role="admin"
       title="설정"
-      description="무통장입금 계좌와 운영 수치를 확인·변경합니다."
+      description="무통장입금 계좌·운영 수치·카테고리를 관리합니다."
       actions={
         <button className="btn m_small m_ghost" type="button" onClick={load}>새로고침</button>
       }
@@ -222,6 +223,11 @@ export default function AdminSettings() {
               })}
             </dl>
             <p className="i_hint">수치 변경은 DB에서 합니다.</p>
+          </section>
+          <section className="card p_card">
+            <h2 className="i_title">카테고리</h2>
+            <p className="i_desc">상품 분류 카테고리를 추가·수정·정렬합니다.</p>
+            <CategoryPanel />
           </section>
         </>
       )}

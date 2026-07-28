@@ -1,142 +1,146 @@
 "use client";
 
+/* 관리자 대시보드 — 운영형(action-queue 중심). UX 전문가 검토(2026-07-28) 반영.
+   랜딩은 "지금 무엇을 처리할까"에 답한다: 처리 대기 큐(각 라우트로 딥링크) + 최근 주문.
+   전부 기존 API의 total/items로 구성 — 신규 백엔드 없음. 매출·추이·랭킹(집계 API 필요)은 2차.
+   입점 심사는 /admin/sellers/applications, 카테고리는 /admin/settings로 이동(IA 개선). */
+
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import ConsoleShell from "@/app/(console)/console-shell";
-import CategoryPanel from "./category-panel";
-import "./admin.css";
+import { statusBadgeClass, statusLabel } from "./orders/status";
+import "./dashboard.css";
 
-type Application = {
-  id: string;
-  status: string;
-  brand_name: string;
-  brand_intro: string;
-  company_name: string;
-  representative_name: string;
-  business_registration_number: string;
-  mail_order_number: string;
-  business_address: string;
-  contact_phone: string;
+type RecentOrder = {
+  order_id: string;
+  order_no: string;
   created_at: string;
-  rejection_reason: string | null;
+  display_status: string;
+  grand_total: number;
+  buyer_name: string;
+  buyer_email: string;
 };
 
-export default function AdminHome() {
+function formatDateTime(s: string) {
+  // 주문 목록·상세와 대사 시 시간 불일치 방지 — KST 고정
+  return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
+}
+
+export default function AdminDashboard() {
   const router = useRouter();
-  const [tab, setTab] = useState<"applications" | "categories">("applications");
-  const [items, setItems] = useState<Application[]>([]);
-  const [status, setStatus] = useState("pending");
-  const [rejecting, setRejecting] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [deposits, setDeposits] = useState<number | null>(null);
+  const [preparing, setPreparing] = useState<number | null>(null);
+  const [applications, setApplications] = useState<number | null>(null);
+  const [recent, setRecent] = useState<RecentOrder[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (s: string) => {
-    setNotice(null);
+  const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch(`/api/admin/applications?status=${s}`);
-      if (res.status === 401) return void router.replace("/login");
-      if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
-      if (!res.ok) {
-        setError("목록을 불러오지 못했습니다. 새로고침해 주세요.");
-        return;
-      }
-      const data = await res.json();
-      setItems(data.items ?? []);
+      // 처리 대기 카운트 + 최근 주문을 병렬 조회 (전부 기존 엔드포인트의 total/items)
+      const [d, o, a, r] = await Promise.all([
+        fetch("/api/admin/deposits?page=1"),
+        fetch("/api/admin/orders?status=preparing&page=1"),
+        fetch("/api/admin/applications?status=pending"),
+        fetch("/api/admin/orders?page=1"),
+      ]);
+      const all = [d, o, a, r];
+      if (all.some((x) => x.status === 401)) return void router.replace("/login");
+      if (all.some((x) => x.status === 403)) return void router.replace("/no-role"); // R7
+      const dj = d.ok ? await d.json() : null;
+      const oj = o.ok ? await o.json() : null;
+      const aj = a.ok ? await a.json() : null;
+      const rj = r.ok ? await r.json() : null;
+      setDeposits(dj?.total ?? null);
+      setPreparing(oj?.total ?? null);
+      setApplications(aj?.total ?? aj?.items?.length ?? null);
+      setRecent(rj?.items ? (rj.items as RecentOrder[]).slice(0, 5) : []);
+      if (!d.ok && !o.ok && !a.ok && !r.ok) setError("대시보드를 불러오지 못했습니다. 새로고침해 주세요.");
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
     }
   }, [router]);
 
-  // 상태 탭 변경 시 재조회 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
+  // 초기 로드 — effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    void (async () => { await load(status); })();
-  }, [status, load]);
+    void (async () => { await load(); })();
+  }, [load]);
 
-  async function act(id: string, action: "approve" | "reject") {
-    setError(null);
-    const res = await fetch("/api/admin/applications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, action, reason: action === "reject" ? reason : undefined }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.details?.[0]?.reason ?? data.message ?? "처리에 실패했습니다.");
-      return;
-    }
-    setNotice(
-      action === "approve"
-        ? `승인 완료 — 신청자가 다시 로그인하면 판매자 센터를 이용할 수 있습니다.`
-        : "반려 처리했습니다. 신청자에게 사유가 표시됩니다.",
-    );
-    setRejecting(null);
-    setReason("");
-    load(status);
-  }
+  const queue = [
+    { label: "입금 확인", count: deposits, href: "/admin/deposits", hint: "무통장 입금 대기" },
+    { label: "배송 준비", count: preparing, href: "/admin/orders?status=preparing", hint: "발송 대기 주문" },
+    { label: "입점 심사", count: applications, href: "/admin/sellers/applications", hint: "판매자 신청 대기" },
+  ];
 
   return (
-    <ConsoleShell role="admin" title="관리자 홈" description="입점 신청과 카테고리를 관리합니다.">
-      <div className="page_admin">
-      <div className="p_tabs">
-        <button type="button" className={`btn m_small${tab === "applications" ? " m_primary" : " m_ghost"}`}
-          onClick={() => setTab("applications")}>입점 신청</button>
-        <button type="button" className={`btn m_small${tab === "categories" ? " m_primary" : " m_ghost"}`}
-          onClick={() => setTab("categories")}>카테고리</button>
-      </div>
-      {tab === "categories" ? <CategoryPanel /> : <>
-      <div className="p_tabs">
-        {(["pending", "approved", "rejected"] as const).map((s) => (
-          <button key={s} type="button"
-            className={`btn m_small${status === s ? " m_primary" : " m_ghost"}`}
-            onClick={() => setStatus(s)}>
-            {s === "pending" ? "심사 대기" : s === "approved" ? "승인됨" : "반려됨"}
-          </button>
-        ))}
-      </div>
-      {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
-      {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-      {items.length === 0 && <p className="p_empty">해당 상태의 신청이 없습니다.</p>}
-      <ul className="p_list">
-        {items.map((a) => (
-          <li className="card p_item" key={a.id}>
-            <div className="i_head">
-              <strong className="i_brand">{a.brand_name}</strong>
-              <span className="badge">{a.company_name}</span>
+    <ConsoleShell
+      role="admin"
+      title="대시보드"
+      description="지금 처리할 일과 최근 주문을 한눈에 봅니다."
+      actions={<button className="btn m_small m_ghost" type="button" onClick={load}>새로고침</button>}
+    >
+      <div className="page_admin_dash">
+        {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
+
+        <section className="p_queue">
+          <h2 className="p_section_title">처리 대기</h2>
+          <div className="i_grid">
+            {queue.map((q) => (
+              <Link key={q.href} href={q.href} className="i_qcard"
+                data-alert={q.count && q.count > 0 ? "" : undefined}>
+                <span className="i_qlabel">{q.label}</span>
+                <span className="i_qcount">{q.count === null ? "–" : q.count.toLocaleString()}</span>
+                <span className="i_qhint">{q.hint}</span>
+                <span className="i_qgo">처리하기 →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="p_recent">
+          <div className="i_head">
+            <h2 className="p_section_title">최근 주문</h2>
+            <Link className="i_more" href="/admin/orders">전체 보기 →</Link>
+          </div>
+          {recent === null ? (
+            <p className="p_empty" role="status">불러오는 중…</p>
+          ) : recent.length === 0 ? (
+            <p className="p_empty">최근 주문이 없습니다.</p>
+          ) : (
+            <div className="table_wrap">
+              <table className="table_data">
+                <thead>
+                  <tr>
+                    <th>주문번호</th>
+                    <th>주문자</th>
+                    <th>상태</th>
+                    <th className="m_num">금액</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map((o) => (
+                    <tr key={o.order_id} className="i_row" tabIndex={0}
+                      onClick={() => router.push(`/admin/orders/${o.order_id}`)}
+                      onKeyDown={(e) => { if (e.key === "Enter") router.push(`/admin/orders/${o.order_id}`); }}>
+                      <td>
+                        <strong>{o.order_no}</strong>
+                        <span className="i_time">{formatDateTime(o.created_at)}</span>
+                      </td>
+                      <td>
+                        {o.buyer_name}
+                        <span className="i_email">{o.buyer_email}</span>
+                      </td>
+                      <td><span className={statusBadgeClass(o.display_status)}>{statusLabel(o.display_status)}</span></td>
+                      <td className="m_num"><strong>{o.grand_total.toLocaleString()}원</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <p className="i_intro">{a.brand_intro}</p>
-            <dl className="i_meta">
-              <div><dt>대표자</dt><dd>{a.representative_name}</dd></div>
-              <div><dt>사업자번호</dt><dd>{a.business_registration_number}</dd></div>
-              <div><dt>통판신고</dt><dd>{a.mail_order_number}</dd></div>
-              <div><dt>주소</dt><dd>{a.business_address}</dd></div>
-              <div><dt>연락처</dt><dd>{a.contact_phone}</dd></div>
-            </dl>
-            {a.status === "pending" && rejecting !== a.id && (
-              <div className="i_actions">
-                <button className="btn m_primary" type="button" onClick={() => act(a.id, "approve")}>승인</button>
-                <button className="btn m_danger" type="button" onClick={() => setRejecting(a.id)}>반려</button>
-              </div>
-            )}
-            {rejecting === a.id && (
-              <div className="i_reject">
-                <input className="input_text" placeholder="반려 사유 (신청자에게 표시됩니다)"
-                  value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
-                <div className="i_actions">
-                  <button className="btn m_danger" type="button" onClick={() => act(a.id, "reject")}>반려 확정</button>
-                  <button className="btn m_ghost" type="button" onClick={() => { setRejecting(null); setReason(""); }}>취소</button>
-                </div>
-              </div>
-            )}
-            {a.status === "rejected" && a.rejection_reason && (
-              <p className="i_reason">반려 사유: {a.rejection_reason}</p>
-            )}
-          </li>
-        ))}
-      </ul>
-      </>}
+          )}
+        </section>
       </div>
     </ConsoleShell>
   );

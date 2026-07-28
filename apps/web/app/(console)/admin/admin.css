@@ -12,11 +12,4 @@
 .page_admin .i_actions { display: flex; gap: var(--space-8); }
 .page_admin .i_reject { display: flex; flex-direction: column; gap: var(--space-8); }
 .page_admin .i_reason { font-size: var(--text-sm); color: var(--color-danger); }
-.page_admin .p_categories { display: flex; flex-direction: column; gap: var(--space-12); }
-.page_admin .i_new { display: flex; gap: var(--space-8); }
-.page_admin .i_new .input_text { flex: 1; }
-.page_admin .i_list { display: flex; flex-direction: column; gap: var(--space-8); }
-.page_admin .i_row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); padding: var(--space-12) var(--space-16); }
-.page_admin .i_name { color: var(--color-text-primary); }
-.page_admin .i_edit { display: flex; flex: 1; gap: var(--space-8); }
-.page_admin .i_edit .input_text { flex: 1; }
+/* 카테고리 관리 스타일은 category-panel.css로 이동(자립화) — 설정 화면에서도 재사용 */

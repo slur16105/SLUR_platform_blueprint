@@ -40,12 +40,16 @@ const I = {
   box: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M8 2l6 3v6l-6 3-6-3V5z" strokeLinejoin="round" /><path d="M2 5l6 3 6-3M8 8v6" /></svg>
   ),
+  badge: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M8 1.5l1.6 1.1 1.9-.2.7 1.8 1.6 1v1.9l1 1.6-1 1.6v1.9l-1.6 1-.7 1.8-1.9-.2L8 14.5l-1.6-1.1-1.9.2-.7-1.8-1.6-1V8.9l-1-1.6 1-1.6V3.8l1.6-1 .7-1.8 1.9.2z" strokeLinejoin="round" /><path d="M6 8l1.5 1.5L10.5 6.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  ),
 };
 
 const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "대시보드", icon: I.grid },
   { href: "/admin/orders", label: "주문 관리", icon: I.list },
   { href: "/admin/deposits", label: "입금 확인", icon: I.card },
+  { href: "/admin/sellers/applications", label: "입점 심사", icon: I.badge },
   { href: "/admin/home", label: "홈 편성", icon: I.layout },
   { href: "/admin/lookup", label: "회원·판매자", icon: I.people },
   { href: "/admin/settings", label: "설정", icon: I.gear },

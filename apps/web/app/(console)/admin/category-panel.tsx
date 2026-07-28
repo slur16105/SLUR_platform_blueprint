@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import "./category-panel.css";
+
 type Category = { id: string; name: string; sort_order: number };
 
 export default function CategoryPanel() {
