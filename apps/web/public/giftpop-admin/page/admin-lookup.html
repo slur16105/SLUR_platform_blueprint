@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>회원 · 판매자 · SLUR 관리자</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../common/css/console-kit.css">
+<style>
+  .l_tabs{margin-bottom:16px}
+  .l_pane[hidden]{display:none}
+</style>
+</head>
+<body>
+<div class="c_app">
+
+  <!-- 사이드바 -->
+  <aside class="c_side" id="side">
+    <div class="c_brand"><b>SLUR</b> <span>ADMIN</span></div>
+    <nav class="c_nav">
+      <p class="c_group">개요</p>
+      <a href="./admin-dashboard.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>대시보드</a>
+      <p class="c_group">거래</p>
+      <a href="./admin-orders.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h8"/></svg>주문 관리<span class="cnt">18</span></a>
+      <a href="./admin-deposits.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1"/><path d="M2 7h12"/></svg>입금 확인<span class="cnt">5</span></a>
+      <p class="c_group">카탈로그</p>
+      <a href="./admin-products.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l6 3v6l-6 3-6-3V5z"/><path d="M2 5l6 3 6-3M8 8v6"/></svg>상품 관리</a>
+      <a href="./admin-home.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="5" rx="1"/><rect x="2" y="9" width="12" height="5" rx="1"/></svg>홈 편성</a>
+      <p class="c_group">회원 · 설정</p>
+      <a href="./admin-lookup.html" data-on><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M13 13l-2.5-2.5"/></svg>회원 · 판매자</a>
+      <a href="./admin-settings.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>설정</a>
+    </nav>
+  </aside>
+  <div class="c_scrim" id="scrim"></div>
+
+  <!-- 본문 -->
+  <div class="c_main">
+    <header class="c_topbar">
+      <button class="c_btn m_icon c_menu" id="menuBtn" aria-label="메뉴"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+      <span class="c_crumb">회원 / 조회</span>
+      <div class="c_search"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M13 13l-2.5-2.5"/></svg><input placeholder="상호·이름·이메일 검색"></div>
+      <div class="c_user"><span class="av">관</span>운영자</div>
+    </header>
+
+    <main class="c_body">
+      <div class="c_page_head">
+        <div>
+          <h1>회원 · 판매자</h1>
+          <p>입점 판매자와 구매 회원을 조회하고 상태를 관리합니다. 판매자 승인은 통신판매중개 입점 심사 후 처리합니다.</p>
+        </div>
+      </div>
+
+      <!-- 탭 -->
+      <div class="c_seg l_tabs" id="tabs">
+        <button data-on data-pane="pane-seller">판매자</button>
+        <button data-pane="pane-buyer">구매자</button>
+      </div>
+
+      <!-- [판매자] 탭 -->
+      <section class="l_pane" id="pane-seller">
+        <!-- KPI -->
+        <div class="c_tiles">
+          <div class="c_tile"><div class="lb">영업중</div><div class="val num">8</div><div class="dt">입점 판매자</div></div>
+          <div class="c_tile"><div class="lb">승인대기</div><div class="val num">3</div><div class="dt up">심사 필요</div></div>
+          <div class="c_tile"><div class="lb">정지</div><div class="val num">1</div><div class="dt">운영 보류</div></div>
+          <div class="c_tile m_accent"><div class="lb">이번달 정산예정</div><div class="val num">4,182,000원</div><div class="dt">8개 판매자</div></div>
+        </div>
+
+        <!-- 필터 -->
+        <div class="c_filters">
+          <select class="c_select"><option>상태 전체</option><option>승인대기</option><option>영업중</option><option>정지</option></select>
+          <div class="c_search_box c_spacer"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M13 13l-2.5-2.5"/></svg><input placeholder="상호·담당자·사업자번호 검색"></div>
+          <button class="c_btn m_sm">필터 초기화</button>
+        </div>
+
+        <div class="c_table_wrap">
+          <div class="c_table_scroll">
+            <table class="c_table">
+              <thead>
+                <tr>
+                  <th>상호</th>
+                  <th>담당자</th>
+                  <th>상태</th>
+                  <th class="col_num">상품수</th>
+                  <th class="col_num">주문수</th>
+                  <th class="col_num">정산예정액</th>
+                  <th class="sortable">가입일 <span class="sort">↓</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="strong">오이뮤<div class="sub">문구·아카이브</div></td>
+                  <td>신소미<div class="sub">somi@oimu.example</div></td>
+                  <td><span class="c_badge s_done">영업중</span></td>
+                  <td class="col_num">10</td>
+                  <td class="col_num">142</td>
+                  <td class="col_num">862,000</td>
+                  <td>26-03-11</td>
+                  <td><a href="#" class="c_link">상세</a></td>
+                </tr>
+                <tr>
+                  <td class="strong">챕터원<div class="sub">리빙·오브제</div></td>
+                  <td>김도현<div class="sub">dohyun@chapter1.example</div></td>
+                  <td><span class="c_badge s_done">영업중</span></td>
+                  <td class="col_num">8</td>
+                  <td class="col_num">98</td>
+                  <td class="col_num">1,024,000</td>
+                  <td>26-03-15</td>
+                  <td><a href="#" class="c_link">상세</a></td>
+                </tr>
+                <tr>
+                  <td class="strong">TWL<div class="sub">패브릭</div></td>
+                  <td>이하람<div class="sub">haram@twl.example</div></td>
+                  <td><span class="c_badge s_done">영업중</span></td>
+                  <td class="col_num">9</td>
+                  <td class="col_num">76</td>
+                  <td class="col_num">418,000</td>
+                  <td>26-04-02</td>
+                  <td><a href="#" class="c_link">상세</a></td>
+                </tr>
+                <tr>
+                  <td class="strong">아모멘토<div class="sub">리빙·오브제</div></td>
+                  <td>정유라<div class="sub">contact@amomento.example</div></td>
+                  <td><span class="c_badge s_off">정지</span></td>
+                  <td class="col_num">7</td>
+                  <td class="col_num">54</td>
+                  <td class="col_num">0</td>
+                  <td>26-04-20</td>
+                  <td><a href="#" class="c_link">상세</a></td>
+                </tr>
+                <tr>
+                  <td class="strong">모모스<div class="sub">커피·푸드</div></td>
+                  <td>박준서<div class="sub">order@momos.example</div></td>
+                  <td><span class="c_badge s_done">영업중</span></td>
+                  <td class="col_num">14</td>
+                  <td class="col_num">203</td>
+                  <td class="col_num">1,286,000</td>
+                  <td>26-05-06</td>
+                  <td><a href="#" class="c_link">상세</a></td>
+                </tr>
+                <tr>
+                  <td class="strong">서리<div class="sub">테이블웨어</div></td>
+                  <td>최은비<div class="sub">hello@seori.example</div></td>
+                  <td><span class="c_badge s_wait">승인대기</span></td>
+                  <td class="col_num">0</td>
+                  <td class="col_num">0</td>
+                  <td class="col_num">0</td>
+                  <td>26-07-24</td>
+                  <td><button class="c_btn m_sm m_primary">승인</button> <button class="c_btn m_sm m_danger">반려</button></td>
+                </tr>
+                <tr>
+                  <td class="strong">폴드<div class="sub">패브릭</div></td>
+                  <td>한지원<div class="sub">studio@fold.example</div></td>
+                  <td><span class="c_badge s_wait">승인대기</span></td>
+                  <td class="col_num">0</td>
+                  <td class="col_num">0</td>
+                  <td class="col_num">0</td>
+                  <td>26-07-26</td>
+                  <td><button class="c_btn m_sm m_primary">승인</button> <button class="c_btn m_sm m_danger">반려</button></td>
+                </tr>
+                <tr>
+                  <td class="strong">위켄더스<div class="sub">테이블웨어</div></td>
+                  <td>오세림<div class="sub">team@weekenders.example</div></td>
+                  <td><span class="c_badge s_wait">승인대기</span></td>
+                  <td class="col_num">0</td>
+                  <td class="col_num">0</td>
+                  <td class="col_num">0</td>
+                  <td>26-07-27</td>
+                  <td><button class="c_btn m_sm m_primary">승인</button> <button class="c_btn m_sm m_danger">반려</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="c_pager">
+            <span class="info">총 12건 · 1–8 표시</span>
+            <div class="pages">
+              <button disabled>‹</button><button data-on>1</button><button>2</button><button>›</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- [구매자] 탭 -->
+      <section class="l_pane" id="pane-buyer" hidden>
+        <!-- KPI -->
+        <div class="c_tiles">
+          <div class="c_tile"><div class="lb">전체 구매자</div><div class="val num">1,284</div><div class="dt">누적 가입</div></div>
+          <div class="c_tile"><div class="lb">이번달 신규</div><div class="val num">86</div><div class="dt up">▲ 지난달 +12</div></div>
+          <div class="c_tile"><div class="lb">주문 경험 회원</div><div class="val num">742</div><div class="dt">1회 이상</div></div>
+          <div class="c_tile"><div class="lb">휴면</div><div class="val num">58</div><div class="dt">90일 미접속</div></div>
+        </div>
+
+        <!-- 필터 -->
+        <div class="c_filters">
+          <select class="c_select"><option>상태 전체</option><option>활성</option><option>휴면</option><option>탈퇴</option></select>
+          <div class="c_search_box c_spacer"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M13 13l-2.5-2.5"/></svg><input placeholder="이름·이메일 검색"></div>
+          <button class="c_btn m_sm">필터 초기화</button>
+        </div>
+
+        <div class="c_table_wrap">
+          <div class="c_table_scroll">
+            <table class="c_table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>이메일</th>
+                  <th class="col_num">주문수</th>
+                  <th>최근주문일</th>
+                  <th class="sortable">가입일 <span class="sort">↓</span></th>
+                  <th>상태</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="strong">김서연</td><td>seoyeon@example.com</td><td class="col_num">7</td><td>07-28</td><td>26-03-02</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">이준호</td><td>junho@example.com</td><td class="col_num">3</td><td>07-28</td><td>26-04-18</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">박민지</td><td>minji@example.com</td><td class="col_num">12</td><td>07-27</td><td>26-01-25</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">정하늘</td><td>haneul@example.com</td><td class="col_num">1</td><td>07-26</td><td>26-07-20</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">최유진</td><td>yujin@example.com</td><td class="col_num">0</td><td>—</td><td>26-07-25</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">강도윤</td><td>doyoon@example.com</td><td class="col_num">5</td><td>04-11</td><td>25-12-10</td><td><span class="c_badge s_off">휴면</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">윤소라</td><td>sora@example.com</td><td class="col_num">2</td><td>06-30</td><td>26-02-14</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+                <tr><td class="strong">임하준</td><td>hajun@example.com</td><td class="col_num">9</td><td>07-22</td><td>26-03-30</td><td><span class="c_badge s_done">활성</span></td><td><a href="#" class="c_link">상세</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="c_pager">
+            <span class="info">총 1,284건 · 1–8 표시</span>
+            <div class="pages">
+              <button disabled>‹</button><button data-on>1</button><button>2</button><button>3</button><button>…</button><button>161</button><button>›</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+  // 사이드바 토글(모바일)
+  var side=document.getElementById('side'),scrim=document.getElementById('scrim');
+  document.getElementById('menuBtn').addEventListener('click',function(){side.toggleAttribute('data-open');scrim.toggleAttribute('data-open');});
+  scrim.addEventListener('click',function(){side.removeAttribute('data-open');scrim.removeAttribute('data-open');});
+  // 탭 전환
+  document.querySelectorAll('#tabs button').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('#tabs button').forEach(function(x){x.removeAttribute('data-on');});
+    b.setAttribute('data-on','');
+    document.querySelectorAll('.l_pane').forEach(function(p){p.hidden=true;});
+    document.getElementById(b.dataset.pane).hidden=false;
+  });});
+</script>
+</body>
+</html>

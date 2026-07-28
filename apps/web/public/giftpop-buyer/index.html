@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>:: SLUR Guide ::</title>
+<meta name="author" content="hoseong.lee@slur.co.kr" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=3.0, minimum-scale=1.0, width=device-width" />
+<style type="text/css">@import url('https://cdn.jsdelivr.net/gh/orioncactus/Pretendard/dist/web/static/pretendard.css');*{margin:0;padding:0;}body{font-size:13px;color:#333;line-height:1.5;font-family:'Pretendard', dotum, Arial, sans-serif;}html,body{width:100%;height:100%;}ul,ol,li{list-style:none;}a{vertical-align:top;color:#666;}button{border:none;outline:none;cursor:pointer;font:inherit;background-color:transparent;}.blind{width:1px;height:1px;position:absolute;overflow:hidden;clip:rect(0,0,0,0);margin:-1px;}#wrap{width:100%;height:100%;position:relative;overflow:hidden;}#left{width:100%;height:100%;vertical-align:top;position:relative;overflow:hidden;}#right{width:0;height:100%;overflow:hidden;position:absolute;top:0;right:0;}#wrap.review{width:auto;padding-left:300px;transition:all .3s;}#wrap.review.wide{width:auto;padding-left:0;}#wrap.review #left{width:300px;border-right:1px solid #ccc;position:absolute;top:0;left:0;background-color:#fbfbfa;transition:all .3s;}#wrap.review.wide #left{left:-301px;}#wrap.review #right{width:100%;position:static;}#wrap.review #header h1 .version{display:block;}#wrap.review #tree .list li>a:before,#wrap.review #tree .list li .ongoing:before{content:'';width:6px;height:6px;margin-right:6px;position:absolute;left:10px;top:10px;}#container{height:100%;padding-top:110px;position:relative;box-sizing:border-box;}#header{width:100%;border-bottom:1px solid #eee;position:absolute;left:0;top:0;box-sizing:border-box;padding:15px 10px;}#header h1{margin-bottom:10px;font-size:18px;}#header h1 .project{color:#000;}#header h1 .version{font-size:13px;color:#999;font-weight:400;}#header .status{width:100%;overflow:hidden;}#header .status dt{float:left;line-height:22px;margin-right:5px;font-weight:400;}#header .status dd{float:left;}#header .status dd span{display:inline-block;width:42px;height:22px;margin-right:5px;text-align:center;border-radius:3px;box-sizing:border-box;}#header .status dd span.ing{border:1px solid #999;color:#999;}#header .status dd span.fin{border:1px solid #39b54a;color:#fff;background:#39b54a;}#header .status dd span.new{border:1px solid red;color:#fff;background:red;}#header .btns{position:static;margin-bottom:10px;}#header .btns a{display:inline-block;height:22px;border-radius:3px;box-sizing:border-box;border:1px solid #000;background:#fff;color:#000;padding:0 5px;}#header .btns a.on{background:#000;color:#fff;}#header .sidebar_close{display:none;position:absolute;right:15px;top:15px;transition:all .3s;opacity:0;padding:7px;}#header .sidebar_close svg{width:16px;height:16px;display:block;fill:rgba(55,53,47,0.45);flex-shrink:0;backface-visibility:hidden;}#wrap.review #header .sidebar_close{display:inline-block;}#left:hover #header .sidebar_close{opacity:1;}#header .sidebar_close:hover{background-color:#eee;border-radius:5px;}#wrap.wide #header .sidebar_close{right:-100px;opacity:1;}#wrap.review.wide .sidebar_open{display:block;width:30px;height:100vh;position:absolute;left:0;top:0;z-index:1;}#iFrame{width:100%;height:100%;overflow-x:hidden;}#tree{height:100%;padding:0 5px; background-color: #241328;}#tree>ul{height:100%;overflow-y:auto;}#tree>ul::-webkit-scrollbar{width:7px;}#tree>ul::-webkit-scrollbar-track{background-color:transparent;}#tree>ul::-webkit-scrollbar-thumb{background:transparent;border-radius:7px;}#tree>ul:hover::-webkit-scrollbar-thumb{background:rgba(211,209,203,0.5);}#tree>ul>li{border-bottom:1px solid #eee;padding:5px 0;}#tree>ul>li:last-child{border-bottom:none!important;}#tree>ul>li.close{margin-bottom:0;}#tree>ul>li>a{display:block;font-size:13px;line-height:30px;color:#37352f;background:#eee;position:relative;border-radius:5px;padding:0 0 0 20px;}#tree>ul>li>a>svg{display:block;width:12px;height:12px;fill:rgba(55,53,47,0.35);backface-visibility:hidden;position:absolute;left:3px;top:calc(50% - 6px);transform:rotate(0);transition:all .3s;}#tree>ul>li.close>a>svg{transform:rotate(-90deg);}#tree>ul>li>ul>li:hover{background-color:#f4f4f4;border-radius:5px;}#tree>ul>li>ul>li.ing:hover{background-color:transparent!important;}#tree .list li{position:relative;}#tree .list li>a,#tree .list li .ongoing{display:block;color:#666;vertical-align:top;position:relative;padding:3px 58px 3px 23px;}#tree .list li .ongoing{color:#999;}#tree .list li>a:before,#tree .list li .ongoing:before{display:inline-block;width:42px;height:22px;margin-right:10px;border-radius:3px;text-align:center;box-sizing:border-box;font-weight:700;vertical-align:top;}#tree .list li.ing>a,#tree .list li.ing .ongoing{cursor:default;}#tree .list li.fin:hover>a{color:#39b54a;}#tree .list li.fin>a.on{color:#39b54a;border-radius:5px;}#tree .list li.ing>a:before,#tree .list li.ing .ongoing:before{content:'진행';border:1px solid #999;color:#999;background:#fff;}#tree .list li.fin>a:before{content:'완료';border:1px solid #39b54a;color:#fff;background:#39b54a;}#tree .list li.new>a:before{content:'NEW';border:1px solid red;color:#fff;background:red;}#tree .href{position:absolute;right:20px;top:3px;}#tree .btn_copy{display:inline-block;color:#fff;font-size:12px;background-color:#000;opacity:0.2;border-radius:5px;position:absolute;right:2px;top:3px;padding:0 5px 2px;}#left.theme_aubergine{color:#fff;background-color:#3F0E40;}#wrap.review #left.theme_aubergine{border-right:0 solid #fff;background-color:#3F0E40;}#left.theme_aubergine #header h1 .version{color:#fff;opacity:0.7;}#left.theme_aubergine #header .status dd span.ing{border:1px solid #fff;color:#fff;opacity:0.5;}#left.theme_aubergine #header .btns a{border:1px solid #000;background:#000;color:#fff;opacity:0.7;}#left.theme_aubergine #header .btns a.on{background:#fff;color:#000;opacity:1;}#left.theme_aubergine #header .sidebar_close{background-color:#eee;border-radius:100%;}#left.theme_aubergine #header .sidebar_close svg{fill:#3F0E40;}#left.theme_aubergine #header .sidebar_close:hover{background-color:#eee;}#left.theme_aubergine #tree>ul>li>a{color:#fff;background:transparent;}#left.theme_aubergine #tree>ul>li>a>svg{fill:#fff;}#left.theme_aubergine #tree>ul>li>ul>li:hover{background-color:rgba(255,255,255,0.1);}#left.theme_aubergine #tree .list li .ongoing{color:#fff;opacity:0.5;}#left.theme_aubergine #tree .list li.fin>a.on{color:#fff;background-color:#1164A3;}#left.theme_aubergine #tree .list li.ing .ongoing:before{border:1px solid #fff;color:#fff;background:transparent;}#left.theme_aubergine #tree .btn_copy{color:rgba(255,255,255,0.5);background-color:transparent;opacity:1;}#left.theme_aubergine #tree .btn_copy:hover{color:#000;background-color:#ECE7EC;opacity:1;}a:link,a:visited,a:active,a:hover{text-decoration:none;color:inherit;}#header .status dd br,#wrap .sidebar_open,#tree>ul::-webkit-scrollbar-button,#tree>ul>li.close>ul,#tree .list li.ing .btn_copy,#newUpdate{display:none;}#tree .list li .ongoing:before,#tree .list li.fin:hover>a .href,#tree .list li.fin>a.on .href{font-weight:400;}#tree .btn_copy:hover,#left.theme_aubergine #tree>ul>li>a .name .date{opacity:0.5;}#left.theme_aubergine #header,#left.theme_aubergine #tree>ul>li{border-bottom:1px solid rgba(255,255,255,0.1);}#left.theme_aubergine #header h1 .project,#left.theme_aubergine #tree .list li>a,#left.theme_aubergine #tree .list li.fin:hover>a{color:#fff;}#left.theme_aubergine #header .status dd span.fin,#left.theme_aubergine #tree .list li.fin>a:before{border:1px solid #2BAC76;color:#fff;background:#2BAC76;}#left.theme_aubergine #header .status dd span.new,#left.theme_aubergine #tree .list li.new>a:before{border:1px solid #CD2553;color:#fff;background:#CD2553;}</style>
+<style type="text/css">
+/* 제외(기획 밖) 항목 — 링크 없음, 취소선 + '제외' 뱃지 */
+#tree .list li.del>span{display:block;color:#999;padding:3px 20px 3px 23px;position:relative;text-decoration:line-through;opacity:.6;}
+#tree .list li.del>span:before{content:'제외';display:inline-block;width:42px;height:22px;margin-right:10px;border-radius:3px;text-align:center;box-sizing:border-box;font-weight:700;vertical-align:top;border:1px solid #b0678a;color:#fff;background:#8a2f57;text-decoration:none;font-size:12px;line-height:20px;}
+#left.theme_aubergine #tree .list li.del>span{color:rgba(255,255,255,0.5);}
+/* 예정 항목 */
+#tree .list li.todo>span{display:block;color:#999;padding:3px 20px 3px 23px;position:relative;}
+#tree .list li.todo>span:before{content:'예정';display:inline-block;width:42px;height:22px;margin-right:10px;border-radius:3px;text-align:center;box-sizing:border-box;font-weight:700;vertical-align:top;border:1px solid #c99a3a;color:#fff;background:#c99a3a;font-size:12px;line-height:20px;}
+#left.theme_aubergine #tree .list li.todo>span{color:rgba(255,255,255,0.65);}
+</style>
+</head>
+<body>
+	<div id="wrap" class="review">
+		<div id="left" class="theme_aubergine">
+			<div id="container">
+				<div id="header">
+					<h1><span class="project"></span> SLUR 구매자 <span class="version">v3.0 · 2026.07.28 · 편집숍 기반</span></h1>
+					<dl class="status">
+						<dt>진행상황 : </dt>
+						<dd>
+							<span class="fin">완료</span>
+							<span class="ing">진행</span>
+							<span class="new">NEW</span>
+							<span class="ing"><del>제외</del></span>
+						</dd>
+					</dl>
+					<button class="sidebar_close" type="button" title="사이드바 닫기"><svg viewBox="0 0 16 16"><path d="M7.07031 13.8887C7.2207 14.0391 7.40527 14.1211 7.62402 14.1211C8.06836 14.1211 8.41699 13.7725 8.41699 13.3281C8.41699 13.1094 8.32812 12.9043 8.17773 12.7539L3.37207 8.05762L8.17773 3.375C8.32812 3.21777 8.41699 3.0127 8.41699 2.80078C8.41699 2.35645 8.06836 2.00781 7.62402 2.00781C7.40527 2.00781 7.2207 2.08984 7.07031 2.24023L1.73828 7.44922C1.56055 7.62012 1.46484 7.8252 1.46484 8.06445C1.46484 8.29688 1.55371 8.49512 1.73828 8.67969L7.07031 13.8887ZM13.1748 13.8887C13.3252 14.0391 13.5098 14.1211 13.7354 14.1211C14.1797 14.1211 14.5283 13.7725 14.5283 13.3281C14.5283 13.1094 14.4395 12.9043 14.2891 12.7539L9.4834 8.05762L14.2891 3.375C14.4395 3.21777 14.5283 3.0127 14.5283 2.80078C14.5283 2.35645 14.1797 2.00781 13.7354 2.00781C13.5098 2.00781 13.3252 2.08984 13.1748 2.24023L7.84961 7.44922C7.66504 7.62012 7.57617 7.8252 7.56934 8.06445C7.56934 8.29688 7.66504 8.49512 7.84961 8.67969L13.1748 13.8887Z"></path></svg></button>
+				</div>
+				<div id="tree">
+					<ul>
+						<li id="newUpdate"><a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">업데이트</span></a><ul class="list"><!-- 최근 업데이트 영역 --></ul></li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">메인</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/main.html">메인 (홈)</a><button type="button" class="btn_copy">20.11.20</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">회원 · 인증</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/login.html">로그인</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/join.html">회원가입</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/welcome.html">회원가입 완료</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/find_pw.html">비밀번호 찾기</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/pw_set_01.html">비밀번호 설정</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/mail_authentication.html">메일 인증</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/lock.html">계정 잠금</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/error.html">에러 페이지</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/alert.html">Alert 팝업</a><button type="button" class="btn_copy">20.11.20</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">상품</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/giftshop_01.html">상품목록</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/goods_view_01.html">상품상세</a><button type="button" class="btn_copy">20.11.20</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">장바구니 · 주문</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/cart.html">장바구니</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/order_01.html">주문</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/order_02.html">결제</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/order_03.html">주문 완료</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="del"><span>주문 팝업 7종 (배너선택·수신자·거래명세서·매출전표·메시지 — 기프트/PG용)</span></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">마이페이지</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/my.html">마이페이지</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="fin"><a href="./page/member_01.html">회원정보 관리</a><button type="button" class="btn_copy">20.11.20</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">약관</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/privacy.html">개인정보처리방침</a><button type="button" class="btn_copy">20.11.20</button></li>
+								<li class="todo"><span>이용약관 (추가 예정)</span></li>
+							</ul>
+						</li>
+						<li class="close">
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274C6.27148 8.80274 6.47168 8.71484 6.66211 8.51465L10.2803 4.82324C10.4268 4.67676 10.5 4.49609 10.5 4.28125C10.5 3.85156 10.1484 3.5 9.72363 3.5C9.50879 3.5 9.30859 3.58789 9.15234 3.74902L6.03223 6.9668L2.90722 3.74902C2.74609 3.58789 2.55078 3.5 2.33105 3.5C1.90137 3.5 1.55469 3.85156 1.55469 4.28125C1.55469 4.49609 1.62793 4.67676 1.77441 4.82324L5.39258 8.51465C5.58789 8.71973 5.78808 8.80274 6.02734 8.80274Z"></path></svg><span class="name">제외 (기획 밖 · 삭제됨)</span></a>
+							<ul class="list">
+								<li class="del"><span>변형 중복: 상품목록2·상품상세2/3·회원정보2/3·비번설정2/3/4 (각 대표 1개만 유지)</span></li>
+								<li class="del"><span>고객센터: 공지·FAQ·1:1문의 6종 (기획 밖)</span></li>
+								<li class="del"><span>마이 - 거래명세서 팝업 (my_popup_01 · 무통장엔 불필요)</span></li>
+								<li class="del"><span>온라인 견적서 (estimate_01/02 + 팝업 3)</span></li>
+								<li class="del"><span>이벤트 / 기획전 (event_list · event_view 등 5)</span></li>
+								<li class="del"><span>관심상품 발송 (interest)</span></li>
+								<li class="del"><span>매니저 관리 (manager_01~07 + 팝업 2)</span></li>
+								<li class="del"><span>메시지 관리 (message_01/02)</span></li>
+								<li class="del"><span>팝머니 관리 · 충전 (popmoney)</span></li>
+								<li class="del"><span>구매관리 (purchase_management + 팝업 4)</span></li>
+								<li class="del"><span>발신번호 관리 (sender)</span></li>
+								<li class="del"><span>개인결제창 (personal_01/02)</span></li>
+								<li class="del"><span>회사소개 (company)</span></li>
+								<li class="del"><span>임시저장 발송 (temporary)</span></li>
+								<li class="del"><span>아이디 찾기 (find_id · 이메일=ID라 불필요)</span></li>
+								<li class="del"><span>이메일 구독 (newsletter)</span></li>
+								<li class="del"><span>메인 - 로그인 변형 (main_login · 중복)</span></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<!-- <button type="button" class="btn_resize"></button> -->
+		</div>
+		<div id="right">
+			<iframe frameborder="0" id="iFrame" name="iFrame" src="./page/main.html" ></iframe>
+		</div>
+		<div class="sidebar_open"><span class="blind">마우스 오버시 사이드바 오픈</span></div>
+	<script>
+		//IIFE
+		(function(){
+			// Change of state
+			const statusTarget = (target) => {
+				const statusItems = document.querySelectorAll('#tree > ul > li > ul > li');
+				statusItems.forEach((item) => {
+					if (item.classList.contains('ing')) {
+						const link = item.querySelector('a');
+						const span = document.createElement('div');
+						span.className = 'ongoing';
+						span.innerHTML = link.innerHTML;
+						link.replaceWith(span);
+					} else if (item.classList.contains('fin')) {
+						item.querySelector('a').setAttribute('target', target);
+					}
+				});
+			};
+
+			statusTarget('iFrame');
+
+			// 현재 날짜와 최근 일주일 전 날짜 계산
+			const currentDate = new Date();
+			const oneWeekAgo = new Date();
+			oneWeekAgo.setDate(oneWeekAgo.getDate() - 1);
+
+			// 날짜를 yy.mm.dd 형식으로 변환하는 함수
+			function formatDate(date) {
+				const year = date.getFullYear().toString().slice(-2);
+				const month = String(date.getMonth() + 1).padStart(2, '0');
+				const day = String(date.getDate()).padStart(2, '0');
+				return `${year}.${month}.${day}`;
+			}
+
+			const formattedCurrentDate = formatDate(currentDate);
+			const formattedOneWeekAgo = formatDate(oneWeekAgo);
+
+			// 모든 .btn_copy 요소를 선택
+			const btnCopyElements = document.querySelectorAll('.btn_copy');
+
+			btnCopyElements.forEach((btnCopyElement) => {
+				const dateString = btnCopyElement.textContent;
+				const listItem = btnCopyElement.closest('li');
+
+				// 최근 일주일 내에 있는 경우 .new 클래스 추가
+				if (dateString >= formattedOneWeekAgo && dateString <= formattedCurrentDate) {
+					listItem.classList.add('new');
+				} else {
+					listItem.classList.remove('new');
+				}
+			});
+
+			// 가장 최근 날짜와 해당 요소의 부모 요소를 추적하기 위한 변수를 초기화합니다.
+			let mostRecentDate = "";
+			let parentElements = [];
+
+			for (let i = 0; i < btnCopyElements.length; i++) {
+				const btnCopyElement = btnCopyElements[i];
+
+				// 버튼의 텍스트에서 날짜를 가져옵니다.
+				const date = btnCopyElement.textContent;
+
+				// 날짜를 비교합니다.
+				if (date > mostRecentDate) {
+					mostRecentDate = date;
+					parentElements = [btnCopyElement.parentNode];
+				} else if (date === mostRecentDate) {
+					parentElements.push(btnCopyElement.parentNode);
+				}
+			}
+
+			// 가장 최근 날짜를 가진 부모들 요소에 "new" 클래스를 추가합니다.
+			parentElements.forEach(parentElement => {
+				parentElement.classList.add("new");
+			});
+
+			// New Update
+			const newItems = document.querySelectorAll('.list .new');
+
+			if (newItems.length > 0) {
+				const newUpdate = document.querySelector('#newUpdate');
+				newItems.forEach((element) => {
+					const clonedElement = element.cloneNode(true);
+					const newUpdateList = document.querySelector('#newUpdate .list');
+					newUpdateList.appendChild(clonedElement);
+				});
+				newUpdate.style.display = 'block';
+			}
+
+			// List control
+			const depth2 = document.querySelectorAll('#tree > ul > li > ul > li > a');
+
+			depth2.forEach(function(item) {
+				item.addEventListener('click', function() {
+					depth2.forEach(function(item) {
+						item.classList.remove('on');
+					});
+					this.classList.add('on');
+				});
+			});
+
+			// List control
+			const depth1 = document.querySelectorAll('#tree > ul > li > a');
+
+			depth1.forEach(function(item) {
+				item.addEventListener('click', function() {
+					this.parentNode.classList.toggle('close');
+				});
+			});
+
+			// Copy filename
+			const links = document.querySelectorAll('li.fin a');
+
+			links.forEach(function(link) {
+				const filename_extension = link.getAttribute('href').split('/').pop();
+				const button = link.nextElementSibling;
+				button.addEventListener('click', function() {
+					const tempInput = document.createElement('input');
+					tempInput.setAttribute('value', filename_extension);
+					document.body.appendChild(tempInput);
+					tempInput.select();
+					document.execCommand('copy');
+					document.body.removeChild(tempInput);
+					console.log('Filename copied to clipboard: ' + filename_extension);
+				});
+			});
+
+			// Sidebar Control
+			const wrap = document.querySelector('#wrap');
+			const sidebarClose = document.querySelector(".sidebar_close");
+			const sidebarOpen = document.querySelector(".sidebar_open");
+
+			sidebarClose.addEventListener('click', function() {
+				wrap.classList.add('wide');
+			});
+
+			sidebarOpen.addEventListener('mouseover', function() {
+				wrap.classList.remove('wide');
+			});
+		})();
+	</script>
+	</div>
+</body>
+</html>

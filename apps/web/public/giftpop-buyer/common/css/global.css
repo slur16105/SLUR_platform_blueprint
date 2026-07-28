@@ -1,0 +1,103 @@
+@charset "utf-8";
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+* 	 		{margin:0; padding:0;}
+
+body		{font-size:16px; font-weight:400; line-height:1.5; color: #333; -webkit-text-size-adjust:none; -moz-text-size-adjust:none; -ms-text-size-adjust:none;}
+ul,ol,li	{list-style:none;}
+img,hr		{border:none;}
+img			{vertical-align:top; border:0px;}
+
+table 			{width:100%; border-spacing:0; table-layout:fixed;}
+table td img	{vertical-align:middle;}
+
+a			{vertical-align:top; color:#333;}
+a:link		{text-decoration:none; color:inherit;}
+a:visited	{text-decoration:none; color:inherit;}
+a:active	{text-decoration:none; color:inherit;}
+a:hover		{text-decoration:none; color:inherit;}
+
+article,aside,bdi,details,dialog,figcaption,figure,footer,header,main,mark,menuitem,meter,nav,progress,rp,rt,ruby,section,summary,time,wbr,
+body,p,div,ul,li,dl,dt,dd,ol,fieldset,textarea,input,select,table,th,td,address,cite,h1,h2,h3,h4,h5,h6,strong,b,label,pre {font-family:'Noto Sans KR', dotum, Arial, sans-serif;}
+strong,h1,h2,h3,h4,h5,h6,th,b,dt {font-family:'Noto Sans KR'; font-weight:700; font-size:inherit; color:inherit;}
+
+input,select			{vertical-align:top; outline:none;}
+input[type=text],
+input[type=password]	{display:inline-block; width:100%; height:40px; border-radius: 40px; padding:0 0 0 15px; border:1px solid #ddd; background-color:#fff; font-size:16px; color:#333; box-sizing:border-box; transition: all 0.1s;}
+input[type=text]:focus,
+input[type=password]:focus	{border:1px solid #000;}
+input[type=text]:disabled,
+input[type=password]:disabled {background-color: #F4F4F4; color: #777;}
+select					{display:inline-block; width:100%; height:40px; padding:0 0 0 15px; border:1px solid #ddd; background-color:#fff; border-radius: 10px; font-size:16px; color:#333; box-sizing:border-box; transition: all 0.1s;}
+select:focus            {border:1px solid #000;}
+textarea				{display:inline-block; width:100%; padding: 15px; border:solid 1px #ddd; background-color:#fff; font-size:16px; color:#333; box-sizing:border-box; transition: all 0.1s;}
+textarea:focus          {border:1px solid #000;}
+input[type=file],input[type=image],input[type=reset],input[type=button],input[type=submit] {cursor:pointer;}
+textarea::placeholder {color: #ddd;}
+textarea:-ms-input-placeholder {color: #ddd;}
+input::placeholder {color: #ddd;}
+input:-ms-input-placeholder {color: #ddd;}
+hr, caption		{display:block;width:0;height:0;margin:0;padding:0;line-height:0;font-size:0;overflow:hidden;}
+legend			{position:absolute; height:0; font-size:0px; line-height:0; overflow:hidden;}
+address,cite,em,i{font-style:normal;}
+fieldset,iframe	{border:0;}
+label			{cursor:pointer;}
+sup,sub         {line-height:1em;}
+button {border:none; outline:none; cursor:pointer; font:inherit; background-color:transparent; color: inherit;}
+
+.select {display:inline-block; position:relative;}
+.select:after {content:""; display:block; width:11px; height:7px; background:url(../../images/ico_select_01.png) 0 0 no-repeat; position:absolute; right:15px; top:calc(50% - 3px);}
+.select select {-webkit-appearance:none; -moz-appearance:none;}
+.select.style_01 select {border-radius: 40px;}
+select::-ms-expand {display:none;}
+
+.both_area {width:100%; overflow:hidden;}
+
+.fl_l {float:left !important;}
+.fl_c {display:inline-block; *display:inline; zoom:1;}
+.fl_r {float:right !important;}
+
+.ta_l {text-align:left !important;}
+.ta_c {text-align:center !important;}
+.ta_r {text-align:right !important;}
+
+.blind {display:block; width:0; height:0; margin:0; padding:0; line-height:0; font-size:0; overflow:hidden; opacity:0;}
+
+.pt0 {padding-top:0px !important;}.pt5 {padding-top:5px !important;}.pt10 {padding-top:10px !important;}.pt15 {padding-top:15px !important;}.pt20 {padding-top:20px !important;}.pt25 {padding-top:25px !important;}.pt30 {padding-top:30px !important;}.pt35 {padding-top:35px !important;}.pt40 {padding-top:40px !important;}.pt45 {padding-top:45px !important;}.pt50 {padding-top:50px !important;}.pt55 {padding-top:55px !important;}.pt60 {padding-top:60px !important;}.pt65 {padding-top:65px !important;}.pt70 {padding-top:70px !important;}.pt75 {padding-top:75px !important;}.pt80 {padding-top:80px !important;}.pt85 {padding-top:85px !important;}.pt90 {padding-top:90px !important;}.pt95 {padding-top:95px !important;}.pt100 {padding-top:100px !important;}
+.pr0 {padding-right:0px !important;}.pr5 {padding-right:5px !important;}.pr10 {padding-right:10px !important;}.pr15 {padding-right:15px !important;}.pr17 {padding-right:17px !important;}.pr20 {padding-right:20px !important;}.pr25 {padding-right:25px !important;}.pr30 {padding-right:30px !important;}.pr35 {padding-right:35px !important;}.pr40 {padding-right:40px !important;}.pr45 {padding-right:45px !important;}.pr50 {padding-right:50px !important;}.pr55 {padding-right:55px !important;}.pr60 {padding-right:60px !important;}.pr65 {padding-right:65px !important;}.pr70 {padding-right:70px !important;}.pr75 {padding-right:75px !important;}.pr80 {padding-right:80px !important;}.pr85 {padding-right:85px !important;}.pr90 {padding-right:90px !important;}.pr95 {padding-right:95px !important;}.pr100 {padding-right:100px !important;}
+.pb0 {padding-bottom:0px !important;}.pb5 {padding-bottom:5px !important;}.pb10 {padding-bottom:10px !important;}.pb15 {padding-bottom:15px !important;}.pb20 {padding-bottom:20px !important;}.pb25 {padding-bottom:25px !important;}.pb30 {padding-bottom:30px !important;}.pb35 {padding-bottom:35px !important;}.pb40 {padding-bottom:40px !important;}.pb45 {padding-bottom:45px !important;}.pb50 {padding-bottom:50px !important;}.pb55 {padding-bottom:55px !important;}.pb60 {padding-bottom:60px !important;}.pb65 {padding-bottom:65px !important;}.pb70 {padding-bottom:70px !important;}.pb75 {padding-bottom:75px !important;}.pb80 {padding-bottom:80px !important;}.pb85 {padding-bottom:85px !important;}.pb90 {padding-bottom:90px !important;}.pb95 {padding-bottom:95px !important;}.pb100 {padding-bottom:100px !important;}
+.pl0 {padding-left:0px !important;}.pl5 {padding-left:5px !important;}.pl10 {padding-left:10px !important;}.pl15 {padding-left:15px !important;}.pl20 {padding-left:20px !important;}.pl25 {padding-left:25px !important;}.pl30 {padding-left:30px !important;}.pl35 {padding-left:35px !important;}.pl40 {padding-left:40px !important;}.pl45 {padding-left:45px !important;}.pl50 {padding-left:50px !important;}.pl55 {padding-left:55px !important;}.pl60 {padding-left:60px !important;}.pl65 {padding-left:65px !important;}.pl70 {padding-left:70px !important;}.pl75 {padding-left:75px !important;}.pl80 {padding-left:80px !important;}.pl85 {padding-left:85px !important;}.pl90 {padding-left:90px !important;}.pl95 {padding-left:95px !important;}.pl100 {padding-left:100px !important;}
+.mt0 {margin-top:0px !important;}.mt5 {margin-top:5px !important;}.mt10 {margin-top:10px !important;}.mt15 {margin-top:15px !important;}.mt20 {margin-top:20px !important;}.mt25 {margin-top:25px !important;}.mt30 {margin-top:30px !important;}.mt35 {margin-top:35px !important;}.mt40 {margin-top:40px !important;}.mt45 {margin-top:45px !important;}.mt50 {margin-top:50px !important;}.mt55 {margin-top:55px !important;}.mt60 {margin-top:60px !important;}.mt65 {margin-top:65px !important;}.mt70 {margin-top:70px !important;}.mt75 {margin-top:75px !important;}.mt80 {margin-top:80px !important;}.mt85 {margin-top:85px !important;}.mt90 {margin-top:90px !important;}.mt95 {margin-top:95px !important;}.mt100 {margin-top:100px !important;}
+.mr0 {margin-right:0px !important;}.mr5 {margin-right:5px !important;}.mr10 {margin-right:10px !important;}.mr15 {margin-right:15px !important;}.mr20 {margin-right:20px !important;}.mr25 {margin-right:25px !important;}.mr30 {margin-right:30px !important;}.mr35 {margin-right:35px !important;}.mr40 {margin-right:40px !important;}.mr45 {margin-right:45px !important;}.mr50 {margin-right:50px !important;}.mr55 {margin-right:55px !important;}.mr60 {margin-right:60px !important;}.mr65 {margin-right:65px !important;}.mr70 {margin-right:70px !important;}.mr75 {margin-right:75px !important;}.mr80 {margin-right:80px !important;}.mr85 {margin-right:85px !important;}.mr90 {margin-right:90px !important;}.mr95 {margin-right:95px !important;}.mr100 {margin-right:100px !important;}
+.mb0 {margin-bottom:0px !important;}.mb5 {margin-bottom:5px !important;}.mb10 {margin-bottom:10px !important;}.mb15 {margin-bottom:15px !important;}.mb20 {margin-bottom:20px !important;}.mb25 {margin-bottom:25px !important;}.mb30 {margin-bottom:30px !important;}.mb35 {margin-bottom:35px !important;}.mb40 {margin-bottom:40px !important;}.mb45 {margin-bottom:45px !important;}.mb50 {margin-bottom:50px !important;}.mb55 {margin-bottom:55px !important;}.mb60 {margin-bottom:60px !important;}.mb65 {margin-bottom:65px !important;}.mb70 {margin-bottom:70px !important;}.mb75 {margin-bottom:75px !important;}.mb80 {margin-bottom:80px !important;}.mb85 {margin-bottom:85px !important;}.mb90 {margin-bottom:90px !important;}.mb95 {margin-bottom:95px !important;}.mb100 {margin-bottom:100px !important;}
+.ml0 {margin-left:0px !important;}.ml5 {margin-left:5px !important;}.ml10 {margin-left:10px !important;}.ml15 {margin-left:15px !important;}.ml20 {margin-left:20px !important;}.ml25 {margin-left:25px !important;}.ml30 {margin-left:30px !important;}.ml35 {margin-left:35px !important;}.ml40 {margin-left:40px !important;}.ml45 {margin-left:45px !important;}.ml50 {margin-left:50px !important;}.ml55 {margin-left:55px !important;}.ml60 {margin-left:60px !important;}.ml65 {margin-left:65px !important;}.ml70 {margin-left:70px !important;}.ml75 {margin-left:75px !important;}.ml80 {margin-left:80px !important;}.ml85 {margin-left:85px !important;}.ml90 {margin-left:90px !important;}.ml95 {margin-left:95px !important;}.ml100 {margin-left:100px !important;}
+.pl180 {padding-left:180px !important;}.pl183 {padding-left:183px !important;}
+
+.checkbox {display:inline-block; position: relative;}
+.checkbox input[type="checkbox"] {width:0px; height:0px; overflow:hidden; border:solid 0px #fff; opacity:0; -webkit-appearance:none; -moz-appearance:none; appearance:none;}
+.checkbox span {display:inline-block; padding-left:30px; height:18px; line-height:18px; color:#777;}
+.checkbox em {display:inline-block; width:18px; height:18px; box-sizing:border-box; border-radius: 4px; border:solid 1px #777; box-sizing:border-box; position: absolute; left: 0; top: calc(50% - 8px);}
+.checkbox input[type="checkbox"]:checked + em {background:url(../../images/ico_chk.png) 0 0 no-repeat; border:solid 0 #fff;}
+.checkbox input[type="checkbox"]:disabled + em,
+.checkbox input[type="checkbox"]:disabled ~ span,
+.checkbox input[type="checkbox"]:disabled:checked + em {opacity:0.5;}
+.checkbox.style_01 em {position: static;}
+.checkbox.style_02 span {display:inline-block; padding-left:0; padding-right: 43px; height:18px; line-height:18px; color:#777;}
+.checkbox.style_02 span::after {content: '이용중지'; display: block; width: 60px;}
+.checkbox.style_02 em {width:36px !important; height:19px !important; background-color: #aaa; border-radius: 19px; border:solid 0 #fff; position: absolute !important; left: auto; right: 0; top: calc(50% - 9px);}
+.checkbox.style_02 em::after {content: ''; display: block; width: 15px; height: 15px; border-radius: 15px; background-color: #fff; position: absolute; left: 2px; top: 2px;}
+.checkbox.style_02 input[type="checkbox"]:checked + em {background:none; background-color: #F84148; border:solid 0 #fff;}
+.checkbox.style_02 input[type="checkbox"]:checked + em::after {left: 19px;}
+.checkbox.style_02 input[type="checkbox"]:checked ~ span {color: #F84148;}
+.checkbox.style_02 input[type="checkbox"]:checked ~ span::after {content: '이용중';}
+
+.radiobox {display:inline-block; vertical-align:middle;}
+.radiobox input[type="radio"] {width:0px; height:0px; overflow:hidden; border:solid 0px #fff; opacity:0; -webkit-appearance:none; -moz-appearance:none; appearance:none;}
+.radiobox span {display: inline-block; padding-left:10px; font-size:16px; line-height:38px; color:#777; vertical-align:middle;}
+.radiobox em {display:inline-block; width:20px; height:20px; box-sizing:border-box; border-radius:20px; background-color:#fff; border:solid 1px #ccc; vertical-align:middle; position: relative;}
+.radiobox em::after {content: ''; display: block; width: 10px; height: 10px; background-color: #000; border-radius: 10px; position: absolute; left: calc(50% - 5px); top: calc(50% - 5px); opacity: 0; transition: all 0.1s;}
+.radiobox input[type="radio"]:checked + em::after {opacity: 1;}
+.radiobox input[type="radio"]:disabled + em,
+.radiobox input[type="radio"]:disabled ~ span,
+.radiobox input[type="radio"]:disabled:checked + em {opacity:0.5;}

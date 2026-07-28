@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>SLUR - 관리자</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="stylesheet" type="text/css" href="../common/css/common.css" />
+	<link rel="stylesheet" type="text/css" href="../common/css/responsive.css" />
+	<script type="text/javascript" src="../common/js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="../common/js/slick.min.js"></script>
+	<script type="text/javascript" src="../common/js/ui.js"></script>
+</head>
+<body>
+	<div id="wrap">
+
+		<header id="header">
+			<div class="inner_box">
+				<h1 class="logo"><a href="#self"><span class="blind">SLUR</span></a></h1>
+				<div class="select">
+					<select name="" id="">
+						<option value="">즐겨찾기</option>
+						<option value="">즐겨찾기</option>
+						<option value="">즐겨찾기</option>
+					</select>
+				</div>
+				<nav id="gnb" class="gnb">
+					<ul>
+						<li><a href="#self">회원 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">회원 등록</a></li>
+								<li><a href="#self">회원 미승인</a></li>
+								<li><a href="#self">회원 리스트</a></li>
+								<li><a href="#self">Logo 계정 관리</a></li>
+								<li><a href="#self">Logo 기본 설정</a></li>
+								<li><a href="#self">회원 계정 잠금</a></li>
+								<li><a href="#self">탈퇴 회원 리스트</a></li>
+								<li><a href="#self">회원 상품 할인 리스트</a></li>
+								<li><a href="#self">발신번호 리스트</a></li>
+								<li><a href="#self">팝머니 리스트</a></li>
+								<li><a href="#self">팝머니 환불 요청</a></li>
+							</ul>
+						</li>
+						<li class="open active"><a href="#self">상품 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">상품 등록</a></li>
+								<li class="on"><a href="#self">상품 목록</a></li>
+								<li><a href="#self">카테고리 / 브랜드 관리</a></li>
+								<li><a href="#self">메인 테마 관리</a></li>
+								<li><a href="#self">핫딜 상품 관리</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">주문 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">전체 주문 목록</a></li>
+								<li><a href="#self">전체 쿠폰 목록</a></li>
+								<li><a href="#self">취소 / 환불 관리</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">문의 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">1:1 문의 내역</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">이벤트 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">이벤트 관리</a></li>
+								<li><a href="#self">해쉬태그 관리</a></li>
+								<li><a href="#self">인기 검색어 관리</a></li>
+								<li><a href="#self">팝업 / 메인 배너</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">메시지 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">EMAIL / MMS 발송내역</a></li>
+								<li><a href="#self">EMAIL 발송</a></li>
+								<li><a href="#self">MMS 발송</a></li>
+								<li><a href="#self">MAIL 템플릿 관리</a></li>
+								<li><a href="#self">메시지 템플릿 관리</a></li>
+								<li><a href="#self">이미지 템플릿 관리</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">게시판 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">공지사항</a></li>
+								<li><a href="#self">자주 묻는 질문</a></li>
+								<li><a href="#self">약관 관리</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">계정 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">계정 관리</a></li>
+							</ul>
+						</li>
+						<li><a href="#self">기본 관리</a>
+							<ul class="depth_02">
+								<li><a href="#self">메뉴 관리</a></li>
+								<li><a href="#self">코드 관리</a></li>
+								<li><a href="#self">할인율 관리</a></li>
+							</ul>
+						</li>
+					</ul>
+				</nav>
+			</div><!-- class : inner_box -->
+		</header><!-- id : header -->
+
+		<div id="container">
+			<header class="header">
+				<nav class="menu">
+					<ul>
+						<li><a href="#self" class="btn_setting">관리자 설정</a></li>
+						<li><a href="#self">로그아웃</a></li>
+						<li><a href="#self" id="btn_all">전체메뉴</a></li>
+						<li><a href="#self" id="btn_favorite"><span class="blind">즐겨찾기</span></a></li>
+					</ul>
+				</nav>
+			</header>
+			<section class="contents">
+				<h2 class="title_01">상품 목록</h2>
+				<div class="in_box">
+					<div class="table_style_03 mb20">
+						<table cellpadding="0" cellspacing="0">
+							<colgroup>
+								<col style="width:12%;"/>
+								<col style="width:auto;"/>
+								<col style="width:12%;"/>
+								<col style="width:auto;"/>
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>검색어</th>
+									<td colspan="3">
+										<select name="" id="" class="mr5" style="width: 150px;">
+											<option value="">선택</option>
+											<option value="">선택</option>
+											<option value="">선택</option>
+										</select>
+										<input type="text" style="width: 335px;">
+									</td>
+								</tr>
+								<tr>
+									<th>상품 분류</th>
+									<td colspan="3">
+										<select name="" id="" class="mr5" style="width: 242px;">
+											<option value="">카테고리</option>
+											<option value="">카테고리</option>
+											<option value="">카테고리</option>
+										</select>
+										<select name="" id="" class="mr5" style="width: 242px;">
+											<option value="">브랜드</option>
+											<option value="">브랜드</option>
+											<option value="">브랜드</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<th>상품 등록일</th>
+									<td colspan="3">
+										<input type="text" style="width: 240px;"> <span class="lh_36">-</span> <input type="text" style="width: 240px;">
+									</td>
+								</tr>
+								<tr>
+									<th>판매상태</th>
+									<td>
+										<label class="radiobox mr50"><input type="radio" name="rdo_01" checked="checked"><em></em><span>전체</span></label>
+										<label class="radiobox mr50"><input type="radio" name="rdo_01"><em></em><span>판매중</span></label>
+										<label class="radiobox"><input type="radio" name="rdo_01"><em></em><span>판매중지</span></label>
+									</td>
+									<th>노출 여부</th>
+									<td>
+										<label class="radiobox mr50"><input type="radio" name="rdo_02" checked="checked"><em></em><span>전체</span></label>
+										<label class="radiobox mr50"><input type="radio" name="rdo_02"><em></em><span>노출중</span></label>
+										<label class="radiobox"><input type="radio" name="rdo_02"><em></em><span>노출 중지</span></label>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="both_area">
+						<a href="#self" class="btn_45" style="width: 184px;">상품 검색</a>
+					</div>
+				</div>
+				<hr>
+				<div class="in_box">
+					<h3 class="title_02 mb20">상품 목록 <span class="total">총 <strong>3</strong>개</span></h3>
+					<div class="both_area mb15">
+						<div class="left">
+							<a href="#self" class="btn_36 blue" style="width: 140px;">선택 삭제</a>
+						</div>
+						<div class="right">
+							<a href="#self" class="btn_36" style="width: 160px;">선택 노출 처리</a>
+							<a href="#self" class="btn_36" style="width: 150px;">선택 판매 처리</a>
+							<a href="#self" class="btn_36" style="width: 140px;">선택 SMS 보내기</a>
+							<a href="#self" class="btn_36" style="width: 140px;">선택 메일 보내기</a>
+							<a href="#self" class="btn_36" style="width: 140px;">엑셀 다운로드</a>
+							<select name="" id="" style="width: 150px;">
+								<option value="">20개씩 보기</option>
+								<option value="">20개씩 보기</option>
+								<option value="">20개씩 보기</option>
+							</select>
+						</div>
+					</div>
+					<div class="scroll mb15" style="height: 300px;">
+						<table cellpadding="0" cellspacing="0" class="table_style_01">
+							<colgroup>
+								<col style="width:60px;"/>
+                                <col style="width:auto;"/>
+                                <col style="width:7%;"/>
+                                <col style="width:7%;"/>
+                                <col style="width:10%;"/>
+                                <col style="width:6%;"/>
+                                <col style="width:6%;"/>
+                                <col style="width:12%;"/>
+                                <col style="width:11%;"/>
+                                <col style="width:10%;"/>
+							</colgroup>
+							<thead>
+								<tr>
+									<th><label class="checkbox"><input type="checkbox"><em></em></label></th>
+									<th>상품명</th>
+									<th>상품코드</th>
+									<th>판매가</th>
+									<th>상품 분류</th>
+									<th>판매상태</th>
+									<th>노출상태</th>
+									<th>바로구매 URL</th>
+									<th>카테고리 / 브랜드</th>
+									<th>상품 등록일</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td><label class="checkbox"><input type="checkbox"><em></em></label></td>
+									<td class="l">
+                                        <div class="product_box">
+                                            <span class="img"><img src="../images/sample_60x63_01.png" alt=""></span>
+                                            <span class="name">스타벅스</span>
+                                            <span class="txt">망고 바나나 블렌디드 Grande</span>
+                                        </div>
+                                    </td>
+									<td>GGC123456</td>
+									<td>5,000원</td>
+									<td>일반 등급 상품</td>
+									<td>판매중</td>
+									<td>노출중</td>
+									<td>
+                                        <div class="url_box">
+                                            <span class="url">opbiz.com/12312312</span>
+                                            <div class="btn_link">
+                                                <a href="#self">주소복사</a>
+                                                <a href="#self">링크 열기</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>커피 / 음료(노출중)(판매중) > 스타벅스(노출중)(판매중)</td>
+                                    <td>2020.10.10</td>
+                                </tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="both_area">
+						<div class="left">
+							<a href="#self" class="btn_36 blue" style="width: 140px;">선택 삭제</a>
+						</div> 
+						<div class="right">
+							<a href="#self" class="btn_36" style="width: 140px;">SMS 보내기</a>
+							<a href="#self" class="btn_36" style="width: 140px;">엑셀 다운로드</a>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div><!-- id : container -->
+
+		<footer id="footer">
+			<p class="copyright">copyright 2020. SLUR ALL Rights Reserved.</p>
+			<a href="#self" class="btn_terms">이용약관</a>
+		</footer><!-- id : footer -->
+
+        <div id="all_menu">
+            <div class="menu"></div>
+            <button type="button" class="btn_close"><span>닫기</span></button>
+        </div>
+
+	</div><!-- id : wrap -->
+</body>
+</html>

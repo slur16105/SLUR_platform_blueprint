@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>입점 신청 · SLUR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../common/css/console-kit.css">
+</head>
+<body style="background:var(--page)">
+
+  <!-- 상단 로고 바 -->
+  <header style="height:var(--topbar-h);background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:20">
+    <div style="display:flex;align-items:center;gap:8px">
+      <b style="font-size:18px;font-weight:800;letter-spacing:.14em;color:var(--brand)">SLUR</b>
+      <span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--ink-4);background:var(--brand-soft);padding:2px 6px;border-radius:var(--r-4)">SELLER</span>
+    </div>
+    <a href="#" class="c_link" style="margin-left:auto;font-size:12.5px">이미 판매자이신가요? 로그인</a>
+  </header>
+
+  <!-- 중앙 정렬 -->
+  <main style="max-width:640px;margin:0 auto;padding:40px 20px 80px">
+    <div style="text-align:center;margin-bottom:28px">
+      <h1 style="font-size:26px;font-weight:800;letter-spacing:-.02em">SLUR 입점 신청</h1>
+      <p style="font-size:13px;color:var(--ink-3);margin-top:10px;line-height:1.6">SLUR는 운영자가 브랜드를 직접 선별·초청하는 큐레이션형 디자인 편집숍입니다.<br>아래 정보를 남겨주시면 <b style="color:var(--ink-2)">운영자 심사 후 영업일 기준 5일 내</b> 승인 여부를 안내드립니다.</p>
+    </div>
+
+    <div class="c_card">
+      <div class="c_card_body" style="display:flex;flex-direction:column;gap:16px;padding:24px">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="c_field" style="gap:6px"><label>브랜드 / 상호</label><input class="c_input" style="width:100%" placeholder="예: 오이뮤 (OIMU)"></div>
+          <div class="c_field" style="gap:6px"><label>담당자명</label><input class="c_input" style="width:100%" placeholder="이름"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="c_field" style="gap:6px"><label>연락처</label><input class="c_input" style="width:100%" placeholder="010-0000-0000"></div>
+          <div class="c_field" style="gap:6px"><label>이메일</label><input class="c_input" style="width:100%" placeholder="brand@example.com"></div>
+        </div>
+
+        <div class="c_field" style="gap:6px"><label>취급 카테고리</label>
+          <select class="c_select" style="width:100%"><option>대표 카테고리 선택</option><option>인센스·향</option><option>문구·오브제</option><option>홈·리빙</option><option>패브릭</option><option>주방·테이블</option></select>
+        </div>
+
+        <div class="c_field" style="gap:6px"><label>브랜드 소개</label>
+          <textarea class="c_input" style="width:100%;height:120px;padding:12px;resize:vertical" placeholder="브랜드의 지향점, 대표 제품, 판매 채널 등을 자유롭게 소개해주세요."></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="c_field" style="gap:6px"><label>브랜드 웹사이트</label><input class="c_input" style="width:100%" placeholder="https://"></div>
+          <div class="c_field" style="gap:6px"><label>인스타그램</label><input class="c_input" style="width:100%" placeholder="@brand"></div>
+        </div>
+
+        <div class="c_field" style="gap:6px"><label>사업자등록증</label>
+          <div style="border:1.5px dashed var(--line);border-radius:var(--r-8);padding:20px;text-align:center;color:var(--ink-4);font-size:12.5px;cursor:pointer">
+            <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px"><path d="M8 2v8M5 5l3-3 3 3M2 13h12"/></svg>
+            파일을 끌어놓거나 클릭해 업로드 · PDF·JPG·PNG (최대 10MB)
+          </div>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--ink-2);cursor:pointer;padding-top:4px">
+          <input type="checkbox" class="c_chk" style="margin-top:1px">
+          <span><b>이용약관</b> 및 <b>개인정보 수집·이용</b>에 동의합니다. 제출된 정보는 입점 심사 목적으로만 사용됩니다.</span>
+        </label>
+
+        <button class="c_btn m_primary" style="width:100%;height:48px;font-size:14px;margin-top:4px">입점 신청하기</button>
+      </div>
+    </div>
+
+    <p style="text-align:center;font-size:11.5px;color:var(--ink-4);margin-top:18px">문의: partner@slur.co.kr</p>
+  </main>
+
+</body>
+</html>

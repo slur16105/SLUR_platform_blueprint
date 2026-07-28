@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>상품 관리 · SLUR 판매자</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../common/css/console-kit.css">
+</head>
+<body>
+<div class="c_app">
+
+  <!-- 사이드바 (판매자) -->
+  <aside class="c_side" id="side">
+    <div class="c_brand"><b>SLUR</b> <span>SELLER</span></div>
+    <nav class="c_nav">
+      <p class="c_group">개요</p>
+      <a href="./seller-dashboard.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>대시보드</a>
+      <p class="c_group">판매</p>
+      <a href="./seller-products.html" data-on><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l6 3v6l-6 3-6-3V5z"/><path d="M2 5l6 3 6-3M8 8v6"/></svg>상품 관리</a>
+      <a href="./seller-orders.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h8"/></svg>주문 관리<span class="cnt">6</span></a>
+      <p class="c_group">정산</p>
+      <a href="./seller-settlement.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1"/><path d="M2 7h12"/></svg>정산 내역</a>
+      <p class="c_group">설정</p>
+      <a href="./seller-store.html"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>스토어 설정</a>
+    </nav>
+  </aside>
+  <div class="c_scrim" id="scrim"></div>
+
+  <!-- 본문 -->
+  <div class="c_main">
+    <header class="c_topbar">
+      <button class="c_btn m_icon c_menu" id="menuBtn" aria-label="메뉴"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+      <span class="c_crumb">판매 / 상품 관리</span>
+      <div class="c_search"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M13 13l-2.5-2.5"/></svg><input placeholder="내 상품 검색"></div>
+      <div class="c_user"><span class="av">오</span>오이뮤 스토어</div>
+    </header>
+
+    <main class="c_body">
+      <div class="c_page_head">
+        <div>
+          <h1>상품 관리</h1>
+          <p>오이뮤 스토어의 상품을 등록·수정합니다. 신규 등록은 운영자 승인 후 노출됩니다.</p>
+        </div>
+        <div class="c_head_actions">
+          <a href="./seller-product-new.html" class="c_btn m_primary"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M8 2v12"/></svg>상품 등록</a>
+        </div>
+      </div>
+
+      <!-- 필터 -->
+      <div class="c_filters">
+        <select class="c_select"><option>판매상태 전체</option><option>판매중</option><option>품절</option><option>숨김</option><option>승인대기</option></select>
+        <select class="c_select"><option>카테고리 전체</option><option>인센스·향</option><option>문구·오브제</option><option>홈·리빙</option></select>
+        <div class="c_search_box c_spacer"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" stroke-width="1.5"><circle cx="7" cy="7" r="4"/><path d="M13 13l-2.5-2.5"/></svg><input placeholder="상품명 검색"></div>
+        <button class="c_btn m_sm">필터 초기화</button>
+      </div>
+
+      <!-- 일괄 액션 -->
+      <div class="c_bulk" id="bulk" hidden>
+        <span id="bulkCnt">0건 선택</span>
+        <div class="c_spacer"></div>
+        <button class="c_btn m_sm">노출</button>
+        <button class="c_btn m_sm">숨김</button>
+        <button class="c_btn m_sm">품절 처리</button>
+      </div>
+
+      <!-- 테이블 -->
+      <div class="c_table_wrap">
+        <div class="c_table_scroll">
+          <table class="c_table">
+            <thead>
+              <tr>
+                <th class="col_chk"><input type="checkbox" class="c_chk" id="all"></th>
+                <th>상품</th>
+                <th>카테고리</th>
+                <th class="col_num">판매가</th>
+                <th class="col_num">재고</th>
+                <th>상태</th>
+                <th class="sortable">등록일 <span class="sort">↓</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>인센스 홀더 · 그레이<div class="sub">OIMU-INC-02</div></div></div></td>
+                <td>인센스·향</td>
+                <td class="col_num">19,000원</td>
+                <td class="col_num">2</td>
+                <td><span class="c_badge s_done">판매중</span></td>
+                <td>07-20</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>향 카드 6매 세트<div class="sub">OIMU-CARD-01</div></div></div></td>
+                <td>인센스·향</td>
+                <td class="col_num">14,000원</td>
+                <td class="col_num">4</td>
+                <td><span class="c_badge s_done">판매중</span></td>
+                <td>07-18</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>성냥 아카이브 세트<div class="sub">OIMU-MAT-03</div></div></div></td>
+                <td>문구·오브제</td>
+                <td class="col_num">28,000원</td>
+                <td class="col_num">0</td>
+                <td><span class="c_badge s_cancel">품절</span></td>
+                <td>07-14</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>디퓨저 · 우드<div class="sub">OIMU-DIF-01</div></div></div></td>
+                <td>홈·리빙</td>
+                <td class="col_num">32,000원</td>
+                <td class="col_num">15</td>
+                <td><span class="c_badge s_done">판매중</span></td>
+                <td>07-11</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>룸 스프레이 · 시더<div class="sub">OIMU-SPR-02</div></div></div></td>
+                <td>인센스·향</td>
+                <td class="col_num">24,000원</td>
+                <td class="col_num">31</td>
+                <td><span class="c_badge s_done">판매중</span></td>
+                <td>07-08</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>인센스 스틱 · 라벤더<div class="sub">OIMU-INC-05</div></div></div></td>
+                <td>인센스·향</td>
+                <td class="col_num">16,000원</td>
+                <td class="col_num">48</td>
+                <td><span class="c_badge s_off">숨김</span></td>
+                <td>07-05</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>세라믹 향꽂이 · 오프화이트<div class="sub">OIMU-HOL-07</div></div></div></td>
+                <td>문구·오브제</td>
+                <td class="col_num">21,000원</td>
+                <td class="col_num">9</td>
+                <td><span class="c_badge s_wait">승인대기</span></td>
+                <td>07-27</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+              <tr>
+                <td class="col_chk"><input type="checkbox" class="c_chk row"></td>
+                <td><div class="c_prod"><span class="th"></span><div>기프트 랩 세트<div class="sub">OIMU-GFT-01</div></div></div></td>
+                <td>홈·리빙</td>
+                <td class="col_num">12,000원</td>
+                <td class="col_num">62</td>
+                <td><span class="c_badge s_done">판매중</span></td>
+                <td>06-30</td>
+                <td><a href="./seller-product-new.html" class="c_link">수정</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="c_pager">
+          <span class="info">총 24건 · 1–8 표시</span>
+          <div class="pages">
+            <button disabled>‹</button><button data-on>1</button><button>2</button><button>3</button><button>›</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  var side=document.getElementById('side'),scrim=document.getElementById('scrim');
+  document.getElementById('menuBtn').addEventListener('click',function(){side.toggleAttribute('data-open');scrim.toggleAttribute('data-open');});
+  scrim.addEventListener('click',function(){side.removeAttribute('data-open');scrim.removeAttribute('data-open');});
+  var all=document.getElementById('all'),rows=document.querySelectorAll('.c_chk.row'),bulk=document.getElementById('bulk'),cnt=document.getElementById('bulkCnt');
+  function refresh(){var n=[].filter.call(rows,function(r){return r.checked;}).length;if(n>0){bulk.hidden=false;cnt.textContent=n+'건 선택';}else{bulk.hidden=true;}all.checked=n===rows.length;}
+  all.addEventListener('change',function(){[].forEach.call(rows,function(r){r.checked=all.checked;});refresh();});
+  [].forEach.call(rows,function(r){r.addEventListener('change',refresh);});
+</script>
+</body>
+</html>

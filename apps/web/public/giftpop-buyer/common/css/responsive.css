@@ -1,0 +1,225 @@
+@charset "utf-8";
+/* ─────────────────────────────────────────────
+   giftpop 구매자 — 반응형 오버레이 (common.css 뒤에 로드)
+   원본(common.css)은 손대지 않는다. 이 파일 링크 한 줄을 빼면 원상복귀된다.
+   전략: (1) 컨테이너를 고정폭 → 유동(max-width 1200)로,
+        (2) ≤1024 좌측 wing·추천박스 숨김 + GNB/카테고리 가로스크롤,
+        (3) ≤768 헤더 세로 리플로우 + 상품 2열 + 배너 축소,
+        (4) ≤480 미세 조정.
+   대상: main.html 구조(header/wing/recommend/main_contents/footer/goods_list/tab).
+   ───────────────────────────────────────────── */
+
+/* ── 공통: 고정 최소폭 해제 + 컨테이너 유동화 ── */
+body { min-width: 0 !important; }
+#wrap { min-width: 0 !important; }
+
+/* 1200 고정폭 → 유동. 좌우 여백을 padding으로 준다 */
+#header .inner_box,
+#main_contents .inner_box,
+#footer .inner_box,
+#contents .inner_box,
+#header .section_03 .quick_menu > ul {
+  width: 100% !important;
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+#header .inner_box { padding-left: 20px; padding-right: 20px; }
+#main_contents .inner_box { padding-left: 20px; padding-right: 20px; }
+
+/* 상품 그리드: float 285px 고정 → 유동 그리드 */
+.goods_list_style_01 ul {
+  width: auto !important;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px 20px;
+}
+.goods_list_style_01 ul li {
+  width: auto !important;
+  margin: 0 !important;
+  float: none !important;
+}
+.goods_list_style_01 ul li > a span.img img { width: 100%; height: auto; aspect-ratio: 283/218; object-fit: cover; }
+.goods_list_style_01 ul li .btn_box { top: auto; bottom: 40%; }
+
+/* ══════════════ ≤1200 : 유동 진입 ══════════════ */
+@media (max-width: 1200px) {
+  /* 좌측 wing / 추천박스는 화면 밖 offset(calc(50%+640px))이라 유동에서 깨진다 → 숨김 */
+  #wing, #recommend_box { display: none !important; }
+  /* GNB 배너(절대 위치)·quick_menu 더보기 버튼 숨김 */
+  #header .section_03 .gnb_bg .btn_banner { display: none; }
+  #header .section_03 .quick_menu .btn_more { left: auto; right: 20px; }
+}
+
+/* ══════════════ ≤1024 : 태블릿 ══════════════ */
+@media (max-width: 1024px) {
+  .goods_list_style_01 ul { grid-template-columns: repeat(3, 1fr); gap: 26px 16px; }
+
+  /* GNB: 가로 스크롤로 */
+  #header .section_03 { height: auto; }
+  #header .section_03 .btn_quick { position: static; height: 50px; line-height: 50px; }
+  #header .section_03 .gnb { position: static; overflow-x: auto; }
+  #header .section_03 .gnb > ul { display: flex; white-space: nowrap; }
+  #header .section_03 .gnb > ul > li > a { padding: 0 18px; height: 50px; line-height: 50px; }
+  #header .section_03 .btn_event { position: static; height: 50px; line-height: 50px; padding-left: 24px; }
+  #header .section_03 .inner_box { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+  /* 드롭다운 depth_02 는 hover 기반이라 태블릿에서 접어둔다 */
+  #header .section_03 .gnb > ul > li .depth_02 { display: none !important; }
+  #header.open .section_03 .quick_menu.open,
+  #header.open .section_03 .gnb_bg { display: none; height: 0; }
+
+  /* 카테고리 원형 메뉴: 가로 스크롤 */
+  #main_contents .category_goods .menu ul { width: auto !important; display: flex; overflow-x: auto; padding-bottom: 6px; }
+  #main_contents .category_goods .menu ul li { float: none; flex: 0 0 auto; }
+
+  /* 게시판/고객센터: 세로로 */
+  #main_contents .board_info .inner_box > div { height: auto; }
+  #main_contents .board_info .latest_board,
+  #main_contents .board_info .info { float: none; width: 100%; }
+  #main_contents .board_info .latest_board { margin-bottom: 30px; }
+  #main_contents .board_info .info { padding: 32px 24px; }
+}
+
+/* ══════════════ ≤768 : 모바일 ══════════════ */
+@media (max-width: 768px) {
+  /* 상단 유틸/배너 섹션 세로 정리 */
+  #header .section_01 .inner_box { padding: 5px 0 12px; }
+  #header .section_01 .util_menu { position: static; margin-top: 8px; display: flex; justify-content: flex-end; }
+  #header .section_01 .util_menu li { float: none; }
+
+  /* section_02: 로고 → 검색 → 유틸을 세로로 */
+  #header .section_02 { height: auto; padding: 12px 0; }
+  #header .section_02 .logo a { position: static; margin: 0 auto 12px; }
+  #header .section_02 .search_box { position: static; margin: 0 auto 10px; width: 100%; max-width: 460px; }
+  #header .section_02 .search_box .search { width: 100%; }
+  #header .section_02 .search_box .keyword_box { width: 100%; }
+  #header .section_02 .hashtag { position: static; width: 100%; margin-bottom: 8px; }
+  #header .section_02 .util_menu { position: static; left: auto; top: auto; display: flex; justify-content: center; gap: 8px; }
+  #header .section_02 .util_menu li { margin-right: 0; }
+  #header .section_02 .util_menu li a { font-size: 15px; }
+
+  /* 상품 2열 */
+  .goods_list_style_01 ul { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; }
+  .goods_list_style_01 ul li > a span.name { font-size: 15px; }
+  .goods_list_style_01 ul li > a span.price_box .sale_price { font-size: 16px; }
+  /* hover 액션 버튼은 모바일에서 상시 숨김(터치엔 hover 없음) */
+  .goods_list_style_01 ul li .btn_box { display: none !important; }
+
+  /* 큰 배너: 유동 높이 */
+  #main_contents .big_banner { height: auto; margin-bottom: 40px; }
+  #main_contents .big_banner .banner_img { width: 100%; height: auto; position: static; margin-left: 0; }
+  #main_contents .big_banner .banner_img img { width: 100%; height: auto; }
+  #main_contents .big_banner .banner_img .control { display: none; }
+  #main_contents .big_banner .btn_control { display: none; }
+  #main_contents .big_banner .banner_btn { display: none; }
+
+  /* 섹션 여백 축소 */
+  #main_contents .category_goods,
+  #main_contents .recommendation_goods,
+  #main_contents .board_info { padding: 36px 0; }
+  #main_contents .category_goods .title,
+  #main_contents .recommendation_goods .title { font-size: 24px; margin-bottom: 24px; }
+
+  /* 탭 pill: 폭 유동 */
+  .tab_style_01 ul { display: flex; width: 100%; }
+  .tab_style_01 ul li { flex: 1; }
+  .tab_style_01 ul li button { width: 100% !important; font-size: 14px; height: 42px; line-height: 42px; }
+
+  /* 고객센터 링크 2열 유지, 전화번호 축소 */
+  #main_contents .board_info .info .title .tel { font-size: 24px; }
+  #main_contents .board_info .info .title .name { font-size: 20px; }
+  #main_contents .board_info .info .title .name strong { font-size: 22px; }
+
+  /* 푸터 */
+  #footer .inner_box { padding: 32px 20px; }
+  #footer .inner_box .logo { position: static; margin-bottom: 20px; }
+  #footer .inner_box .ft_menu li a,
+  #footer .inner_box .address { font-size: 14px; line-height: 22px; }
+}
+
+/* ══════════════ ≤480 : 소형 ══════════════ */
+@media (max-width: 480px) {
+  .goods_list_style_01 ul { gap: 18px 10px; }
+  #header .section_02 .util_menu li a { font-size: 14px; }
+  #main_contents .category_goods .title,
+  #main_contents .recommendation_goods .title { font-size: 21px; }
+  #main_contents .board_info .info .link_box ul li { width: 100%; padding-right: 0; }
+}
+
+/* ═══════════════════════════════════════════════
+   서브페이지 (#contents) — 결 맞추기
+   goods_view / sub_order / sub_login / join_form /
+   payment_information / table_list / goods_list_02
+   ═══════════════════════════════════════════════ */
+
+/* 본문 컨테이너 좌우 여백 (유동은 위 공통 규칙에서 처리) */
+@media (max-width: 1200px) {
+  #contents .inner_box { padding-left: 20px; padding-right: 20px; }
+}
+
+/* 상품목록 스타일2 그리드화 */
+.goods_list_style_02 ul { width: auto !important; display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px 20px; }
+.goods_list_style_02 ul li { width: auto !important; margin: 0 !important; float: none !important; }
+.goods_list_style_02 ul li > a span.img img { width: 100%; height: auto; aspect-ratio: 178/131; object-fit: cover; }
+
+/* ══════════ ≤1024 ══════════ */
+@media (max-width: 1024px) {
+  #contents .inner_box { padding-top: 40px; padding-bottom: 90px; }
+  .goods_list_style_02 ul { grid-template-columns: repeat(4, 1fr); }
+
+  /* 상품상세 2단 → 세로 스택 */
+  .goods_view .header .fl_l,
+  .goods_view .header .fl_r { width: 100% !important; float: none !important; }
+  .goods_view .header .fl_r { height: auto !important; margin-top: 24px; }
+  .goods_view .header .img { width: 100% !important; height: auto !important; aspect-ratio: 1/1; }
+  .goods_view .header .img img { width: 100% !important; height: 100% !important; object-fit: cover; }
+  .goods_view .header .btn_box { position: static !important; margin-top: 20px; }
+
+  /* 주문 2단(수신자 리스트 | 폼) → 세로 스택 */
+  .sub_order .cont,
+  .sub_order .cont.wide { width: 100% !important; }
+  .sub_order .receive_info .list { width: 100% !important; height: auto !important; float: none !important; border-right: 0 !important; border-bottom: 1px solid #ddd; }
+  .sub_order .receive_info .right { width: 100% !important; float: none !important; }
+}
+
+/* ══════════ ≤768 ══════════ */
+@media (max-width: 768px) {
+  #contents .inner_box { padding-top: 28px; padding-bottom: 72px; }
+  .goods_list_style_02 ul { grid-template-columns: repeat(2, 1fr); gap: 20px 12px; }
+
+  /* 로그인 박스 유동 */
+  .sub_login .it_box { width: 100% !important; max-width: 460px; padding: 28px 24px !important; }
+
+  /* 회원가입/약관 폼 좌우 2단 → 1단 */
+  .join_form .both_area > div { width: 100% !important; float: none !important; }
+  .join_form .name { width: 110px !important; }
+  .join_form .it_file_box .btn_44.gray { position: static !important; margin-top: 8px; }
+
+  /* 결제정보 다단 → 세로 */
+  .payment_information .info_02 > div,
+  .payment_information .info_02.style_01 > div,
+  .payment_information .info_02.style_01 > div:last-child,
+  .payment_information .info_02.style_02 > div,
+  .payment_information .info_02.style_03 > div,
+  .payment_information .info_02.style_03 > div:first-child { width: 100% !important; float: none !important; padding-left: 0 !important; margin-bottom: 16px; }
+  .payment_information .info_02 > div::after { display: none !important; }
+
+  /* 주문 진행 스텝 — 가로 스크롤 */
+  .sub_order .step ol { display: flex; overflow-x: auto; padding-bottom: 6px; }
+  .sub_order .step ol li { flex: 0 0 auto; margin-left: 56px !important; }
+
+  /* 상품상세 액션버튼 세로폭 확보 */
+  .goods_view .header .btn_box div button { margin: 0 3px !important; }
+
+  /* 테이블형 목록(장바구니/주문/구매내역) — 가로 스크롤로 컬럼 유지 */
+  .table_list_style_01,
+  .table_list_style_02 { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table_list_style_01 .thead,
+  .table_list_style_01 .tbody > ul > li { min-width: 620px; }
+  .table_list_style_02 .thead,
+  .table_list_style_02 .tbody > ul > li { min-width: 620px; }
+}
+
+/* ══════════ ≤480 ══════════ */
+@media (max-width: 480px) {
+  .sub_order .step ol li { margin-left: 40px !important; padding-top: 92px; }
+}

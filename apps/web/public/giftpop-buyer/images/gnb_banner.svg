@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="428" height="223" viewBox="0 0 428 223" role="img" aria-label="SLUR 편집숍 신상품 배너">
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#1c1b19"/>
+			<stop offset="1" stop-color="#2e2b27"/>
+		</linearGradient>
+	</defs>
+	<rect width="428" height="223" fill="url(#bg)"/>
+	<!-- accent frame -->
+	<rect x="14" y="14" width="400" height="195" fill="none" stroke="#8a7f6d" stroke-width="1" opacity="0.5"/>
+	<!-- eyebrow -->
+	<text x="34" y="58" fill="#c9b892" font-family="Arial, 'Apple SD Gothic Neo', sans-serif" font-size="12" letter-spacing="4">NEW ARRIVALS</text>
+	<!-- title -->
+	<text x="33" y="108" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="700" letter-spacing="1">EDITORIAL</text>
+	<!-- subtitle KR -->
+	<text x="34" y="138" fill="#e7e1d6" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" font-size="14">이번 시즌 새롭게 입점한 디자이너 브랜드</text>
+	<!-- cta pill -->
+	<rect x="34" y="160" width="120" height="34" rx="17" fill="none" stroke="#ffffff" stroke-width="1.2"/>
+	<text x="94" y="182" fill="#ffffff" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" letter-spacing="2">VIEW MORE</text>
+	<!-- decorative dots -->
+	<circle cx="392" cy="188" r="3" fill="#c9b892"/>
+	<circle cx="380" cy="188" r="3" fill="#8a7f6d"/>
+	<circle cx="368" cy="188" r="3" fill="#5c564c"/>
+</svg>

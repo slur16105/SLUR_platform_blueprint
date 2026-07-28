@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>:: SLUR 관리자 콘솔 ::</title>
+<meta name="author" content="hoseong.lee@slur.co.kr" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=3.0, minimum-scale=1.0, width=device-width" />
+<style type="text/css">@import url('https://cdn.jsdelivr.net/gh/orioncactus/Pretendard/dist/web/static/pretendard.css');*{margin:0;padding:0;}body{font-size:13px;color:#333;line-height:1.5;font-family:'Pretendard', dotum, Arial, sans-serif;}html,body{width:100%;height:100%;}ul,ol,li{list-style:none;}a{vertical-align:top;color:#666;}button{border:none;outline:none;cursor:pointer;font:inherit;background-color:transparent;}.blind{width:1px;height:1px;position:absolute;overflow:hidden;clip:rect(0,0,0,0);margin:-1px;}#wrap{width:100%;height:100%;position:relative;overflow:hidden;}#left{width:100%;height:100%;vertical-align:top;position:relative;overflow:hidden;}#right{width:0;height:100%;overflow:hidden;position:absolute;top:0;right:0;}#wrap.review{width:auto;padding-left:300px;transition:all .3s;}#wrap.review.wide{width:auto;padding-left:0;}#wrap.review #left{width:300px;border-right:1px solid #ccc;position:absolute;top:0;left:0;background-color:#fbfbfa;transition:all .3s;}#wrap.review.wide #left{left:-301px;}#wrap.review #right{width:100%;position:static;}#wrap.review #header h1 .version{display:block;}#container{height:100%;padding-top:110px;position:relative;box-sizing:border-box;}#header{width:100%;border-bottom:1px solid #eee;position:absolute;left:0;top:0;box-sizing:border-box;padding:15px 10px;}#header h1{margin-bottom:10px;font-size:18px;}#header h1 .project{color:#000;}#header h1 .version{font-size:13px;color:#999;font-weight:400;}#header .status{width:100%;overflow:hidden;}#header .status dt{float:left;line-height:22px;margin-right:5px;font-weight:400;}#header .status dd{float:left;}#header .status dd span{display:inline-block;height:22px;margin-right:5px;padding:0 6px;text-align:center;border-radius:3px;box-sizing:border-box;line-height:20px;}#header .status dd span.fin{border:1px solid #2f6bff;color:#fff;background:#2f6bff;}#header .sidebar_close{display:none;position:absolute;right:15px;top:15px;transition:all .3s;opacity:0;padding:7px;}#header .sidebar_close svg{width:16px;height:16px;display:block;fill:rgba(55,53,47,0.45);flex-shrink:0;backface-visibility:hidden;}#wrap.review #header .sidebar_close{display:inline-block;}#left:hover #header .sidebar_close{opacity:1;}#header .sidebar_close:hover{background-color:#eee;border-radius:5px;}#wrap.wide #header .sidebar_close{right:-100px;opacity:1;}#wrap.review.wide .sidebar_open{display:block;width:30px;height:100vh;position:absolute;left:0;top:0;z-index:1;}#iFrame{width:100%;height:100%;overflow-x:hidden;}#tree{height:100%;padding:0 5px;background-color:#0f1b33;}#tree>ul{height:100%;overflow-y:auto;}#tree>ul::-webkit-scrollbar{width:7px;}#tree>ul::-webkit-scrollbar-thumb{background:transparent;border-radius:7px;}#tree>ul:hover::-webkit-scrollbar-thumb{background:rgba(211,209,203,0.5);}#tree>ul>li{border-bottom:1px solid rgba(255,255,255,0.1);padding:5px 0;}#tree>ul>li:last-child{border-bottom:none!important;}#tree>ul>li>a{display:block;font-size:13px;line-height:30px;color:#fff;background:transparent;position:relative;border-radius:5px;padding:0 0 0 20px;}#tree>ul>li>a>svg{display:block;width:12px;height:12px;fill:#fff;position:absolute;left:3px;top:calc(50% - 6px);transform:rotate(0);transition:all .3s;}#tree>ul>li.close>a>svg{transform:rotate(-90deg);}#tree>ul>li.close>ul{display:none;}#tree>ul>li>ul>li:hover{background-color:rgba(255,255,255,0.1);border-radius:5px;}#tree .list li{position:relative;}#tree .list li>a{display:block;color:#fff;position:relative;padding:3px 58px 3px 23px;}#tree .list li>a:before{display:inline-block;height:22px;margin-right:10px;padding:0 6px;border-radius:3px;text-align:center;box-sizing:border-box;font-weight:700;vertical-align:top;font-size:12px;line-height:20px;}#tree .list li.fin:hover>a{color:#7aa2ff;}#tree .list li.fin>a.on{color:#fff;background-color:#2f6bff;border-radius:5px;}#tree .list li.fin>a:before{content:'완료';border:1px solid #2f6bff;color:#fff;background:#2f6bff;}#tree .list li.todo>span{display:block;color:rgba(255,255,255,0.7);padding:3px 20px 3px 23px;position:relative;}#tree .list li.todo>span:before{content:'예정';display:inline-block;height:22px;margin-right:10px;padding:0 6px;border-radius:3px;text-align:center;box-sizing:border-box;font-weight:700;vertical-align:top;border:1px solid #c99a3a;color:#fff;background:#c99a3a;font-size:12px;line-height:20px;}#tree .list li.del>span{display:block;color:rgba(255,255,255,0.45);padding:3px 20px 3px 23px;position:relative;text-decoration:line-through;}#tree .list li.del>span:before{content:'제외';display:inline-block;height:22px;margin-right:10px;padding:0 6px;border-radius:3px;text-align:center;box-sizing:border-box;font-weight:700;vertical-align:top;border:1px solid #7a4a2f;color:#fff;background:#7a4a2f;text-decoration:none;font-size:12px;line-height:20px;}#tree .btn_copy{display:inline-block;color:rgba(255,255,255,0.5);font-size:12px;background:transparent;border-radius:5px;position:absolute;right:2px;top:3px;padding:0 5px 2px;}a:link,a:visited,a:active,a:hover{text-decoration:none;color:inherit;}#wrap .sidebar_open{display:none;}</style>
+</head>
+<body>
+	<div id="wrap" class="review">
+		<div id="left">
+			<div id="container">
+				<div id="header">
+					<h1><span class="project"></span> SLUR 관리자 콘솔 <span class="version">v1.0 · 2026.07.28 · 커머스 고도화</span></h1>
+					<dl class="status">
+						<dt>진행 : </dt>
+						<dd>
+							<span class="fin">완료</span>
+							<span style="border:1px solid #c99a3a;color:#c99a3a">예정</span>
+							<span style="border:1px solid #7a4a2f;color:#7a4a2f">제외</span>
+						</dd>
+					</dl>
+					<button class="sidebar_close" type="button" title="사이드바 닫기"><svg viewBox="0 0 16 16"><path d="M7.07031 13.8887C7.2207 14.0391 7.40527 14.1211 7.62402 14.1211C8.06836 14.1211 8.41699 13.7725 8.41699 13.3281C8.41699 13.1094 8.32812 12.9043 8.17773 12.7539L3.37207 8.05762L8.17773 3.375C8.32812 3.21777 8.41699 3.0127 8.41699 2.80078C8.41699 2.35645 8.06836 2.00781 7.62402 2.00781C7.40527 2.00781 7.2207 2.08984 7.07031 2.24023L1.73828 7.44922C1.56055 7.62012 1.46484 7.8252 1.46484 8.06445C1.46484 8.29688 1.55371 8.49512 1.73828 8.67969L7.07031 13.8887ZM13.1748 13.8887C13.3252 14.0391 13.5098 14.1211 13.7354 14.1211C14.1797 14.1211 14.5283 13.7725 14.5283 13.3281C14.5283 13.1094 14.4395 12.9043 14.2891 12.7539L9.4834 8.05762L14.2891 3.375C14.4395 3.21777 14.5283 3.0127 14.5283 2.80078C14.5283 2.35645 14.1797 2.00781 13.7354 2.00781C13.5098 2.00781 13.3252 2.08984 13.1748 2.24023L7.84961 7.44922C7.66504 7.62012 7.57617 7.8252 7.56934 8.06445C7.56934 8.29688 7.66504 8.49512 7.84961 8.67969L13.1748 13.8887Z"></path></svg></button>
+				</div>
+				<div id="tree">
+					<ul>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">대시보드 · 로그인</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/admin-dashboard.html">대시보드</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/login.html">로그인</a><button type="button" class="btn_copy">기존</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">주문 관리 (커머스 핵심)</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/admin-orders.html">주문 목록 — 리스트·다중필터·상태·일괄처리</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/admin-order-detail.html">주문 상세 — 상태 워크플로우·송장·취소/환불</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/admin-deposits.html">입금 확인 — 무통장 입금대기·확인</a><button type="button" class="btn_copy">신규</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">상품 관리</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/admin-products.html">상품 관리 — 목록·카테고리·브랜드</a><button type="button" class="btn_copy">신규</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">홈 편성</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/admin-home.html">홈 편성 — 히어로·슬롯 지면 관리</a><button type="button" class="btn_copy">신규</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">회원 · 판매자</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/admin-lookup.html">회원·판매자 조회·승인</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="todo"><span>판매자 정산 (후순위)</span></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">설정</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/admin-settings.html">관리자 설정 — 입금·배송·정책·권한(RBAC)</a><button type="button" class="btn_copy">신규</button></li>
+							</ul>
+						</li>
+						<li>
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">━━ 판매자(SELLER) 콘솔 ━━</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/seller-dashboard.html">판매자 대시보드</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/seller-products.html">상품 관리</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/seller-product-new.html">상품 등록</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/seller-orders.html">주문 관리 (판매자)</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="fin"><a href="./page/seller-apply.html">입점 신청 (/apply)</a><button type="button" class="btn_copy">신규</button></li>
+								<li class="todo"><span>판매자 정산 · 스토어 설정 (후순위)</span></li>
+							</ul>
+						</li>
+						<li class="close">
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">giftpop 원본 (참고 재료)</span></a>
+							<ul class="list">
+								<li class="fin"><a href="./page/main.html">giftpop 대시보드</a><button type="button" class="btn_copy">참고</button></li>
+								<li class="fin"><a href="./page/product_03.html">giftpop 상품 목록</a><button type="button" class="btn_copy">참고</button></li>
+								<li class="fin"><a href="./page/product_01.html">giftpop 상품 등록</a><button type="button" class="btn_copy">참고</button></li>
+								<li class="fin"><a href="./page/member_03.html">giftpop 회원 목록</a><button type="button" class="btn_copy">참고</button></li>
+							</ul>
+						</li>
+						<li class="close">
+							<a href="#self"><svg viewBox="0 0 12 12"><path d="M6.02734 8.80274 6.66211 8.51465 10.5 4.28125 9.72363 3.5 6.03223 6.9668 2.33105 3.5 1.55469 4.28125 6.02734 8.80274Z"></path></svg><span class="name">제외 (기프트 전용 · 삭제됨)</span></a>
+							<ul class="list">
+								<li class="del"><span>메시지·이미지 템플릿 발송 (message 6)</span></li>
+								<li class="del"><span>EMAIL 발송 모달 16종 (member/order/product/account/message popup)</span></li>
+								<li class="del"><span>이벤트 · 검색어/해시태그 (event 2)</span></li>
+								<li class="del"><span>1:1 문의 (inquiry 3 · 기획 밖)</span></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div id="right">
+			<iframe frameborder="0" id="iFrame" name="iFrame" src="./page/admin-orders.html"></iframe>
+		</div>
+	<script>
+		(function(){
+			document.querySelectorAll('#tree > ul > li > ul > li.fin > a').forEach(function(a){ a.setAttribute('target','iFrame'); });
+			var depth2 = document.querySelectorAll('#tree > ul > li > ul > li > a');
+			depth2.forEach(function(item){ item.addEventListener('click', function(){ depth2.forEach(function(i){ i.classList.remove('on'); }); this.classList.add('on'); }); });
+			document.querySelectorAll('#tree > ul > li > a').forEach(function(item){ item.addEventListener('click', function(){ this.parentNode.classList.toggle('close'); }); });
+			document.querySelectorAll('.sidebar_close').forEach(function(b){ b.addEventListener('click', function(){ document.querySelector('#wrap').classList.toggle('wide'); }); });
+		})();
+	</script>
+	</div>
+</body>
+</html>
