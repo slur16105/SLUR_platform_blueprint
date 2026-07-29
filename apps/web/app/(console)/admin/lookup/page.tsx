@@ -247,7 +247,7 @@ export default function AdminLookup() {
                     <td className="m_muted">{formatDateTime(u.created_at)}</td>
                     <td className="m_num">
                       {/* 이메일 없는 계정은 링크 숨김 — 빈 q가 전체 주문 목록으로 이어져 오인되는 것 방지 */}
-                      {u.email && <a className="btn m_small m_ghost" href={`/admin/orders?q=${encodeURIComponent(u.email)}`}>주문 이력</a>}
+                      {u.email && <a className="btn m_small" href={`/admin/orders?q=${encodeURIComponent(u.email)}`}>주문 이력</a>}
                     </td>
                   </tr>
                 ))}
@@ -317,10 +317,10 @@ export default function AdminLookup() {
           <div className="i_foot">
             <span className="i_count">총 {total}건</span>
             <div className="i_btn_wrap">
-              <button className="btn m_small m_ghost" type="button" disabled={page <= 1}
+              <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
               <span className="i_page">{page} / {lastPage}</span>
-              <button className="btn m_small m_ghost" type="button" disabled={page >= lastPage}
+              <button className="btn m_small" type="button" disabled={page >= lastPage}
                 onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>
           </div>

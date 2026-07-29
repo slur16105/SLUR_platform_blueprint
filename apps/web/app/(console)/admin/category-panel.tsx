@@ -80,17 +80,17 @@ export default function CategoryPanel() {
           <li className="card i_row" key={c.id}>
             {editing === c.id ? (
               <form className="i_edit" onSubmit={async (e) => { e.preventDefault(); if (await op({ op: "rename", id: c.id, name: editName.trim() })) setEditing(null); }}>
-                <input className="input_text" value={editName} maxLength={30} onChange={(e) => setEditName(e.target.value)} />
+                <input className="input_text m_small" value={editName} maxLength={30} onChange={(e) => setEditName(e.target.value)} />
                 <button className="btn m_small m_primary" type="submit">저장</button>
-                <button className="btn m_small m_ghost" type="button" onClick={() => setEditing(null)}>취소</button>
+                <button className="btn m_small" type="button" onClick={() => setEditing(null)}>취소</button>
               </form>
             ) : (
               <>
                 <strong className="i_name">{c.name}</strong>
                 <div className="i_actions">
-                  <button className="btn m_small m_ghost" type="button" onClick={() => move(idx, -1)} aria-label="위로">↑</button>
-                  <button className="btn m_small m_ghost" type="button" onClick={() => move(idx, 1)} aria-label="아래로">↓</button>
-                  <button className="btn m_small m_ghost" type="button" onClick={() => { setEditing(c.id); setEditName(c.name); }}>이름 수정</button>
+                  <button className="btn m_small" type="button" onClick={() => move(idx, -1)} aria-label="위로">↑</button>
+                  <button className="btn m_small" type="button" onClick={() => move(idx, 1)} aria-label="아래로">↓</button>
+                  <button className="btn m_small" type="button" onClick={() => { setEditing(c.id); setEditName(c.name); }}>이름 수정</button>
                   <button className="btn m_small m_danger" type="button" onClick={() => op({ op: "delete", id: c.id })}>삭제</button>
                 </div>
               </>

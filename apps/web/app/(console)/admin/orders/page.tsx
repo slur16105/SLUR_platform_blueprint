@@ -203,10 +203,10 @@ function AdminOrdersInner() {
           <div className="i_foot">
             <span className="i_count">총 {total}건</span>
             <div className="i_btn_wrap">
-              <button className="btn m_small m_ghost" type="button" disabled={page <= 1}
+              <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
               <span className="i_page">{page} / {lastPage}</span>
-              <button className="btn m_small m_ghost" type="button" disabled={page >= lastPage}
+              <button className="btn m_small" type="button" disabled={page >= lastPage}
                 onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>
           </div>

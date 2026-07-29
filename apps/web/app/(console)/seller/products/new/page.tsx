@@ -195,7 +195,7 @@ export default function NewProductPage() {
                 <li key={img.path} className="i_thumb" data-state={idx === 0 ? "main" : undefined}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.preview} alt={idx === 0 ? "대표 이미지" : `추가 이미지 ${idx}`} />
-                  <button type="button" className="btn m_small m_ghost" onClick={() => setImages((p) => p.filter((_, i) => i !== idx))}>제거</button>
+                  <button type="button" className="btn m_small" onClick={() => setImages((p) => p.filter((_, i) => i !== idx))}>제거</button>
                 </li>
               ))}
             </ul>

@@ -259,7 +259,7 @@ export default function AdminHomeFeatures() {
                     </td>
                     <td>
                       <div className="i_actions">
-                        <Link className="btn m_small m_ghost" href={`/admin/home/${f.id}`}>수정</Link>
+                        <Link className="btn m_small" href={`/admin/home/${f.id}`}>수정</Link>
                         <button className="btn m_small m_danger" type="button" disabled={busy !== null}
                           onClick={() => setPendingDelete(f)}>삭제</button>
                       </div>

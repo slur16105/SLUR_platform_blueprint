@@ -237,7 +237,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
     return (
       <div className="page_admin_home">
         <div className="alert m_inline m_danger" role="alert">{loadError}</div>
-        <nav className="p_tabs"><Link className="btn m_small m_ghost" href="/admin/home">← 메인 화면 관리</Link></nav>
+        <nav className="p_tabs"><Link className="btn m_small" href="/admin/home">← 메인 화면 관리</Link></nav>
       </div>
     );
   }
@@ -368,10 +368,10 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
               <div className="i_picker_foot">
                 <span className="i_note">총 {candTotal}개</span>
                 <div className="i_form_actions">
-                  <button className="btn m_small m_ghost" type="button" disabled={candPage <= 1 || candLoading}
+                  <button className="btn m_small" type="button" disabled={candPage <= 1 || candLoading}
                     onClick={() => setCandPage((p) => Math.max(1, p - 1))}>이전</button>
                   <span className="i_note">{candPage} / {candLastPage}</span>
-                  <button className="btn m_small m_ghost" type="button" disabled={candPage >= candLastPage || candLoading}
+                  <button className="btn m_small" type="button" disabled={candPage >= candLastPage || candLoading}
                     onClick={() => setCandPage((p) => p + 1)}>다음</button>
                 </div>
               </div>
@@ -395,9 +395,9 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
                       <span className="i_prod_meta">{priceText(p)}{p.sold_out && <span className="i_soldout"> · 품절</span>}</span>
                     </span>
                     <span className="i_prod_actions">
-                      <button className="btn m_small m_ghost" type="button" aria-label="위로"
+                      <button className="btn m_small" type="button" aria-label="위로"
                         disabled={idx === 0} onClick={() => moveSelected(idx, -1)}>↑</button>
-                      <button className="btn m_small m_ghost" type="button" aria-label="아래로"
+                      <button className="btn m_small" type="button" aria-label="아래로"
                         disabled={idx === selected.length - 1} onClick={() => moveSelected(idx, 1)}>↓</button>
                       <button className="btn m_small m_danger" type="button" aria-label="제거"
                         onClick={() => removeProduct(p.id)}>✕</button>
@@ -410,7 +410,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
         </fieldset>
 
         <div className="i_form_foot">
-          <Link className="btn m_ghost" href="/admin/home">취소</Link>
+          <Link className="btn" href="/admin/home">취소</Link>
           <div className="i_form_actions">
             <button className="btn m_primary" type="submit" disabled={submitting}
               data-state={submitting ? "loading" : undefined}>

@@ -121,7 +121,7 @@ export default function SellerHome() {
         {dashError ? (
           <div className="alert m_inline m_danger" role="alert">
             {dashError}
-            <button className="btn m_small m_ghost" type="button" onClick={loadDashboard}>다시 시도</button>
+            <button className="btn m_small" type="button" onClick={loadDashboard}>다시 시도</button>
           </div>
         ) : !dashboard ? (
           <p className="p_loading" role="status">대시보드를 불러오는 중…</p>

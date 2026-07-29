@@ -240,10 +240,10 @@ export default function SellerApplications() {
             <div className="i_foot">
               <span className="i_count">총 {total}건</span>
               <div className="i_btn_wrap">
-                <button className="btn m_small m_ghost" type="button" disabled={page <= 1}
+                <button className="btn m_small" type="button" disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
                 <span className="i_page">{page} / {lastPage}</span>
-                <button className="btn m_small m_ghost" type="button" disabled={page >= lastPage}
+                <button className="btn m_small" type="button" disabled={page >= lastPage}
                   onClick={() => setPage((p) => p + 1)}>다음</button>
               </div>
             </div>
@@ -273,7 +273,7 @@ export default function SellerApplications() {
                 </dl>
               </div>
               <div className="i_foot">
-                <button className="btn m_ghost" type="button" disabled={submitting} onClick={() => setApproving(null)}>취소</button>
+                <button className="btn" type="button" disabled={submitting} onClick={() => setApproving(null)}>취소</button>
                 <button className="btn m_primary" type="button" ref={approveRef} data-state={submitting ? "loading" : undefined}
                   onClick={() => act(approving.id, "approve")}>승인 확정</button>
               </div>
@@ -305,7 +305,7 @@ export default function SellerApplications() {
                 </label>
               </div>
               <div className="i_foot">
-                <button className="btn m_ghost" type="button" disabled={submitting} onClick={() => setRejecting(null)}>취소</button>
+                <button className="btn" type="button" disabled={submitting} onClick={() => setRejecting(null)}>취소</button>
                 <button className="btn m_danger" type="button" data-state={submitting ? "loading" : undefined}
                   onClick={() => act(rejecting.id, "reject")}>반려 확정</button>
               </div>

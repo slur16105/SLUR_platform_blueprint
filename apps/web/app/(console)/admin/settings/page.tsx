@@ -179,7 +179,7 @@ export default function AdminSettings() {
       ) : error ? (
         <div className="alert m_inline m_danger" role="alert">
           {error}
-          <button className="btn m_small m_ghost" type="button" onClick={load}>재시도</button>
+          <button className="btn m_small" type="button" onClick={load}>재시도</button>
         </div>
       ) : (
         <>
@@ -251,7 +251,7 @@ export default function AdminSettings() {
               </dl>
             </div>
             <div className="i_foot">
-              <button className="btn m_ghost" type="button" disabled={submitting} onClick={() => setConfirming(false)}>취소</button>
+              <button className="btn" type="button" disabled={submitting} onClick={() => setConfirming(false)}>취소</button>
               <button className="btn m_primary" type="button" data-state={submitting ? "loading" : undefined}
                 onClick={save}>변경 확정</button>
             </div>

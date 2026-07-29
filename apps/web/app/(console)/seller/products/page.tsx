@@ -95,8 +95,8 @@ export default function SellerProducts() {
                     <td>
                       <div className="i_actions">
                         {p.status !== "active" && <button className="btn m_small m_primary" type="button" onClick={() => setStatus(p, "active")}>판매 재개</button>}
-                        {p.status === "active" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "soldout")}>품절 처리</button>}
-                        {p.status !== "hidden" && <button className="btn m_small m_ghost" type="button" onClick={() => setStatus(p, "hidden")}>숨기기</button>}
+                        {p.status === "active" && <button className="btn m_small" type="button" onClick={() => setStatus(p, "soldout")}>품절 처리</button>}
+                        {p.status !== "hidden" && <button className="btn m_small" type="button" onClick={() => setStatus(p, "hidden")}>숨기기</button>}
                       </div>
                     </td>
                   </tr>

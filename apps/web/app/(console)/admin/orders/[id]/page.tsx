@@ -515,7 +515,7 @@ export default function AdminOrderDetail() {
               )}
             </div>
             <div className="i_foot">
-              <button className="btn m_ghost" type="button" disabled={submitting} onClick={closeModal}>취소</button>
+              <button className="btn" type="button" disabled={submitting} onClick={closeModal}>취소</button>
               <button
                 className={`btn ${action.kind === "cancel_order" || action.kind === "cancel_item" ? "m_danger" : "m_primary"}`}
                 type="button" ref={confirmBtnRef} data-state={submitting ? "loading" : undefined}

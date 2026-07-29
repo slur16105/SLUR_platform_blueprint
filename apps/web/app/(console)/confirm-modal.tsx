@@ -59,7 +59,7 @@ export default function ConfirmModal({
           <p className="i_text">{message}</p>
         </div>
         <div className="i_foot">
-          <button className="btn m_ghost" type="button" disabled={submitting} onClick={onCancel}>{cancelLabel}</button>
+          <button className="btn" type="button" disabled={submitting} onClick={onCancel}>{cancelLabel}</button>
           <button
             className={`btn ${danger ? "m_danger" : "m_primary"}`}
             type="button"
