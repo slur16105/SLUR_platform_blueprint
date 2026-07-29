@@ -1,21 +1,18 @@
 .page_admin { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
 .page_admin .p_tabs { display: flex; gap: var(--space-8); }
 .page_admin .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
-.page_admin .p_list { display: flex; flex-direction: column; gap: var(--space-12); }
-.page_admin .p_item { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
-/* .card .i_head(슬러 카드 헤더 패딩 20px)가 새지 않게 padding 0 + 특이도 확보 — 제목 indent 방지 */
-.page_admin .p_item .i_head { display: flex; align-items: baseline; gap: var(--space-8); padding: 0; }
-.page_admin .i_brand { font-size: var(--text-lg); color: var(--color-text-primary); }
-.page_admin .i_company { color: var(--color-text-secondary); font-size: var(--text-sm); }
-.page_admin .i_intro { font-size: var(--text-sm); color: var(--color-text-secondary); }
-.page_admin .i_meta { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4) var(--space-16); font-size: var(--text-sm); }
-.page_admin .i_meta dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
-.page_admin .i_meta dd { display: inline; color: var(--color-text-primary); }
+
+/* 검색 폼 (주문·입금 화면과 동일 패턴) */
+.page_admin .p_search { display: flex; gap: var(--space-8); flex-wrap: wrap; }
+.page_admin .p_search .input_text[type="search"] { flex: 1; max-width: 420px; }
+
+/* 테이블 셀 내부 요소 (테이블 룩은 components/table.css) */
+.page_admin .i_brand { font-weight: var(--weight-bold); color: var(--color-text-primary); }
 .page_admin .i_actions { display: flex; gap: var(--space-8); }
-.page_admin .i_reject { display: flex; flex-direction: column; gap: var(--space-8); }
-.page_admin .i_reason { font-size: var(--text-sm); color: var(--color-danger); }
-.page_admin .i_warn { font-size: var(--text-sm); color: var(--color-danger); }
-/* 승인 확인 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
+.page_admin .i_reason { color: var(--color-text-muted); }
+.page_admin .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }
+
+/* 승인·반려 확인 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
 .page_admin .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
 .page_admin .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
 .page_admin .modal_dialog .i_summary > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-12); }

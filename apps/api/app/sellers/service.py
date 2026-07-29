@@ -47,8 +47,19 @@ async def my_latest_application(session: AsyncSession, user_id: uuid.UUID) -> Se
 CODE_NOT_PENDING = "application_not_pending"
 
 
-async def list_applications(session: AsyncSession, status: str, page: int, size: int = 20):
+async def list_applications(session: AsyncSession, status: str, page: int, size: int = 20, q: str | None = None):
     base = select(SellerApplication).where(SellerApplication.status == status)
+    if q:  # status 필터 위에 다섯 신원 컬럼 부분검색 OR (admin 주문/조회 검색과 동일 ilike 규칙)
+        from app.core.search import ESCAPE, ilike_pattern
+
+        pat = ilike_pattern(q)
+        base = base.where(
+            SellerApplication.brand_name.ilike(pat, escape=ESCAPE)
+            | SellerApplication.company_name.ilike(pat, escape=ESCAPE)
+            | SellerApplication.representative_name.ilike(pat, escape=ESCAPE)
+            | SellerApplication.business_registration_number.ilike(pat, escape=ESCAPE)
+            | SellerApplication.contact_phone.ilike(pat, escape=ESCAPE)
+        )
     total = await session.scalar(select(func.count()).select_from(base.subquery()))
     rows = await session.scalars(
         base.order_by(SellerApplication.created_at.desc(), SellerApplication.id.desc()).offset((page - 1) * size).limit(size)

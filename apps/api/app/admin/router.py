@@ -46,10 +46,12 @@ class RejectRequest(BaseModel):
 async def list_applications(
     status: str = Query("pending", pattern="^(pending|approved|rejected)$"),
     page: int = Query(1, ge=1),
+    q: str | None = Query(None, max_length=100),
     _admin: uuid.UUID = Depends(require_role("admin")),
     session: AsyncSession = Depends(get_session),
 ) -> ApplicationListResponse:
-    rows, total = await sellers_service.list_applications(session, status, page)
+    q = _lookup_params(q, page)  # 공백→None, 2~100자 검증 (admin 주문/조회 검색과 동일 규칙)
+    rows, total = await sellers_service.list_applications(session, status, page, q=q)
     items = [ApplicationAdminItem.model_validate(r, from_attributes=True) for r in rows]
     return ApplicationListResponse(items=items, total=total, page=page)
 
