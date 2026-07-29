@@ -62,7 +62,10 @@
 .page_admin_order_detail .m_line_cancel { flex: none; }
 .page_admin_order_detail .i_cancel_info { display: flex; align-items: center; gap: var(--space-8); padding: var(--space-8) var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-xs); color: var(--color-text-secondary); flex-wrap: wrap; }
 .page_admin_order_detail .i_refunded { color: var(--color-success); font-weight: var(--weight-medium); }
-.page_admin_order_detail .i_fees { display: flex; gap: var(--space-8); justify-content: flex-end; font-size: var(--text-xs); color: var(--color-text-secondary); }
+/* 판매자 묶음 하단 액션바 — 배송비(좌) + 상태 진행 버튼(우, primary) */
+.page_admin_order_detail .i_sub_foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; margin-top: var(--space-8); padding-top: var(--space-12); border-top: 1px solid var(--color-border-subtle); }
+.page_admin_order_detail .i_fees { display: flex; gap: var(--space-8); font-size: var(--text-xs); color: var(--color-text-secondary); }
+.page_admin_order_detail .i_sub_action { flex: none; margin-left: auto; }
 
 /* 금액 요약 */
 .page_admin_order_detail .p_amounts .i_rows { display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--text-sm); }

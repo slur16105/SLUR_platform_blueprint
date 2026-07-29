@@ -332,19 +332,11 @@ export default function AdminOrderDetail() {
                   <strong className="i_brand">{sub.brand_name}</strong>
                   <span className={statusBadgeClass(sub.display_status)}>{statusLabel(sub.display_status)}</span>
                 </div>
-                <div className="i_head_side">
-                  {(sub.carrier || sub.tracking_number) && (
+                {(sub.carrier || sub.tracking_number) && (
+                  <div className="i_head_side">
                     <span className="i_tracking">{sub.carrier ?? "-"} {sub.tracking_number ?? ""}</span>
-                  )}
-                  {sub.display_status === "preparing" && (
-                    <button className="btn m_small m_ghost" type="button"
-                      onClick={() => openAction({ kind: "ship", sub })}>배송중 처리</button>
-                  )}
-                  {sub.display_status === "shipping" && (
-                    <button className="btn m_small m_ghost" type="button"
-                      onClick={() => openAction({ kind: "deliver", sub })}>배송완료 처리</button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
               <ul className="i_lines">
                 {sub.items.map((line) => (
@@ -358,7 +350,7 @@ export default function AdminOrderDetail() {
                       {line.status === "canceled" ? (
                         <span className="badge m_small m_danger">취소</span>
                       ) : (
-                        <button className="btn m_small m_ghost m_line_cancel" type="button"
+                        <button className="btn m_small m_line_cancel" type="button"
                           onClick={() => openAction({ kind: "cancel_item", sub, item: line })}>품목 취소</button>
                       )}
                     </div>
@@ -370,7 +362,7 @@ export default function AdminOrderDetail() {
                         {line.cancellation.refunded_at ? (
                           <span className="i_refunded">환불 완료 {formatDateTime(line.cancellation.refunded_at)}</span>
                         ) : (
-                          <button className="btn m_small m_ghost" type="button"
+                          <button className="btn m_small" type="button"
                             onClick={() => openAction({ kind: "refunded", item: line, cancellation: line.cancellation! })}>
                             환불 완료 기록
                           </button>
@@ -380,9 +372,19 @@ export default function AdminOrderDetail() {
                   </li>
                 ))}
               </ul>
-              <div className="i_fees">
-                <span>배송비 {sub.shipping_fee.toLocaleString()}원</span>
-                {sub.remote_extra_fee > 0 && <span>도서산간 +{sub.remote_extra_fee.toLocaleString()}원</span>}
+              <div className="i_sub_foot">
+                <div className="i_fees">
+                  <span>배송비 {sub.shipping_fee.toLocaleString()}원</span>
+                  {sub.remote_extra_fee > 0 && <span>도서산간 +{sub.remote_extra_fee.toLocaleString()}원</span>}
+                </div>
+                {sub.display_status === "preparing" && (
+                  <button className="btn m_small m_primary i_sub_action" type="button"
+                    onClick={() => openAction({ kind: "ship", sub })}>배송중 처리 →</button>
+                )}
+                {sub.display_status === "shipping" && (
+                  <button className="btn m_small m_primary i_sub_action" type="button"
+                    onClick={() => openAction({ kind: "deliver", sub })}>배송완료 처리 →</button>
+                )}
               </div>
             </section>
           ))}
