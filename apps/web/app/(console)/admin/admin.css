@@ -14,4 +14,11 @@
 .page_admin .i_actions { display: flex; gap: var(--space-8); }
 .page_admin .i_reject { display: flex; flex-direction: column; gap: var(--space-8); }
 .page_admin .i_reason { font-size: var(--text-sm); color: var(--color-danger); }
+.page_admin .i_warn { font-size: var(--text-sm); color: var(--color-danger); }
+/* 승인 확인 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
+.page_admin .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
+.page_admin .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+.page_admin .modal_dialog .i_summary > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-12); }
+.page_admin .modal_dialog .i_summary dt { color: var(--color-text-muted); flex: none; }
+.page_admin .modal_dialog .i_summary dd { color: var(--color-text-primary); text-align: right; min-width: 0; overflow-wrap: anywhere; }
 /* 카테고리 관리 스타일은 category-panel.css로 이동(자립화) — 설정 화면에서도 재사용 */
