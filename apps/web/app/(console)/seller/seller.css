@@ -16,7 +16,7 @@
 .page_seller .p_stat .i_label { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_seller .p_stat .i_value { font-size: var(--text-2xl); font-weight: var(--weight-bold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
 .page_seller .p_low_stock { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
-.page_seller .p_low_stock .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); }
+.page_seller .p_low_stock .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); padding: 0; }
 .page_seller .p_low_stock .p_subtitle { font-size: var(--text-base); }
 .page_seller .p_low_stock .i_link { font-size: var(--text-sm); color: var(--color-text-brand); text-decoration: none; }
 .page_seller .p_low_stock .i_link:hover { text-decoration: underline; }
