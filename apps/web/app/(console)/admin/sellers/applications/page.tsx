@@ -139,6 +139,10 @@ export default function SellerApplications() {
     if (s === status) return;
     setStatus(s);
     setPage(1);
+    // 탭은 독립 컨텍스트 — 이전 탭의 검색어가 새 탭에 남지 않게 초기화한다.
+    // (검색어 미초기화 시 effect가 이전 appliedQ로 재조회해, 검색 안 했는데 필터된 결과가 뜬다)
+    setQ("");
+    setAppliedQ("");
   }
 
   function submitSearch() {
