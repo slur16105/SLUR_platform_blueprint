@@ -15,6 +15,8 @@
 
 /* 확인 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
 .page_admin_deposits .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
-.page_admin_deposits .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
-.page_admin_deposits .modal_dialog .i_summary dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
-.page_admin_deposits .modal_dialog .i_summary dd { display: inline; color: var(--color-text-primary); }
+.page_admin_deposits .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-8); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+/* 각 행 라벨 좌 · 값 우 (양끝 정렬) */
+.page_admin_deposits .modal_dialog .i_summary > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-12); }
+.page_admin_deposits .modal_dialog .i_summary dt { color: var(--color-text-muted); flex: none; }
+.page_admin_deposits .modal_dialog .i_summary dd { color: var(--color-text-primary); text-align: right; min-width: 0; }
