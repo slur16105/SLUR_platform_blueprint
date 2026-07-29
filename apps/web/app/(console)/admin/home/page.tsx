@@ -160,6 +160,9 @@ export default function AdminHomeFeatures() {
   const shownHeroId = activeHeroes.length > 0 ? activeHeroes[0].id : null;
   const multiActiveHero = activeHeroes.length >= 2;
   const draggedKind = dragId ? items.find((i) => i.id === dragId)?.kind ?? null : null;
+  // 같은 구분 항목이 2개 이상일 때만 순서 변경 가능 — 1개뿐이면 바꿀 상대가 없다(손잡이 비활성).
+  const heroCount = items.filter((i) => i.kind === "hero").length;
+  const slotCount = items.length - heroCount;
 
   return (
     <ConsoleShell
@@ -202,11 +205,14 @@ export default function AdminHomeFeatures() {
             </thead>
             <tbody>
               {items.map((f) => {
+                const kindCount = f.kind === "hero" ? heroCount : slotCount;
+                const canReorder = kindCount > 1; // 같은 구분에 항목이 2개 이상이라야 순서 변경 의미가 있다
+                const canDrag = busy === null && !deleting && canReorder;
                 const canDropHere = dragId !== null && dragId !== f.id && draggedKind === f.kind;
                 return (
                   <tr
                     key={f.id}
-                    draggable={busy === null && !deleting}
+                    draggable={canDrag}
                     data-dragging={dragId === f.id ? "" : undefined}
                     data-over={overId === f.id && canDropHere ? "" : undefined}
                     onDragStart={(e) => { setDragId(f.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", f.id); }}
@@ -215,7 +221,13 @@ export default function AdminHomeFeatures() {
                     onDragEnd={() => { setDragId(null); setOverId(null); }}
                   >
                     <td className="i_drag_cell">
-                      <span className="i_grip" title="끌어서 순서 변경">{GripIcon}</span>
+                      <span
+                        className="i_grip"
+                        data-state={canReorder ? undefined : "disabled"}
+                        title={canReorder ? "끌어서 순서 변경" : "이 구분에 항목이 하나뿐이라 순서를 바꿀 수 없습니다"}
+                      >
+                        {GripIcon}
+                      </span>
                     </td>
                     <td>
                       <span className={KIND_BADGE[f.kind] ?? "badge m_small"}>{KIND_LABEL[f.kind] ?? f.kind}</span>
