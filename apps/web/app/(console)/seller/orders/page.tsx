@@ -227,7 +227,7 @@ function SellerOrdersInner() {
       title="주문 관리"
     >
       <div className="page_seller_orders">
-      <nav className="p_tabs" aria-label="배송 상태">
+      <nav className="tab_menu" aria-label="배송 상태">
         {TABS.map((t) => (
           <button className="i_tab" type="button" key={t.key}
             data-state={tab === t.key ? "active" : undefined}

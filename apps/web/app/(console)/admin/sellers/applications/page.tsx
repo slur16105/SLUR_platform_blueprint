@@ -158,15 +158,15 @@ export default function SellerApplications() {
       description="판매자 입점 신청을 검토하고 승인·반려합니다."
     >
       <div className="page_admin">
-        <div className="p_tabs">
+        <nav className="tab_menu" aria-label="심사 상태">
           {(["pending", "approved", "rejected"] as const).map((s) => (
-            <button key={s} type="button"
-              className={`btn m_small${status === s ? " m_primary" : " m_ghost"}`}
+            <button key={s} type="button" className="i_tab"
+              data-state={status === s ? "active" : undefined}
               onClick={() => changeStatus(s)}>
               {s === "pending" ? "심사 대기" : s === "approved" ? "승인됨" : "반려됨"}
             </button>
           ))}
-        </div>
+        </nav>
         <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
           <input className="input_text" type="search" maxLength={100} value={q}
             placeholder="브랜드·상호·대표자명"

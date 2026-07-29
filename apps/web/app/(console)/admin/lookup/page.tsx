@@ -186,10 +186,10 @@ export default function AdminLookup() {
       description="회원·판매자·상품을 검색하고 상세를 확인합니다."
     >
       <div className="page_admin_lookup">
-      <nav className="p_tabs">
+      <nav className="tab_menu" aria-label="조회 대상">
         {TABS.map((t) => (
-          <button key={t.key} type="button"
-            className={`btn m_small${tab === t.key ? " m_primary" : " m_ghost"}`}
+          <button key={t.key} type="button" className="i_tab"
+            data-state={tab === t.key ? "active" : undefined}
             onClick={() => changeTab(t.key)}>{t.label}</button>
         ))}
       </nav>
