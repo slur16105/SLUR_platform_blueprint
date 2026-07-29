@@ -87,9 +87,7 @@ export default function SellerApplications() {
       role="admin"
       title="입점 심사"
       description="판매자 입점 신청을 검토하고 승인·반려합니다."
-      actions={
-        <button className="btn m_small m_ghost" type="button" onClick={() => load(status)}>새로고침</button>
-      }
+      onRefresh={() => load(status)}
     >
       <div className="page_admin">
         <div className="p_tabs">

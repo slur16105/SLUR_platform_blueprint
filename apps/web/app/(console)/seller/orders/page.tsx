@@ -225,7 +225,7 @@ function SellerOrdersInner() {
     <ConsoleShell
       role="seller"
       title="주문 관리"
-      actions={<button className="btn m_small m_ghost" type="button" onClick={() => load(tab, page)}>새로고침</button>}
+      onRefresh={() => load(tab, page)}
     >
       <div className="page_seller_orders">
       <nav className="p_tabs" aria-label="배송 상태">

@@ -184,9 +184,7 @@ export default function AdminLookup() {
       role="admin"
       title="회원·판매자 조회"
       description="회원·판매자·상품을 검색하고 상세를 확인합니다."
-      actions={
-        <button className="btn m_small m_ghost" type="button" onClick={() => load(tab, appliedQ, categoryId, status, page)}>새로고침</button>
-      }
+      onRefresh={() => load(tab, appliedQ, categoryId, status, page)}
     >
       <div className="page_admin_lookup">
       <nav className="p_tabs">
