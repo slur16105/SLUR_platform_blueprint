@@ -1,0 +1,41 @@
+/* giftpop 홈 룩 — .gp_home 스코프로만 적용(전역 오염 방지). 원본 common.css의 홈 시각값을 안전하게 재현.
+   할인·라벨·찜/구매 hover 버튼은 v1 미보유로 제외(사용자 승인 2026-07-29). */
+.gp_home { color: #333; }
+.gp_home a { color: inherit; text-decoration: none; }
+
+/* 히어로 배너 (big_banner 대체 — 검정 배너 톤) */
+.gp_home .gp_hero { margin-bottom: 40px; border-radius: 20px; overflow: hidden; background: #000; color: #fff; }
+.gp_home .gp_hero_inner { display: flex; flex-direction: column; gap: 8px; padding: 48px 32px; }
+.gp_home .gp_hero_eyebrow { font-size: 13px; opacity: .7; }
+.gp_home .gp_hero_title { font-size: 34px; font-weight: 700; line-height: 1.25; }
+.gp_home .gp_hero_lead { font-size: 16px; opacity: .85; }
+
+/* 섹션 */
+.gp_home .gp_section { margin-bottom: 60px; }
+.gp_home .gp_section_title { margin-bottom: 24px; font-size: 26px; font-weight: 700; color: #000; }
+
+/* 상품 그리드 (goods_list_style_01 재현) */
+.gp_home .gp_goods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 20px; list-style: none; }
+.gp_home .gp_goods_item { position: relative; }
+.gp_home .gp_goods_item > a { display: block; }
+.gp_home .gp_thumb { display: block; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 20px; overflow: hidden; position: relative; aspect-ratio: 283 / 218; background: #f7f7f7; }
+.gp_home .gp_thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gp_home .gp_thumb::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.4); opacity: 0; transition: opacity .3s; }
+.gp_home .gp_goods_item:hover .gp_thumb::after { opacity: 1; }
+.gp_home .gp_brand { display: block; margin-bottom: 3px; font-size: 18px; font-weight: 700; color: #000; }
+.gp_home .gp_name { display: block; margin-bottom: 5px; color: #777; }
+.gp_home .gp_price { display: block; font-size: 20px; font-weight: 700; color: #000; }
+
+/* 품절 (sold_out 재현 — 딤 + SOLD OUT) */
+.gp_home .gp_goods_item[data-soldout] .gp_thumb::after { opacity: 1; }
+.gp_home .gp_goods_item[data-soldout] .gp_thumb::before { content: 'SOLD OUT'; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); z-index: 1; text-align: center; color: #fff; font-size: 24px; font-weight: 700; text-shadow: 0 0 5px #000; }
+
+.gp_home .gp_empty { padding: 40px 0; color: #777; text-align: center; }
+
+/* 반응형 (직접 작성하신 responsive.css 전략 반영 — 4열 → 2열) */
+@media (max-width: 768px) {
+  .gp_home .gp_goods { grid-template-columns: repeat(2, 1fr); gap: 20px 12px; }
+  .gp_home .gp_hero_inner { padding: 32px 20px; }
+  .gp_home .gp_hero_title { font-size: 26px; }
+  .gp_home .gp_section_title { font-size: 20px; }
+}

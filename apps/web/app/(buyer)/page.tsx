@@ -1,8 +1,5 @@
-import { Suspense } from "react";
-
 import BuyerShell from "./buyer-shell";
-import { GridSkeleton } from "./buyer-feedback";
-import HomeFeed from "./home-feed";
+import GpHome from "./gp-home";
 
 import "./browse.css";
 import "./home.css";
@@ -21,21 +18,7 @@ import "./home.css";
 export default function BuyerHomePage() {
   return (
     <BuyerShell tab="home" showTabbar topbar={{ variant: "logo", showCart: true }}>
-      <Suspense
-        fallback={
-          <div className="b_container b_section">
-            <p className="b_eyebrow i_eyebrow">큐레이션</p>
-            <h1 className="b_display i_display">
-              골라온 것들을
-              <br />
-              천천히 봅니다
-            </h1>
-            <GridSkeleton />
-          </div>
-        }
-      >
-        <HomeFeed />
-      </Suspense>
+      <GpHome />
     </BuyerShell>
   );
 }
