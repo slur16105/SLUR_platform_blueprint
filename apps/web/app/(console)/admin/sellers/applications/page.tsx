@@ -31,12 +31,6 @@ function formatDateTime(s: string) {
   return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
 }
 
-function statusBadge(s: string) {
-  if (s === "approved") return { className: "badge m_success", label: "승인됨" };
-  if (s === "rejected") return { className: "badge m_danger", label: "반려됨" };
-  return { className: "badge m_warning", label: "심사 대기" };
-}
-
 export default function SellerApplications() {
   const router = useRouter();
   const [items, setItems] = useState<Application[]>([]);
@@ -205,21 +199,17 @@ export default function SellerApplications() {
                   <th>대표자</th>
                   <th>연락처</th>
                   <th>신청일</th>
-                  <th>상태</th>
                   <th aria-label="처리"></th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((a) => {
-                  const badge = statusBadge(a.status);
-                  return (
+                {items.map((a) => (
                     <tr key={a.id}>
                       <td><strong className="i_brand">{a.brand_name}</strong></td>
                       <td>{a.company_name}</td>
                       <td>{a.representative_name}</td>
                       <td className="m_muted">{a.contact_phone}</td>
                       <td className="m_muted">{formatDateTime(a.created_at)}</td>
-                      <td><span className={badge.className}>{badge.label}</span></td>
                       <td>
                         {a.status === "pending" ? (
                           <div className="i_actions">
@@ -233,8 +223,7 @@ export default function SellerApplications() {
                         ) : null}
                       </td>
                     </tr>
-                  );
-                })}
+                ))}
               </tbody>
             </table></div>
             <div className="i_foot">
