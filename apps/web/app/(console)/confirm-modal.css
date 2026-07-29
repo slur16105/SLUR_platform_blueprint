@@ -1,0 +1,4 @@
+/* 공통 확인 모달 — modal_dialog(components/modal.css) 룩을 그대로 쓰고, 본문 여백만 보탠다.
+   modal.css는 i_body에 여백을 두지 않는다(페이지가 각자 정의) → 확인 모달은 여기서 채운다. */
+.modal_dialog.m_confirm .i_body { padding: var(--space-12) var(--space-20) 0; }
+.modal_dialog.m_confirm .i_text { margin: 0; }

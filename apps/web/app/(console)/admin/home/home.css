@@ -12,9 +12,26 @@
 .page_admin_home .i_title { display: block; font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 .page_admin_home .i_issue { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_home .i_period { font-size: var(--text-xs); color: var(--color-text-muted); }
-.page_admin_home .i_order_cell { display: flex; align-items: center; gap: var(--space-4); }
-.page_admin_home .i_order_num { min-width: 1.5em; text-align: center; color: var(--color-text-primary); }
 .page_admin_home .i_actions { display: flex; gap: var(--space-8); flex-wrap: wrap; }
+
+/* 드래그드랍 순서 변경 */
+.page_admin_home .i_drag_cell { width: 2.5rem; text-align: center; }
+.page_admin_home .i_grip { display: inline-flex; align-items: center; justify-content: center; color: var(--color-text-muted); cursor: grab; }
+.page_admin_home .table_data tbody tr[draggable="true"]:active .i_grip { cursor: grabbing; }
+.page_admin_home .table_data tbody tr[data-dragging] { opacity: 0.45; }
+.page_admin_home .table_data tbody tr[data-over] td { box-shadow: inset 0 2px 0 0 var(--color-brand); }
+.page_admin_home .i_sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* 상태 토글 스위치 (노출중/비노출중) */
+.page_admin_home .i_toggle { display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer; }
+.page_admin_home .i_toggle input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.page_admin_home .i_toggle_track { display: inline-flex; align-items: center; width: 2.25rem; height: 1.25rem; padding: 0.125rem; border-radius: var(--radius-full); background: var(--color-border-strong); transition: background-color var(--duration-fast) var(--ease-standard); }
+.page_admin_home .i_toggle_thumb { display: block; width: 1rem; height: 1rem; border-radius: 50%; background: var(--color-surface-card); box-shadow: var(--shadow-xs); transition: transform var(--duration-fast) var(--ease-standard); }
+.page_admin_home .i_toggle input:checked + .i_toggle_track { background: var(--color-brand); }
+.page_admin_home .i_toggle input:checked + .i_toggle_track .i_toggle_thumb { transform: translateX(1rem); }
+.page_admin_home .i_toggle input:focus-visible + .i_toggle_track { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+.page_admin_home .i_toggle input:disabled + .i_toggle_track { opacity: 0.5; cursor: default; }
+.page_admin_home .i_toggle_label { min-width: 3.5em; font-size: var(--text-sm); color: var(--color-text-secondary); }
 
 /* 생성/수정 폼 */
 .page_admin_home .p_form { display: flex; flex-direction: column; gap: var(--space-16); }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
+import ConfirmModal from "@/app/(console)/confirm-modal";
 import "./home.css";
 
 type Feature = {
@@ -29,6 +30,16 @@ function formatDate(s: string | null) {
 
 const KIND_LABEL: Record<string, string> = { hero: "히어로", slot: "슬롯" };
 const LAYOUT_LABEL: Record<string, string> = { feature: "피처", strip: "스트립" };
+// 구분 배지 색 — 행 호버색(--color-surface-hover)과 겹치지 않도록 색을 준다.
+const KIND_BADGE: Record<string, string> = { hero: "badge m_small m_brand", slot: "badge m_small m_outline" };
+
+const GripIcon = (
+  <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+    <circle cx="6" cy="4" r="1.2" /><circle cx="10" cy="4" r="1.2" />
+    <circle cx="6" cy="8" r="1.2" /><circle cx="10" cy="8" r="1.2" />
+    <circle cx="6" cy="12" r="1.2" /><circle cx="10" cy="12" r="1.2" />
+  </svg>
+);
 
 export default function AdminHomeFeatures() {
   const router = useRouter();
@@ -36,6 +47,10 @@ export default function AdminHomeFeatures() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null); // 처리 중인 항목 id — 버튼 잠금
+  const [dragId, setDragId] = useState<string | null>(null); // 드래그 중인 행
+  const [overId, setOverId] = useState<string | null>(null); // 드롭 대상 행
+  const [pendingDelete, setPendingDelete] = useState<Feature | null>(null); // 삭제 확인 모달 대상
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,23 +105,38 @@ export default function AdminHomeFeatures() {
     if (await patch(f.id, { is_active: !f.is_active })) await load();
   }
 
-  // 같은 kind 내 인접 항목과 display_order 값을 맞바꾼다 (category-panel ↑↓ 관례).
-  // 순차 PATCH 2건 — 401/403·에러 봉투 처리는 patch()가 다른 핸들러와 동일하게 맡는다.
-  // 성공·부분실패(a성공·b실패로 display_order 중복 잔존)와 무관하게 load()로 서버 상태에 재동기화한다.
-  async function move(idx: number, dir: -1 | 1) {
-    const cur = items[idx];
-    const target = items[idx + dir];
-    if (!cur || !target || cur.kind !== target.kind) return;
-    const okA = await patch(cur.id, { display_order: target.display_order });
-    if (!okA) return void (await load()); // A 실패(401은 patch가 이미 리다이렉트) — 재동기화만
-    await patch(target.id, { display_order: cur.display_order });
+  // 드래그드랍 순서 변경 — 같은 kind 그룹 안에서만(히어로↔슬롯 경계는 넘지 않는다).
+  // 그룹의 display_order 값 풀은 그대로 두고 "어느 항목이 어느 값을 갖느냐"만 위치대로 재배정한다.
+  // → 값 집합·오름차순·유일성이 보존돼 충돌이 없고, 실제로 자리가 바뀐 항목만 PATCH한다.
+  // 부분 실패(중간 PATCH 오류)든 성공이든 마지막 load()로 서버 상태에 재동기화한다.
+  async function reorder(fromId: string, toId: string) {
+    if (fromId === toId) return;
+    const drag = items.find((i) => i.id === fromId);
+    const drop = items.find((i) => i.id === toId);
+    if (!drag || !drop || drag.kind !== drop.kind) return; // 같은 구분 안에서만
+    const group = items.filter((i) => i.kind === drag.kind); // display_order 오름차순 상태
+    const orders = group.map((i) => i.display_order); // 순서값 풀(보존)
+    const from = group.findIndex((i) => i.id === fromId);
+    const to = group.findIndex((i) => i.id === toId);
+    const next = group.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    const changed = next
+      .map((it, idx) => ({ id: it.id, order: orders[idx], prev: it.display_order }))
+      .filter((u) => u.order !== u.prev);
+    if (changed.length === 0) return;
+    for (const u of changed) {
+      const ok = await patch(u.id, { display_order: u.order });
+      if (!ok) break; // 401은 patch가 이미 리다이렉트, 그 외는 setError. 어느 쪽이든 load로 재동기화.
+    }
     await load();
   }
 
-  async function remove(f: Feature) {
-    if (!window.confirm(`"${f.title}" 항목을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const f = pendingDelete;
+    setDeleting(true);
     setError(null);
-    setBusy(f.id);
     try {
       const res = await fetch(`/api/admin/home/${f.id}`, { method: "DELETE" });
       if (res.status === 401) return void router.replace("/login");
@@ -115,11 +145,12 @@ export default function AdminHomeFeatures() {
         const data = await res.json().catch(() => null);
         return void setError(data?.message ?? "삭제에 실패했습니다.");
       }
+      setPendingDelete(null);
       await load();
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
     } finally {
-      setBusy(null);
+      setDeleting(false);
     }
   }
 
@@ -128,25 +159,26 @@ export default function AdminHomeFeatures() {
   const activeHeroes = items.filter((f) => f.kind === "hero" && f.is_active);
   const shownHeroId = activeHeroes.length > 0 ? activeHeroes[0].id : null;
   const multiActiveHero = activeHeroes.length >= 2;
+  const draggedKind = dragId ? items.find((i) => i.id === dragId)?.kind ?? null : null;
 
   return (
     <ConsoleShell
       role="admin"
       title="메인 화면 관리"
-      description="구매자 앱 메인 화면에 노출되는 히어로·슬롯을 관리합니다. 노출 순서·기간·활성 여부를 정합니다."
+      description="구매자 앱 메인 화면에 노출되는 히어로·슬롯을 관리합니다. 노출 순서·기간·노출 여부를 정합니다."
       actions={<Link className="btn m_small m_primary" href="/admin/home/new">새 항목</Link>}
     >
       <div className="page_admin_home">
       <p className="p_hint">
         여기서 만든 항목은 <strong>구매자 앱 메인 화면</strong>에 그대로 노출됩니다.{" "}
-        <strong>히어로</strong>는 홈 최상단 대형 지면(활성 1건만 노출),{" "}
+        <strong>히어로</strong>는 홈 최상단 대형 지면(노출 1건만),{" "}
         <strong>슬롯</strong>은 편집 문장 + 고른 상품 묶음입니다(피처=크게 2점 / 스트립=가로로 여러 점).{" "}
-        순서·노출기간·활성으로 관리합니다. 아래는 예시 항목이니 <strong>수정</strong>으로 열어 확인해 보세요.
+        행 왼쪽 손잡이를 끌어 <strong>같은 구분 안에서</strong> 순서를 바꿉니다. 아래는 예시 항목이니 <strong>수정</strong>으로 열어 확인해 보세요.
       </p>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {multiActiveHero && (
         <div className="alert m_inline m_warning" role="alert">
-          활성 히어로는 1건만 노출됩니다 — 노출 순서 값이 가장 낮은 히어로가 홈에 나옵니다. 아래 <strong>노출 중</strong> 표시를 확인하세요.
+          노출 중인 히어로가 여러 개입니다 — 홈엔 순서가 가장 앞선 히어로 1건만 나옵니다. 아래 <strong>대표</strong> 표시를 확인하세요.
         </div>
       )}
       {loading ? (
@@ -158,26 +190,37 @@ export default function AdminHomeFeatures() {
           <div className="table_scroll"><table className="table_data">
             <thead>
               <tr>
+                <th className="i_drag_cell"><span className="i_sr">순서</span></th>
                 <th>구분</th>
                 <th>제목</th>
                 <th>레이아웃</th>
                 <th className="m_num">품목</th>
                 <th>노출 기간</th>
-                <th>순서</th>
                 <th>상태</th>
                 <th>관리</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((f, idx) => {
-                const prev = items[idx - 1];
-                const next = items[idx + 1];
+              {items.map((f) => {
+                const canDropHere = dragId !== null && dragId !== f.id && draggedKind === f.kind;
                 return (
-                  <tr key={f.id}>
+                  <tr
+                    key={f.id}
+                    draggable={busy === null && !deleting}
+                    data-dragging={dragId === f.id ? "" : undefined}
+                    data-over={overId === f.id && canDropHere ? "" : undefined}
+                    onDragStart={(e) => { setDragId(f.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", f.id); }}
+                    onDragOver={(e) => { if (canDropHere) { e.preventDefault(); if (overId !== f.id) setOverId(f.id); } }}
+                    onDrop={(e) => { e.preventDefault(); if (dragId) void reorder(dragId, f.id); setDragId(null); setOverId(null); }}
+                    onDragEnd={() => { setDragId(null); setOverId(null); }}
+                  >
+                    <td className="i_drag_cell">
+                      <span className="i_grip" title="끌어서 순서 변경">{GripIcon}</span>
+                    </td>
                     <td>
-                      <span className="badge m_small">{KIND_LABEL[f.kind] ?? f.kind}</span>
+                      <span className={KIND_BADGE[f.kind] ?? "badge m_small"}>{KIND_LABEL[f.kind] ?? f.kind}</span>
                       {multiActiveHero && f.id === shownHeroId && (
-                        <span className="badge m_small m_success" title="이 히어로가 홈에 노출됩니다"> 노출 중</span>
+                        <span className="badge m_small m_success" title="여러 활성 히어로 중 실제로 홈에 노출되는 히어로"> 대표</span>
                       )}
                     </td>
                     <td>
@@ -190,28 +233,23 @@ export default function AdminHomeFeatures() {
                     <td className="m_num">{f.item_count}</td>
                     <td className="i_period">{formatDate(f.starts_at)} ~ {formatDate(f.ends_at)}</td>
                     <td>
-                      <div className="i_order_cell">
-                        <button className="btn m_small m_ghost" type="button" aria-label="위로"
-                          disabled={busy !== null || !prev || prev.kind !== f.kind}
-                          onClick={() => move(idx, -1)}>↑</button>
-                        <span className="i_order_num">{f.display_order}</span>
-                        <button className="btn m_small m_ghost" type="button" aria-label="아래로"
-                          disabled={busy !== null || !next || next.kind !== f.kind}
-                          onClick={() => move(idx, 1)}>↓</button>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`badge m_small${f.is_active ? " m_success" : ""}`}>
-                        {f.is_active ? "활성" : "비활성"}
-                      </span>
+                      <label className="i_toggle">
+                        <input
+                          type="checkbox"
+                          checked={f.is_active}
+                          disabled={busy !== null}
+                          onChange={() => toggleActive(f)}
+                          aria-label={`${f.title} 노출 여부`}
+                        />
+                        <span className="i_toggle_track" aria-hidden="true"><span className="i_toggle_thumb" /></span>
+                        <span className="i_toggle_label">{f.is_active ? "노출중" : "비노출중"}</span>
+                      </label>
                     </td>
                     <td>
                       <div className="i_actions">
-                        <button className="btn m_small m_ghost" type="button" disabled={busy !== null}
-                          onClick={() => toggleActive(f)}>{f.is_active ? "비활성화" : "활성화"}</button>
                         <Link className="btn m_small m_ghost" href={`/admin/home/${f.id}`}>수정</Link>
                         <button className="btn m_small m_danger" type="button" disabled={busy !== null}
-                          onClick={() => remove(f)}>삭제</button>
+                          onClick={() => setPendingDelete(f)}>삭제</button>
                       </div>
                     </td>
                   </tr>
@@ -222,6 +260,17 @@ export default function AdminHomeFeatures() {
         </div>
       )}
       </div>
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title="항목 삭제"
+        message={pendingDelete ? <>「<strong>{pendingDelete.title}</strong>」 항목을 삭제합니다. 되돌릴 수 없습니다.</> : ""}
+        confirmLabel="삭제"
+        danger
+        submitting={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => { if (!deleting) setPendingDelete(null); }}
+      />
     </ConsoleShell>
   );
 }
