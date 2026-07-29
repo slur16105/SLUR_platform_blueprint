@@ -6,7 +6,7 @@ import { assertSameOrigin, proxyWithRefresh } from "@/lib/auth";
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 function badId() {
-  return Response.json({ code: "validation_error", message: "올바르지 않은 편성 ID입니다.", details: [] }, { status: 422 });
+  return Response.json({ code: "validation_error", message: "올바르지 않은 항목 ID입니다.", details: [] }, { status: 422 });
 }
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {

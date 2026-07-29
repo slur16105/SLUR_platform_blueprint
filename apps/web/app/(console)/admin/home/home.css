@@ -1,4 +1,4 @@
-/* 관리자 홈 편성 (Story 9.2) — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
+/* 관리자 메인 화면 관리 (Story 9.2) — 페이지 전용 스타일 (컴포넌트 룩은 styles/slur/components가 담당) */
 .page_admin_home { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
 .page_admin_home .p_head { display: flex; align-items: center; justify-content: space-between; }
 .page_admin_home .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
@@ -7,7 +7,7 @@
 .page_admin_home .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
 .page_admin_home .p_hint { font-size: var(--text-sm); color: var(--color-text-muted); }
 
-/* 편성 목록 테이블 */
+/* 항목 목록 테이블 */
 .page_admin_home .i_kind { display: inline-flex; align-items: center; gap: var(--space-4); }
 .page_admin_home .i_title { display: block; font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 .page_admin_home .i_issue { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }

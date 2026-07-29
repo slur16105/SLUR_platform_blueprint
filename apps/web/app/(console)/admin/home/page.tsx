@@ -35,7 +35,7 @@ export default function AdminHomeFeatures() {
   const [items, setItems] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null); // 처리 중인 편성 id — 버튼 잠금
+  const [busy, setBusy] = useState<string | null>(null); // 처리 중인 항목 id — 버튼 잠금
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,7 +44,7 @@ export default function AdminHomeFeatures() {
       const res = await fetch("/api/admin/home");
       if (res.status === 401) return void router.replace("/login");
       if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
-      if (!res.ok) return void setError("편성 목록을 불러오지 못했습니다. 새로고침해 주세요.");
+      if (!res.ok) return void setError("목록을 불러오지 못했습니다. 다시 시도해 주세요.");
       const data = await res.json();
       // kind(hero 먼저) → display_order → 최신순 정렬. 상류 순서와 무관하게 화면에서 고정한다.
       const list: Feature[] = (data.items ?? []).slice().sort((a: Feature, b: Feature) =>
@@ -90,7 +90,7 @@ export default function AdminHomeFeatures() {
     if (await patch(f.id, { is_active: !f.is_active })) await load();
   }
 
-  // 같은 kind 내 인접 편성과 display_order 값을 맞바꾼다 (category-panel ↑↓ 관례).
+  // 같은 kind 내 인접 항목과 display_order 값을 맞바꾼다 (category-panel ↑↓ 관례).
   // 순차 PATCH 2건 — 401/403·에러 봉투 처리는 patch()가 다른 핸들러와 동일하게 맡는다.
   // 성공·부분실패(a성공·b실패로 display_order 중복 잔존)와 무관하게 load()로 서버 상태에 재동기화한다.
   async function move(idx: number, dir: -1 | 1) {
@@ -104,7 +104,7 @@ export default function AdminHomeFeatures() {
   }
 
   async function remove(f: Feature) {
-    if (!window.confirm(`"${f.title}" 편성을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+    if (!window.confirm(`"${f.title}" 항목을 삭제할까요? 되돌릴 수 없습니다.`)) return;
     setError(null);
     setBusy(f.id);
     try {
@@ -132,16 +132,16 @@ export default function AdminHomeFeatures() {
   return (
     <ConsoleShell
       role="admin"
-      title="홈 편성"
-      description="구매자 홈 화면에 노출되는 히어로·슬롯 편성입니다. 노출 순서·기간·활성 여부를 관리합니다."
-      actions={<Link className="btn m_small m_primary" href="/admin/home/new">새 편성</Link>}
+      title="메인 화면 관리"
+      description="구매자 앱 메인 화면에 노출되는 히어로·슬롯을 관리합니다. 노출 순서·기간·활성 여부를 정합니다."
+      actions={<Link className="btn m_small m_primary" href="/admin/home/new">새 항목</Link>}
     >
       <div className="page_admin_home">
       <p className="p_hint">
-        여기서 만든 편성은 <strong>구매자 앱 홈 화면</strong>에 그대로 노출됩니다.{" "}
+        여기서 만든 항목은 <strong>구매자 앱 메인 화면</strong>에 그대로 노출됩니다.{" "}
         <strong>히어로</strong>는 홈 최상단 대형 지면(활성 1건만 노출),{" "}
         <strong>슬롯</strong>은 편집 문장 + 고른 상품 묶음입니다(피처=크게 2점 / 스트립=가로로 여러 점).{" "}
-        순서·노출기간·활성으로 관리합니다. 아래는 예시 편성이니 <strong>수정</strong>으로 열어 확인해 보세요.
+        순서·노출기간·활성으로 관리합니다. 아래는 예시 항목이니 <strong>수정</strong>으로 열어 확인해 보세요.
       </p>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {multiActiveHero && (
@@ -152,7 +152,7 @@ export default function AdminHomeFeatures() {
       {loading ? (
         <p className="p_empty" role="status">불러오는 중…</p>
       ) : items.length === 0 ? (
-        <p className="p_empty">편성이 없습니다 — 첫 편성을 만들어 보세요.</p>
+        <p className="p_empty">항목이 없습니다 — 첫 항목을 만들어 보세요.</p>
       ) : (
         <div className="table_wrap">
           <div className="table_scroll"><table className="table_data">

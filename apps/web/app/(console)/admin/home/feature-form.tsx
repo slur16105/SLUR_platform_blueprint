@@ -100,8 +100,8 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
       const res = await fetch(`/api/admin/home/${featureId}`);
       if (res.status === 401) return void router.replace("/login");
       if (res.status === 403) return void router.replace("/no-role");
-      if (res.status === 404) return void setLoadError("편성을 찾을 수 없습니다. 삭제되었을 수 있습니다.");
-      if (!res.ok) return void setLoadError("편성을 불러오지 못했습니다.");
+      if (res.status === 404) return void setLoadError("항목을 찾을 수 없습니다. 삭제되었을 수 있습니다.");
+      if (!res.ok) return void setLoadError("항목을 불러오지 못했습니다.");
       const d: FeatureDetail = await res.json();
       setKind(d.kind);
       setLayout(d.layout);
@@ -237,7 +237,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
     return (
       <div className="page_admin_home">
         <div className="alert m_inline m_danger" role="alert">{loadError}</div>
-        <nav className="p_tabs"><Link className="btn m_small m_ghost" href="/admin/home">← 편성 목록</Link></nav>
+        <nav className="p_tabs"><Link className="btn m_small m_ghost" href="/admin/home">← 메인 화면 관리</Link></nav>
       </div>
     );
   }
@@ -253,7 +253,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
               <span className="i_label">구분 <span className="i_req">*</span></span>
               <select className="input_text m_select" value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
                 <option value="hero">히어로 (홈 최상단 대표)</option>
-                <option value="slot">슬롯 (일반 편성)</option>
+                <option value="slot">슬롯 (일반)</option>
               </select>
             </label>
             <label className="i_field">
@@ -284,7 +284,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
           <label className="i_field">
             <span className="i_label">리드 문구</span>
             <textarea className="input_text" maxLength={5000} value={leadText}
-              placeholder="편성 소개 문구 (선택)" onChange={(e) => setLeadText(e.target.value)} />
+              placeholder="소개 문구 (선택)" onChange={(e) => setLeadText(e.target.value)} />
           </label>
           <label className="i_field">
             <span className="i_label">이미지 경로</span>
@@ -330,7 +330,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
 
         <fieldset className="card p_fieldset">
           <legend className="p_legend">상품 묶음</legend>
-          <p className="i_note">후보에서 상품을 골라 오른쪽에 담고 순서를 정합니다. 저장하면 이 목록으로 <strong>편성 품목이 전량 교체</strong>됩니다.</p>
+          <p className="i_note">후보에서 상품을 골라 오른쪽에 담고 순서를 정합니다. 저장하면 이 목록으로 <strong>이 항목의 상품이 전량 교체</strong>됩니다.</p>
           <div className="p_picker">
             <div className="p_picker_col">
               <div className="i_col_head">
@@ -414,7 +414,7 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
           <div className="i_form_actions">
             <button className="btn m_primary" type="submit" disabled={submitting}
               data-state={submitting ? "loading" : undefined}>
-              {isEdit ? "변경 저장" : "편성 만들기"}
+              {isEdit ? "변경 저장" : "항목 만들기"}
             </button>
           </div>
         </div>
