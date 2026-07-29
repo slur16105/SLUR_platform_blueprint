@@ -199,7 +199,7 @@ export default function SellerApplications() {
                   <th>대표자</th>
                   <th>연락처</th>
                   <th>신청일</th>
-                  <th aria-label="처리"></th>
+                  <th aria-label="처리">{status === "rejected" ? "반려 사유" : status === "pending" ? "처리" : ""}</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,7 +219,7 @@ export default function SellerApplications() {
                               onClick={() => { setRejecting(a); setReason(""); }}>반려</button>
                           </div>
                         ) : a.status === "rejected" && a.rejection_reason ? (
-                          <span className="i_reason">사유: {a.rejection_reason}</span>
+                          <span className="i_reason">{a.rejection_reason}</span>
                         ) : null}
                       </td>
                     </tr>
