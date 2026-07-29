@@ -279,7 +279,7 @@ export default function AdminOrderDetail() {
       return;
     }
     submitAction({ action: "mark_refunded", cancellation_id: action.cancellation.cancellation_id },
-      `${action.item.product_name} 환불 완료를 기록했습니다.`);
+      `${action.item.product_name} 환불 완료 처리했습니다.`);
   }
 
   const modalTitle = action === null ? "" : {
@@ -287,7 +287,7 @@ export default function AdminOrderDetail() {
     cancel_item: "품목 취소",
     ship: "배송중 처리",
     deliver: "배송완료 처리",
-    refunded: "환불 완료 기록",
+    refunded: "환불 완료 처리",
   }[action.kind];
 
   return (
@@ -364,7 +364,7 @@ export default function AdminOrderDetail() {
                         ) : (
                           <button className="btn m_small" type="button"
                             onClick={() => openAction({ kind: "refunded", item: line, cancellation: line.cancellation! })}>
-                            환불 완료 기록
+                            환불 완료 처리
                           </button>
                         )}
                       </div>
@@ -453,7 +453,7 @@ export default function AdminOrderDetail() {
                 <p className="i_text">이 묶음을 배송완료로 강제 전환합니다. 처리 후에는 되돌릴 수 없습니다.</p>
               )}
               {action.kind === "refunded" && (
-                <p className="i_text">아래 취소 건의 환불 완료 시각을 기록합니다. 이미 기록된 건은 중복 처리되지 않습니다.</p>
+                <p className="i_text">무통장입금이라 실제 환불은 <strong>구매자 계좌로 직접 송금</strong>합니다. 송금을 마친 뒤 눌러 환불 완료를 기록하세요. 이미 처리된 건은 중복되지 않습니다.</p>
               )}
               <dl className="i_summary">
                 <div><dt>주문번호</dt><dd><strong>{detail.order_no}</strong></dd></div>
