@@ -137,6 +137,12 @@ export default function AdminHomeFeatures() {
       actions={<Link className="btn m_small m_primary" href="/admin/home/new">새 편성</Link>}
     >
       <div className="page_admin_home">
+      <p className="p_hint">
+        여기서 만든 편성은 <strong>구매자 앱 홈 화면</strong>에 그대로 노출됩니다.{" "}
+        <strong>히어로</strong>는 홈 최상단 대형 지면(활성 1건만 노출),{" "}
+        <strong>슬롯</strong>은 편집 문장 + 고른 상품 묶음입니다(피처=크게 2점 / 스트립=가로로 여러 점).{" "}
+        순서·노출기간·활성으로 관리합니다. 아래는 예시 편성이니 <strong>수정</strong>으로 열어 확인해 보세요.
+      </p>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {multiActiveHero && (
         <div className="alert m_inline m_warning" role="alert">
