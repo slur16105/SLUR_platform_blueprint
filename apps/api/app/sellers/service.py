@@ -162,6 +162,22 @@ async def find_seller_ids_by_brand(session: AsyncSession, q: str) -> list[uuid.U
     return list(rows)
 
 
+async def get_seller_by_user_id(session: AsyncSession, user_id: uuid.UUID) -> dict | None:
+    """회원 상세용 판매자 프로필 (user_id 1:1). product_count 합성은 라우터 층이 붙인다."""
+    seller = await session.scalar(select(Seller).where(Seller.user_id == user_id))
+    if seller is None:
+        return None
+    return {
+        "id": seller.id, "brand_name": seller.brand_name, "brand_intro": seller.brand_intro,
+        "company_name": seller.company_name, "representative_name": seller.representative_name,
+        "business_registration_number": seller.business_registration_number,
+        "mail_order_number": seller.mail_order_number, "business_address": seller.business_address,
+        "contact_phone": seller.contact_phone, "base_shipping_fee": seller.base_shipping_fee,
+        "jeju_extra_fee": seller.jeju_extra_fee, "island_extra_fee": seller.island_extra_fee,
+        "created_at": seller.created_at,
+    }
+
+
 async def list_sellers_admin(session: AsyncSession, q: str | None, page: int, size: int) -> dict:
     """관리자 판매자 조회 (5.6) — 브랜드·상호 검색, 법정 신원·배송비 포함. product_count는 라우터가 붙인다."""
     from sqlalchemy import func

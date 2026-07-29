@@ -218,14 +218,21 @@ async def find_user_ids_by_name_or_email(session: AsyncSession, q: str) -> list[
     return list(rows)
 
 
-async def list_users(session: AsyncSession, q: str | None, page: int, size: int) -> dict:
-    """관리자 회원 조회 (5.6, FR-30 읽기 전용) — 이메일·이름 검색, 역할 포함."""
+async def list_users(session: AsyncSession, q: str | None, page: int, size: int, role: str | None = None) -> dict:
+    """관리자 회원 조회 (5.6, FR-30 읽기 전용) — 이메일·이름 검색, 역할 필터·포함.
+
+    role: admin/seller = 해당 role 보유 회원, buyer(일반회원) = admin·seller 어느 것도 없는 회원, None = 전체.
+    """
     from app.core.search import ESCAPE, ilike_pattern
 
     base = select(User)
     if q:
         pat = ilike_pattern(q)
         base = base.where((User.name.ilike(pat, escape=ESCAPE)) | (User.email.ilike(pat, escape=ESCAPE)))
+    if role in ("admin", "seller"):
+        base = base.where(User.id.in_(select(UserRole.user_id).where(UserRole.role == role)))
+    elif role == "buyer":
+        base = base.where(User.id.not_in(select(UserRole.user_id).where(UserRole.role.in_(["admin", "seller"]))))
     total = await session.scalar(select(func.count()).select_from(base.subquery())) or 0
     users = list(await session.scalars(
         base.order_by(User.created_at.desc(), User.id.desc()).offset((page - 1) * size).limit(size)
@@ -242,4 +249,19 @@ async def list_users(session: AsyncSession, q: str | None, page: int, size: int)
             "roles": sorted(roles_by_user.get(u.id, [])), "created_at": u.created_at,
         } for u in users],
         "total": total, "page": page, "size": size,
+    }
+
+
+async def get_user_basic(session: AsyncSession, user_id: uuid.UUID) -> dict | None:
+    """회원 상세용 기본 정보 (id·email·name·roles·가입일). 없으면 None.
+
+    판매자 프로필·상품 수 등 타 도메인 합성은 라우터 층이 붙인다 (AD-2: auth→sellers 엣지 금지).
+    """
+    user = await session.scalar(select(User).where(User.id == user_id))
+    if user is None:
+        return None
+    roles = list(await session.scalars(select(UserRole.role).where(UserRole.user_id == user_id)))
+    return {
+        "id": user.id, "email": user.email or "", "name": user.name,
+        "roles": sorted(roles), "created_at": user.created_at,
     }

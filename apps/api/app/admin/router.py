@@ -347,15 +347,37 @@ def _lookup_params(q: str | None, page: int) -> str | None:
 @router.get("/users")
 async def admin_list_users(
     q: str | None = None,
+    role: str | None = None,
     page: int = 1,
     _admin: uuid.UUID = Depends(require_role("admin")),
     session: AsyncSession = Depends(get_session),
 ):
-    """회원 조회 — 이메일·이름·역할·가입일 (AC 1). 주문 이력은 /admin/orders?q=이메일 링크로."""
+    """회원 조회 — 이메일·이름·역할·가입일 (AC 1). role=admin|seller|buyer 필터. 주문 이력은 /admin/orders?q=이메일 링크로."""
     from app.core.config import get_settings as _gs
 
+    if role is not None and role not in ("admin", "seller", "buyer"):
+        raise AppError("validation_error", "올바르지 않은 역할입니다.", status_code=422)
     q = _lookup_params(q, page)
-    return await auth_service.list_users(session, q, page, _gs().page_size)
+    return await auth_service.list_users(session, q, page, _gs().page_size, role=role)
+
+
+@router.get("/users/{user_id}")
+async def admin_get_user(
+    user_id: uuid.UUID,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """회원 상세 — 기본정보·역할 + (판매자면) 사업자 프로필·상품 수. 타 도메인 합성은 이 라우터 층에서."""
+    user = await auth_service.get_user_basic(session, user_id)
+    if user is None:
+        raise AppError("not_found", "회원을 찾을 수 없습니다.", status_code=404)
+    seller = None
+    if "seller" in user["roles"]:
+        seller = await sellers_service.get_seller_by_user_id(session, user_id)
+        if seller is not None:
+            counts = await products_service.count_products_by_sellers(session, [seller["id"]])
+            seller["product_count"] = counts.get(seller["id"], 0)
+    return {**user, "seller": seller}
 
 
 @router.get("/sellers")
