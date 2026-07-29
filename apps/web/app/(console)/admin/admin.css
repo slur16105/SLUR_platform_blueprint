@@ -18,3 +18,8 @@
 .page_admin .modal_dialog .i_summary dt { color: var(--color-text-muted); flex: none; }
 .page_admin .modal_dialog .i_summary dd { color: var(--color-text-primary); text-align: right; min-width: 0; overflow-wrap: anywhere; }
 /* 카테고리 관리 스타일은 category-panel.css로 이동(자립화) — 설정 화면에서도 재사용 */
+/* 검색 활성 표시 — 검색바 아래, 결과 위. 검색 중임을 명확히 + 초기화 */
+.page_admin .p_search_note { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); padding: var(--space-8) var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_admin .p_search_note strong { color: var(--color-text-primary); font-weight: var(--weight-semibold); }
+.page_admin .p_search_note .i_clear { border: none; background: none; color: var(--color-text-brand); font-size: var(--text-sm); font-weight: var(--weight-medium); cursor: pointer; flex: none; }
+.page_admin .p_search_note .i_clear:hover { text-decoration: underline; }

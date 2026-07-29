@@ -153,6 +153,12 @@ export default function SellerApplications() {
     else setAppliedQ(query);
   }
 
+  function clearSearch() {
+    setQ("");
+    setAppliedQ("");
+    setPage(1);
+  }
+
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -177,6 +183,12 @@ export default function SellerApplications() {
             onChange={(e) => setQ(e.target.value)} />
           <button className="btn m_primary" type="submit">검색</button>
         </form>
+        {appliedQ && (
+          <div className="p_search_note" role="status">
+            <span>「<strong>{appliedQ}</strong>」 검색 결과{!loading ? ` · ${total}건` : ""}</span>
+            <button className="i_clear" type="button" onClick={clearSearch}>검색 초기화</button>
+          </div>
+        )}
         {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
         {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
         {loading ? (
