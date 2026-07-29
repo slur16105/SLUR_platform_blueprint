@@ -2,6 +2,7 @@
 /* 와이드: 2컬럼(좌 작업 2fr / 우 참조 1fr). 헤더바·타임라인·알림은 풀폭(1/-1). */
 .page_admin_order_detail { flex: 1; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; gap: var(--space-16); }
 /* 알림·로더·헤더·타임라인·모달은 그리드 전체 폭을 차지한다 */
+.page_admin_order_detail > .p_back,
 .page_admin_order_detail > .alert,
 .page_admin_order_detail > .p_loading,
 .page_admin_order_detail > .p_summary,
@@ -18,9 +19,9 @@
   .page_admin_order_detail .i_aside { grid-column: 1; }
   .page_admin_order_detail .i_aside { position: static; top: auto; }
 }
-.page_admin_order_detail .p_head { display: flex; align-items: center; justify-content: space-between; }
-.page_admin_order_detail .p_head_actions { display: flex; align-items: center; gap: var(--space-8); }
-.page_admin_order_detail .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+/* 뒤로가기 (브레드크럼형) — 페이지 최상단, 목록으로 복귀. 링크 폭만 차지. */
+.page_admin_order_detail .p_back { display: inline-flex; align-items: center; gap: var(--space-4); width: fit-content; font-size: var(--text-sm); color: var(--color-text-muted); }
+.page_admin_order_detail .p_back:hover { color: var(--color-text-brand); }
 .page_admin_order_detail .p_loading { padding: var(--space-16); color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
 
 /* 섹션 카드 공통 */
@@ -30,13 +31,14 @@
 .page_admin_order_detail .i_meta dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
 .page_admin_order_detail .i_meta dd { display: inline; color: var(--color-text-primary); }
 
-/* 헤더 카드 */
-.page_admin_order_detail .p_summary .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); }
-.page_admin_order_detail .i_order { display: flex; align-items: baseline; gap: var(--space-8); }
+/* 요약(헤더) 카드 — 좌: 주문번호+상태배지 한 줄, UUID는 아래 줄. 우: 주 액션. 상단 정렬로 반듯하게. */
+.page_admin_order_detail .p_summary .i_head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; }
+.page_admin_order_detail .p_summary .i_ident { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.page_admin_order_detail .p_summary .i_title_row { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; }
 .page_admin_order_detail .i_order_no { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--color-text-primary); }
-.page_admin_order_detail .i_uuid { display: inline-block; padding: 0; border: none; background: transparent; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+.page_admin_order_detail .i_uuid { align-self: flex-start; padding: 0; border: none; background: transparent; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
 .page_admin_order_detail .i_uuid:hover { color: var(--color-text-brand); text-decoration: underline; }
-.page_admin_order_detail .p_summary .i_actions { display: flex; justify-content: flex-end; }
+.page_admin_order_detail .p_summary .i_actions { display: flex; align-items: center; gap: var(--space-8); flex: none; }
 
 /* 묶음 카드 */
 .page_admin_order_detail .p_sub .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; }

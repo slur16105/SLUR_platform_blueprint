@@ -291,17 +291,9 @@ export default function AdminOrderDetail() {
   }[action.kind];
 
   return (
-    <ConsoleShell
-      role="admin"
-      title="주문 상세"
-      actions={
-        <>
-          <button className="btn m_small m_ghost" type="button" onClick={() => load()}>새로고침</button>
-          <Link className="btn m_small m_ghost" href="/admin/orders">← 주문 검색</Link>
-        </>
-      }
-    >
+    <ConsoleShell role="admin" title="주문 상세" onRefresh={() => load()}>
       <div className="page_admin_order_detail">
+      <Link className="p_back" href="/admin/orders"><span aria-hidden="true">←</span> 주문 검색</Link>
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {loading && <p className="p_loading" role="status">불러오는 중…</p>}
@@ -309,24 +301,26 @@ export default function AdminOrderDetail() {
         <>
           <section className="card p_summary">
             <div className="i_head">
-              <div className="i_order">
-                <strong className="i_order_no">{detail.order_no}</strong>
+              <div className="i_ident">
+                <div className="i_title_row">
+                  <strong className="i_order_no">{detail.order_no}</strong>
+                  <span className={statusBadgeClass(detail.display_status)}>{statusLabel(detail.display_status)}</span>
+                </div>
                 <button className="i_uuid" type="button" title="클릭하여 전체 주문 ID 복사" onClick={copyOrderId}>
                   {copied ? "복사됨" : shortUuid(detail.order_id)}
                 </button>
               </div>
-              <span className={statusBadgeClass(detail.display_status)}>{statusLabel(detail.display_status)}</span>
+              {detail.display_status === "awaiting_payment" && (
+                <div className="i_actions">
+                  <button className="btn m_small m_danger" type="button"
+                    onClick={() => openAction({ kind: "cancel_order" })}>주문 전체 취소</button>
+                </div>
+              )}
             </div>
             <dl className="i_meta">
               <div><dt>주문 일시</dt><dd>{formatDateTime(detail.created_at)}</dd></div>
               <div><dt>주문자</dt><dd>{detail.buyer_name} ({detail.buyer_email})</dd></div>
             </dl>
-            {detail.display_status === "awaiting_payment" && (
-              <div className="i_actions">
-                <button className="btn m_small m_danger" type="button"
-                  onClick={() => openAction({ kind: "cancel_order" })}>주문 전체 취소</button>
-              </div>
-            )}
           </section>
 
           <div className="i_work">
