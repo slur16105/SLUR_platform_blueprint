@@ -51,7 +51,8 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/deposits", label: "입금 확인", icon: I.card },
   { href: "/admin/sellers/applications", label: "입점 심사", icon: I.badge },
   { href: "/admin/home", label: "메인 화면 관리", icon: I.layout },
-  { href: "/admin/lookup", label: "회원·판매자", icon: I.people },
+  { href: "/admin/lookup", label: "회원 관리", icon: I.people },
+  { href: "/admin/products", label: "상품", icon: I.box },
   { href: "/admin/settings", label: "설정", icon: I.gear },
 ];
 

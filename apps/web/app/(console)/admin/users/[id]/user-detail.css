@@ -1,0 +1,17 @@
+/* 회원 상세 — 페이지 전용 (컴포넌트 룩은 styles/slur/components가 담당) */
+.page_admin_user { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
+.page_admin_user .p_back { display: inline-flex; align-items: center; gap: var(--space-4); font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_admin_user .p_back:hover { color: var(--color-text-brand); }
+.page_admin_user .p_loading { padding: var(--space-16); color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+
+.page_admin_user .p_block { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-20); }
+.page_admin_user .i_block_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; }
+.page_admin_user .i_title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_admin_user .i_roles { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.page_admin_user .i_block_foot { display: flex; gap: var(--space-8); }
+
+/* 라벨(좌 고정폭) · 값(우 유동) — 값이 줄바꿈돼도 라벨 밑이 아니라 값 컬럼 안에 접힌다 */
+.page_admin_user .i_meta { display: flex; flex-direction: column; gap: var(--space-8); font-size: var(--text-sm); }
+.page_admin_user .i_meta > div { display: flex; gap: var(--space-12); }
+.page_admin_user .i_meta dt { flex: none; width: 6rem; color: var(--color-text-muted); white-space: nowrap; }
+.page_admin_user .i_meta dd { flex: 1; min-width: 0; color: var(--color-text-primary); }

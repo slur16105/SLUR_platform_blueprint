@@ -24,6 +24,12 @@ export async function GET(req: NextRequest) {
   const query = new URLSearchParams({ page });
   if (q) query.set("q", q);
 
+  if (tab === "users") {
+    const role = sp.get("role") ?? "";
+    if (role && !["admin", "seller", "buyer"].includes(role)) return invalid("올바르지 않은 역할입니다.");
+    if (role) query.set("role", role);
+  }
+
   if (tab === "products") {
     const categoryId = sp.get("category_id") ?? "";
     const status = sp.get("status") ?? "";
