@@ -291,7 +291,7 @@ export default function AdminOrderDetail() {
   }[action.kind];
 
   return (
-    <ConsoleShell role="admin" title="주문 상세" onRefresh={() => load()}>
+    <ConsoleShell role="admin" title="주문 상세">
       <div className="page_admin_order_detail">
       <Link className="p_back" href="/admin/orders"><span aria-hidden="true">←</span> 주문 검색</Link>
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}

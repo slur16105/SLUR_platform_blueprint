@@ -225,7 +225,6 @@ function SellerOrdersInner() {
     <ConsoleShell
       role="seller"
       title="주문 관리"
-      onRefresh={() => load(tab, page)}
     >
       <div className="page_seller_orders">
       <nav className="p_tabs" aria-label="배송 상태">

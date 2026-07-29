@@ -24,10 +24,6 @@
 .console_topbar { position: sticky; top: 0; z-index: var(--z-sticky); height: 3.5rem; display: flex; align-items: center; gap: var(--space-12); padding: 0 var(--space-24); background: var(--color-surface-card); border-bottom: 1px solid var(--color-border-subtle); }
 .console_topbar .l_crumb { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-muted); }
 .console_topbar .l_top_actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-8); }
-/* 새로고침 — 상단바 고정 아이콘 버튼(테두리·배경 없이 아이콘만, 원형 hover 피드백). */
-.console_topbar .l_refresh { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border: none; border-radius: var(--radius-full); background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
-.console_topbar .l_refresh:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
-.console_topbar .l_refresh svg { width: 1.125rem; height: 1.125rem; }
 /* 햄버거 — 시각 스타일은 시스템 컴포넌트 .btn_menu가 담당(button.css).
    여기서는 배치(모바일 노출 토글 + 좌측 광학 정렬)만 다룬다. */
 .console_topbar .l_menu { display: none; margin-left: calc(var(--space-8) * -1); }

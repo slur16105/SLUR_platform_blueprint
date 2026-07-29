@@ -87,7 +87,6 @@ export default function SellerApplications() {
       role="admin"
       title="입점 심사"
       description="판매자 입점 신청을 검토하고 승인·반려합니다."
-      onRefresh={() => load(status)}
     >
       <div className="page_admin">
         <div className="p_tabs">

@@ -79,7 +79,6 @@ export default function AdminDashboard() {
       role="admin"
       title="대시보드"
       description="지금 처리할 일과 최근 주문을 한눈에 봅니다."
-      onRefresh={load}
     >
       <div className="page_admin_dash">
         {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}

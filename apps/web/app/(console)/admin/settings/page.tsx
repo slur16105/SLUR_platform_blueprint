@@ -171,7 +171,6 @@ export default function AdminSettings() {
       role="admin"
       title="설정"
       description="무통장입금 계좌·운영 수치·카테고리를 관리합니다."
-      onRefresh={load}
     >
       <div className="page_admin_settings">
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}

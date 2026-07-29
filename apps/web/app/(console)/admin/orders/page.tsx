@@ -140,7 +140,6 @@ function AdminOrdersInner() {
       role="admin"
       title="주문 관리"
       description="전체 주문을 조회하고 상태를 처리합니다."
-      onRefresh={() => load(appliedQ, status, page)}
     >
       <div className="page_admin_orders">
       <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>

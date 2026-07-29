@@ -176,7 +176,6 @@ export default function AdminDeposits() {
       role="admin"
       title="입금 확인"
       description="입금대기 주문을 확인하고 결제완료로 처리합니다."
-      onRefresh={() => load(page)}
     >
       <div className="page_admin_deposits">
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}

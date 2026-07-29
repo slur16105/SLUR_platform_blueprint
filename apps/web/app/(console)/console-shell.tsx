@@ -66,16 +66,12 @@ export default function ConsoleShell({
   title,
   description,
   actions,
-  onRefresh,
   children,
 }: {
   role: Role;
   title: string;
   description?: string;
   actions?: ReactNode;
-  /* 새로고침은 상단바의 고정 아이콘 슬롯으로 표준화한다 — 페이지별 actions(뒤로가기·새 편성 등)와
-     무관하게 항상 같은 자리·같은 아이콘. 핸들러를 넘기면 버튼이 뜬다. */
-  onRefresh?: () => void;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -116,11 +112,6 @@ export default function ConsoleShell({
           </button>
           <span className="l_crumb">{role === "seller" ? "판매자 콘솔" : "관리자 콘솔"}</span>
           <div className="l_top_actions">
-            {onRefresh ? (
-              <button className="l_refresh" type="button" aria-label="새로고침" title="새로고침" onClick={onRefresh}>
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" strokeLinecap="round" /><path d="M13.8 2.5V5h-2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </button>
-            ) : null}
             <LogoutButton />
           </div>
         </header>
