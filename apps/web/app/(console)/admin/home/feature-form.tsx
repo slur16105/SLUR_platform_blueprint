@@ -229,6 +229,8 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
   }
 
   const candLastPage = Math.max(1, Math.ceil(candTotal / 20));
+  // 이미 담은 상품은 후보에서 뺀다 — "담김" 표시로 남기지 않고 목록에서 사라지게(중복 인지 부담 제거).
+  const visibleCandidates = candidates.filter((p) => !selected.some((s) => s.id === p.id));
 
   if (loading) {
     return <div className="page_admin_home"><p className="p_empty" role="status">불러오는 중…</p></div>;
@@ -345,13 +347,11 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
               <div className="i_candidates">
                 {candLoading ? (
                   <p className="i_note" role="status">불러오는 중…</p>
-                ) : candidates.length === 0 ? (
-                  <p className="i_note">후보 상품이 없습니다.</p>
-                ) : candidates.map((p) => {
-                  const picked = selected.some((s) => s.id === p.id);
-                  return (
-                    <button className="i_product" type="button" key={p.id} disabled={picked}
-                      onClick={() => addProduct(p)} title={picked ? "이미 담김" : "추가"}>
+                ) : visibleCandidates.length === 0 ? (
+                  <p className="i_note">{candidates.length === 0 ? "후보 상품이 없습니다." : "이 페이지의 상품은 모두 담았습니다."}</p>
+                ) : visibleCandidates.map((p) => (
+                    <button className="i_product" type="button" key={p.id}
+                      onClick={() => addProduct(p)} title="담기">
                       {p.main_image_url
                         /* eslint-disable-next-line @next/next/no-img-element */
                         ? <img className="i_thumb" src={p.main_image_url} alt="" />
@@ -360,10 +360,9 @@ export default function FeatureForm({ featureId }: { featureId?: string }) {
                         <span className="i_prod_name">{p.name}</span>
                         <span className="i_prod_meta">{priceText(p)}{p.sold_out && <span className="i_soldout"> · 품절</span>}</span>
                       </span>
-                      <span className="i_prod_actions">{picked ? "담김" : "+"}</span>
+                      <span className="i_prod_actions">+</span>
                     </button>
-                  );
-                })}
+                  ))}
               </div>
               <div className="i_picker_foot">
                 <span className="i_note">총 {candTotal}개</span>
