@@ -27,9 +27,11 @@
 /* 섹션 카드 공통 */
 .page_admin_order_detail .card { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-16); }
 .page_admin_order_detail .card > .i_title { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-secondary); }
-.page_admin_order_detail .i_meta { display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--text-sm); }
-.page_admin_order_detail .i_meta dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
-.page_admin_order_detail .i_meta dd { display: inline; color: var(--color-text-primary); }
+/* 라벨(좌 고정폭) · 값(우 유동) 두 컬럼 — 값이 줄바꿈돼도 라벨 밑이 아니라 값 컬럼 안에 접힌다 */
+.page_admin_order_detail .i_meta { display: flex; flex-direction: column; gap: var(--space-8); font-size: var(--text-sm); }
+.page_admin_order_detail .i_meta > div { display: flex; gap: var(--space-12); }
+.page_admin_order_detail .i_meta dt { flex: none; width: 5rem; color: var(--color-text-muted); white-space: nowrap; }
+.page_admin_order_detail .i_meta dd { flex: 1; min-width: 0; color: var(--color-text-primary); }
 
 /* 요약(헤더) 카드 — 좌: 주문번호+상태배지 한 줄, UUID는 아래 줄. 우: 주 액션. 상단 정렬로 반듯하게. */
 .page_admin_order_detail .p_summary .i_head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; padding: 0; }
