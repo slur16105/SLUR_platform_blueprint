@@ -1,18 +1,56 @@
-import BuyerShell from "../buyer-shell";
-import BuyerPageHeading from "../buyer-page-heading";
-import CartView from "./cart-view";
-import "./cart.css";
+/* 장바구니 — `/cart` (보호 라우트). **새 테마 적용 화면 (이전 3/N).**
 
-/* 장바구니 — `/cart` (보호 라우트).
-   장바구니만 하단 고정 CTA + 탭바 2단이 허용되는 예외 화면이다 —
-   최상위이면서 결제로 넘어가는 지점이기 때문. 헤더에 뒤로가기를 두지 않는다.
-   🚨 셸 호출부 세 값(tab="cart" · showTabbar · topbar title)은 8.1이 검증하고
-      EXPERIENCE.md IA 표가 확정한 것이다. 여기를 바꾸면 8.1의 AC 1·2가 깨진다. */
-export default function CartPage() {
+   화면 단위 통째 교체: 옛 셸(buyer-shell)·옛 CSS(cart.css)를 쓰지 않고 새 테마만 쓴다.
+   본체(CartScreen)는 옛 cart-view/cart-pack의 **로직을 그대로 옮긴 것**이라
+   수량 변경·인라인 삭제 확인·낙관적 갱신·서버 합계 규약이 이전과 똑같이 동작한다. */
+
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+
+import { API_BASE } from "@/lib/auth";
+
+import CartScreen from "./cart-screen";
+import { SiteFooter, SiteHeader } from "../site-chrome";
+import type { NavCategory } from "../labels";
+
+import "../theme.css";
+
+export const metadata: Metadata = {
+  title: "장바구니 — SLUR 편집숍",
+};
+
+async function getJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { next: { revalidate: 300 } });
+    if (!res.ok) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export default async function CartPage() {
+  const [categories, cookieStore] = await Promise.all([
+    getJson<NavCategory[]>("/api/v1/products/categories", []),
+    cookies(),
+  ]);
+  const loggedIn = Boolean(cookieStore.get("slur_role"));
+
   return (
-    <BuyerShell tab="cart" showTabbar ctaBar topbar={{ variant: "title", title: "장바구니" }}>
-      <BuyerPageHeading title="장바구니" wide />
-      <CartView />
-    </BuyerShell>
+    <div className="slur min-h-screen">
+      <SiteHeader categories={categories} loggedIn={loggedIn} />
+
+      <div className="border-b border-border">
+        <div className="mx-auto max-w-[1600px] px-5 py-12 text-center md:py-16">
+          <h1 className="text-[34px] font-bold uppercase leading-none tracking-tight md:text-[44px]">CART</h1>
+        </div>
+      </div>
+
+      <div className="pt-10">
+        <CartScreen />
+      </div>
+
+      <SiteFooter />
+    </div>
   );
 }
