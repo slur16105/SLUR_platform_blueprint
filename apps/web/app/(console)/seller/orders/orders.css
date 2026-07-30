@@ -26,12 +26,15 @@
 .page_seller_orders .i_line[data-state="canceled"] .i_line_qty { color: var(--color-text-muted); text-decoration: line-through; }
 .page_seller_orders .i_line_option { font-size: var(--text-xs); color: var(--color-text-secondary); }
 .page_seller_orders .i_line_qty { font-variant-numeric: tabular-nums; }
-.page_seller_orders .i_fee { display: block; font-size: var(--text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.page_seller_orders .i_fee_total { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.page_seller_orders .i_fee { display: block; font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .page_seller_orders .i_carrier { display: block; }
 .page_seller_orders .i_tracking { display: block; font-family: var(--font-geist-mono, monospace); font-size: var(--text-xs); color: var(--color-text-secondary); }
 
 /* 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
 .page_seller_orders .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
+/* 라벨(고정폭 좌) + 값(유동 우) 2컬럼 — inline으로 두면 송장 같은 긴 값이 라벨 밑으로 접힌다 */
 .page_seller_orders .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
-.page_seller_orders .modal_dialog .i_summary dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
-.page_seller_orders .modal_dialog .i_summary dd { display: inline; color: var(--color-text-primary); }
+.page_seller_orders .modal_dialog .i_summary > div { display: flex; gap: var(--space-8); }
+.page_seller_orders .modal_dialog .i_summary dt { flex: none; width: 5rem; color: var(--color-text-muted); }
+.page_seller_orders .modal_dialog .i_summary dd { flex: 1; min-width: 0; color: var(--color-text-primary); word-break: break-all; }

@@ -60,6 +60,7 @@ function SellerOrdersInner() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(isTab(initialStatus) ? initialStatus : "preparing");
   const [items, setItems] = useState<SubOrder[]>([]);
+  const [loaded, setLoaded] = useState(false); // 최초 조회 완료 전엔 빈 상태 대신 로딩 표시 (거짓 "주문 없음" 깜빡임 방지)
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
   const [page, setPage] = useState(1);
@@ -111,8 +112,12 @@ function SellerOrdersInner() {
       }
       setItems(list);
       setTotal(t2);
+      setLoaded(true);
     } catch {
-      if (gen === loadSeq.current) setError("네트워크 연결을 확인해 주세요.");
+      if (gen === loadSeq.current) {
+        setError("네트워크 연결을 확인해 주세요.");
+        setLoaded(true); // 실패도 로딩 종료 — "불러오는 중"에 갇히지 않게
+      }
     }
   }, [router]);
 
@@ -237,18 +242,21 @@ function SellerOrdersInner() {
       </nav>
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-      {items.length === 0 ? (
+      {!loaded ? (
+        <p className="p_loading" role="status">불러오는 중…</p>
+      ) : items.length === 0 ? (
         <p className="p_empty">{TABS.find((t) => t.key === tab)?.label} 주문이 없습니다.</p>
       ) : (
         <div className="table_wrap">
           <div className="table_scroll"><table className="table_data">
             <thead>
               <tr>
+                {/* 헤더 워딩은 관리자 주문 관리와 같은 표기를 쓴다 (주문 일시 · 품목) */}
                 <th>주문번호</th>
-                <th>주문일</th>
+                <th>주문 일시</th>
                 <th>수령인</th>
                 <th>배송지·요청사항</th>
-                <th>주문 상품</th>
+                <th>품목</th>
                 <th className="m_num">배송비</th>
                 {tab !== "preparing" && <th>송장 정보</th>}
                 {tab !== "delivered" && <th>처리</th>}
@@ -291,8 +299,11 @@ function SellerOrdersInner() {
                       <span className="i_fee">-</span> /* 전체 취소 — 발송·배송비 없음 */
                     ) : (
                       <>
-                        <span className="i_fee">기본 {o.shipping_fee.toLocaleString()}원</span>
-                        {o.remote_extra_fee > 0 && <span className="i_fee">도서산간 +{o.remote_extra_fee.toLocaleString()}원</span>}
+                        {/* 합계를 먼저 크게, 내역(기본·도서산간)은 아래 작게 — 금액 열은 숫자 우측정렬 */}
+                        <strong className="i_fee_total">{(o.shipping_fee + o.remote_extra_fee).toLocaleString()}원</strong>
+                        {o.remote_extra_fee > 0 && (
+                          <span className="i_fee">기본 {o.shipping_fee.toLocaleString()} + 도서산간 {o.remote_extra_fee.toLocaleString()}</span>
+                        )}
                       </>
                     )}
                   </td>
