@@ -374,7 +374,19 @@ async def admin_list_users(
     if role is not None and role not in ("admin", "seller", "buyer"):
         raise AppError("validation_error", "올바르지 않은 역할입니다.", status_code=422)
     q = _lookup_params(q, page)
-    return await auth_service.list_users(session, q, page, _gs().page_size, role=role)
+    # 판매자는 브랜드로 찾는 게 자연스럽다 — 브랜드명 매칭을 선해결해 이름·이메일 OR 축에 더한다
+    brand_user_ids = await sellers_service.find_user_ids_by_brand(session, q) if q else None
+    data = await auth_service.list_users(
+        session, q, page, _gs().page_size, role=role, extra_user_ids=brand_user_ids
+    )
+    # 판매자는 이메일·이름보다 브랜드로 식별된다 — 목록에서 누구인지 알 수 있게 브랜드명을 합성한다.
+    # 판매자 역할이 없는 회원은 None (AD-2: 도메인 간 합성은 라우터 층 소유)
+    brands = await sellers_service.get_brand_names_by_user_ids(
+        session, [r["id"] for r in data["items"] if "seller" in r.get("roles", [])]
+    )
+    for row in data["items"]:
+        row["brand_name"] = brands.get(row["id"])
+    return data
 
 
 @router.get("/users/{user_id}")

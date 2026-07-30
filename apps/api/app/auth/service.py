@@ -218,17 +218,25 @@ async def find_user_ids_by_name_or_email(session: AsyncSession, q: str) -> list[
     return list(rows)
 
 
-async def list_users(session: AsyncSession, q: str | None, page: int, size: int, role: str | None = None) -> dict:
+async def list_users(
+    session: AsyncSession, q: str | None, page: int, size: int, role: str | None = None,
+    extra_user_ids: list[uuid.UUID] | None = None,
+) -> dict:
     """관리자 회원 조회 (5.6, FR-30 읽기 전용) — 이메일·이름 검색, 역할 필터·포함.
 
     role: admin/seller = 해당 role 보유 회원, buyer(일반회원) = admin·seller 어느 것도 없는 회원, None = 전체.
+    extra_user_ids: 다른 도메인이 선해결한 매칭(브랜드명 → 판매자 회원). 검색어 OR 축에 더한다 —
+    auth가 sellers를 직접 import하지 않기 위해 admin 라우터가 풀어서 넘긴다 (AD-2).
     """
     from app.core.search import ESCAPE, ilike_pattern
 
     base = select(User)
     if q:
         pat = ilike_pattern(q)
-        base = base.where((User.name.ilike(pat, escape=ESCAPE)) | (User.email.ilike(pat, escape=ESCAPE)))
+        match = (User.name.ilike(pat, escape=ESCAPE)) | (User.email.ilike(pat, escape=ESCAPE))
+        if extra_user_ids:
+            match = match | User.id.in_(extra_user_ids)
+        base = base.where(match)
     if role in ("admin", "seller"):
         base = base.where(User.id.in_(select(UserRole.user_id).where(UserRole.role == role)))
     elif role == "buyer":

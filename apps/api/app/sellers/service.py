@@ -162,6 +162,24 @@ async def find_seller_ids_by_brand(session: AsyncSession, q: str) -> list[uuid.U
     return list(rows)
 
 
+async def find_user_ids_by_brand(session: AsyncSession, q: str) -> list[uuid.UUID]:
+    """브랜드명 부분 일치 → 판매자 회원 user_id — 관리자 회원 검색 선해결용 (AD-2)."""
+    from app.core.search import ESCAPE, ilike_pattern
+
+    rows = await session.scalars(
+        select(Seller.user_id).where(Seller.brand_name.ilike(ilike_pattern(q), escape=ESCAPE)).limit(200)
+    )
+    return list(rows)
+
+
+async def get_brand_names_by_user_ids(session: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, str]:
+    """user_id → 브랜드명 배치 조회 — 회원 목록에서 판매자를 브랜드로 식별하기 위해 (AD-2: admin 라우터가 합성)."""
+    if not user_ids:
+        return {}
+    rows = (await session.execute(select(Seller.user_id, Seller.brand_name).where(Seller.user_id.in_(user_ids)))).all()
+    return {uid: brand for uid, brand in rows}
+
+
 async def get_seller_by_user_id(session: AsyncSession, user_id: uuid.UUID) -> dict | None:
     """회원 상세용 판매자 프로필 (user_id 1:1). product_count 합성은 라우터 층이 붙인다."""
     seller = await session.scalar(select(Seller).where(Seller.user_id == user_id))

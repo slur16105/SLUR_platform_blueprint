@@ -32,6 +32,13 @@ async def test_lookup_users(client, clean_products):
     # 판매자 역할
     body = (await client.get(USERS, params={"q": "brand2@"}, headers=_auth(admin_t))).json()
     assert "seller" in body["items"][0]["roles"]
+    # 판매자 회원은 브랜드명이 응답에 붙는다 — 목록에서 이메일 말고 브랜드로 식별하기 위해
+    assert body["items"][0]["brand_name"] == "슬러굿즈"
+    # 브랜드명으로도 검색된다(이름·이메일 OR 축에 합류) + 판매자 아닌 회원은 brand_name None
+    by_brand = (await client.get(USERS, params={"q": "슬러굿즈"}, headers=_auth(admin_t))).json()
+    assert by_brand["total"] == 1 and by_brand["items"][0]["brand_name"] == "슬러굿즈"
+    buyer_row = (await client.get(USERS, params={"q": "buyer@"}, headers=_auth(admin_t))).json()["items"][0]
+    assert buyer_row["brand_name"] is None
     # 이스케이프 — %%는 아무것도 매칭하지 않아야
     assert (await client.get(USERS, params={"q": "%%"}, headers=_auth(admin_t))).json()["total"] == 0
     assert (await client.get(USERS, params={"q": "a"}, headers=_auth(admin_t))).status_code == 422

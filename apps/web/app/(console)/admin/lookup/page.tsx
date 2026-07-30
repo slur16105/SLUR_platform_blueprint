@@ -22,6 +22,7 @@ type UserRow = {
   email: string;
   name: string;
   roles: string[];
+  brand_name: string | null; // 판매자 역할이 있는 회원만 — 이메일·이름보다 브랜드로 식별된다
   created_at: string;
 };
 
@@ -131,7 +132,7 @@ export default function AdminMembers() {
       </nav>
       <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input className="input_text" type="search" maxLength={100} value={q}
-          placeholder="이메일·이름 (2자 이상)"
+          placeholder="브랜드·이메일·이름 (2자 이상)"
           onChange={(e) => setQ(e.target.value)} />
         <button className="btn m_primary" type="submit">검색</button>
       </form>
@@ -151,8 +152,11 @@ export default function AdminMembers() {
           <div className="table_scroll"><table className="table_data">
             <thead>
               <tr>
+                {/* 판매자 탭에서는 브랜드가 식별자다 — 전체 탭에서도 판매자 행만 값이 채워진다 */}
+                {role !== "buyer" && role !== "admin" && <th>브랜드</th>}
                 <th>이메일</th>
                 <th>이름</th>
+                {/* 역할 탭으로 걸러도 한 계정이 역할을 겸할 수 있어 역할 컬럼은 정보를 준다 */}
                 <th>역할</th>
                 <th>가입일</th>
                 <th aria-label="바로가기"></th>
@@ -161,6 +165,9 @@ export default function AdminMembers() {
             <tbody>
               {items.map((u) => (
                 <tr key={u.id}>
+                  {role !== "buyer" && role !== "admin" && (
+                    <td>{u.brand_name ? <strong className="i_brand">{u.brand_name}</strong> : <span className="m_muted">-</span>}</td>
+                  )}
                   <td>{u.email ? <span className="i_email">{u.email}</span> : <span className="m_muted">(소셜 계정)</span>}</td>
                   <td>{u.name}</td>
                   <td>
