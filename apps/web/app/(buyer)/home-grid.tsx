@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { armHomeScroll, consumeHomeScroll, restoreHomeScroll } from "./home-scroll";
+import { productImage } from "./product-image";
 
 export type GridProduct = {
   id: string;
@@ -27,16 +28,6 @@ export type GridProduct = {
   category_id: string | null;
 };
 
-/* 편집숍 톤 데모 이미지 — 실 상품 사진이 플레이스홀더라 상품 id로 안정적으로 배정한다.
-   ⚠️ 실 상품 사진이 준비되면 main_image_url로 교체한다(오픈 게이트). */
-const OBJ = [
-  "1493957988430-a5f2e15f39a3", "1534349762230-e0cadf78f5da", "1556909212-d5b604d0c90d",
-  "1513694203232-719a280e022f", "1567016432779-094069958ea5", "1540932239986-30128078f3c5",
-  "1522708323590-d24dbb6b0267", "1556910103-1c02745aae4d", "1600607687939-ce8a6c25118c",
-];
-export const seedOf = (id: string) => id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-export const demoImg = (seed: number, w = 600, h = 750) =>
-  `https://images.unsplash.com/photo-${OBJ[Math.abs(seed) % OBJ.length]}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
 export const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
 export function ProductCard({ p, ratio = "aspect-4/5" }: { p: GridProduct; ratio?: string }) {
@@ -45,7 +36,7 @@ export function ProductCard({ p, ratio = "aspect-4/5" }: { p: GridProduct; ratio
       <div className={`relative overflow-hidden bg-muted ${ratio}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={demoImg(seedOf(p.id))}
+          src={productImage(p.id, p.main_image_url)}
           alt=""
           className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${
             p.sold_out ? "opacity-40 grayscale" : ""

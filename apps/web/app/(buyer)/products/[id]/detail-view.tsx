@@ -23,6 +23,7 @@ import { formatWon } from "../../format";
 import { getPublicJson, type ApiFailure } from "../../buyer-feedback";
 import type { ProductItem } from "../../product-card";
 import OptionAxes, { type PublicVariant } from "./option-axes-themed";
+import { isPlaceholder, productImage } from "../../product-image";
 
 type SellerInfoData = {
   brand_name: string;
@@ -44,17 +45,6 @@ type ProductDetailData = ProductItem & {
 /* D11 — 공개 상품 API에 배송비가 없다. 실제 금액은 우편번호가 있어야 정해지고
    POST /orders/preview가 계산한다 (AD-12). 응답에 없는 값을 화면이 만들어내지 않는다. */
 const SHIPPING_NOTE = "배송비는 판매자마다 다르며 주문서에서 확인할 수 있습니다.";
-
-/* 실 상품 사진이 준비되기 전의 데모 이미지 — 목록과 같은 규칙으로 상품 id에서 뽑는다.
-   ⚠️ image_urls가 있으면 그것이 우선이다. */
-const OBJ = [
-  "1493957988430-a5f2e15f39a3", "1534349762230-e0cadf78f5da", "1556909212-d5b604d0c90d",
-  "1513694203232-719a280e022f", "1567016432779-094069958ea5", "1540932239986-30128078f3c5",
-  "1522708323590-d24dbb6b0267", "1556910103-1c02745aae4d", "1600607687939-ce8a6c25118c",
-];
-const seedOf = (id: string) => id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-const demoImg = (id: string, k = 0, w = 1000, h = 1250) =>
-  `https://images.unsplash.com/photo-${OBJ[(seedOf(id) + k) % OBJ.length]}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
 
 export default function DetailView() {
   const { id } = useParams<{ id: string }>();
@@ -260,14 +250,14 @@ export default function DetailView() {
             <div className="aspect-4/5 w-full overflow-hidden bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={hero ?? demoImg(data.id)}
+                src={productImage(data.id, hero, { w: 1000, h: 1250 })}
                 alt={data.name}
                 decoding="async"
                 className={`h-full w-full object-cover ${data.sold_out ? "opacity-40 grayscale" : ""}`}
               />
             </div>
             {/* 이미지가 1장이면 썸네일 행을 그리지 않는다 */}
-            {images.length > 1 ? (
+            {images.length > 1 && !isPlaceholder(images[0]) ? (
               <div className="mt-2 grid grid-cols-4 gap-2" role="group" aria-label="상품 이미지">
                 {images.map((url, i) => (
                   <button

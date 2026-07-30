@@ -97,22 +97,40 @@ export function PolicyProvider({ children }: { children: React.ReactNode }) {
     <PolicyContext.Provider value={{ openPolicy }}>
       {children}
       {open ? (
+        /* 🚨 루트에 `slur`를 함께 건다 — 테마 토큰(--background·--foreground…)은 그 클래스에
+           선언돼 있고, 이 모달은 페이지 밖(레이아웃)에서 렌더되므로 직접 걸어야 색이 산다. */
         <div
-          className="b_modal"
-          /* 배경(패널 바깥) 클릭으로 닫는다 — ≥768 가운데 패널에서만 실효가 있다.
+          className="slur fixed inset-0 z-[100] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-6"
+          /* 배경(패널 바깥) 클릭으로 닫는다.
              target === currentTarget이라 본문·헤더 클릭으로는 닫히지 않는다. */
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) close();
           }}
         >
-          <div className="i_dialog" role="dialog" aria-modal="true" aria-label={LABEL[open]} ref={dialogRef}>
-            <div className="i_head">
-              <span className="b_section_label i_title">{LABEL[open]}</span>
-              <button type="button" className="i_close" aria-label="닫기" onClick={close} ref={closeRef}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={LABEL[open]}
+            ref={dialogRef}
+            className="flex max-h-[90dvh] w-full max-w-[720px] flex-col bg-background"
+          >
+            <div className="flex flex-none items-center justify-between border-b border-border px-6 py-4">
+              <span className="text-[15px] font-semibold uppercase tracking-wide">{LABEL[open]}</span>
+              <button
+                type="button"
+                aria-label="닫기"
+                onClick={close}
+                ref={closeRef}
+                className="-mr-2 flex h-10 w-10 items-center justify-center text-[22px] leading-none text-muted-foreground transition-colors hover:text-foreground"
+              >
                 ×
               </button>
             </div>
-            <div className="i_body b_policy">{open === "terms" ? <TermsDoc /> : <PrivacyDoc />}</div>
+            {/* slur_doc — 공용 약관 본문(policy-docs)의 클래스를 새 테마 톤으로 받는 스코프.
+                🚨 문서 내용을 복사하지 않는다. 표현만 여기서 입힌다. */}
+            <div className="slur_doc flex-1 overflow-y-auto px-6 py-7">
+              {open === "terms" ? <TermsDoc /> : <PrivacyDoc />}
+            </div>
           </div>
         </div>
       ) : null}

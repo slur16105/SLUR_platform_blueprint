@@ -82,3 +82,27 @@
   --color-accent-foreground: var(--accent-foreground);
   --radius-base: var(--radius);
 }
+
+/* ── 약관·개인정보처리방침 본문 (.slur_doc) ──────────────────
+   문서 내용은 app/legal/policy-docs.tsx **한 곳**이 소유한다(콘솔과 공유).
+   여기서는 그 마크업의 클래스를 새 테마 톤으로 받기만 한다 — 문장을 복사하지 않는다. */
+.slur_doc { color: var(--foreground); }
+.slur_doc .p_title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.slur_doc .p_meta { margin-top: 6px; font-size: 13px; color: var(--muted-foreground); }
+.slur_doc .p_section { margin-top: 28px; }
+.slur_doc .p_section > h2 { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+.slur_doc .p_section > h3 { font-size: 14px; font-weight: 600; margin-top: 16px; margin-bottom: 6px; }
+.slur_doc .p_section p,
+.slur_doc .p_section li { font-size: 14px; line-height: 1.8; color: var(--foreground); }
+.slur_doc .p_section ul,
+.slur_doc .p_section ol { margin-top: 8px; padding-left: 18px; list-style: disc; }
+.slur_doc .p_section ol { list-style: decimal; }
+.slur_doc .p_section li { margin-top: 4px; }
+.slur_doc table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.slur_doc th, .slur_doc td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+.slur_doc th { background: var(--muted); font-weight: 600; }
+
+/* 초안 경고 배너 — 콘솔의 .alert 대신 이 지면의 톤으로 (빨강은 테두리·라벨에만) */
+.slur_doc .alert { border: 1px solid var(--accent); padding: 14px 16px; margin-bottom: 24px; }
+.slur_doc .alert .i_title { display: block; font-size: 13px; font-weight: 600; color: var(--accent); }
+.slur_doc .alert .i_text { display: block; margin-top: 4px; font-size: 13px; line-height: 1.7; color: var(--muted-foreground); }

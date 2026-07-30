@@ -119,24 +119,8 @@ export default async function BuyerHomePage({
          카테고리를 고르면(`?category=`) 그 화면의 목적은 "고른 갈래를 훑는 것"이므로
          목록만 남긴다 — 매 카테고리마다 같은 히어로가 반복되면 지면의 뜻이 사라진다. */}
       {!category ? (
-        <>
-          {/* 편성이 없으면(초기 상태) 히어로를 그리지 않고 목록만 보인다 */}
-          {heroSlides.length > 0 ? <HomeHero slides={heroSlides} /> : null}
-
-          {/* 큐레이션 선언 */}
-          <section className="bg-foreground py-20 text-background md:py-24">
-            <div className="mx-auto max-w-[1600px] px-5">
-              <p className="text-[13px] tracking-[0.35em] opacity-50">SEOUL · SINCE 2026</p>
-              <h2 className="mt-5 flex items-start text-[64px] font-bold leading-[0.9] tracking-[-0.03em] md:text-[110px]">
-                CURATED
-                <span className="text-accent">.</span>
-              </h2>
-              <p className="mt-7 max-w-md text-[15px] leading-relaxed opacity-60">
-                운영자가 직접 만나고 고른 브랜드만 소개합니다. 많이 파는 대신, 오래 남을 것을 고릅니다.
-              </p>
-            </div>
-          </section>
-        </>
+        /* 편성이 없으면(초기 상태) 히어로를 그리지 않고 목록만 보인다 */
+        heroSlides.length > 0 ? <HomeHero slides={heroSlides} /> : null
       ) : (
         /* 카테고리 지면의 머리 — 어디에 있는지 알려주는 최소한의 표지 */
         <section className="border-b border-border">
