@@ -1,19 +1,51 @@
-.page_product_new { display: flex; flex: 1; justify-content: center; background: var(--color-surface-sunken); }
-.page_product_new .p_panel { display: flex; width: 100%; max-width: 560px; height: fit-content; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+/* 판매자 상품 등록 — 시안(seller-product-new)처럼 성격별 카드로 나눈다.
+   한 카드에 전 항목을 몰아넣으면 어디까지가 한 묶음인지 안 보인다.
+   좁은 560px 중앙 정렬은 콘솔(PC) 화면에서 좌우가 크게 비어 폭을 넓혔다. */
+.page_product_new { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); max-width: 880px; }
+.page_product_new .p_card { display: flex; flex-direction: column; gap: var(--space-16); padding: var(--space-24); }
+.page_product_new .i_title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_product_new .i_desc { margin-top: calc(var(--space-12) * -1); font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_product_new .p_title { font-size: var(--text-2xl); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 .page_product_new .p_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_product_new .i_req { color: var(--color-danger); }
+.page_product_new .field { display: flex; flex-direction: column; gap: var(--space-4); }
+.page_product_new .field .i_label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.page_product_new .field .i_help { font-size: var(--text-xs); color: var(--color-text-muted); }
+/* 상품명·가격·카테고리는 짧아 넓은 화면에서 2열로 */
+.page_product_new .i_row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); }
 .page_product_new .input_text.m_textarea { height: auto; padding: var(--space-12); resize: vertical; }
 .page_product_new .i_file { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_product_new .i_previews { display: flex; gap: var(--space-8); overflow-x: auto; }
 .page_product_new .i_thumb { display: flex; flex-direction: column; gap: var(--space-4); }
 .page_product_new .i_thumb img { width: 72px; height: 72px; border: 1px solid var(--color-border-default); border-radius: var(--radius-8); object-fit: cover; }
 .page_product_new .i_thumb[data-state="main"] img { border: 2px solid var(--color-brand); }
+.page_product_new .i_uploading { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .page_product_new .p_options { display: flex; flex-direction: column; gap: var(--space-12); }
 .page_product_new .i_axes { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-8); }
-.page_product_new .i_axes .btn { grid-column: 1 / -1; }
+.page_product_new .i_axes .btn { grid-column: 1 / -1; justify-self: start; }
 .page_product_new .i_grid { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .page_product_new .i_grid th { padding: var(--space-8); border-bottom: 1px solid var(--color-border-default); color: var(--color-text-muted); font-weight: var(--weight-medium); text-align: left; }
 .page_product_new .i_grid th.m_num { text-align: right; }
 .page_product_new .i_grid td { padding: var(--space-4) var(--space-8); border-bottom: 1px solid var(--color-border-subtle); }
+.page_product_new .i_grid td.m_num { text-align: right; }
 .page_product_new .i_grid .input_text.m_small { width: 90px; height: 2rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 어디서 정해지는지 알려주는 안내 (상품별로 정하지 않는 것) */
+.page_product_new .i_elsewhere > div { padding: var(--space-8) 0; border-bottom: 1px solid var(--color-border-subtle); font-size: var(--text-sm); }
+.page_product_new .i_elsewhere > div:last-child { border-bottom: none; }
+.page_product_new .i_elsewhere dt { font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.page_product_new .i_elsewhere dd { color: var(--color-text-secondary); }
+.page_product_new .i_elsewhere a { color: var(--color-text-brand); }
+
+/* 하단 액션 바 — 등록/취소는 폼 밖 고정 위치에 둔다 */
+.page_product_new .p_actions { display: flex; align-items: center; gap: var(--space-8); }
+.page_product_new .p_actions .i_hint { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* 등록 완료 */
+.page_product_new .p_done { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-24); }
+.page_product_new .p_done .i_links { display: flex; gap: var(--space-8); }
+
+@media (max-width: 768px) {
+  .page_product_new .i_row2 { grid-template-columns: 1fr; }
+  .page_product_new .i_axes { grid-template-columns: 1fr; }
+}
