@@ -14,89 +14,11 @@
 
 import Link from "next/link";
 
-import { API_BASE } from "@/lib/auth";
-
+import { ProductCard, ProtoFooter, ProtoHeader } from "../chrome";
+import { getJson, img, imgSeed, en, won, wide, type Category, type Home, type Product } from "../data";
 import HeroSwiper, { type HeroSlide } from "./hero-swiper";
 
 import "../proto.css";
-
-type Product = { id: string; name: string; brand_name: string; price_from: number; sold_out: boolean };
-type Category = { id: string; name: string };
-type Feature = {
-  id: string;
-  kind: "hero" | "slot";
-  issue_no: string | null;
-  issue_label: string | null;
-  title: string;
-  lead_text: string | null;
-  layout: "feature" | "strip";
-  items: Product[];
-};
-type Home = { hero: Feature | null; slots: Feature[] };
-
-/* 편집숍 톤 정물·오브제 (인물 없음). 실 상품 사진 확보 전 데모. */
-const OBJ = [
-  "1493957988430-a5f2e15f39a3", "1534349762230-e0cadf78f5da", "1556909212-d5b604d0c90d",
-  "1513694203232-719a280e022f", "1567016432779-094069958ea5", "1540932239986-30128078f3c5",
-  "1522708323590-d24dbb6b0267", "1556910103-1c02745aae4d", "1600607687939-ce8a6c25118c",
-];
-const img = (i: number, w = 600, h = 750) =>
-  `https://images.unsplash.com/photo-${OBJ[i % OBJ.length]}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
-const wide = (id: string, w = 1800, h = 620) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&q=80&auto=format`;
-
-async function getJson<T>(path: string, fallback: T): Promise<T> {
-  try {
-    const res = await fetch(`${API_BASE}${path}`, { next: { revalidate: 60 } });
-    if (!res.ok) return fallback;
-    return (await res.json()) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
-
-/* 내비 표기용 영문 라벨 — 데이터(카테고리명)는 한글 그대로 두고 **표시만** 영문으로 옮긴다.
-   매핑에 없는 이름은 원본을 그대로 보여준다(운영자가 새 카테고리를 추가해도 깨지지 않는다). */
-const EN: Record<string, string> = {
-  문구: "STATIONERY",
-  생활: "LIVING",
-  패션: "FASHION",
-  리빙: "INTERIOR",
-  뷰티: "BEAUTY",
-  테크: "TECH",
-  푸드: "FOOD",
-};
-const en = (name: string) => EN[name] ?? name;
-
-/* 상품 카드 — EQL식: 이미지 + 아래 브랜드(대문자)·상품명·가격 */
-function Card({ p, i, ratio = "aspect-4/5" }: { p: Product; i: number; ratio?: string }) {
-  return (
-    <Link href="#" className="group block">
-      <div className={`relative overflow-hidden bg-muted ${ratio}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={img(i)}
-          alt=""
-          className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${
-            p.sold_out ? "opacity-40 grayscale" : ""
-          }`}
-        />
-        {p.sold_out ? (
-          <span className="absolute left-0 top-0 bg-foreground px-2.5 py-1 text-[12px] font-medium text-background">
-            SOLD OUT
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-3">
-        <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{p.brand_name}</p>
-        <p className="mt-1.5 truncate text-[20px] font-medium leading-snug">{p.name}</p>
-        <p className="mt-1.5 text-[16px] font-semibold tabular-nums">{won(p.price_from)}</p>
-      </div>
-    </Link>
-  );
-}
 
 export default async function ProtoHome() {
   const [home, list, categories] = await Promise.all([
@@ -129,40 +51,7 @@ export default async function ProtoHome() {
 
   return (
     <div className="proto min-h-screen">
-      {/* ── 상단 공지 바 ── */}
-      <div className="bg-foreground py-2 text-center text-[13px] tracking-wide text-background">
-        <span className="font-semibold text-accent">이번 주 편성 공개</span> · 운영자가 직접 선별한 브랜드를 가장 먼저 만나보세요
-      </div>
-
-      {/* ── 헤더 (슬림·조밀) ── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background">
-        <div className="mx-auto flex h-[100px] max-w-[1600px] items-center gap-8 px-5">
-          <Link href="/proto/home" className="text-[30px] font-bold leading-none tracking-tight">
-            SLUR.
-          </Link>
-          <nav className="hidden items-center gap-5 text-[13px] font-medium tracking-wide lg:flex">
-            {categories.map((c) => (
-              <Link key={c.id} href="#" className="uppercase transition-colors hover:opacity-60">
-                {en(c.name)}
-              </Link>
-            ))}
-            <Link href="#" className="uppercase font-semibold text-accent transition-opacity hover:opacity-60">
-              NEW IN
-            </Link>
-            <Link href="#" className="uppercase transition-colors hover:opacity-60">EXCLUSIVE</Link>
-            <span className="ml-1 bg-accent px-2.5 py-1 text-[12px] font-semibold uppercase text-accent-foreground">
-              THIS WEEK
-            </span>
-          </nav>
-          <div className="ml-auto flex items-center gap-4 text-[13px]">
-            <Link href="#" className="hover:opacity-60">LOGIN</Link>
-            <Link href="#" className="hover:opacity-60">JOIN</Link>
-            <Link href="#" className="flex items-center gap-1 hover:opacity-60">
-              CART<span className="bg-accent px-1.5 text-[12px] text-accent-foreground">0</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <ProtoHeader categories={categories} />
 
       {/* ── 히어로: 전체 폭 스와이퍼 ── */}
       <section>
@@ -172,9 +61,9 @@ export default async function ProtoHome() {
       {/* ── 에디토리얼 4열 (편성 슬롯 품목) ── */}
       <section className="mx-auto max-w-[1600px] px-5 py-12">
         <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4">
-          {features.flatMap((f) => f.items).slice(0, 4).map((p, i) => (
+          {features.flatMap((f) => f.items).slice(0, 4).map((p) => (
             <div key={p.id}>
-              <Card p={p} i={i} ratio="aspect-3/4" />
+              <ProductCard p={p} seed={imgSeed(p.id)} ratio="aspect-3/4" />
             </div>
           ))}
         </div>
@@ -207,7 +96,7 @@ export default async function ProtoHome() {
             </div>
             <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-6">
               {strip.items.concat(products.slice(0, 3)).slice(0, 6).map((p, i) => (
-                <Link key={`${p.id}-${i}`} href="#" className="group block">
+                <Link key={`${p.id}-${i}`} href={`/proto/product/${p.id}`} className="group block">
                   <div className="aspect-square overflow-hidden bg-white/10">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -270,45 +159,14 @@ export default async function ProtoHome() {
           <p className="py-20 text-center text-sm text-muted-foreground">등록된 상품이 없습니다.</p>
         ) : (
           <div className="grid grid-cols-2 gap-x-3 gap-y-9 md:grid-cols-4 lg:grid-cols-5">
-            {products.map((p, i) => (
-              <Card key={p.id} p={p} i={i} />
+            {products.map((p) => (
+              <ProductCard key={p.id} p={p} seed={imgSeed(p.id)} />
             ))}
           </div>
         )}
       </section>
 
-      {/* ── 다단 조밀 푸터 ── */}
-      <footer className="border-t border-border bg-muted/40">
-        <div className="mx-auto max-w-[1600px] px-5 py-12">
-          <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
-            <div>
-              <p className="text-[28px] font-bold leading-none tracking-tight">SLUR.</p>
-              <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-                운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍입니다.
-                통신판매중개자이며 통신판매의 당사자가 아닙니다.
-              </p>
-            </div>
-            {[
-              { h: "SUPPORT", items: ["NOTICE", "FAQ", "1:1 INQUIRY", "SHIPPING"] },
-              { h: "ABOUT", items: ["BRAND STORY", "PARTNERSHIP", "CAREERS"] },
-              { h: "POLICY", items: ["TERMS", "PRIVACY", "BUSINESS INFO"] },
-            ].map((col) => (
-              <div key={col.h}>
-                <p className="mb-3.5 text-[15px] font-semibold">{col.h}</p>
-                <ul className="space-y-2.5 text-[14px] text-muted-foreground">
-                  {col.items.map((it) => (
-                    <li key={it} className="hover:text-foreground">{it}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="mt-10 border-t border-border pt-5 text-[12px] leading-relaxed text-muted-foreground">
-            <p>SLUR | 대표이사 이호성 | 사업자등록번호 123-45-67890 | 통신판매업신고 2026-서울서초-1234</p>
-            <p className="mt-1">COPYRIGHT © SLUR. ALL RIGHTS RESERVED.</p>
-          </div>
-        </div>
-      </footer>
+      <ProtoFooter />
     </div>
   );
 }
