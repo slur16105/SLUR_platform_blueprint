@@ -20,14 +20,18 @@ export function ProtoHeader({ categories }: { categories: Category[] }) {
           </Link>
           <nav className="hidden items-center gap-5 text-[13px] font-medium tracking-wide lg:flex">
             {categories.map((c) => (
-              <Link key={c.id} href="#" className="uppercase transition-colors hover:opacity-60">
+              <Link
+                key={c.id}
+                href={`/proto/list?category=${encodeURIComponent(c.id)}`}
+                className="uppercase transition-colors hover:opacity-60"
+              >
                 {en(c.name)}
               </Link>
             ))}
-            <Link href="#" className="uppercase font-semibold text-accent transition-opacity hover:opacity-60">
+            <Link href="/proto/list" className="uppercase font-semibold text-accent transition-opacity hover:opacity-60">
               NEW IN
             </Link>
-            <Link href="#" className="uppercase transition-colors hover:opacity-60">EXCLUSIVE</Link>
+            <Link href="/proto/list" className="uppercase transition-colors hover:opacity-60">EXCLUSIVE</Link>
             <span className="ml-1 bg-accent px-2.5 py-1 text-[12px] font-semibold uppercase text-accent-foreground">
               THIS WEEK
             </span>
@@ -35,7 +39,7 @@ export function ProtoHeader({ categories }: { categories: Category[] }) {
           <div className="ml-auto flex items-center gap-4 text-[13px]">
             <Link href="#" className="hover:opacity-60">LOGIN</Link>
             <Link href="#" className="hover:opacity-60">JOIN</Link>
-            <Link href="#" className="flex items-center gap-1 hover:opacity-60">
+            <Link href="/proto/cart" className="flex items-center gap-1 hover:opacity-60">
               CART<span className="bg-accent px-1.5 text-[12px] text-accent-foreground">0</span>
             </Link>
           </div>

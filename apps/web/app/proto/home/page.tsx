@@ -129,7 +129,7 @@ export default async function ProtoHome() {
       {/* ── 3분할 카테고리 타일 (라벨 바) ── */}
       <section className="mx-auto grid max-w-[1600px] grid-cols-1 gap-3 px-5 py-12 md:grid-cols-3">
         {categories.slice(0, 3).map((c, i) => (
-          <Link key={c.id} href="#" className="group relative block">
+          <Link key={c.id} href={`/proto/list?category=${encodeURIComponent(c.id)}`} className="group relative block">
             <div className="aspect-4/3 overflow-hidden bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
