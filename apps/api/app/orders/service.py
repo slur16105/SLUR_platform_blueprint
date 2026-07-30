@@ -106,6 +106,7 @@ async def preview_order(session: AsyncSession, user_id: uuid.UUID, postal_code: 
 from sqlalchemy import exists  # noqa: E402 — 엔진 절 전용
 from sqlalchemy.exc import IntegrityError  # noqa: E402
 
+from app.auth.models import User  # noqa: E402 — 관리자 집계(신규 가입 수) 전용
 from app.orders import transitions as t  # noqa: E402
 from app.orders.models import Cancellation, Order, OrderEvent, OrderItem, SubOrder  # noqa: E402
 
@@ -1096,3 +1097,92 @@ async def update_deposit_account(session: AsyncSession, admin_id: uuid.UUID, val
     logger.info("deposit_account 변경 by admin=%s: %r -> %r", admin_id, setting.value, value)
     setting.value = value
     await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# 관리자 집계 (콘솔 통계 타일) — 여러 화면이 "집계 API 부재"로 막혀 있던 지점
+# ---------------------------------------------------------------------------
+
+def _line_amount_sq():
+    """취소되지 않은 품목의 금액 합 — (단가 + 옵션 추가금) × 수량. AD-12: 총액 컬럼이 없어 매번 파생한다."""
+    return func.coalesce(func.sum((OrderItem.unit_price + OrderItem.extra_price) * OrderItem.quantity), 0)
+
+
+async def _revenue_between(session: AsyncSession, start, *, paid_only: bool = True) -> int:
+    """확정 금액 합 = 살아있는 품목 금액 + 그 품목이 남아있는 묶음의 배송비.
+
+    전 품목이 취소된 묶음의 배송비는 빼는 것이 판매자 주문 목록(all_canceled → 배송비 '-')과
+    같은 규칙이다. 취소 주문이 매출로 잡히지 않게 한다.
+    """
+    where_order = [Order.payment_status == t.ORDER_PAID] if paid_only else []
+    time_col = Order.paid_at if paid_only else Order.created_at
+    if start is not None:
+        where_order.append(time_col >= start)
+
+    items = await session.scalar(
+        select(_line_amount_sq())
+        .select_from(OrderItem)
+        .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
+        .join(Order, SubOrder.order_id == Order.id)
+        .where(OrderItem.status == t.ITEM_ORDERED, *where_order)
+    )
+    shipping = await session.scalar(
+        select(func.coalesce(func.sum(SubOrder.shipping_fee + SubOrder.remote_extra_fee), 0))
+        .select_from(SubOrder)
+        .join(Order, SubOrder.order_id == Order.id)
+        .where(
+            exists().where(OrderItem.sub_order_id == SubOrder.id, OrderItem.status == t.ITEM_ORDERED),
+            *where_order,
+        )
+    )
+    return int(items or 0) + int(shipping or 0)
+
+
+async def admin_stats(session: AsyncSession, start) -> dict:
+    """관리자 대시보드 통계 — 기간 경계(KST 자정)는 호출자(admin 라우터)가 계산해 넘긴다.
+
+    기간 기준이 지표마다 다르다는 점이 중요하다:
+      - 신규 주문 = 주문 생성 시각(created_at)
+      - 매출·결제 확인 = 입금 확인 시각(paid_at) — 운영자가 "오늘 얼마 들어왔나"로 읽는 값
+    입금 대기는 기간과 무관한 현재 상태 스냅샷이다(지금 처리해야 할 일).
+    """
+    new_orders = await session.scalar(
+        select(func.count()).select_from(Order).where(Order.created_at >= start)
+    )
+    paid_orders = await session.scalar(
+        select(func.count()).select_from(Order)
+        .where(Order.payment_status == t.ORDER_PAID, Order.paid_at >= start)
+    )
+    new_users = await session.scalar(
+        select(func.count()).select_from(User).where(User.created_at >= start)
+    )
+    revenue = await _revenue_between(session, start)
+
+    # 현재 입금 대기 — 건수와 합계 금액 (기간 무관)
+    pending_count = await session.scalar(
+        select(func.count()).select_from(Order).where(Order.payment_status == t.ORDER_PENDING_PAYMENT)
+    )
+    pending_items = await session.scalar(
+        select(_line_amount_sq())
+        .select_from(OrderItem)
+        .join(SubOrder, OrderItem.sub_order_id == SubOrder.id)
+        .join(Order, SubOrder.order_id == Order.id)
+        .where(OrderItem.status == t.ITEM_ORDERED, Order.payment_status == t.ORDER_PENDING_PAYMENT)
+    )
+    pending_shipping = await session.scalar(
+        select(func.coalesce(func.sum(SubOrder.shipping_fee + SubOrder.remote_extra_fee), 0))
+        .select_from(SubOrder)
+        .join(Order, SubOrder.order_id == Order.id)
+        .where(
+            exists().where(OrderItem.sub_order_id == SubOrder.id, OrderItem.status == t.ITEM_ORDERED),
+            Order.payment_status == t.ORDER_PENDING_PAYMENT,
+        )
+    )
+    return {
+        "new_orders": int(new_orders or 0),
+        "paid_orders": int(paid_orders or 0),
+        "revenue": revenue,
+        "new_users": int(new_users or 0),
+        "pending_payment_count": int(pending_count or 0),
+        "pending_payment_amount": int(pending_items or 0) + int(pending_shipping or 0),
+    }

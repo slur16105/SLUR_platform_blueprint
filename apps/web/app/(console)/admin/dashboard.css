@@ -3,6 +3,14 @@
 .page_admin_dash { display: flex; flex: 1; flex-direction: column; gap: var(--space-24); }
 .page_admin_dash .p_section_title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
 
+/* ── 현황 타일 (집계) ── */
+.page_admin_dash .p_stats .i_head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); flex-wrap: wrap; margin-bottom: var(--space-12); }
+.page_admin_dash .p_stats .i_grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-12); }
+.page_admin_dash .i_tile { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-16); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-12); background: var(--color-surface-card); }
+.page_admin_dash .i_tlabel { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_admin_dash .i_tvalue { font-size: var(--text-2xl); font-weight: var(--weight-bold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.page_admin_dash .i_thint { font-size: var(--text-xs); color: var(--color-text-muted); }
+
 /* ── 처리 대기 큐 (지배 섹션) ── */
 .page_admin_dash .p_queue .i_grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-16); margin-top: var(--space-12); }
 .page_admin_dash .i_qcard { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-20); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-12); background: var(--color-surface-card); box-shadow: var(--shadow-sm); transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
@@ -25,6 +33,10 @@
 /* 최근 주문 테이블 가로 스크롤은 공용 .table_scroll(styles/slur/components/table.css)이 담당한다. */
 
 /* ══ 모바일: 큐 카드 좌우 구성으로 높이 축소 ══ */
+@media (max-width: 1080px) {
+  .page_admin_dash .p_stats .i_grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 768px) {
   .page_admin_dash .p_queue .i_grid { grid-template-columns: 1fr; gap: var(--space-8); }
   .page_admin_dash .i_qcard { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-16); padding: var(--space-16); }

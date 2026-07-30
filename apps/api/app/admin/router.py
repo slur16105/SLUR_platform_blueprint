@@ -260,6 +260,31 @@ def _period_start(period: str) -> datetime:
     return midnight_kst - timedelta(days=_PERIOD_DAYS[period] - 1)
 
 
+class AdminStats(BaseModel):
+    """관리자 대시보드 통계 — 기간 지표와 현재 상태 스냅샷이 섞여 있어 필드명으로 구분한다."""
+
+    period: str
+    new_orders: int          # 기간 내 생성된 주문 수 (created_at 기준)
+    paid_orders: int         # 기간 내 입금 확인된 주문 수 (paid_at 기준)
+    revenue: int             # 기간 내 확정 금액 — 취소 품목·유령 배송비 제외
+    new_users: int           # 기간 내 가입 수
+    pending_payment_count: int   # 지금 입금 대기 중인 주문 수 (기간 무관)
+    pending_payment_amount: int  # 그 합계 금액
+
+
+@router.get("/stats", response_model=AdminStats)
+async def admin_stats(
+    period: str = "today",
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> AdminStats:
+    """콘솔 통계 타일용 집계. 경계는 주문 목록 기간 필터와 같은 KST 자정 기준이다."""
+    if period not in _PERIOD_DAYS:
+        raise AppError("validation_error", "올바르지 않은 기간입니다.", status_code=422)
+    data = await orders_service.admin_stats(session, _period_start(period))
+    return AdminStats(period=period, **data)
+
+
 @router.get("/orders", response_model=AdminOrderList)
 async def admin_search_orders(
     q: str | None = None,

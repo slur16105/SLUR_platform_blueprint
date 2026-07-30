@@ -28,13 +28,42 @@ function formatDateTime(s: string) {
   return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
 }
 
+type Stats = {
+  period: string;
+  new_orders: number;
+  paid_orders: number;
+  revenue: number;
+  new_users: number;
+  pending_payment_count: number;
+  pending_payment_amount: number;
+};
+
+const PERIODS: { value: string; label: string }[] = [
+  { value: "today", label: "오늘" },
+  { value: "7d", label: "최근 7일" },
+  { value: "30d", label: "최근 30일" },
+];
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [deposits, setDeposits] = useState<number | null>(null);
   const [preparing, setPreparing] = useState<number | null>(null);
   const [applications, setApplications] = useState<number | null>(null);
   const [recent, setRecent] = useState<RecentOrder[] | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [period, setPeriod] = useState("today");
   const [error, setError] = useState<string | null>(null);
+
+  // 통계는 기간 전환마다 다시 부른다 — 처리 대기 큐(기간 무관)와 로딩을 분리
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const res = await fetch(`/api/admin/stats?period=${period}`).catch(() => null);
+      if (!alive) return;
+      setStats(res?.ok ? await res.json() : null);
+    })();
+    return () => { alive = false; };
+  }, [period]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -83,6 +112,42 @@ export default function AdminDashboard() {
     >
       <div className="page_admin_dash">
         {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
+
+        <section className="p_stats">
+          <div className="i_head">
+            <h2 className="p_section_title">현황</h2>
+            <nav className="tab_menu m_small" aria-label="집계 기간">
+              {PERIODS.map((p) => (
+                <button key={p.value} type="button" className="i_tab"
+                  data-state={period === p.value ? "active" : undefined}
+                  onClick={() => setPeriod(p.value)}>{p.label}</button>
+              ))}
+            </nav>
+          </div>
+          <div className="i_grid">
+            {/* 매출·주문·가입은 선택한 기간 기준, 입금 대기는 지금 상태(기간 무관)라 라벨로 구분한다 */}
+            <div className="i_tile">
+              <span className="i_tlabel">매출</span>
+              <strong className="i_tvalue">{stats ? `${stats.revenue.toLocaleString()}원` : "–"}</strong>
+              <span className="i_thint">입금 확인된 금액 · 취소 제외</span>
+            </div>
+            <div className="i_tile">
+              <span className="i_tlabel">신규 주문</span>
+              <strong className="i_tvalue">{stats ? stats.new_orders.toLocaleString() : "–"}</strong>
+              <span className="i_thint">입금 확인 {stats ? stats.paid_orders.toLocaleString() : "–"}건</span>
+            </div>
+            <div className="i_tile">
+              <span className="i_tlabel">신규 가입</span>
+              <strong className="i_tvalue">{stats ? stats.new_users.toLocaleString() : "–"}</strong>
+              <span className="i_thint">기간 내 가입한 회원</span>
+            </div>
+            <div className="i_tile">
+              <span className="i_tlabel">입금 대기 금액</span>
+              <strong className="i_tvalue">{stats ? `${stats.pending_payment_amount.toLocaleString()}원` : "–"}</strong>
+              <span className="i_thint">지금 기준 {stats ? stats.pending_payment_count.toLocaleString() : "–"}건 · 기간 무관</span>
+            </div>
+          </div>
+        </section>
 
         <section className="p_queue">
           <h2 className="p_section_title">처리 대기</h2>
