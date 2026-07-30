@@ -242,7 +242,9 @@ export default function AdminHomeFeatures() {
                 <th>레이아웃</th>
                 <th className="m_num">품목</th>
                 <th>노출 기간</th>
+                {/* 사실(홈에 나오는가)과 조작(운영자 스위치)을 다른 컬럼으로 — 한 칸에 두면 어느 쪽이 상태인지 헷갈린다 */}
                 <th>노출 상태</th>
+                <th>노출 스위치</th>
                 <th>관리</th>
               </tr>
             </thead>
@@ -300,18 +302,20 @@ export default function AdminHomeFeatures() {
                         {f.display_state === "ended" && (
                           <span className="i_state_why">{formatDate(f.ends_at)} 종료</span>
                         )}
-                        <label className="i_toggle">
-                          <input
-                            type="checkbox"
-                            checked={f.is_active}
-                            disabled={busy !== null}
-                            onChange={() => toggleActive(f)}
-                            aria-label={`${f.title} 노출 스위치`}
-                          />
-                          <span className="i_toggle_track" aria-hidden="true"><span className="i_toggle_thumb" /></span>
-                          <span className="i_toggle_label">{f.is_active ? "켜짐" : "꺼짐"}</span>
-                        </label>
                       </div>
+                    </td>
+                    <td>
+                      <label className="i_toggle">
+                        <input
+                          type="checkbox"
+                          checked={f.is_active}
+                          disabled={busy !== null}
+                          onChange={() => toggleActive(f)}
+                          aria-label={`${f.title} 노출 스위치`}
+                        />
+                        <span className="i_toggle_track" aria-hidden="true"><span className="i_toggle_thumb" /></span>
+                        <span className="i_toggle_label">{f.is_active ? "켜짐" : "꺼짐"}</span>
+                      </label>
                     </td>
                     <td>
                       <div className="i_actions">
