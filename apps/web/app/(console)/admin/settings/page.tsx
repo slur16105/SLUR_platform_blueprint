@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
@@ -225,6 +226,32 @@ export default function AdminSettings() {
             <h2 className="i_title">카테고리</h2>
             <p className="i_desc">상품 분류 카테고리를 추가·수정·정렬합니다.</p>
             <CategoryPanel />
+          </section>
+          {/* 운영자가 여기 있을 것으로 기대하지만 이 화면이 다루지 않는 항목 — 어디서 정해지는지 알려준다 */}
+          <section className="card p_card">
+            <h2 className="i_title">여기서 관리하지 않는 것</h2>
+            <dl className="i_elsewhere">
+              <div>
+                <dt>배송비 · 도서산간 추가비</dt>
+                <dd>판매자가 각자 정합니다. 값은 <Link href="/admin/lookup">회원 관리</Link>의 판매자 탭 → 상세에서 확인할 수 있습니다.</dd>
+              </div>
+              <div>
+                <dt>이용약관 · 개인정보처리방침</dt>
+                <dd>
+                  문서 내용은 코드에서 관리합니다(법률 검토 대상).
+                  현재 문안은 <a href="/terms" target="_blank" rel="noopener noreferrer">이용약관 ↗</a> ·{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer">개인정보처리방침 ↗</a>에서 볼 수 있습니다.
+                </dd>
+              </div>
+              <div>
+                <dt>사업자 정보 · 중개자 고지</dt>
+                <dd>구매자 화면 푸터에 나가는 값으로, 코드에서 관리합니다. 실서비스 오픈 전 실제 등록 정보로 교체합니다.</dd>
+              </div>
+              <div>
+                <dt>운영자 권한 세분화 · 관리자 초대</dt>
+                <dd>v1 역할은 구매자·판매자·관리자 셋입니다. 관리자 권한을 나누는 기능은 없습니다.</dd>
+              </div>
+            </dl>
           </section>
         </>
       )}

@@ -28,3 +28,10 @@
 .page_admin_settings .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
 .page_admin_settings .modal_dialog .i_summary dt { display: inline; margin-right: var(--space-4); color: var(--color-text-muted); }
 .page_admin_settings .modal_dialog .i_summary dd { display: inline; color: var(--color-text-primary); overflow-wrap: anywhere; }
+
+/* 여기서 관리하지 않는 것 — 항목명(좌) + 어디서 정해지는지(우) */
+.page_admin_settings .p_card .i_elsewhere { display: flex; flex-direction: column; gap: var(--space-12); font-size: var(--text-sm); }
+.page_admin_settings .p_card .i_elsewhere > div { display: flex; gap: var(--space-16); }
+.page_admin_settings .p_card .i_elsewhere dt { width: 160px; flex-shrink: 0; color: var(--color-text-muted); }
+.page_admin_settings .p_card .i_elsewhere dd { flex: 1; min-width: 0; color: var(--color-text-secondary); }
+.page_admin_settings .p_card .i_elsewhere a { color: var(--color-text-brand); text-decoration: underline; }
