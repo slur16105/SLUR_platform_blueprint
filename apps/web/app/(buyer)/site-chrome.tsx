@@ -126,12 +126,23 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-muted/40">
       <div className="mx-auto max-w-[1600px] px-5 py-12">
-        <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr]">
+        <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <p className="text-[26px] font-bold leading-none tracking-tight">SLUR.</p>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
               운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍입니다.
             </p>
+          </div>
+          {/* 🚨 닿는 곳이 있는 항목만 둔다 — 목적지 없는 라벨(공지사항 등)을 만들지 않는다. */}
+          <div>
+            <p className="mb-3.5 text-[15px] font-semibold">SUPPORT</p>
+            <ul className="space-y-2.5 text-[14px] text-muted-foreground">
+              <li><Link href="/faq" className="hover:text-foreground">자주 묻는 질문</Link></li>
+              <li><Link href="/faq#shipping" className="hover:text-foreground">배송 안내</Link></li>
+              <li>
+                <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">1:1 문의</a>
+              </li>
+            </ul>
           </div>
           <div>
             <p className="mb-3.5 text-[15px] font-semibold">POLICY</p>
