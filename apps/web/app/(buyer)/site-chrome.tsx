@@ -17,22 +17,10 @@ import { useState } from "react";
 import { BROKER_NOTICE, COMPANY } from "@/app/config/company";
 
 import { useCartCount } from "./cart-count";
+import { en, type NavCategory } from "./labels";
 import PolicyLink from "./legal/policy-link";
 
-export type NavCategory = { id: string; name: string };
-
-/* 표기용 영문 라벨 — 데이터는 한글 그대로 두고 **표시만** 영문으로 옮긴다.
-   매핑에 없으면 원래 이름을 그대로 쓴다(운영자가 카테고리를 추가해도 깨지지 않는다). */
-const EN: Record<string, string> = {
-  문구: "STATIONERY",
-  생활: "LIVING",
-  패션: "FASHION",
-  리빙: "INTERIOR",
-  뷰티: "BEAUTY",
-  테크: "TECH",
-  푸드: "FOOD",
-};
-export const en = (name: string) => EN[name] ?? name;
+export type { NavCategory };
 
 export function SiteHeader({
   categories,

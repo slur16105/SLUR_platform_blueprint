@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { armHomeScroll, consumeHomeScroll, restoreHomeScroll } from "./home-scroll";
-import { en, type NavCategory } from "./site-chrome";
+import { en, type NavCategory } from "./labels";
 
 export type GridProduct = {
   id: string;
@@ -109,7 +109,6 @@ export default function HomeGrid({
 
   const hasMore = items.length < total;
   const catHref = (id: string | null) => (id ? `/?category=${encodeURIComponent(id)}` : "/");
-  const currentName = category ? categories.find((c) => c.id === category)?.name : undefined;
 
   return (
     <section className="mx-auto max-w-[1600px] px-5 pb-20">
@@ -136,14 +135,15 @@ export default function HomeGrid({
         ))}
       </div>
 
-      <div className="mb-6 flex items-baseline justify-between border-b border-border pb-3">
-        <h2 className="text-[22px] font-semibold uppercase tracking-wide">
-          {currentName ? en(currentName) : "ALL PRODUCTS"}
-        </h2>
-        <p className="text-[14px] text-muted-foreground">
-          <span className="font-semibold text-accent">{total}</span>개
-        </p>
-      </div>
+      {/* 카테고리 지면은 위쪽 지면 머리가 이름·개수를 이미 말하므로 이 줄을 두지 않는다 */}
+      {!category ? (
+        <div className="mb-6 flex items-baseline justify-between border-b border-border pb-3">
+          <h2 className="text-[22px] font-semibold uppercase tracking-wide">ALL PRODUCTS</h2>
+          <p className="text-[14px] text-muted-foreground">
+            <span className="font-semibold text-accent">{total}</span>개
+          </p>
+        </div>
+      ) : null}
 
       {items.length === 0 ? (
         <p className="py-24 text-center text-[15px] text-muted-foreground">
