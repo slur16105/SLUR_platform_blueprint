@@ -19,9 +19,12 @@ type Feature = {
   is_active: boolean;
   starts_at: string | null;
   ends_at: string | null;
+  display_state: DisplayState; // 서버 파생 — 토글(is_active)과 노출 기간을 합친 실제 노출 상태
   item_count: number;
   updated_at: string;
 };
+
+type DisplayState = "live" | "scheduled" | "ended" | "off";
 
 function formatDate(s: string | null) {
   if (!s) return "—";
@@ -32,6 +35,21 @@ const KIND_LABEL: Record<string, string> = { hero: "히어로", slot: "슬롯" }
 const LAYOUT_LABEL: Record<string, string> = { feature: "피처", strip: "스트립" };
 // 구분 배지 색 — 행 호버색(--color-surface-hover)과 겹치지 않도록 색을 준다.
 const KIND_BADGE: Record<string, string> = { hero: "badge m_small m_brand", slot: "badge m_small m_outline" };
+
+// 실제 노출 상태 — 토글을 켜도 노출 기간 밖이면 구매자 홈에 안 나온다. 그 차이를 화면에서 말해준다.
+const STATE_LABEL: Record<DisplayState, string> = {
+  live: "노출중", scheduled: "예약", ended: "종료", off: "비노출",
+};
+const STATE_BADGE: Record<DisplayState, string> = {
+  live: "badge m_small m_success", scheduled: "badge m_small m_warning",
+  ended: "badge m_small", off: "badge m_small",
+};
+const STATE_HINT: Record<DisplayState, string> = {
+  live: "지금 구매자 홈에 나옵니다.",
+  scheduled: "노출 시작일이 아직 오지 않아 홈에 나오지 않습니다.",
+  ended: "노출 기간이 끝나 홈에 나오지 않습니다.",
+  off: "노출 스위치가 꺼져 있어 홈에 나오지 않습니다.",
+};
 
 const GripIcon = (
   <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
@@ -169,7 +187,13 @@ export default function AdminHomeFeatures() {
       role="admin"
       title="메인 화면 관리"
       description="구매자 앱 메인 화면에 노출되는 히어로·슬롯을 관리합니다. 노출 순서·기간·노출 여부를 정합니다."
-      actions={<Link className="btn m_small m_primary" href="/admin/home/new">새 항목</Link>}
+      actions={
+        <>
+          {/* 편성 결과는 구매자 홈에서 확인한다 — 새 탭으로 열어 관리 화면을 잃지 않게 */}
+          <a className="btn m_small" href="/" target="_blank" rel="noopener noreferrer">구매자 홈 열기 ↗</a>
+          <Link className="btn m_small m_primary" href="/admin/home/new">새 항목</Link>
+        </>
+      }
     >
       <div className="page_admin_home">
       <p className="p_hint">
@@ -199,7 +223,7 @@ export default function AdminHomeFeatures() {
                 <th>레이아웃</th>
                 <th className="m_num">품목</th>
                 <th>노출 기간</th>
-                <th>상태</th>
+                <th>노출 상태</th>
                 <th>관리</th>
               </tr>
             </thead>
@@ -245,17 +269,23 @@ export default function AdminHomeFeatures() {
                     <td className="m_num">{f.item_count}</td>
                     <td className="i_period">{formatDate(f.starts_at)} ~ {formatDate(f.ends_at)}</td>
                     <td>
-                      <label className="i_toggle">
-                        <input
-                          type="checkbox"
-                          checked={f.is_active}
-                          disabled={busy !== null}
-                          onChange={() => toggleActive(f)}
-                          aria-label={`${f.title} 노출 여부`}
-                        />
-                        <span className="i_toggle_track" aria-hidden="true"><span className="i_toggle_thumb" /></span>
-                        <span className="i_toggle_label">{f.is_active ? "노출중" : "비노출중"}</span>
-                      </label>
+                      <div className="i_state">
+                        {/* 배지가 실제 노출 여부(기간 포함), 토글은 운영자가 켜고 끄는 스위치 */}
+                        <span className={STATE_BADGE[f.display_state]} title={STATE_HINT[f.display_state]}>
+                          {STATE_LABEL[f.display_state]}
+                        </span>
+                        <label className="i_toggle">
+                          <input
+                            type="checkbox"
+                            checked={f.is_active}
+                            disabled={busy !== null}
+                            onChange={() => toggleActive(f)}
+                            aria-label={`${f.title} 노출 스위치`}
+                          />
+                          <span className="i_toggle_track" aria-hidden="true"><span className="i_toggle_thumb" /></span>
+                          <span className="i_toggle_label">{f.is_active ? "켜짐" : "꺼짐"}</span>
+                        </label>
+                      </div>
                     </td>
                     <td>
                       <div className="i_actions">

@@ -268,3 +268,38 @@ async def test_non_admin_forbidden(client, clean_home):
         "kind": "slot", "layout": "strip", "title": "x", "product_ids": [],
     })
     assert r.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_list_display_state_reflects_window(client, clean_home):
+    """관리자 목록의 display_state — 토글만이 아니라 노출 기간까지 반영한다(구매자 홈 노출 규칙과 정합)."""
+    from datetime import datetime, timedelta, timezone
+
+    admin_t, cid, t, sid = await _setup(client)
+    p = await _make_product(client, t, sid, cid, "상태확인상품", stock=5)
+    now = datetime.now(timezone.utc)
+
+    def iso(dt):
+        return dt.isoformat()
+
+    async def create(title, **extra):
+        body = {"kind": "slot", "layout": "strip", "title": title, "product_ids": [p], **extra}
+        res = await client.post("/api/v1/admin/home/features", headers=_auth(admin_t), json=body)
+        assert res.status_code == 201, res.text
+        return res.json()["id"]
+
+    live = await create("지금 노출")
+    scheduled = await create("아직 시작 전", starts_at=iso(now + timedelta(days=1)))
+    ended = await create("기간 끝남", starts_at=iso(now - timedelta(days=2)), ends_at=iso(now - timedelta(days=1)))
+    off = await create("스위치 꺼짐", is_active=False)
+
+    states = {f["id"]: f["display_state"] for f in
+              (await client.get("/api/v1/admin/home/features", headers=_auth(admin_t))).json()["items"]}
+    assert states[live] == "live"
+    assert states[scheduled] == "scheduled"
+    assert states[ended] == "ended"
+    assert states[off] == "off"
+
+    # 구매자 홈과 정합: live만 실제로 노출된다
+    slots = (await client.get("/api/v1/home")).json()["slots"]
+    assert [s["id"] for s in slots] == [live]

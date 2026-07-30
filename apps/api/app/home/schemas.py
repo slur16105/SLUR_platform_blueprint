@@ -157,6 +157,7 @@ class AdminFeatureListItem(BaseModel):
     is_active: bool
     starts_at: datetime | None
     ends_at: datetime | None
+    display_state: str  # live | scheduled | ended | off — 토글 + 노출기간을 합친 실제 노출 상태
     item_count: int
     updated_at: datetime
 

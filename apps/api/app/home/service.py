@@ -167,10 +167,27 @@ async def _replace_items(session: AsyncSession, feature_id: uuid.UUID, product_i
         session.add(HomeFeatureItem(feature_id=feature_id, product_id=pid, sort_order=order))
 
 
+def _display_state(feature: HomeFeature, now: datetime) -> str:
+    """관리자 목록의 실제 노출 상태 — 토글(is_active)만으로는 기간을 반영하지 못한다.
+
+    구매자 홈은 is_active + 노출기간(_in_window)을 모두 만족하는 것만 내보낸다(list_home).
+    관리자 화면이 토글만 보여주면 시작 전·종료된 항목도 "노출중"으로 읽혀 오해를 만든다.
+    파생은 서버가 소유한다(AD-12) — 클라이언트 시계에 기대지 않는다.
+    """
+    if not feature.is_active:
+        return "off"
+    if feature.starts_at is not None and now < feature.starts_at:
+        return "scheduled"  # 예약 — 시작 전
+    if feature.ends_at is not None and now >= feature.ends_at:
+        return "ended"  # 종료 — 기간 만료
+    return "live"
+
+
 async def list_features(session: AsyncSession) -> list[dict]:
     features = list(await session.scalars(
         select(HomeFeature).order_by(HomeFeature.kind, HomeFeature.display_order, HomeFeature.id)
     ))
+    now = await session.scalar(select(func.now()))  # 기간 판정은 DB 시각 기준 (구매자 홈과 동일)
     # 공개 노출 가능한 품목(status != 'hidden')만 센다 — 구매자 홈 노출 수와 정합.
     # 숨김 품목을 포함해 세면 목록엔 "품목 3"인데 홈엔 더 적게 나온다.
     counts = dict((await session.execute(
@@ -184,6 +201,7 @@ async def list_features(session: AsyncSession) -> list[dict]:
         "issue_no": f.issue_no, "issue_label": f.issue_label, "layout": f.layout,
         "display_order": f.display_order, "is_active": f.is_active,
         "starts_at": f.starts_at, "ends_at": f.ends_at,
+        "display_state": _display_state(f, now),
         "item_count": int(counts.get(f.id, 0)), "updated_at": f.updated_at,
     } for f in features]
 
