@@ -184,6 +184,8 @@ export default function AdminSettings() {
         </div>
       ) : (
         <>
+          {/* 계좌(편집)와 운영 수치(읽기)는 둘 다 짧아 넓은 화면에서 한 행에 나란히 둔다 */}
+          <div className="p_pair">
           <section className="card p_card">
             <h2 className="i_title">무통장입금 계좌</h2>
             <p className="i_desc">{account?.description || "구매자 주문서·입금 안내에 표시되는 계좌입니다."}</p>
@@ -222,6 +224,7 @@ export default function AdminSettings() {
             </dl>
             <p className="i_hint">이 수치는 이 화면에서 바꿀 수 없습니다 — 변경은 서버에서 직접 처리합니다.</p>
           </section>
+          </div>
           <section className="card p_card">
             <h2 className="i_title">카테고리</h2>
             <p className="i_desc">상품 분류 카테고리를 추가·수정·정렬합니다.</p>

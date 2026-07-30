@@ -67,3 +67,33 @@ async def test_non_admin_403(client, clean_categories):
     signup = await client.post("/api/v1/auth/signup", json={"email": "x@example.com", "password": "password123", "name": "x"})
     res = await client.post("/api/v1/admin/categories", json={"name": "문구"}, headers=_auth(signup.json()["access_token"]))
     assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_list_includes_product_count(client, clean_products):
+    """관리자 카테고리 목록 — 상품 수 포함(삭제 가능 여부와 같은 기준) + 공개 목록엔 넣지 않는다."""
+    from tests.helpers import _admin_login, _buyer, _shop
+
+    st, pid, vs = await _shop(client, stock=3)  # 카테고리 1개 + 그 안에 상품 1개 (admin 가입도 여기서 수행)
+    admin_t = await _admin_login(client)
+    bt = await _buyer(client)
+
+    res = await client.get("/api/v1/admin/categories", headers=_auth(admin_t))
+    assert res.status_code == 200
+    rows = res.json()
+    assert len(rows) >= 1
+    used = [r for r in rows if r["product_count"] > 0]
+    assert len(used) == 1 and used[0]["product_count"] == 1
+    # 순서 필드는 공개 목록과 같은 규칙(sort_order)
+    assert [r["sort_order"] for r in rows] == sorted(r["sort_order"] for r in rows)
+
+    # 상품이 속한 카테고리는 삭제 거부 — 화면이 버튼을 막는 근거와 서버 판정이 같다
+    assert (await client.delete(f"/api/v1/admin/categories/{used[0]['id']}", headers=_auth(admin_t))).status_code >= 400
+
+    # 권한 — 구매자·비인증은 접근 불가
+    assert (await client.get("/api/v1/admin/categories", headers=_auth(bt))).status_code == 403
+    assert (await client.get("/api/v1/admin/categories")).status_code == 401
+
+    # 공개 목록에는 product_count가 없다(구매자 필터 칩이 쓰지 않는 정보)
+    pub = (await client.get("/api/v1/products/categories")).json()
+    assert pub and "product_count" not in pub[0]

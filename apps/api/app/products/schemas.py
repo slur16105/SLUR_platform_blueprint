@@ -32,6 +32,12 @@ class CategoryResponse(BaseModel):
     sort_order: int
 
 
+class CategoryAdminItem(CategoryResponse):
+    """관리자 카테고리 패널용 — 소속 상품 수(삭제 가능 여부와 같은 기준)를 더한다."""
+
+    product_count: int
+
+
 class PresignRequest(BaseModel):
     content_type: str = Field(min_length=1, max_length=50)
 

@@ -3,6 +3,11 @@ import { NextRequest } from "next/server";
 import { assertSameOrigin, proxyWithRefresh } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  // counts=1 → 관리자 전용 목록(카테고리별 상품 수 포함, admin 권한 필요).
+  // 기본은 공개 목록 — 이 라우트는 판매자 상품 등록 화면도 쓰므로 기본 경로를 admin 전용으로 바꾸면 403이 된다.
+  if (req.nextUrl.searchParams.get("counts") === "1") {
+    return proxyWithRefresh(req, "/api/v1/admin/categories", { method: "GET" });
+  }
   return proxyWithRefresh(req, "/api/v1/products/categories", { method: "GET" });
 }
 

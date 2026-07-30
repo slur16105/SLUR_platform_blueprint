@@ -427,6 +427,18 @@ async def low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, thresh
     } for v, p in rows]
 
 
+async def count_products_by_categories(session: AsyncSession) -> dict[uuid.UUID, int]:
+    """카테고리별 상품 수 — 관리자 카테고리 패널이 "삭제 가능한가"를 누르기 전에 보여주기 위해.
+
+    소속 상품이 있는 카테고리는 FK RESTRICT로 삭제가 거부된다(3.1 AC 2). 숨김 상품도 삭제를
+    막으므로 status로 걸르지 않는다 — 여기 수치는 '삭제 가능 여부'와 같은 기준이어야 한다.
+    """
+    rows = (await session.execute(
+        select(Product.category_id, func.count()).group_by(Product.category_id)
+    )).all()
+    return dict(rows)
+
+
 async def count_products_by_sellers(session: AsyncSession, seller_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
     """판매자별 상품 수 — 5.6 관리자 조회."""
     if not seller_ids:

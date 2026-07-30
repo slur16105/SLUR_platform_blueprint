@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_session
 from app.core.security import require_role
 from app.products import service as products_service
-from app.products.schemas import CategoryCreate, CategoryOrder, CategoryRename, CategoryResponse
+from app.products.schemas import CategoryAdminItem, CategoryCreate, CategoryOrder, CategoryRename, CategoryResponse
 from app.sellers import service as sellers_service
 from app.sellers.schemas import ApplicationResponse
 
@@ -76,6 +76,24 @@ async def reject(
 ) -> ApplicationAdminItem:
     row = await sellers_service.reject_application(session, application_id, admin_id, body.reason)
     return ApplicationAdminItem.model_validate(row, from_attributes=True)
+
+
+@router.get("/categories", response_model=list[CategoryAdminItem])
+async def admin_list_categories(
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> list[CategoryAdminItem]:
+    """관리자 카테고리 목록 — 공개 목록(products/categories)에 상품 수를 더한 관리용 뷰.
+
+    상품 수는 삭제 가능 여부와 같은 기준이라(FK RESTRICT), 운영자가 누르기 전에 판단할 수 있다.
+    공개 응답에는 넣지 않는다 — 구매자 필터 칩이 쓰지 않는 정보다.
+    """
+    rows = await products_service.list_categories(session)
+    counts = await products_service.count_products_by_categories(session)
+    return [
+        CategoryAdminItem(id=r.id, name=r.name, sort_order=r.sort_order, product_count=counts.get(r.id, 0))
+        for r in rows
+    ]
 
 
 @router.post("/categories", response_model=CategoryResponse, status_code=201)
