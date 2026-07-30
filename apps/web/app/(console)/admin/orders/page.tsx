@@ -203,7 +203,8 @@ function AdminOrdersInner() {
                 <th>주문 일시</th>
                 <th>주문자</th>
                 <th>브랜드</th>
-                <th>상태</th>
+                {/* 상태 탭으로 이미 걸러진 목록에서는 전 행이 같은 상태다 — 전체 탭에서만 컬럼을 둔다 */}
+                {status === "" && <th>상태</th>}
                 <th className="m_num">금액</th>
               </tr>
             </thead>
@@ -233,7 +234,9 @@ function AdminOrdersInner() {
                       ))}
                     </div>
                   </td>
-                  <td><span className={statusBadgeClass(o.display_status)}>{statusLabel(o.display_status)}</span></td>
+                  {status === "" && (
+                    <td><span className={statusBadgeClass(o.display_status)}>{statusLabel(o.display_status)}</span></td>
+                  )}
                   <td className="m_num"><strong>{o.grand_total.toLocaleString()}원</strong></td>
                 </tr>
               ))}
