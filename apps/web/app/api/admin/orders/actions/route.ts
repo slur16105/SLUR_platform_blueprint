@@ -45,6 +45,23 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  if (body.action === "confirm_payment") {
+    // 무통장 입금 확인 → paid 전이 (입금 확인 화면과 같은 엔드포인트). 성공 시 204
+    if (typeof body.order_id !== "string" || !UUID_RE.test(body.order_id)) return invalid();
+    // 화면에 표시된 금액을 그대로 되돌려 대조한다 — stale 금액으로 과입금을 확인하는 것을 서버가 막는다
+    if (typeof body.expected_grand_total !== "number" || !Number.isInteger(body.expected_grand_total)
+      || body.expected_grand_total < 0) {
+      return invalid("확인 금액이 올바르지 않습니다.");
+    }
+    const payload: Record<string, unknown> = { expected_grand_total: body.expected_grand_total };
+    if (typeof body.note === "string" && body.note.trim()) payload.note = body.note.trim().slice(0, 500);
+    return proxyWithRefresh(req, `/api/v1/admin/orders/${body.order_id.toLowerCase()}/confirm-payment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  }
+
   if (body.action === "cancel_item") {
     // 라인 단위 취소 (배송 후 가능 — admin 예외) → { order_canceled }
     if (typeof body.order_item_id !== "string" || !UUID_RE.test(body.order_item_id)) return invalid();

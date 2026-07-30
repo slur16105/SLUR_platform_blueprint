@@ -48,6 +48,14 @@ type OrderEvent = {
   note: string;
 };
 
+// 입금대기일 때만 내려온다 — grand_total은 활성 라인 기준(부분 취소 후 과입금 방지)
+type DepositInfo = {
+  grand_total: number;
+  deposit_account: string | null;
+  deposit_due_at: string;
+  expired: boolean;
+};
+
 type OrderDetail = {
   order_id: string;
   order_no: string;
@@ -63,12 +71,15 @@ type OrderDetail = {
   order_note: string;
   sub_orders: SubView[];
   item_total: number;
-  shipping_total: number;
+  shipping_total: number; // 도서산간 추가비를 포함한 값 — 화면에서 remote_total만큼 쪼개 표시한다
+  remote_total: number;
   grand_total: number;
+  deposit_info: DepositInfo | null;
   events: OrderEvent[];
 };
 
 type Action =
+  | { kind: "confirm_payment"; deposit: DepositInfo }
   | { kind: "cancel_order" }
   | { kind: "cancel_item"; sub: SubView; item: LineView }
   | { kind: "ship"; sub: SubView }
@@ -278,11 +289,20 @@ export default function AdminOrderDetail() {
       }, `${action.sub.brand_name} 묶음을 배송완료 처리했습니다.`);
       return;
     }
+    if (action.kind === "confirm_payment") {
+      submitAction({
+        action: "confirm_payment", order_id: detail.order_id,
+        expected_grand_total: action.deposit.grand_total, // 모달에 표시된 금액 그대로 — stale 금액 확인 방지
+        note: note.trim() || undefined,
+      }, `주문 ${detail.order_no} 입금 확인 처리되었습니다.`);
+      return;
+    }
     submitAction({ action: "mark_refunded", cancellation_id: action.cancellation.cancellation_id },
       `${action.item.product_name} 환불 완료 처리했습니다.`);
   }
 
   const modalTitle = action === null ? "" : {
+    confirm_payment: "입금 확인",
     cancel_order: "주문 전체 취소",
     cancel_item: "품목 취소",
     ship: "배송중 처리",
@@ -293,7 +313,7 @@ export default function AdminOrderDetail() {
   return (
     <ConsoleShell role="admin" title="주문 상세">
       <div className="page_admin_order_detail">
-      <Link className="p_back" href="/admin/orders"><span aria-hidden="true">←</span> 주문 검색</Link>
+      <Link className="p_back" href="/admin/orders"><span aria-hidden="true">←</span> 주문 관리로</Link>
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {loading && <p className="p_loading" role="status">불러오는 중…</p>}
@@ -312,6 +332,13 @@ export default function AdminOrderDetail() {
               </div>
               {detail.display_status === "awaiting_payment" && (
                 <div className="i_actions">
+                  {/* 입금 확인은 주문 단위 액션 — 입금 확인 화면까지 가지 않고 여기서 바로 처리한다 */}
+                  {detail.deposit_info && (
+                    <button className="btn m_small m_primary" type="button"
+                      onClick={() => openAction({ kind: "confirm_payment", deposit: detail.deposit_info! })}>
+                      입금 확인
+                    </button>
+                  )}
                   <button className="btn m_small m_danger" type="button"
                     onClick={() => openAction({ kind: "cancel_order" })}>주문 전체 취소</button>
                 </div>
@@ -400,11 +427,34 @@ export default function AdminOrderDetail() {
               </dl>
             </section>
 
+            <section className="card p_payment">
+              <h2 className="i_title">결제 정보</h2>
+              <dl className="i_meta">
+                <div><dt>결제수단</dt><dd>무통장입금</dd></div>
+                {detail.deposit_info ? (
+                  <>
+                    <div><dt>입금계좌</dt><dd>{detail.deposit_info.deposit_account || "미설정 — 설정 화면에서 등록"}</dd></div>
+                    <div><dt>입금기한</dt><dd>{formatDateTime(detail.deposit_info.deposit_due_at)}</dd></div>
+                    <div><dt>확인 금액</dt><dd><strong>{detail.deposit_info.grand_total.toLocaleString()}원</strong></dd></div>
+                  </>
+                ) : (
+                  <div><dt>입금상태</dt><dd>입금 확인됨</dd></div>
+                )}
+              </dl>
+              {detail.deposit_info?.expired && (
+                <p className="i_note" role="status">입금기한이 지났습니다 — 자동취소 대상입니다.</p>
+              )}
+            </section>
+
             <section className="card p_amounts">
               <h2 className="i_title">금액 요약</h2>
               <dl className="i_rows">
                 <div><dt>상품 금액</dt><dd>{detail.item_total.toLocaleString()}원</dd></div>
-                <div><dt>배송비</dt><dd>{detail.shipping_total.toLocaleString()}원</dd></div>
+                {/* 배송비 = shipping_total − remote_total. 쪼개기 기준은 서버가 정한다(remote_total) */}
+                <div><dt>배송비</dt><dd>{(detail.shipping_total - detail.remote_total).toLocaleString()}원</dd></div>
+                {detail.remote_total > 0 && (
+                  <div><dt>도서산간 추가</dt><dd>{detail.remote_total.toLocaleString()}원</dd></div>
+                )}
                 <div className="m_total"><dt>총 결제 금액</dt><dd>{detail.grand_total.toLocaleString()}원</dd></div>
               </dl>
             </section>
@@ -440,6 +490,13 @@ export default function AdminOrderDetail() {
                 onClick={closeModal}>✕</button>
             </div>
             <div className="i_body">
+              {action.kind === "confirm_payment" && (
+                <p className="i_text">
+                  통장에 <strong>{action.deposit.grand_total.toLocaleString()}원</strong>이 실제로 들어왔는지 확인한 뒤 눌러 주세요.
+                  결제완료로 전환되고 판매자에게 배송준비 주문으로 넘어갑니다.
+                  {action.deposit.expired && " 입금기한이 지난 주문입니다."}
+                </p>
+              )}
               {action.kind === "cancel_order" && (
                 <p className="i_text">주문의 모든 활성 품목을 취소하고 주문을 취소 상태로 전환합니다. 처리 후에는 되돌릴 수 없습니다.</p>
               )}
@@ -468,6 +525,12 @@ export default function AdminOrderDetail() {
                 )}
                 {action.kind === "refunded" && (
                   <div><dt>취소 사유</dt><dd>{action.cancellation.reason}</dd></div>
+                )}
+                {action.kind === "confirm_payment" && (
+                  <>
+                    <div><dt>확인 금액</dt><dd><strong>{action.deposit.grand_total.toLocaleString()}원</strong></dd></div>
+                    <div><dt>입금기한</dt><dd>{formatDateTime(action.deposit.deposit_due_at)}</dd></div>
+                  </>
                 )}
               </dl>
               {formError && <div className="alert m_inline m_danger" role="alert">{formError}</div>}

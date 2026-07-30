@@ -234,3 +234,32 @@ async def test_period_filter(client, clean_products):
 
     # 잘못된 값 422
     assert (await client.get(SEARCH, params={"period": "1y"}, headers=_auth(admin_t))).status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_detail_remote_total_splits_shipping(client, clean_products):
+    """상세 응답의 remote_total — shipping_total에 포함된 도서산간 몫이며 합이 어긋나지 않는다."""
+    st, pid, vs = await _shop(client, stock=9)
+    await _fees(client, st, base=3000, jeju=3000)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+
+    # 제주 주소로 주문 — 도서산간 추가비가 실제로 붙는 경로
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    ids = await _cart_ids(client, bt)
+    jeju = {**ADDRESS, "postal_code": "63001"}
+    res = await client.post(
+        "/api/v1/orders",
+        json={"cart_item_ids": ids, "expected_grand_total": await _expected(client, bt, postal="63001"), **jeju},
+        headers=_auth(bt),
+    )
+    assert res.status_code == 201
+    oid = res.json()["order_id"]
+
+    d = (await client.get(f"{SEARCH}/{oid}", headers=_auth(admin_t))).json()
+    assert d["remote_total"] == 3000
+    # 화면은 "배송비 = shipping_total − remote_total"으로 쪼개 보여준다 — 음수·합 불일치가 없어야 한다
+    assert d["shipping_total"] - d["remote_total"] == 3000
+    assert d["item_total"] + d["shipping_total"] == d["grand_total"]
+    # 묶음별 값과도 대사된다
+    assert sum(s["remote_extra_fee"] for s in d["sub_orders"]) == d["remote_total"]

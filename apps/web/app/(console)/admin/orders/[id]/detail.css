@@ -69,6 +69,9 @@
 .page_admin_order_detail .i_fees { display: flex; gap: var(--space-8); font-size: var(--text-xs); color: var(--color-text-secondary); }
 .page_admin_order_detail .i_sub_action { flex: none; margin-left: auto; }
 
+/* 결제 정보 — 무통장 입금 안내(계좌·기한·확인 금액). 기한 경과는 경고 톤 한 줄. */
+.page_admin_order_detail .p_payment .i_note { margin-top: var(--space-8); font-size: var(--text-xs); color: var(--color-danger); }
+
 /* 금액 요약 */
 .page_admin_order_detail .p_amounts .i_rows { display: flex; flex-direction: column; gap: var(--space-4); font-size: var(--text-sm); }
 .page_admin_order_detail .p_amounts .i_rows > div { display: flex; justify-content: space-between; }

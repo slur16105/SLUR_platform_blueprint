@@ -572,12 +572,30 @@ def _amounts(subs: list, items_by_sub: dict, *, only_active: bool = True) -> tup
     return item_total, shipping_total, item_total + shipping_total
 
 
+def _display_only_active(subs: list, items_by_sub: dict) -> bool:
+    """표시용 합산이 활성 기준인지 — 전-취소 주문(활성 0)만 원 주문 기준으로 폴백한다.
+
+    폴백 판정을 여기 한 곳에만 두어, 같은 금액을 쪼개 보여주는 쪽(_remote_total)이
+    다른 기준으로 계산해 합이 어긋나는 일을 막는다.
+    """
+    _, _, grand = _amounts(subs, items_by_sub)
+    return not (grand == 0 and any(items_by_sub.get(s.id) for s in subs))
+
+
 def _display_amounts(subs: list, items_by_sub: dict) -> tuple[int, int, int]:
     """표시용 금액 — 활성 기준, 전-취소 주문(활성 0)은 원 주문 금액으로 폴백."""
-    item_total, shipping_total, grand = _amounts(subs, items_by_sub)
-    if grand == 0 and any(items_by_sub.get(s.id) for s in subs):
-        return _amounts(subs, items_by_sub, only_active=False)
-    return item_total, shipping_total, grand
+    return _amounts(subs, items_by_sub, only_active=_display_only_active(subs, items_by_sub))
+
+
+def _remote_total(subs: list, items_by_sub: dict, *, only_active: bool) -> int:
+    """도서산간 추가비 합 — shipping_total에 포함된 몫을 같은 픽 규칙으로 떼어낸다."""
+    total = 0
+    for sub in subs:
+        lines = items_by_sub.get(sub.id, [])
+        picked = [i for i in lines if i.status == t.ITEM_ORDERED] if only_active else lines
+        if picked:
+            total += sub.remote_extra_fee
+    return total
 
 
 async def list_my_orders(session: AsyncSession, user_id: uuid.UUID, page: int) -> dict:
@@ -664,6 +682,9 @@ async def _order_detail_view(session: AsyncSession, order, *, admin: bool = Fals
         "order_note": order.order_note,
         "sub_orders": sub_views,
         "item_total": item_total, "shipping_total": shipping_total, "grand_total": grand,
+        # 배송비 안에 든 도서산간 몫 — 상세 화면이 "배송비 / 도서산간 추가"로 쪼개 보여준다.
+        # 클라이언트가 재계산하면 활성·폴백 규칙과 어긋날 수 있어 서버가 같은 기준으로 내려준다.
+        "remote_total": _remote_total(subs, items_by_sub, only_active=_display_only_active(subs, items_by_sub)),
         "deposit_info": deposit_info,
     }
 
