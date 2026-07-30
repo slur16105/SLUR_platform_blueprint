@@ -181,6 +181,9 @@ export default function AdminHomeFeatures() {
   // 같은 구분 항목이 2개 이상일 때만 순서 변경 가능 — 1개뿐이면 바꿀 상대가 없다(손잡이 비활성).
   const heroCount = items.filter((i) => i.kind === "hero").length;
   const slotCount = items.length - heroCount;
+  // 스위치는 켰는데 노출 기간 때문에 홈에 안 나오는 항목 — 운영자가 "켰으니 나온다"고 오해하는 지점
+  const scheduledCount = items.filter((i) => i.display_state === "scheduled").length;
+  const endedCount = items.filter((i) => i.display_state === "ended").length;
 
   return (
     <ConsoleShell
@@ -203,6 +206,14 @@ export default function AdminHomeFeatures() {
         행 왼쪽 손잡이를 끌어 <strong>같은 구분 안에서</strong> 순서를 바꿉니다. 아래는 예시 항목이니 <strong>수정</strong>으로 열어 확인해 보세요.
       </p>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
+      {(scheduledCount > 0 || endedCount > 0) && (
+        <div className="alert m_inline m_warning" role="status">
+          스위치는 켜져 있지만 <strong>노출 기간이 아니어서 홈에 나오지 않는 항목</strong>이 있습니다
+          {scheduledCount > 0 && ` — 예약 ${scheduledCount}건(시작일 전)`}
+          {endedCount > 0 && ` — 종료 ${endedCount}건(기간 만료)`}.
+          기간을 바꾸려면 <strong>수정</strong>, 목록에서 내리려면 스위치를 끄세요.
+        </div>
+      )}
       {multiActiveHero && (
         <div className="alert m_inline m_warning" role="alert">
           노출 중인 히어로가 여러 개입니다 — 홈엔 순서가 가장 앞선 히어로 1건만 나옵니다. 아래 <strong>대표</strong> 표시를 확인하세요.
@@ -274,6 +285,13 @@ export default function AdminHomeFeatures() {
                         <span className={STATE_BADGE[f.display_state]} title={STATE_HINT[f.display_state]}>
                           {STATE_LABEL[f.display_state]}
                         </span>
+                        {/* 왜 안 나오는지 근거를 항상 보이게 — hover(title)만으로는 발견되지 않는다 */}
+                        {f.display_state === "scheduled" && (
+                          <span className="i_state_why">{formatDate(f.starts_at)}부터</span>
+                        )}
+                        {f.display_state === "ended" && (
+                          <span className="i_state_why">{formatDate(f.ends_at)} 종료</span>
+                        )}
                         <label className="i_toggle">
                           <input
                             type="checkbox"

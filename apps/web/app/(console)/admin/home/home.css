@@ -26,6 +26,7 @@
 /* 상태 토글 스위치 (노출중/비노출중) */
 /* 노출 상태 셀 — 실제 노출 배지(위) + 운영자 스위치(아래) */
 .page_admin_home .i_state { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.page_admin_home .i_state_why { font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_home .i_toggle { display: inline-flex; align-items: center; gap: var(--space-8); cursor: pointer; }
 .page_admin_home .i_toggle input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .page_admin_home .i_toggle_track { display: inline-flex; align-items: center; width: 2.25rem; height: 1.25rem; padding: 0.125rem; border-radius: var(--radius-full); background: var(--color-border-strong); transition: background-color var(--duration-fast) var(--ease-standard); }
