@@ -1,19 +1,16 @@
 "use client";
 
+/* 판매자 대시보드 — 운영형(처리 대기 큐 중심). 관리자 대시보드와 같은 구조·워딩을 쓴다.
+   랜딩은 "지금 무엇을 처리할까"에 답한다: 처리 대기 큐(딥링크) + 발송할 주문 + 품절 임박.
+   배송비 설정은 여기 있던 폼을 /seller/settings로 분리했다(관리자 IA와 일치).
+   매출·정산·추이는 집계 API도 정산 기능도 없어 이식 대상 아님(시안 원본은 직접 판매 모델). */
+
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import ConsoleShell from "@/app/(console)/console-shell";
-import "./seller.css";
-
-type Profile = {
-  brand_name: string;
-  brand_intro: string;
-  company_name: string;
-  base_shipping_fee: number;
-  jeju_extra_fee: number;
-  island_extra_fee: number;
-};
+import "./dashboard.css";
 
 type LowStockItem = {
   product_id: string;
@@ -29,156 +26,188 @@ type Dashboard = {
   low_stock_threshold: number;
 };
 
-const FEE_FIELDS = [
-  { name: "base_shipping_fee", label: "기본 배송비 (0 = 무료배송)" },
-  { name: "jeju_extra_fee", label: "제주 추가 배송비" },
-  { name: "island_extra_fee", label: "도서산간 추가 배송비" },
-] as const;
+type OrderLine = { product_name: string; option_text: string; quantity: number; status: "ordered" | "canceled" };
+type SubOrder = {
+  sub_order_id: string;
+  order_no: string;
+  created_at: string;
+  recipient_name: string;
+  recipient_phone: string;
+  all_canceled: boolean;
+  items: OrderLine[];
+};
 
-export default function SellerHome() {
+type Profile = { brand_name: string; company_name: string };
+
+function formatDateTime(s: string) {
+  // 주문 관리·관리자 화면과 대사 시 시간 불일치 방지 — KST 고정
+  return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
+}
+
+export default function SellerDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [fees, setFees] = useState<Record<string, string>>({});
-  const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
-  const [dashError, setDashError] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState<SubOrder[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // 대시보드 값은 전부 서버 응답 표시만 (AD-12) — 클라이언트 계산 없음
-  const loadDashboard = useCallback(async () => {
-    setDashError(null);
-    setDashboard(null);
+  const load = useCallback(async () => {
+    setError(null);
     try {
-      const res = await fetch("/api/seller/dashboard");
-      if (res.status === 401) return void router.replace("/login");
-      if (res.status === 403) return void router.replace("/no-role");
-      if (!res.ok) return void setDashError("대시보드를 불러오지 못했습니다.");
-      setDashboard(await res.json());
+      const [d, o, p] = await Promise.all([
+        fetch("/api/seller/dashboard"),
+        fetch("/api/seller/orders?status=preparing&page=1"),
+        fetch("/api/sellers/me"),
+      ]);
+      const all = [d, o, p];
+      if (all.some((x) => x.status === 401)) return void router.replace("/login");
+      if (all.some((x) => x.status === 403)) return void router.replace("/no-role");
+      if (d.ok) setDashboard(await d.json());
+      if (o.ok) {
+        const data = await o.json();
+        setPreparing(((data.items ?? []) as SubOrder[]).slice(0, 5));
+      } else {
+        setPreparing([]);
+      }
+      if (p.ok) setProfile(await p.json());
+      if (!d.ok && !o.ok) setError("대시보드를 불러오지 못했습니다.");
     } catch {
-      setDashError("네트워크 연결을 확인해 주세요.");
+      setError("네트워크 연결을 확인해 주세요.");
     }
   }, [router]);
 
   // 초기 로드 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    void (async () => { await loadDashboard(); })();
-  }, [loadDashboard]);
+    void (async () => { await load(); })();
+  }, [load]);
 
-  useEffect(() => {
-    fetch("/api/sellers/me").then(async (r) => {
-      if (r.status === 401) return void router.replace("/login");
-      if (r.status === 403) return void router.replace("/no-role");
-      const p: Profile = await r.json();
-      setProfile(p);
-      setFees({
-        base_shipping_fee: String(p.base_shipping_fee),
-        jeju_extra_fee: String(p.jeju_extra_fee),
-        island_extra_fee: String(p.island_extra_fee),
-      });
-    }).catch(() => setError("네트워크 연결을 확인해 주세요."));
-  }, [router]);
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setNotice(null);
-    setError(null);
-    try {
-      const res = await fetch("/api/sellers/me", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          base_shipping_fee: Number(fees.base_shipping_fee),
-          jeju_extra_fee: Number(fees.jeju_extra_fee),
-          island_extra_fee: Number(fees.island_extra_fee),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.details?.[0]?.reason ?? data.message ?? "저장에 실패했습니다.");
-        return;
-      }
-      setNotice("배송비 설정을 저장했습니다.");
-    } catch {
-      setError("네트워크 연결을 확인해 주세요.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!profile)
-    return (
-      <ConsoleShell role="seller" title="판매자 센터">
-        <p className="p_loading" role="status">불러오는 중…</p>
-      </ConsoleShell>
-    );
+  const lowStock = dashboard?.low_stock ?? [];
+  const queue = [
+    // 라벨은 주문 관리 탭 이름과 같은 표기 — 같은 것을 화면마다 다른 이름으로 부르지 않는다
+    { label: "배송준비", count: dashboard?.preparing_count ?? null, href: "/seller/orders?status=preparing", hint: "송장 입력이 필요한 주문" },
+    { label: "배송중", count: dashboard?.shipping_count ?? null, href: "/seller/orders?status=shipping", hint: "배송 완료 처리 대기" },
+    { label: "품절 임박", count: dashboard ? lowStock.length : null, href: "/seller/products", hint: dashboard ? `재고 ${dashboard.low_stock_threshold}개 이하` : "재고 부족 상품" },
+  ];
 
   return (
-    <ConsoleShell role="seller" title={profile.brand_name} description={`${profile.company_name} · 판매자 센터`}>
-      <div className="page_seller">
-      <section className="p_dashboard" aria-label="대시보드">
-        {dashError ? (
+    <ConsoleShell
+      role="seller"
+      title="대시보드"
+      description={profile ? `${profile.brand_name} · 지금 처리할 일을 한눈에 봅니다.` : "지금 처리할 일을 한눈에 봅니다."}
+      actions={<Link className="btn m_primary" href="/seller/products/new">상품 등록</Link>}
+    >
+      <div className="page_seller_dash">
+        {error && (
           <div className="alert m_inline m_danger" role="alert">
-            {dashError}
-            <button className="btn m_small" type="button" onClick={loadDashboard}>다시 시도</button>
+            {error}
+            <button className="btn m_small" type="button" onClick={load}>다시 시도</button>
           </div>
-        ) : !dashboard ? (
-          <p className="p_loading" role="status">대시보드를 불러오는 중…</p>
-        ) : (
-          <>
-            <div className="p_stats">
-              <a className="card p_stat" href="/seller/orders">
-                {/* 라벨은 주문 관리 탭 이름(배송준비)과 같은 표기 — 같은 것을 두 이름으로 부르지 않는다 */}
-                <span className="i_label">배송준비 — 발송할 주문</span>
-                <strong className="i_value">{dashboard.preparing_count}건</strong>
-              </a>
-              <a className="card p_stat" href="/seller/orders?status=shipping">
-                <span className="i_label">배송중</span>
-                <strong className="i_value">{dashboard.shipping_count}건</strong>
-              </a>
-            </div>
-            <div className="card p_low_stock">
-              <div className="i_head">
-                <h2 className="p_subtitle">품절 임박 — 재고 {dashboard.low_stock_threshold}개 이하</h2>
-                <a className="i_link" href="/seller/products">상품 관리로 →</a>
-              </div>
-              {dashboard.low_stock.length === 0 ? (
-                <p className="i_empty">품절 임박 상품이 없습니다.</p>
-              ) : (
-                <ul className="i_stock_list">
-                  {dashboard.low_stock.map((s, idx) => (
-                    <li className="i_stock_row" key={`${s.product_id}-${idx}`}>
-                      <span className="i_name">{s.product_name}</span>
-                      {s.option_text && <span className="i_option">{s.option_text}</span>}
-                      <strong className="i_stock">{s.stock}개</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </>
         )}
-      </section>
-      <form className="card p_panel" onSubmit={save}>
-        <h2 className="p_subtitle">배송비 설정</h2>
-        {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
-        {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
-        {FEE_FIELDS.map((f) => (
-          <div className="field" key={f.name}>
-            <label className="i_label" htmlFor={f.name}>{f.label}</label>
-            <input id={f.name} className="input_text" type="number" min={0} step={1} required
-              value={fees[f.name] ?? ""}
-              onChange={(e) => setFees((v) => ({ ...v, [f.name]: e.target.value }))} />
-            <span className="i_help">원 단위 정수</span>
+
+        <section className="p_queue">
+          <h2 className="p_section_title">처리 대기</h2>
+          <div className="i_grid">
+            {queue.map((q) => (
+              <Link key={q.href} href={q.href} className="i_qcard"
+                data-alert={q.count && q.count > 0 ? "" : undefined}>
+                <span className="i_qmain">
+                  <span className="i_qlabel">{q.label}</span>
+                  <span className="i_qhint">{q.hint}</span>
+                </span>
+                <span className="i_qval">
+                  <span className="i_qcount">{q.count === null ? "–" : q.count.toLocaleString()}</span>
+                  <span className="i_qgo">처리하기 →</span>
+                </span>
+              </Link>
+            ))}
           </div>
-        ))}
-        <button className="btn m_primary" type="submit" disabled={busy}>저장</button>
-      </form>
-      <nav className="p_links">
-        <a className="btn m_primary" href="/seller/products">내 상품 관리</a>
-        <a className="btn m_primary" href="/seller/orders">주문 관리</a>
-      </nav>
+        </section>
+
+        <section className="p_list">
+          <div className="i_head">
+            <h2 className="p_section_title">발송할 주문</h2>
+            <Link className="i_more" href="/seller/orders?status=preparing">전체 보기 →</Link>
+          </div>
+          {preparing === null ? (
+            <p className="p_loading" role="status">불러오는 중…</p>
+          ) : preparing.length === 0 ? (
+            <p className="p_empty">발송할 주문이 없습니다.</p>
+          ) : (
+            <div className="table_wrap">
+              <div className="table_scroll"><table className="table_data">
+                <thead>
+                  <tr>
+                    <th>주문번호</th>
+                    <th>수령인</th>
+                    <th>품목</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preparing.map((o) => (
+                    <tr key={o.sub_order_id}>
+                      <td>
+                        <strong>{o.order_no}</strong>
+                        <span className="i_time">{formatDateTime(o.created_at)}</span>
+                        {o.all_canceled && <span className="badge m_small m_danger">전체 취소됨</span>}
+                      </td>
+                      <td>
+                        {o.recipient_name}
+                        <span className="i_phone">{o.recipient_phone}</span>
+                      </td>
+                      <td>
+                        <ul className="i_lines">
+                          {o.items.filter((l) => l.status !== "canceled").map((line, idx) => (
+                            <li key={idx}>
+                              {line.product_name}
+                              {line.option_text && <span className="i_line_option"> · {line.option_text}</span>}
+                              <span className="i_line_qty"> × {line.quantity}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+            </div>
+          )}
+        </section>
+
+        <section className="p_list">
+          <div className="i_head">
+            <h2 className="p_section_title">
+              품절 임박{dashboard && ` — 재고 ${dashboard.low_stock_threshold}개 이하`}
+            </h2>
+            <Link className="i_more" href="/seller/products">상품 관리 →</Link>
+          </div>
+          {dashboard === null ? (
+            <p className="p_loading" role="status">불러오는 중…</p>
+          ) : lowStock.length === 0 ? (
+            <p className="p_empty">품절 임박 상품이 없습니다.</p>
+          ) : (
+            <div className="table_wrap">
+              <div className="table_scroll"><table className="table_data">
+                <thead>
+                  <tr>
+                    <th>상품</th>
+                    <th>옵션</th>
+                    <th className="m_num">남은 재고</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lowStock.map((s, idx) => (
+                    <tr key={`${s.product_id}-${idx}`}>
+                      <td>{s.product_name}</td>
+                      <td className="m_muted">{s.option_text || "-"}</td>
+                      <td className="m_num"><span className="i_stock">{s.stock.toLocaleString()}개</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+            </div>
+          )}
+        </section>
       </div>
     </ConsoleShell>
   );

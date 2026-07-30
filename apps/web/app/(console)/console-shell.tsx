@@ -61,6 +61,7 @@ const SELLER_NAV: NavItem[] = [
   { href: "/seller", label: "대시보드", icon: I.grid },
   { href: "/seller/products", label: "상품 관리", icon: I.box },
   { href: "/seller/orders", label: "주문 관리", icon: I.list },
+  { href: "/seller/settings", label: "설정", icon: I.gear },
 ];
 
 export default function ConsoleShell({

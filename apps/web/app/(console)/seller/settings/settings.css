@@ -1,0 +1,35 @@
+/* 판매자 설정 — 관리자 설정(admin/settings.css)과 같은 카드 구성.
+   짧은 카드 둘을 넓은 화면에서 한 행에 둔다(우측 여백 방지). */
+.page_seller_settings { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
+.page_seller_settings .p_pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: stretch; }
+.page_seller_settings .p_stack { display: flex; flex-direction: column; gap: var(--space-16); }
+.page_seller_settings .p_card { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-24); }
+.page_seller_settings .i_title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-primary); }
+.page_seller_settings .i_desc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.page_seller_settings .i_hint { margin-top: auto; font-size: var(--text-xs); color: var(--color-text-muted); }
+.page_seller_settings .p_empty { padding: var(--space-24); text-align: center; color: var(--color-text-muted); }
+.page_seller_settings .alert { display: flex; align-items: center; justify-content: space-between; gap: var(--space-8); }
+
+/* 배송비 입력 — 라벨·입력·도움말 세로 스택, 저장 버튼은 카드 하단 */
+.page_seller_settings .i_form { display: flex; flex-direction: column; gap: var(--space-16); }
+.page_seller_settings .i_form .field { display: flex; flex-direction: column; gap: var(--space-4); }
+.page_seller_settings .i_form .i_label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.page_seller_settings .i_form .i_help { font-size: var(--text-xs); color: var(--color-text-muted); }
+.page_seller_settings .i_form .input_text { font-variant-numeric: tabular-nums; }
+.page_seller_settings .i_form .i_submit { align-self: flex-start; }
+
+/* 읽기 전용 정보 — 라벨(고정폭 좌) + 값(유동 우) 2컬럼 */
+.page_seller_settings .i_info > div { display: flex; gap: var(--space-12); padding: var(--space-8) 0; border-bottom: 1px solid var(--color-border-subtle); font-size: var(--text-sm); }
+.page_seller_settings .i_info > div:last-child { border-bottom: none; }
+.page_seller_settings .i_info dt { flex: none; width: 6rem; color: var(--color-text-secondary); }
+.page_seller_settings .i_info dd { flex: 1; min-width: 0; color: var(--color-text-primary); }
+
+.page_seller_settings .i_elsewhere > div { padding: var(--space-8) 0; border-bottom: 1px solid var(--color-border-subtle); font-size: var(--text-sm); }
+.page_seller_settings .i_elsewhere > div:last-child { border-bottom: none; }
+.page_seller_settings .i_elsewhere dt { font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.page_seller_settings .i_elsewhere dd { color: var(--color-text-secondary); }
+.page_seller_settings .i_elsewhere a { color: var(--color-text-brand); }
+
+@media (max-width: 900px) {
+  .page_seller_settings .p_pair { grid-template-columns: 1fr; }
+}
