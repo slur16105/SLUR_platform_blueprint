@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SLUR 커머스 플랫폼 1호 — 운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍 마켓플레이스(통신판매중개자 모델). 1차 목표는 매출이 아니라 **실서비스 완주**, 2차 목표는 완성 후 범용 커머스 블루프린트 추출. 기능 추가 판단 기준은 "완주에 기여하는가".
 
-**구현 상태 (2026-07-20): v1 전 스토리(Epic 1~6) 완주 — 코드·테스트·프로덕션 배포 완료.** 잔여는 실서비스 오픈 게이트 항목(`_bmad-output/implementation-artifacts/deferred-work.md` 참조): PG 연동, 사업자 실정보·법률 검토, 도서산간 공식 대조 등.
+**구현 상태 (2026-07-30): v1 전 스토리(Epic 1~6) 완주 + Epic 8(구매자 반응형 웹 전환) 완료 — 실기 검증까지 마쳤다.** Epic 9(구매자 홈 편성)는 구현·리뷰 완료 `review`. 잔여는 실서비스 오픈 게이트 항목(`_bmad-output/implementation-artifacts/deferred-work.md` 참조): PG 연동, 사업자 실정보·법률 검토, 도서산간 공식 대조 등.
 
 ## 명령어
 
@@ -16,8 +16,6 @@ cd apps/api && uv run pytest -q          # 전체 테스트 (153 — 마지막 �
 uv run alembic upgrade head              # 마이그레이션
 # 웹 (apps/web)
 cd apps/web && npx tsc --noEmit && npm run lint
-# 앱 (apps/mobile)
-cd apps/mobile && flutter analyze && flutter run
 # Hub맥 로컬 테스트: docker compose up -d --build --wait (API·web·Postgres·Alembic)
 # Railway는 기존 배포 검증 환경이며, 종료 결정 전까지 유지한다. 상세: LOCAL_DOCKER.md
 ```
@@ -35,9 +33,9 @@ cd apps/mobile && flutter analyze && flutter run
 
 ## 아키텍처 (확정)
 
-- **FastAPI(Python)가 유일한 문지기.** 인증(JWT+bcrypt), RBAC, 상태 전이, 주문 로직 전부 FastAPI 소유. Flutter·Next.js는 FastAPI API만 호출한다.
+- **FastAPI(Python)가 유일한 문지기.** 인증(JWT+bcrypt), RBAC, 상태 전이, 주문 로직 전부 FastAPI 소유. Next.js는 FastAPI API만 호출한다.
 - **Supabase는 매니지드 Postgres + Storage로만 사용.** Supabase Auth·RLS·Edge Functions는 의도적으로 배제된 결정이다 — 제안하지 말 것.
-- 구매자: Flutter 모바일 앱 (Android 먼저, iOS는 이후). 판매자·관리자: Next.js PC 웹 단일 앱에서 Role 분기.
+- **클라이언트 표면은 Next.js 웹 하나다 (AD-14).** 구매자·판매자·관리자가 같은 앱에서 Role로 갈린다 — 구매자 라우트는 모바일 퍼스트 반응형+PWA, 판매자·관리자 라우트는 PC 폭. (구매자 Flutter 앱은 2026-07-21 코스 코렉션으로 웹 전환, 2026-07-30 저장소에서 제거 — 소스는 태그 `flutter-app-final`에 보존)
 - 계정 모델: 단일 계정 + 역할(구매자/판매자/관리자 중복 보유 가능).
 - 결제: v1 개발·내부 테스트는 무통장입금(관리자 수동 확인). **PG 연동이 실서비스 오픈의 선행 조건** — PG 전에 실제 외부 구매자를 받지 않는다 (에스크로·지급대행 규제 회피의 전제).
 - Hub맥 테스트 배포: Docker Compose(API·web·로컬 Postgres). Railway는 종료 결정 전까지 기존 배포 검증 환경으로만 유지한다. Next.js CSS는 슬러 시스템 (`slur-ux`·`slur-design` 스킬 적용).

@@ -4,7 +4,7 @@ baseline_commit: 8c5198375fa3bd5a966c323a82fded57a28ea311
 
 # Story 8.1: 구매자 웹 셸과 반응형 기반
 
-Status: in-progress
+Status: done
 
 ## Story
 

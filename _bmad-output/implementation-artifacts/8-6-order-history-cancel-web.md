@@ -4,7 +4,7 @@ baseline_commit: a8d5da2c4270e4012c8ebffe2d325150b9c843d0
 
 # Story 8.6: 주문내역·주문상세·취소 (구매자 반응형 웹)
 
-Status: review
+Status: done
 
 > **선행 조건.** 이 스토리는 **8.5(주문서·주문완료)가 끝난 뒤** 착수한다.
 > 8.5가 만드는 `app/api/orders/route.ts`(POST) · `app/api/orders/[id]/route.ts`(GET) · `(buyer)/orders-api.ts` ·

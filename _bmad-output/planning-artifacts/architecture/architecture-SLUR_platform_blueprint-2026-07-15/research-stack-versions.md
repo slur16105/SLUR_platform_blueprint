@@ -18,6 +18,9 @@
 - **React 19.2.7** (2026-06) — https://react.dev/versions
 
 ## 4. Flutter / Dart
+
+> **[2026-07-30 정정] 이 절은 현행 스택이 아니다.** 2026-07-15 리서치 시점의 조사 기록으로 보존한다. 구매자 표면은 2026-07-21 코스 코렉션으로 Flutter 앱 → Next.js 반응형 웹(PWA)으로 전환됐고(AD-14), `apps/mobile`은 2026-07-30 Story 8.8에서 제거됐다(소스는 태그 `flutter-app-final`에 보존). 현행 스택 정본은 `ARCHITECTURE-SPINE.md`의 Stack 표다.
+
 - **Flutter 3.44** (2026-05 안정, 다음 3.47은 8월 예정) + **Dart 3.12** — https://docs.flutter.dev/install/archive
 - 주의: 3.44부터 Material/Cupertino가 SDK에서 분리되는 과도기(material_ui 패키지화 진행), Android 10+ Impeller 강제
 - 상태관리: **Riverpod 3.x가 신규 앱 기본 선택**(async-first, codegen), Bloc 9.x는 대형 팀 표준으로 병존. 신규 커머스 앱엔 Riverpod 3 권장이 2026 커뮤니티 컨센서스 — https://asoasis.tech/articles/2026-04-17-2054-flutter-bloc-vs-riverpod-comparison-2026/
@@ -27,4 +30,7 @@
 - Railway 빌드: 기본은 **Railpack**(Nixpacks 후속, Nixpacks는 유지보수 모드). 단 FastAPI·Next.js(standalone output) 모두 **커스텀 Dockerfile이 빌드 속도·재현성에서 우위**라 프로덕션 표준 구성은 서비스별 Dockerfile + Railway pre-deploy에서 Alembic 마이그레이션 실행 — https://docs.railway.com/guides/nextjs , https://blog.railway.com/p/comparing-deployment-methods-in-railway
 
 ## 권장 핀 요약 (스파인용)
+
+> **[2026-07-30 정정]** 아래 목록의 `Flutter 3.44 + Dart 3.12 + Riverpod 3`은 **현행 핀이 아니다** — §4 정정 참조. 구매자 표면은 Next.js 웹으로 단일화됐다.
+
 Python 3.14 / FastAPI 0.139 / Pydantic 2.13 / SQLAlchemy 2.0.51(async) / Alembic 1.18 / uv 0.11 / Next.js 16.2(App Router) / React 19.2 / Flutter 3.44 + Dart 3.12 + Riverpod 3 / Supabase PG17 / Railway Dockerfile 빌드

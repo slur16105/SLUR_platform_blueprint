@@ -4,7 +4,7 @@ baseline_commit: 5d60203dfdf672162e547ffc042f5d52fafaa6fd
 
 # Story 8.2: 구매자 가입·로그인 (역할 쿠키 `buyer` 도입)
 
-Status: in-progress
+Status: done
 
 ## Story
 

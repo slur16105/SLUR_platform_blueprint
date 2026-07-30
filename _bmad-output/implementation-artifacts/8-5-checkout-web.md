@@ -4,7 +4,7 @@ baseline_commit: bd5a52e22099afc7d659b10ffb2ef96da872b191
 
 # Story 8.5: 주문서·주문완료 (구매자 반응형 웹)
 
-Status: in-progress
+Status: done
 
 > **선행 조건.** 이 스토리는 **8.4(장바구니)가 끝난 뒤** 착수한다.
 > 8.4가 만드는 `app/api/carts/**`(BFF) · `(buyer)/cart-api.ts` · `cart-count.tsx`(배지 컨텍스트) ·

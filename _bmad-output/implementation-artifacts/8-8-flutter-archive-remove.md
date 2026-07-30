@@ -4,7 +4,7 @@ baseline_commit: a12606bfe395ba4ab1ac6c65555188cacf12ac21
 
 # Story 8.8: Flutter 앱 보관과 제거
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -437,7 +437,7 @@ git show flutter-app-final:apps/mobile/lib/src/carts/cart_screen.dart
 
 ### Agent Model Used
 
-_(구현 시 기록)_
+Claude Opus 5 (1M context)
 
 ### Debug Log References
 
@@ -445,7 +445,70 @@ _(구현 시 기록)_
 
 ### Completion Notes List
 
-_(구현 시 기록 — 최소한 아래를 반드시 남긴다)_
+**Task 0 — 착수 게이트 (2026-07-30 개방)**
+
+| 스토리 | 착수 전 | 게이트 후 |
+|---|---|---|
+| 8-1 buyer-web-shell | in-progress | done |
+| 8-2 buyer-auth-web | in-progress | done |
+| 8-3 buyer-product-browse-web | review | done |
+| 8-4 cart-web | review | done |
+| 8-5 checkout-web | in-progress | done |
+| 8-6 order-history-cancel-web | review | done |
+| 8-7 me-and-pwa | in-progress | done |
+
+실기 검증 근거(A-E8-2 해소): Hub맥 Docker를 **최신 코드로 재빌드**(기존 이미지는 9시간 전 것이라 이후 커밋 미반영)하고 `local_seed_bulk`로 대량 더미를 넣은 뒤(주문 34건 = 입금대기12·배송준비7·배송중6·배송완료5·취소4 / 판매자 영업중4·심사대기3·반려1 / 상품 32 = active24·soldout4·hidden4 / 회원 21), Slur가 관리자 10화면·판매자·구매자 전 플로우를 직접 점검하고 **이상 없음**을 확인했다. `sprint-status.yaml`의 A-E8-2를 done으로 갱신.
+
+**Task 1 — 제거 전 실측 (전부 기대값 일치)**
+
+```
+추적 파일 47 (기대 47) · dart 22 = lib 21 + integration_test 1 (기대 22) · dart 2,811줄 (기대 2,811) · 384K
+```
+
+⚠️ **스토리 전제와 달랐던 점**: D4·Dev Notes는 "이 머신에 `flutter`·`dart` CLI가 없어 `flutter analyze`를 새로 돌릴 수 없다"고 적었으나, **이 머신(Hub맥)에는 있다**(`/opt/homebrew/bin/flutter`). 따라서 옛 기록을 인용하는 대신 실제로 실행했다 — `flutter pub get` 후 **`flutter analyze` → No issues found! (4.6s)**. 앱이 정상 상태로 보관됐음을 인용이 아니라 실측으로 남긴다.
+
+**Task 2·3 — 태그와 원격 확인 (D1의 핵심)**
+
+annotated 태그 확인(`git cat-file -t` → `tag`). 대상 커밋 `cf60ff4`에 `apps/mobile/pubspec.yaml`이 실재함을 `git show`로 직접 확인.
+
+```
+$ git ls-remote --tags origin | grep flutter-app-final
+3357a70f086951d33baf47caf8a0d12ac39b0ae2	refs/tags/flutter-app-final
+cf60ff42d8ccdb89da7bbbf5b4676b40f02c3d2a	refs/tags/flutter-app-final^{}
+
+$ git rev-parse flutter-app-final^{}
+cf60ff42d8ccdb89da7bbbf5b4676b40f02c3d2a      <- 일치
+```
+
+**Task 4 — 제거 전 복원 실증**: `git worktree add <스크래치패드>/flutter-restore flutter-app-final` -> 47파일 / dart 22 대조 일치, `lib/src/carts/cart_screen.dart` 실제 열림 확인. worktree 제거 완료(`git worktree list`에 잔여 없음).
+
+**Task 5 — 제거**: `git rm -r apps/mobile` 후 `git ls-files apps/mobile` **0줄**. 스토리 위험 #2가 예측한 대로 ignored 산출물(`.dart_tool`·`.flutter-plugins-dependencies`·`android`·`slur_mobile.iml`)이 빈 디렉터리로 남아 `rm -rf apps/mobile`로 수동 제거 — `ls -a apps/mobile` 없음 확인. 저장소는 `apps/api`·`apps/web` 두 워크스페이스가 됐다.
+
+> 참고: 같은 세션에서 제거 **전에** ignored 빌드 산출물 **2.1GB**(`build/`·`.dart_tool/`·`android/build`·`android/.gradle`)를 먼저 정리했다(2.4G -> 384K). git 추적 파일 0건이라 저장소 영향은 없다.
+
+**Task 6·7 — 문서 정리**
+
+고친 것: `CLAUDE.md`(명령어 2줄 제거 / "Flutter·Next.js는" -> "Next.js는" / 구매자 표면 줄을 AD-14 서술로 / 구현 상태 줄에 Epic 8 완료·Epic 9 review 반영) · `deferred-work.md`(상단 규약을 완료 사실로 + "남은 `apps/mobile/...` 경로는 죽은 링크가 아니라 태그 안의 좌표" 명시) · `research-stack-versions.md`(§4와 권장 핀 요약에 **지우지 않고** 정정 주석).
+
+남길 것 검증: `epics.md` · 완료 스토리 파일 · `brief.md` · `prd.md` · 코스 코렉션 2문서 · `ARCHITECTURE-SPINE.md` · `EXPERIENCE.md` · `apps/web/app/(buyer)/**` 전부 **diff 0건** 확인.
+
+**Task 8 — 잔재 등록**: `POST /api/v1/auth/kakao/native` 계열을 `deferred-work.md` Epic 8 절에 신규 항목으로 등록. 지우지 않는 이유 3가지와 `railway.ts` `KAKAO_APP_ID: preserve()` 선행 제거 금지(R1 사고 유형)를 함께 기록. `apps/api` 코드는 열지 않았다.
+
+**Task 9 — 검증**
+
+- `npx tsc --noEmit` -> **0**
+- `npx next build` -> **성공** (라우트 정상, `f Proxy (Middleware)` 포함)
+- `npm run lint` -> **0 errors / 1 warning**. ⚠️ 베이스라인(0/0)에서 늘어난 1건은 **이 스토리의 변경이 아니다** — `(console)/seller/products/[id]/edit/page.tsx:32`의 미사용 `NewImage`로, 같은 워킹트리에서 **다른 세션이 작업 중인 신규 파일**이다. 이 커밋의 스테이징에는 포함되지 않았다
+- 커밋 스테이징 `apps/api` **0건** · `apps/web` **0건** 확인 (다른 세션의 미커밋 변경 5파일이 워킹트리에 있어 경로를 명시해 스테이징)
+- `pytest` **미실행** — 이 워킹트리의 `apps/api`에 다른 세션의 미커밋 변경 4파일(products·sellers 계열)이 있어, 지금 실행한 결과는 이 스토리의 무변경 증거가 될 수 없다. 이 스토리는 `apps/api`를 열지 않았고 diff 0건이다
+- `docker-compose.yml`·루트 `package.json`·`scripts/`·`.railway/` mobile 참조 **0건**, `.github/` 부재 확인
+
+**Task 10 — 배포**: Railway 대신 **Hub맥 Docker가 현행 실호스트**다. 제거 전 최신 코드로 재빌드한 컨테이너에서 web `/` 200 · `/login` 200 · api `/api/v1/health` 200 확인. Railway 배포 확인은 이 커밋을 main에 반영하는 시점의 판단으로 넘긴다.
+
+**Task 11 — 제거 후 복원**: 이 커밋을 push한 뒤 수행 예정. 태그가 원격에 있고(SHA 대조 완료) 제거 커밋과 무관한 커밋을 가리키므로 복원 가능성은 이미 성립한다.
+
+**스토리 전제와 달랐던 점 정리** — (1) `flutter` CLI 존재(-> analyze 실측으로 대체) (2) 워킹트리 clean 전제 불성립(다른 세션 동시 작업 -> 경로 명시 스테이징으로 대응, `apps/api`·`apps/web` 0건 확인) (3) Railway -> Hub맥 Docker로 배포 검증 경로 변경.
+
 
 - Task 0 게이트 확인 결과 (8.1~8.7 Status 표 + 실기 완주 근거)
 - Task 1 제거 전 실측값 (파일 수 · dart 수 · 용량 · `flutter` CLI 부재)
@@ -457,10 +520,12 @@ _(구현 시 기록 — 최소한 아래를 반드시 남긴다)_
 
 ### File List
 
-_(구현 시 기록)_
+삭제: `apps/mobile/**` 47파일
+수정: `CLAUDE.md` · `deferred-work.md` · `sprint-status.yaml` · `research-stack-versions.md` · `8-1`~`8-7` 스토리 파일 Status · 이 파일
 
 ### Change Log
 
 | 날짜 | 변경 | 비고 |
 |---|---|---|
 | 2026-07-22 | 스토리 작성 (`ready-for-dev`) | D1~D6 확정. 착수 게이트(8.1~8.7 done) 미충족 상태 |
+| 2026-07-30 | 실행 완료 (`done`) | 실기 검증으로 게이트 개방 -> 태그 `flutter-app-final` 원격 확인 -> 47파일 제거 -> 문서 정리. flutter analyze 실측(No issues) |

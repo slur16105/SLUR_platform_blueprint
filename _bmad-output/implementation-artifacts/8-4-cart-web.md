@@ -4,7 +4,7 @@ baseline_commit: 10a2c4a6d0c8e4be60575ad6c9d6a4f2984e79b6
 
 # Story 8.4: 장바구니 (구매자 반응형 웹)
 
-Status: review
+Status: done
 
 > **선행 조건.** 이 스토리는 **8.2(로그인·`next` 복귀)와 8.3(상품상세·CTA 자리)이 끝난 뒤** 착수한다.
 > 8.3이 만드는 `products/[id]/product-detail.tsx`·`buyer-feedback.tsx`·`format.ts`·하단 고정 CTA 바 CSS가

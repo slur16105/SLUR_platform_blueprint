@@ -4,7 +4,7 @@ baseline_commit: d9228db7cb07ae1da34c0509aa8be236ab28a758
 
 # Story 8.7: 내 정보와 PWA 기반
 
-Status: in-progress
+Status: done
 
 > **선행 조건.** 8.1(셸·토큰·미들웨어)·8.2(로그인·로그아웃 BFF)가 끝나 있어야 한다. **8.6(주문내역·주문상세)와는 파일이 겹치지 않지만 같은 기간에 진행 중**이므로,
 > 착수 시점에 `app/(buyer)/orders/**`·`app/api/orders/**`가 중간 상태일 수 있다. **이 스토리는 그 파일들을 열지도 고치지도 않는다.**

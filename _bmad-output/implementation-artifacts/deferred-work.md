@@ -3,7 +3,8 @@
 리뷰·스토리 진행 중 이월된 항목의 로그. "지금은 안 하기로 결정"한 근거와 재개 조건을 남긴다.
 
 > **[2026-07-21 정리 규약]** 구매자 표면이 Flutter 앱 → Next.js 반응형 웹으로 전환됐다 (`_bmad-output/planning-artifacts/sprint-change-proposal-2026-07-21.md`, §5.6).
-> `apps/mobile`은 **아직 저장소에 있으며**, Story 8.8에서 보존 태그(`flutter-app-final`) 생성 후 제거될 예정이다.
+> `apps/mobile`은 **2026-07-30 저장소에서 제거됐다** (Story 8.8, 커밋은 이 문서 갱신과 동일 커밋). 전체 소스 47파일은 보존 태그 **`flutter-app-final`** (원격 푸시·SHA 대조 확인 완료)에 남아 있다 — 읽기는 `git show flutter-app-final:apps/mobile/<경로>`, 복원은 `git checkout flutter-app-final -- apps/mobile`.
+> 따라서 **이 문서에 남은 `apps/mobile/...` 경로는 죽은 링크가 아니라 태그 안의 좌표**다. 고치지 않는다.
 > 대상 코드가 앱에만 있던 부채는 **[소멸 2026-07-21]** 로 표시하고 사유를 남긴다 — 고쳐서 없어진 것이 아니라 **대상이 사라질 예정이라 추적을 멈추는 것**이므로 해소와 구분한다.
 > 같은 문제가 웹에서 재발할 여지가 있으면 후속 지점(Epic 8)을 한 줄로 남긴다.
 
@@ -90,6 +91,9 @@
 
 ## Deferred from: Epic 8 구매자 반응형 웹 (2026-07-22)
 
+- **[2026-07-30 신규] `POST /api/v1/auth/kakao/native` 계열이 클라이언트 0인 백엔드 잔재가 됐다** — `auth/router.py:43`(엔드포인트)·`auth/service.py:148`(`kakao_native_login`)·`auth/kakao.py:109~130`(access token의 `app_id` 검증)·`core/config.py:30`(`kakao_app_id`)·`.railway/railway.ts:19`·`tests/conftest.py:10`(`KAKAO_APP_ID`)·`tests/test_kakao.py:170~209`(테스트 4건). 이 경로는 **Flutter의 카카오 네이티브 SDK 전용**이었고 웹은 인가코드 방식(`POST /auth/kakao`)만 쓴다(`apps/web` 전체에 `native` 참조 0건). Story 8.8의 앱 제거로 사용자가 0이 됐다.
+  **지금 지우지 않는 이유**: ① Epic 8의 경계가 백엔드 무변경이고 8.1~8.7이 전부 `apps/api` diff 0건을 증거로 써왔다 ② 테스트 4건이 딸려 있어 지우면 153건이 149건이 되는데 `153`이 에픽 전체의 검증 기준이다 ③ `kakao_app_id` 미설정 시 502로 떨어지도록 이미 설계돼 있어(`kakao.py:114`) 오동작하지 않는다 — 미사용 엔드포인트는 위험이 아니라 표면이다.
+  **착수 조건**: Epic 8 회고 또는 Epic 7(PG) 백엔드 정리와 함께. ⚠️ `railway.ts`의 `KAKAO_APP_ID: preserve()` 선언만 먼저 빼면 다음 `config apply`에서 프로덕션 변수가 사라진다(회고 R1 사고 유형) — **백엔드 코드와 반드시 함께** 정리한다
 - **[오픈 게이트] 약관 동의 이력이 서버에 남지 않는다** — `SignupRequest`·`users` 어디에도 동의 필드가 없다. Story 8.2가 회원가입 화면에서 필수 동의를 강제하지만 **기록은 남지 않는다.** ERD 변경이 필요해 Epic 8(프론트 전용) 경계 밖이다. PRD §8의 오픈 게이트 항목 "약관·개인정보처리방침 법률 검토(FR-33)"에 **"동의 이력 보관이 법적으로 요구되는지"** 를 함께 올려 판단한다. 요구되면 스키마 변경(AD-9 승인 게이트) + 백엔드 스토리가 따로 필요하다
 - **`KAKAO_REDIRECT_URIS`가 Railway에 선언돼 있지 않다** — `.railway/railway.ts`의 web 서비스에 `KAKAO_REST_API_KEY`·`KAKAO_CLIENT_SECRET`·`KAKAO_APP_ID`는 `preserve()`로 있으나 리다이렉트 URI allowlist가 없어 백엔드가 기본값(`http://localhost:3000/...`)만 쓴다. **이 상태로는 프로덕션 카카오 로그인이 100% 실패한다.** Story 8.2의 선행 작업이며 카카오 개발자 콘솔 등록(로컬·프로덕션 두 값)과 Railway 변수 추가가 함께 필요하다 — 회고 R1대로 `railway ... --set`으로 넣고 즉시 확인, `railway.ts`에도 동시 선언
 - **`middleware.ts`는 Next 16에서 deprecated** — `proxy.ts`로의 rename이 예고돼 있고 빌드 출력도 `ƒ Proxy (Middleware)`로 나온다. Story 8.1·8.2가 "기존 코드 문자 그대로 보존"을 회귀 증거로 쓰기 때문에 의도적으로 옮기지 않았다. **Epic 8 완료 후** 별도로 rename한다 — 그때는 diff가 순수 이동이라 검증이 쉽다

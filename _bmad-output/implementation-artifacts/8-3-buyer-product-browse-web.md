@@ -4,7 +4,7 @@ baseline_commit: 5d60203dfdf672162e547ffc042f5d52fafaa6fd
 
 # Story 8.3: 상품목록·상품상세 (구매자 반응형 웹)
 
-Status: review
+Status: done
 
 ## Story
 
