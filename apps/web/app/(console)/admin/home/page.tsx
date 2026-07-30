@@ -31,6 +31,14 @@ function formatDate(s: string | null) {
   return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
 }
 
+/** 노출 기간 표기 — 기간은 양쪽 다 비울 수 있다(상시 노출). "— ~ —"로 보이지 않게 문장으로 적는다. */
+function periodLabel(starts: string | null, ends: string | null) {
+  if (!starts && !ends) return "상시";
+  if (starts && !ends) return `${formatDate(starts)}부터`;
+  if (!starts && ends) return `${formatDate(ends)}까지`;
+  return `${formatDate(starts)} ~ ${formatDate(ends)}`;
+}
+
 const KIND_LABEL: Record<string, string> = { hero: "히어로", slot: "슬롯" };
 const LAYOUT_LABEL: Record<string, string> = { feature: "피처", strip: "스트립" };
 // 구분 배지 색 — 행 호버색(--color-surface-hover)과 겹치지 않도록 색을 준다.
@@ -278,7 +286,7 @@ export default function AdminHomeFeatures() {
                     </td>
                     <td>{LAYOUT_LABEL[f.layout] ?? f.layout}</td>
                     <td className="m_num">{f.item_count}</td>
-                    <td className="i_period">{formatDate(f.starts_at)} ~ {formatDate(f.ends_at)}</td>
+                    <td className="i_period">{periodLabel(f.starts_at, f.ends_at)}</td>
                     <td>
                       <div className="i_state">
                         {/* 배지가 실제 노출 여부(기간 포함), 토글은 운영자가 켜고 끄는 스위치 */}
