@@ -1,39 +1,72 @@
+/* 상품상세 — `/products/[id]` (공개 라우트). **새 테마 적용 화면 (이전 2/N).**
+
+   화면 단위 통째 교체: 옛 셸(buyer-shell)·옛 CSS(browse.css)를 쓰지 않고 새 테마만 쓴다.
+   본체(DetailView)는 옛 product-detail.tsx의 **로직을 그대로 옮긴 것**이라 담기·조합 선택·
+   401 복귀 자동담기·배지 갱신이 이전과 똑같이 동작한다.
+
+   본체를 <Suspense>로 감싸는 이유(D3): DetailView가 useSearchParams(?variant)를 쓴다.
+   경계가 없으면 tsc·lint는 통과하고 next build만 깨진다 (Next 16 규약). */
+
+import type { Metadata } from "next";
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 
-import BuyerShell from "../../buyer-shell";
-import { BlockSkeleton } from "../../buyer-feedback";
-import ProductDetail from "./product-detail";
+import { API_BASE } from "@/lib/auth";
 
-import "../../browse.css";
+import DetailView from "./detail-view";
+import { SiteFooter, SiteHeader } from "../../site-chrome";
+import type { NavCategory } from "../../labels";
 
-/* 상품상세 — `/products/[id]` (공개 라우트, 미들웨어 matcher에 없다).
+import "../../theme.css";
 
-   셸: 상단바는 뒤로가기 + 장바구니(제목 없음), 탭바는 없다 —
-   하단 고정 CTA가 있는 화면이라 두 바를 겹치지 않는다 (EXPERIENCE §IA 배치 규칙 2).
-   tab="home"은 ≥768에서 소속 최상위 항목(`홈`)이 활성으로 표시되게 한다 —
-   현재 위치 표시가 비는 화면이 있으면 안 된다.
+async function getJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { next: { revalidate: 60 } });
+    if (!res.ok) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
 
-   본체를 <Suspense>로 감싸는 이유(D3): ProductDetail이 useSearchParams(?variant)를 쓴다.
-   경계가 없으면 tsc·lint는 통과하고 next build만 깨진다. */
-export default function ProductDetailPage() {
+/* 탭 타이틀 — 상품명·브랜드로. 없는 상품이면 기본 이름으로 둔다(404 화면은 본체가 그린다). */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const p = await getJson<{ name?: string; brand_name?: string } | null>(
+    `/api/v1/products/${encodeURIComponent(id)}`,
+    null,
+  );
+  if (!p?.name) return { title: "SLUR 편집숍" };
+  return {
+    title: `${p.name} — ${p.brand_name ?? "SLUR"} | SLUR 편집숍`,
+    description: `${p.brand_name ?? ""} ${p.name} — SLUR 편집숍이 골라온 상품`.trim(),
+  };
+}
+
+export default async function ProductDetailPage() {
+  const [categories, cookieStore] = await Promise.all([
+    getJson<NavCategory[]>("/api/v1/products/categories", []),
+    cookies(),
+  ]);
+  const loggedIn = Boolean(cookieStore.get("slur_role"));
+
   return (
-    <BuyerShell tab="home" ctaBar topbar={{ variant: "back-title", showCart: true }}>
+    <div className="slur min-h-screen">
+      <SiteHeader categories={categories} loggedIn={loggedIn} />
       <Suspense
         fallback={
-          <div className="b_container b_detail">
-            <div className="i_media">
-              <BlockSkeleton className="m_hero" />
-            </div>
-            <div className="i_info">
-              <BlockSkeleton className="m_line" />
-              <BlockSkeleton className="m_title" />
-              <BlockSkeleton className="m_line" />
+          <div className="mx-auto grid max-w-[1600px] gap-10 px-5 py-10 md:grid-cols-2 md:gap-14">
+            <div className="aspect-4/5 w-full animate-pulse bg-muted" />
+            <div className="space-y-4 pt-2">
+              <div className="h-4 w-24 animate-pulse bg-muted" />
+              <div className="h-9 w-3/4 animate-pulse bg-muted" />
             </div>
           </div>
         }
       >
-        <ProductDetail />
+        <DetailView />
       </Suspense>
-    </BuyerShell>
+      <SiteFooter />
+    </div>
   );
 }
