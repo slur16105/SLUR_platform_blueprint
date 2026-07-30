@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
+import { pageRange, pageWindow } from "@/app/(console)/pagination";
 import "./lookup.css";
 
 // 역할 탭 — 전체(필터 없음) / 관리자 / 판매자 / 일반회원(buyer)
@@ -180,11 +181,16 @@ export default function AdminMembers() {
             </tbody>
           </table></div>
           <div className="i_foot">
-            <span className="i_count">총 {total}건</span>
+            <span className="i_count">총 {total}건 · {pageRange(page, size, items.length)} 표시</span>
             <div className="i_btn_wrap">
               <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
-              <span className="i_page">{page} / {lastPage}</span>
+              {pageWindow(page, lastPage).map((n) => (
+                <button key={n} className="btn m_small" type="button"
+                  data-state={n === page ? "active" : undefined}
+                  aria-current={n === page ? "page" : undefined}
+                  onClick={() => setPage(n)}>{n}</button>
+              ))}
               <button className="btn m_small" type="button" disabled={page >= lastPage}
                 onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>

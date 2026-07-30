@@ -17,7 +17,6 @@
 .page_admin_lookup .table_wrap.m_scroll { overflow-x: auto; }
 .page_admin_lookup .table_wrap.m_scroll .i_foot { position: sticky; left: 0; }
 .page_admin_lookup .table_data.m_wide { min-width: 1080px; }
-.page_admin_lookup .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }
 
 /* 검색 활성 표시 */
 .page_admin_lookup .p_search_note { display: flex; align-items: center; gap: var(--space-8); flex-wrap: wrap; padding: var(--space-8) var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); color: var(--color-text-secondary); }

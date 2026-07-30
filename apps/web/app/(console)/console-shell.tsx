@@ -6,7 +6,7 @@
    기능/데이터는 이 컴포넌트가 갖지 않는다 — 순수 레이아웃. 페이지 로직은 children이 소유. */
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -77,7 +77,14 @@ export default function ConsoleShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const roleLabel = role === "seller" ? "판매자" : "관리자";
   const [open, setOpen] = useState(false);
+
+  // 브라우저 탭 제목 — 콘솔 화면은 전부 client component라 페이지별 metadata를 export할 수 없다.
+  // 셸이 이미 화면 제목·역할을 알고 있으므로 여기서 한 번에 붙인다(탭 여러 개를 열어도 구분된다).
+  useEffect(() => {
+    document.title = `${title} · ${roleLabel} · SLUR`;
+  }, [title, roleLabel]);
   const nav = role === "seller" ? SELLER_NAV : ADMIN_NAV;
   const home = role === "seller" ? "/seller" : "/admin";
   const isActive = (href: string) => (href === home ? pathname === home : pathname.startsWith(href));

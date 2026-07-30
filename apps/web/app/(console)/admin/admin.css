@@ -9,7 +9,6 @@
 .page_admin .i_brand { font-weight: var(--weight-bold); color: var(--color-text-primary); }
 .page_admin .i_actions { display: flex; gap: var(--space-8); }
 .page_admin .i_reason { color: var(--color-text-muted); }
-.page_admin .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }
 
 /* 승인·반려 확인 모달 내부 요소 (modal_dialog 룩은 components/modal.css) */
 .page_admin .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
