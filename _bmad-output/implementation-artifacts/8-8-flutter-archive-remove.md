@@ -505,7 +505,7 @@ cf60ff42d8ccdb89da7bbbf5b4676b40f02c3d2a      <- 일치
 
 **Task 10 — 배포**: Railway 대신 **Hub맥 Docker가 현행 실호스트**다. 제거 전 최신 코드로 재빌드한 컨테이너에서 web `/` 200 · `/login` 200 · api `/api/v1/health` 200 확인. Railway 배포 확인은 이 커밋을 main에 반영하는 시점의 판단으로 넘긴다.
 
-**Task 11 — 제거 후 복원**: 이 커밋을 push한 뒤 수행 예정. 태그가 원격에 있고(SHA 대조 완료) 제거 커밋과 무관한 커밋을 가리키므로 복원 가능성은 이미 성립한다.
+**Task 11 — 제거 후 복원 (수행 완료)**: 제거 커밋 `82ef255`를 원격에 push한 **뒤에** 재시험했다. 워킹트리에 `apps/mobile`이 없는 상태에서 `git worktree add <스크래치패드>/verify-restore flutter-app-final` -> **47파일 / dart 22 / 2,811줄** 전부 기대값 일치, worktree 제거 완료. Task 4가 "태그가 온전한가"였다면 이것은 "**main 계열에서 지운 뒤에도 태그에서 되살아나는가**"이며, 코스 코렉션 §6 성공 기준 5가 요구한 것은 후자다.
 
 **스토리 전제와 달랐던 점 정리** — (1) `flutter` CLI 존재(-> analyze 실측으로 대체) (2) 워킹트리 clean 전제 불성립(다른 세션 동시 작업 -> 경로 명시 스테이징으로 대응, `apps/api`·`apps/web` 0건 확인) (3) Railway -> Hub맥 Docker로 배포 검증 경로 변경.
 
