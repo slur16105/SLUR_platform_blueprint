@@ -85,7 +85,7 @@ export default function ApplyPage() {
         <main className="page_apply">
           <div className="p_panel card">
             <h1 className="p_title">입점이 승인되었습니다</h1>
-            <p className="p_desc">다시 로그인하면 판매자 센터를 이용할 수 있습니다.</p>
+            <p className="p_desc">다시 로그인하면 판매자 콘솔을 이용할 수 있습니다.</p>
           </div>
         </main>
         <SiteFooter />

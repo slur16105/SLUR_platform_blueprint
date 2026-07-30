@@ -118,7 +118,7 @@ export default function SellerApplications() {
       }
       setNotice(
         action === "approve"
-          ? `승인 완료 — 신청자가 다시 로그인하면 판매자 센터를 이용할 수 있습니다.`
+          ? `승인 완료 — 신청자가 다시 로그인하면 판매자 콘솔을 이용할 수 있습니다.`
           : "반려 처리했습니다. 신청자에게 사유가 표시됩니다.",
       );
       setApproving(null);
