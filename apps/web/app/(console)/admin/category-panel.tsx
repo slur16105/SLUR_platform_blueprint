@@ -138,7 +138,7 @@ export default function CategoryPanel() {
       <ul className="i_list">
         {items.map((c, idx) => (
           <li
-            className="card i_row"
+            className="i_row"
             key={c.id}
             draggable={canReorder && !busy && editing === null}
             data-dragging={dragId === c.id ? "" : undefined}
@@ -160,8 +160,11 @@ export default function CategoryPanel() {
                   title={canReorder ? "끌어서 순서 변경" : "카테고리가 하나뿐이라 순서를 바꿀 수 없습니다"}>
                   {GripIcon}
                 </span>
-                <strong className="i_name">{c.name}</strong>
-                <span className="i_count">상품 {c.product_count.toLocaleString()}개</span>
+                {/* 좌: 이름 + 상품 수(붙여서 한 덩어리로 읽힌다) · 우: 액션 — 양끝 정렬 */}
+                <span className="i_main">
+                  <strong className="i_name">{c.name}</strong>
+                  <span className="i_count">상품 {c.product_count.toLocaleString()}</span>
+                </span>
                 <div className="i_actions">
                   {/* 드래그가 어려운 환경·키보드 사용자를 위한 대체 경로 — 드래그와 같은 결과 */}
                   <button className="btn m_small m_move" type="button" data-move={`up-${c.id}`}

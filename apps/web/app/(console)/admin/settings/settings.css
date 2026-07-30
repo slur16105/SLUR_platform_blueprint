@@ -4,8 +4,9 @@
 .page_admin_settings .alert .btn { margin-left: var(--space-8); }
 .page_admin_settings .m_muted { color: var(--color-text-muted); }
 
-/* 계좌 + 운영 수치 2단 — 좁은 화면에서는 한 단으로 쌓인다. 카드 높이는 서로 맞춘다(align-items: stretch 기본) */
-.page_admin_settings .p_pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); }
+/* 2단 배치(계좌+운영 수치 / 카테고리+안내) — 좁은 화면에서는 한 단으로 쌓인다.
+   카드는 자기 내용만큼만 높아진다(align-items: start) — 짧은 카드가 늘어나 빈 공간을 만들지 않게. */
+.page_admin_settings .p_pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: start; }
 @media (max-width: 960px) {
   .page_admin_settings .p_pair { grid-template-columns: 1fr; }
 }

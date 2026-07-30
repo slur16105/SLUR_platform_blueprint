@@ -225,6 +225,8 @@ export default function AdminSettings() {
             <p className="i_hint">이 수치는 이 화면에서 바꿀 수 없습니다 — 변경은 서버에서 직접 처리합니다.</p>
           </section>
           </div>
+          {/* 카테고리(좌)와 안내(우)를 한 행에 — 카테고리 행은 짧아 전체 폭을 쓰면 우측이 비어 보인다 */}
+          <div className="p_pair">
           <section className="card p_card">
             <h2 className="i_title">카테고리</h2>
             <p className="i_desc">상품 분류 카테고리를 추가·수정·정렬합니다.</p>
@@ -256,6 +258,7 @@ export default function AdminSettings() {
               </div>
             </dl>
           </section>
+          </div>
         </>
       )}
       {confirming && (
