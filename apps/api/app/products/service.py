@@ -470,6 +470,8 @@ async def list_products_admin(
     return {
         "items": [{
             "id": p.id, "name": p.name, "seller_id": p.seller_id, "base_price": p.base_price,
+            # 카테고리로 걸를 수 있으므로 결과에도 무엇인지 보여준다 — 이름 매핑은 화면이 가진 카테고리 목록으로
+            "category_id": p.category_id,
             "status": p.status, "stock_sum": int(stock_by_product.get(p.id, 0)), "created_at": p.created_at,
         } for p in products],
         "total": total, "page": page, "size": size,

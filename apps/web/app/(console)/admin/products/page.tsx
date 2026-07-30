@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
+import { pageRange, pageWindow } from "@/app/(console)/pagination";
 import "./products.css";
 
 type ProductStatus = "active" | "soldout" | "hidden";
@@ -11,6 +12,7 @@ type ProductRow = {
   id: string;
   name: string;
   brand_name: string;
+  category_id: string; // 상품은 카테고리 1개 필수 — 이름은 categories 목록에서 찾는다
   base_price: number;
   status: ProductStatus;
   stock_sum: number;
@@ -120,11 +122,31 @@ export default function AdminProducts() {
   }
 
   const lastPage = Math.max(1, Math.ceil(total / size));
-  const filtered = appliedQ || categoryId || status;
+  const filtered = Boolean(appliedQ || categoryId || status);
+  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "-";
+
+  function resetFilters() {
+    setQ("");
+    setAppliedQ("");
+    setCategoryId("");
+    setStatus("");
+    setPage(1);
+    setError(null);
+  }
 
   return (
-    <ConsoleShell role="admin" title="상품 조회" description="상품을 이름·브랜드·카테고리·상태로 검색합니다.">
+    <ConsoleShell role="admin" title="상품 조회"
+      description="입점 판매자가 등록한 상품을 조회합니다. 등록·수정은 판매자가 합니다.">
       <div className="page_admin_products">
+      <nav className="tab_menu" aria-label="판매 상태">
+        {STATUS_OPTIONS.map((o) => (
+          <button key={o.value} type="button" className="i_tab"
+            data-state={status === o.value ? "active" : undefined}
+            onClick={() => { setStatus(o.value); setPage(1); }}>
+            {o.label}
+          </button>
+        ))}
+      </nav>
       <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input className="input_text" type="search" maxLength={100} value={q}
           placeholder="상품명·브랜드 (2자 이상)" onChange={(e) => setQ(e.target.value)} />
@@ -133,11 +155,8 @@ export default function AdminProducts() {
           <option value="">전체 카테고리</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select className="input_text m_select" aria-label="상품 상태" value={status}
-          onChange={(e) => { setStatus(e.target.value as StatusFilter); setPage(1); }}>
-          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
         <button className="btn m_primary" type="submit">검색</button>
+        {filtered && <button className="btn" type="button" onClick={resetFilters}>필터 초기화</button>}
       </form>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {loading ? (
@@ -151,8 +170,10 @@ export default function AdminProducts() {
               <tr>
                 <th>상품명</th>
                 <th>브랜드</th>
+                <th>카테고리</th>
                 <th className="m_num">가격</th>
-                <th>상태</th>
+                {/* 상태 탭으로 걸러진 목록은 전 행이 같은 상태다 — 전체 탭에서만 컬럼을 둔다 */}
+                {status === "" && <th>상태</th>}
                 <th className="m_num">재고 합계</th>
                 <th>등록일</th>
               </tr>
@@ -162,8 +183,11 @@ export default function AdminProducts() {
                 <tr key={p.id}>
                   <td><strong className="i_name">{p.name}</strong></td>
                   <td>{p.brand_name}</td>
+                  <td className="m_muted">{categoryName(p.category_id)}</td>
                   <td className="m_num">{p.base_price.toLocaleString()}원</td>
-                  <td><span className={`badge m_small ${STATUS_BADGE[p.status] ?? ""}`.trim()}>{STATUS_LABEL[p.status] ?? p.status}</span></td>
+                  {status === "" && (
+                    <td><span className={`badge m_small ${STATUS_BADGE[p.status] ?? ""}`.trim()}>{STATUS_LABEL[p.status] ?? p.status}</span></td>
+                  )}
                   <td className="m_num">{p.stock_sum.toLocaleString()}</td>
                   <td className="m_muted">{formatDateTime(p.created_at)}</td>
                 </tr>
@@ -171,11 +195,16 @@ export default function AdminProducts() {
             </tbody>
           </table></div>
           <div className="i_foot">
-            <span className="i_count">총 {total}건</span>
+            <span className="i_count">총 {total}건 · {pageRange(page, size, items.length)} 표시</span>
             <div className="i_btn_wrap">
               <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
-              <span className="i_page">{page} / {lastPage}</span>
+              {pageWindow(page, lastPage).map((n) => (
+                <button key={n} className="btn m_small" type="button"
+                  data-state={n === page ? "active" : undefined}
+                  aria-current={n === page ? "page" : undefined}
+                  onClick={() => setPage(n)}>{n}</button>
+              ))}
               <button className="btn m_small" type="button" disabled={page >= lastPage}
                 onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>

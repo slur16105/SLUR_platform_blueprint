@@ -78,4 +78,7 @@ async def test_lookup_sellers_and_products(client, clean_products):
 
     async with engine.begin() as conn:
         cat_id = str((await conn.execute(text("SELECT category_id FROM products LIMIT 1"))).scalar_one())
-    assert (await client.get(PRODUCTS, params={"category_id": cat_id}, headers=_auth(admin_t))).json()["total"] == 1
+    body = (await client.get(PRODUCTS, params={"category_id": cat_id}, headers=_auth(admin_t))).json()
+    assert body["total"] == 1
+    # 응답에 category_id가 있어야 화면이 카테고리 컬럼을 그릴 수 있다 (필터만 되고 표시가 안 되던 문제)
+    assert body["items"][0]["category_id"] == cat_id

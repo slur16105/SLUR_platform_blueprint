@@ -52,7 +52,8 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/sellers/applications", label: "입점 심사", icon: I.badge },
   { href: "/admin/home", label: "메인 화면 관리", icon: I.layout },
   { href: "/admin/lookup", label: "회원 관리", icon: I.people },
-  { href: "/admin/products", label: "상품", icon: I.box },
+  // 관리자는 상품을 읽기만 한다(FR-30) — 화면 제목과 같은 "상품 조회"로 표기
+  { href: "/admin/products", label: "상품 조회", icon: I.box },
   { href: "/admin/settings", label: "설정", icon: I.gear },
 ];
 
