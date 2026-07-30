@@ -1,25 +1,48 @@
-import BuyerShell from "../../buyer-shell";
-import BuyerPageHeading from "../../buyer-page-heading";
-import OrderDetailView from "./order-detail-view";
-import "./detail.css";
+/* 주문상세 — `/orders/[id]` (보호 라우트). **새 테마 적용 화면 (이전 9/N).**
+   🚨 `/orders/complete`와 같은 깊이지만 정적 세그먼트가 동적을 이긴다 —
+      여기서 `id === "complete"`를 걸러내는 코드를 쓰지 않는다(Next가 판정한다). */
 
-/* 주문상세 — `/orders/[id]` (보호 라우트).
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
-   🚨 경로 경합: `/orders/complete`(8.5, 정적)가 이 동적 세그먼트를 이긴다 — Next가 판정하므로
-      여기서 `id === "complete"`를 걸러내지 않는다 (8.1 위험 9 · 8.5 D4).
-   🚨 params는 Next 16에서 Promise다 — await한다 (AGENTS.md).
-   셸: 뒤로가기 + 제목이고 **탭바가 서지 않는다**. tab="orders"는 ≥768 상단 내비에서
-      소속 최상위 항목(`주문내역`)을 활성으로 표시하기 위한 것이다 (EXPERIENCE IA 표). */
-export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+import { API_BASE } from "@/lib/auth";
+
+import DetailScreen from "./detail-screen";
+import { SiteFooter, SiteHeader } from "../../site-chrome";
+import type { NavCategory } from "../../labels";
+
+import "../../theme.css";
+
+export const metadata: Metadata = { title: "주문 상세 — SLUR 편집숍" };
+
+async function getJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { next: { revalidate: 300 } });
+    if (!res.ok) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export default async function OrderDetailPage() {
+  const [categories, cookieStore] = await Promise.all([
+    getJson<NavCategory[]>("/api/v1/products/categories", []),
+    cookies(),
+  ]);
+
   return (
-    <BuyerShell tab="orders" topbar={{ variant: "back-title", title: "주문상세" }}>
-      <div className="b_frame">
-        <div className="b_col_read b_order_detail">
-          <BuyerPageHeading title="주문상세" />
-          <OrderDetailView orderId={id} />
+    <div className="slur min-h-screen">
+      <SiteHeader categories={categories} loggedIn={Boolean(cookieStore.get("slur_role"))} />
+      <div className="border-b border-border">
+        <div className="mx-auto max-w-[1600px] px-5 py-12 text-center md:py-16">
+          <h1 className="text-[34px] font-bold uppercase leading-none tracking-tight md:text-[44px]">ORDER</h1>
         </div>
       </div>
-    </BuyerShell>
+      <div className="pt-10">
+        <DetailScreen />
+      </div>
+      <SiteFooter />
+    </div>
   );
 }

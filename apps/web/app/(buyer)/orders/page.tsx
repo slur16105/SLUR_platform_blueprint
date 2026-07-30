@@ -1,25 +1,46 @@
-import BuyerShell from "../buyer-shell";
-import BuyerPageHeading from "../buyer-page-heading";
-import OrdersView from "./orders-view";
-import "./orders.css";
+/* 주문내역 — `/orders` (보호 라우트). **새 테마 적용 화면 (이전 8/N).** */
 
-/* 주문내역 — `/orders` (보호 라우트).
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
-   🚨 셸 호출 세 값(tab="orders" · showTabbar · topbar title)은 8.1이 검증하고
-      EXPERIENCE.md IA 표가 확정한 것이다 — 최상위 4화면 중 하나이므로 탭바가 선다 (UX-DR3).
-   바깥 틀 .b_frame은 상단바·푸터와 같은 좌우 정렬선(content-max)을 공유하고, "끝까지 한 단"의
-   읽기 폭(640, UX-DR4)은 안쪽 열 .b_col_read가 좌측 정렬로 갖는다 (오너 확정 2026-07-27,
-   이전의 .b_container.m_read 대체 — 640을 가운데 정렬해 정렬선이 어긋나던 것을 고친다).
-   좌우 여백은 행이 스스로 갖는다(orders.css) — 행 사이 hairline이 열 끝까지 그어져야 하기 때문이다. */
-export default function OrdersPage() {
+import { API_BASE } from "@/lib/auth";
+
+import OrdersScreen from "./orders-screen";
+import { SiteFooter, SiteHeader } from "../site-chrome";
+import type { NavCategory } from "../labels";
+
+import "../theme.css";
+
+export const metadata: Metadata = { title: "주문내역 — SLUR 편집숍" };
+
+async function getJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { next: { revalidate: 300 } });
+    if (!res.ok) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export default async function OrdersPage() {
+  const [categories, cookieStore] = await Promise.all([
+    getJson<NavCategory[]>("/api/v1/products/categories", []),
+    cookies(),
+  ]);
+
   return (
-    <BuyerShell tab="orders" showTabbar topbar={{ variant: "title", title: "주문내역" }}>
-      <div className="b_frame">
-        <div className="b_col_read b_orders">
-          <BuyerPageHeading title="주문내역" />
-          <OrdersView />
+    <div className="slur min-h-screen">
+      <SiteHeader categories={categories} loggedIn={Boolean(cookieStore.get("slur_role"))} />
+      <div className="border-b border-border">
+        <div className="mx-auto max-w-[1600px] px-5 py-12 text-center md:py-16">
+          <h1 className="text-[34px] font-bold uppercase leading-none tracking-tight md:text-[44px]">ORDERS</h1>
         </div>
       </div>
-    </BuyerShell>
+      <div className="pt-10">
+        <OrdersScreen />
+      </div>
+      <SiteFooter />
+    </div>
   );
 }
