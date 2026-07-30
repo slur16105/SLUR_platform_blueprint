@@ -126,12 +126,17 @@ export default async function BuyerHomePage({
         </section>
       )}
 
+      {!category ? (
+        <div className="mx-auto max-w-[1600px] px-5 pt-16">
+          <h2 className="text-[22px] font-semibold uppercase tracking-wide">ALL PRODUCTS</h2>
+        </div>
+      ) : null}
+
       <HomeGrid
         /* 카테고리가 바뀌면 새로 마운트해 목록·페이지 상태를 초기화한다 */
         key={category ?? "all"}
         initialItems={list.items ?? []}
         total={list.total ?? (list.items?.length ?? 0)}
-        categories={categories}
         category={category}
       />
 
