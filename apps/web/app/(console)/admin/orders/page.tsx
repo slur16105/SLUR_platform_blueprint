@@ -25,13 +25,30 @@ type OrderCard = {
 
 type StatusFilter = "" | "awaiting_payment" | "preparing" | "shipping" | "delivered" | "canceled";
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "", label: "전체 상태" },
+  { value: "", label: "전체" },
   { value: "awaiting_payment", label: "입금대기" },
   { value: "preparing", label: "배송준비" },
   { value: "shipping", label: "배송중" },
   { value: "delivered", label: "배송완료" },
   { value: "canceled", label: "취소" },
 ];
+
+// 기간은 서버가 KST 자정 기준으로 계산한다(admin 라우터) — 화면 표시 시각과 같은 기준.
+type PeriodFilter = "" | "today" | "7d" | "30d";
+const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: "", label: "전체 기간" },
+  { value: "today", label: "오늘" },
+  { value: "7d", label: "최근 7일" },
+  { value: "30d", label: "최근 30일" },
+];
+
+/** 페이지 번호 창 — 현재 페이지 주변 최대 5개. 총 페이지가 적으면 있는 만큼만. */
+function pageWindow(page: number, lastPage: number): number[] {
+  const span = Math.min(5, lastPage);
+  let start = Math.max(1, page - Math.floor(span / 2));
+  if (start + span - 1 > lastPage) start = lastPage - span + 1;
+  return Array.from({ length: span }, (_, i) => start + i);
+}
 
 function formatDateTime(s: string) {
   // 판매자·입금 확인 화면과 대사 시 시간 불일치 방지 — KST 고정
@@ -56,6 +73,7 @@ function AdminOrdersInner() {
   const [q, setQ] = useState(initialQ); // 입력 중 값
   const [appliedQ, setAppliedQ] = useState(initialQ); // 실제 조회에 쓰인 값
   const [status, setStatus] = useState<StatusFilter>(initialStatus);
+  const [period, setPeriod] = useState<PeriodFilter>("");
   const [items, setItems] = useState<OrderCard[]>([]);
   const [total, setTotal] = useState(0);
   const [size, setSize] = useState(20); // 응답 size로 갱신 — 하드코딩 아님
@@ -65,13 +83,14 @@ function AdminOrdersInner() {
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadSeq = useRef(0); // 요청 세대 카운터 — 검색·페이지 연타 시 늦은 응답 폐기
 
-  const load = useCallback(async (query: string, st: StatusFilter, p: number) => {
+  const load = useCallback(async (query: string, st: StatusFilter, pd: PeriodFilter, p: number) => {
     const gen = ++loadSeq.current;
     setError(null);
     try {
       const sp = new URLSearchParams({ page: String(p) });
       if (query) sp.set("q", query);
       if (st) sp.set("status", st);
+      if (pd) sp.set("period", pd);
       const res = await fetch(`/api/admin/orders?${sp.toString()}`);
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
       if (res.status === 401) return void router.replace("/login");
@@ -97,10 +116,10 @@ function AdminOrdersInner() {
     }
   }, [router]);
 
-  // 검색어·상태·페이지 변경 시 재조회 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
+  // 검색어·상태·기간·페이지 변경 시 재조회 — 로더 호출을 effect 안 async 함수로 감싼다(React 데이터 페칭 관례).
   useEffect(() => {
-    void (async () => { await load(appliedQ, status, page); })();
-  }, [appliedQ, status, page, load]);
+    void (async () => { await load(appliedQ, status, period, page); })();
+  }, [appliedQ, status, period, page, load]);
 
   useEffect(() => () => {
     if (copyTimer.current) clearTimeout(copyTimer.current);
@@ -112,13 +131,30 @@ function AdminOrdersInner() {
     if (query.length > 100) return void setError("검색어는 100자 이내로 입력해 주세요.");
     setError(null);
     setPage(1);
-    if (query === appliedQ) load(query, status, 1); // 같은 조건 재검색 — effect가 안 돌므로 직접 조회
+    if (query === appliedQ) load(query, status, period, 1); // 같은 조건 재검색 — effect가 안 돌므로 직접 조회
     else setAppliedQ(query);
   }
 
   function changeStatus(st: StatusFilter) {
     setStatus(st);
     setPage(1);
+  }
+
+  function changePeriod(pd: PeriodFilter) {
+    setPeriod(pd);
+    setPage(1);
+  }
+
+  const filtered = Boolean(appliedQ || status || period);
+
+  // 초기화 버튼은 filtered일 때만 보이므로 셋 중 하나는 반드시 바뀐다 → effect가 재조회를 맡는다(중복 호출 없음).
+  function resetFilters() {
+    setQ("");
+    setAppliedQ("");
+    setStatus("");
+    setPeriod("");
+    setPage(1);
+    setError(null);
   }
 
   async function copyOrderId(id: string) {
@@ -142,19 +178,29 @@ function AdminOrdersInner() {
       description="전체 주문을 조회하고 상태를 처리합니다."
     >
       <div className="page_admin_orders">
+      <nav className="tab_menu" aria-label="주문 상태">
+        {STATUS_OPTIONS.map((o) => (
+          <button key={o.value} type="button" className="i_tab"
+            data-state={status === o.value ? "active" : undefined}
+            onClick={() => changeStatus(o.value)}>
+            {o.label}
+          </button>
+        ))}
+      </nav>
       <form className="p_search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input className="input_text" type="search" maxLength={100} value={q}
           placeholder="주문번호(8자/전체)·주문자 이름·이메일·브랜드 (2자 이상)"
           onChange={(e) => setQ(e.target.value)} />
-        <select className="input_text m_select" aria-label="주문 상태" value={status}
-          onChange={(e) => changeStatus(e.target.value as StatusFilter)}>
-          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <select className="input_text m_select" aria-label="주문 기간" value={period}
+          onChange={(e) => changePeriod(e.target.value as PeriodFilter)}>
+          {PERIOD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <button className="btn m_primary" type="submit">검색</button>
+        {filtered && <button className="btn" type="button" onClick={resetFilters}>필터 초기화</button>}
       </form>
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {items.length === 0 ? (
-        <p className="p_empty">{appliedQ || status ? "조건에 맞는 주문이 없습니다." : "주문이 없습니다."}</p>
+        <p className="p_empty">{filtered ? "조건에 맞는 주문이 없습니다." : "주문이 없습니다."}</p>
       ) : (
         <div className="table_wrap">
           <div className="table_scroll"><table className="table_data">
@@ -201,11 +247,18 @@ function AdminOrdersInner() {
             </tbody>
           </table></div>
           <div className="i_foot">
-            <span className="i_count">총 {total}건</span>
+            <span className="i_count">
+              총 {total}건 · {(page - 1) * size + 1}–{(page - 1) * size + items.length} 표시
+            </span>
             <div className="i_btn_wrap">
               <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
-              <span className="i_page">{page} / {lastPage}</span>
+              {pageWindow(page, lastPage).map((n) => (
+                <button key={n} className="btn m_small" type="button"
+                  data-state={n === page ? "active" : undefined}
+                  aria-current={n === page ? "page" : undefined}
+                  onClick={() => setPage(n)}>{n}</button>
+              ))}
               <button className="btn m_small" type="button" disabled={page >= lastPage}
                 onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>

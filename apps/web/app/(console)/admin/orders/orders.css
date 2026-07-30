@@ -17,4 +17,3 @@
 .page_admin_orders .i_email { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
 .page_admin_orders .i_brands { display: flex; gap: var(--space-4); flex-wrap: wrap; }
 .page_admin_orders .i_brands .badge[data-state="canceled"] { color: var(--color-text-muted); text-decoration: line-through; }
-.page_admin_orders .i_page { font-size: var(--text-xs); color: var(--color-text-muted); align-self: center; padding: 0 var(--space-4); }

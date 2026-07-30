@@ -842,6 +842,7 @@ def _active_sub_sq(order_col, *shipping_conds):
 async def search_orders(
     session: AsyncSession, *, q: str | None, status: str | None, page: int,
     user_ids: list[uuid.UUID] | None, seller_ids: list[uuid.UUID] | None,
+    created_from: datetime | None = None,
 ) -> dict:
     """관리자 전체 주문 검색 — 파생 status는 SQL 동치 매핑 (5.1 파생 표 대조 테스트로 봉인).
 
@@ -851,6 +852,8 @@ async def search_orders(
 
     size = get_settings().page_size
     base = select(Order)
+    if created_from is not None:  # 기간 필터 — 경계 계산(KST 자정)은 admin 라우터 소유
+        base = base.where(Order.created_at >= created_from)
     if q:
         conds = []
         try:

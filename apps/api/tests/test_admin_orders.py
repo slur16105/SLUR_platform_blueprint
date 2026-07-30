@@ -191,3 +191,46 @@ async def test_admin_sub_transition_and_guards(client, clean_products):
     assert r.status_code == 200 and r.json()["order_canceled"] is True
     body = (await client.get("/api/v1/admin/orders/pending", headers=_auth(admin_t))).json()
     assert oid2 not in [x["order_id"] for x in body["items"]]  # 입금대기 목록에서 사라짐
+
+
+@pytest.mark.asyncio
+async def test_period_filter(client, clean_products):
+    """기간 필터(period) — 오늘/최근 N일 경계는 KST 자정 기준, 잘못된 값은 422."""
+    st, pid, vs = await _shop(client, stock=9)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+
+    o_today, _, _ = await _order(client, bt, vs, idx=0)
+    o_old, _, _ = await _order(client, bt, vs, idx=1)
+
+    # o_old를 40일 전으로 밀어 경계를 실제로 검증한다 (API로는 과거 주문을 만들 수 없음)
+    from datetime import datetime, timedelta, timezone
+
+    from app.core.db import async_session_factory
+
+    async with async_session_factory() as session:
+        order = await session.scalar(select(Order).where(Order.id == u.UUID(o_old)))
+        order.created_at = datetime.now(timezone.utc) - timedelta(days=40)
+        await session.commit()
+
+    def ids(body):
+        return [r["order_id"] for r in body["items"]]
+
+    # 필터 없음 — 둘 다 보인다
+    body = (await client.get(SEARCH, headers=_auth(admin_t))).json()
+    assert o_today in ids(body) and o_old in ids(body)
+
+    # today·7d·30d — 오늘 주문만
+    for period in ("today", "7d", "30d"):
+        body = (await client.get(SEARCH, params={"period": period}, headers=_auth(admin_t))).json()
+        assert o_today in ids(body), period
+        assert o_old not in ids(body), period
+
+    # 다른 필터와 조합 — 상태 필터가 함께 적용된다
+    body = (await client.get(SEARCH, params={"period": "today", "status": "awaiting_payment"},
+                             headers=_auth(admin_t))).json()
+    assert o_today in ids(body) and o_old not in ids(body)
+
+    # 잘못된 값 422
+    assert (await client.get(SEARCH, params={"period": "1y"}, headers=_auth(admin_t))).status_code == 422

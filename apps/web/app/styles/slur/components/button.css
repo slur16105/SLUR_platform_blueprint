@@ -37,3 +37,5 @@
 
 /* 상태 */
 .btn[data-state="loading"] { opacity: 0.6; pointer-events: none; cursor: wait; }
+/* active — 선택지 중 현재 것(페이지네이션 현재 페이지 등). 탭 활성과 같은 브랜드 강조를 쓰되 버튼 형태는 유지. */
+.btn[data-state="active"] { border-color: var(--color-brand); background: var(--color-brand); font-weight: var(--weight-semibold); color: var(--color-on-brand); pointer-events: none; }

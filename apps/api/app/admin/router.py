@@ -122,7 +122,7 @@ async def delete_category(
 # 입금 확인 (Story 5.2) — admin→orders service 경유 (AD-2)
 # ---------------------------------------------------------------------------
 
-from datetime import datetime  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
 
 from app.auth import service as auth_service  # noqa: E402 — buyer 표시 정보 (AD-2: admin→auth 허용)
 from app.core.errors import AppError  # noqa: E402
@@ -231,11 +231,22 @@ class AdminSubTransitionRequest(BaseModel):
 
 _ADMIN_STATUS = ("awaiting_payment", "preparing", "shipping", "delivered", "canceled")
 
+_KST = timezone(timedelta(hours=9))
+# 기간 필터 — 값은 "오늘 포함 최근 N일". 경계는 KST 자정 (콘솔이 주문 일시를 KST로 표시하므로 동일 기준).
+_PERIOD_DAYS = {"today": 1, "7d": 7, "30d": 30}
+
+
+def _period_start(period: str) -> datetime:
+    """period → 조회 시작 시각(UTC aware). KST 자정 기준이라 '오늘'이 화면 표시와 어긋나지 않는다."""
+    midnight_kst = datetime.now(_KST).replace(hour=0, minute=0, second=0, microsecond=0)
+    return midnight_kst - timedelta(days=_PERIOD_DAYS[period] - 1)
+
 
 @router.get("/orders", response_model=AdminOrderList)
 async def admin_search_orders(
     q: str | None = None,
     status: str | None = None,
+    period: str | None = None,
     page: int = 1,
     _admin: uuid.UUID = Depends(require_role("admin")),
     session: AsyncSession = Depends(get_session),
@@ -245,6 +256,9 @@ async def admin_search_orders(
         raise AppError("validation_error", "올바르지 않은 페이지입니다.", status_code=422)
     if status is not None and status not in _ADMIN_STATUS:
         raise AppError("validation_error", "올바르지 않은 상태입니다.", status_code=422)
+    if period is not None and period not in _PERIOD_DAYS:
+        raise AppError("validation_error", "올바르지 않은 기간입니다.", status_code=422)
+    created_from = _period_start(period) if period else None
     if q is not None:
         q = q.strip()
         if q and (len(q) < 2 or len(q) > 100):
@@ -256,7 +270,9 @@ async def admin_search_orders(
 
         user_ids = await auth_service.find_user_ids_by_name_or_email(session, q)
         seller_ids = await sellers_service2.find_seller_ids_by_brand(session, q)
-    data = await orders_service.search_orders(session, q=q, status=status, page=page, user_ids=user_ids, seller_ids=seller_ids)
+    data = await orders_service.search_orders(
+        session, q=q, status=status, page=page, user_ids=user_ids, seller_ids=seller_ids, created_from=created_from,
+    )
     buyers = await auth_service.get_users_by_ids(session, list({r["user_id"] for r in data["items"]}))
     for row in data["items"]:
         buyer = buyers.get(row.pop("user_id"))
