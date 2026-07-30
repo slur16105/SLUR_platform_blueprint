@@ -24,6 +24,12 @@
 .console_topbar { position: sticky; top: 0; z-index: var(--z-sticky); height: 3.5rem; display: flex; align-items: center; gap: var(--space-12); padding: 0 var(--space-24); background: var(--color-surface-card); border-bottom: 1px solid var(--color-border-subtle); }
 .console_topbar .l_crumb { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-muted); }
 .console_topbar .l_top_actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-8); }
+/* 홈페이지 열기 — 좁은 화면에서는 글자를 숨기고 아이콘만(상단바에 로그아웃과 함께 들어가야 한다) */
+.console_topbar .l_home { flex: none; }
+@media (max-width: 600px) {
+  .console_topbar .l_home .i_label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .console_topbar .l_home { min-width: 2rem; padding: 0 var(--space-8); }
+}
 /* 햄버거 — 시각 스타일은 시스템 컴포넌트 .btn_menu가 담당(button.css).
    여기서는 배치(모바일 노출 토글 + 좌측 광학 정렬)만 다룬다. */
 .console_topbar .l_menu { display: none; margin-left: calc(var(--space-8) * -1); }

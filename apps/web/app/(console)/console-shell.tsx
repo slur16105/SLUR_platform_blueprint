@@ -121,6 +121,13 @@ export default function ConsoleShell({
           </button>
           <span className="l_crumb">{role === "seller" ? "판매자 콘솔" : "관리자 콘솔"}</span>
           <div className="l_top_actions">
+            {/* 어느 콘솔 화면에서든 실제 서비스 화면을 열어 확인 — 새 탭이라 작업 중이던 화면을 잃지 않는다 */}
+            <a className="btn m_small l_home" href="/" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                <path d="M2.5 7 8 2.5 13.5 7v6a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V7Z" strokeLinejoin="round" />
+              </svg>
+              <span className="i_label">홈페이지 ↗</span>
+            </a>
             <LogoutButton />
           </div>
         </header>
