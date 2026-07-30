@@ -11,6 +11,7 @@
    · `더 보기` 페이지네이션 · 상품상세 왕복 스크롤 복원 (home-grid)
    · 장바구니 배지·로그아웃·법정 고지 (site-chrome) */
 
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import { API_BASE } from "@/lib/auth";
@@ -52,6 +53,30 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
     /* 편성·목록 조회 실패가 홈 전체를 죽이지 않는다 — 비어 있는 지면으로 내려앉는다 */
     return fallback;
   }
+}
+
+/* 탭 타이틀·설명 — 메인과 카테고리 지면이 서로 다른 이름을 갖는다.
+   🚨 카테고리 이름은 코드에 하드코딩하지 않는다(FR-34) — 서버가 준 이름을 그대로 쓴다.
+   루트 레이아웃(app/layout.tsx)은 콘솔과 공유하는 파일이라 건드리지 않고, 이 화면에서만 덮는다. */
+const SITE_TITLE = "SLUR — 큐레이션 디자인 편집숍";
+const SITE_DESC =
+  "운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍. 오래 남을 것들을 골라 소개합니다.";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  const category = typeof sp.category === "string" ? sp.category : null;
+  if (!category) return { title: SITE_TITLE, description: SITE_DESC };
+
+  const categories = await getJson<NavCategory[]>("/api/v1/products/categories", []);
+  const name = categories.find((c) => c.id === category)?.name;
+  return {
+    title: name ? `${name} — SLUR 편집숍` : SITE_TITLE,
+    description: name ? `${name} 카테고리의 큐레이션 상품 — SLUR 편집숍` : SITE_DESC,
+  };
 }
 
 export default async function BuyerHomePage({
