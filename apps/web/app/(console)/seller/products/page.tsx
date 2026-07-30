@@ -162,6 +162,7 @@ export default function SellerProducts() {
                     )}
                     <td>
                       <div className="i_actions">
+                        <Link className="btn m_small" href={`/seller/products/${p.id}/edit`}>수정</Link>
                         {p.status !== "active" && (
                           <button className="btn m_small m_primary" type="button" disabled={busyId === p.id}
                             onClick={() => setProductStatus(p, "active", `‘${p.name}’을(를) 판매중으로 바꿨습니다.`)}>판매 재개</button>

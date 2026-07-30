@@ -119,3 +119,64 @@ async def test_other_seller_cannot_patch(client, clean_products):
 
     res = await client.patch(f"/api/v1/sellers/products/{pid}", json={"base_price": 1}, headers=_auth(t2))
     assert res.status_code == 404  # 타인 상품 — 존재 비노출
+
+
+@pytest.mark.asyncio
+async def test_replace_images(client, clean_products):
+    """이미지 교체 — 등록 후 사진을 바꾸는 경로(판매자 상품 수정 화면)."""
+    import uuid as _uuid
+
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t)
+    t, sid = await _seller_with_prefix(client, admin_t)
+
+    pid = (await client.post(
+        "/api/v1/sellers/products", json=_product_body(sid, cid, n_images=2), headers=_auth(t)
+    )).json()["id"]
+
+    new_paths = [f"{sid}/{_uuid.uuid7()}.jpg" for _ in range(3)]
+    res = await client.put(f"/api/v1/sellers/products/{pid}/images", json={"image_paths": new_paths}, headers=_auth(t))
+    assert res.status_code == 200
+    images = res.json()["images"]
+    # 보낸 순서가 곧 노출 순서이고 [0]이 대표
+    assert [i["path"] for i in images] == new_paths
+    assert [i["sort_order"] for i in images] == [0, 1, 2]
+
+
+@pytest.mark.asyncio
+async def test_replace_images_rejects_foreign_path(client, clean_products):
+    """타 판매자 경로·임의 문자열은 거부 — 등록과 같은 소유권 검사."""
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t)
+    t, sid = await _seller_with_prefix(client, admin_t)
+    pid = (await client.post(
+        "/api/v1/sellers/products", json=_product_body(sid, cid), headers=_auth(t)
+    )).json()["id"]
+
+    res = await client.put(
+        f"/api/v1/sellers/products/{pid}/images",
+        json={"image_paths": ["../other-seller/steal.jpg"]},
+        headers=_auth(t),
+    )
+    assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_replace_images_foreign_product_404(client, clean_products):
+    """남의 상품 이미지는 못 바꾼다 (존재 노출 방지로 404)."""
+    import uuid as _uuid
+
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t)
+    t, sid = await _seller_with_prefix(client, admin_t)
+    pid = (await client.post(
+        "/api/v1/sellers/products", json=_product_body(sid, cid), headers=_auth(t)
+    )).json()["id"]
+
+    t2, sid2 = await second_seller(client, admin_t, email="seller-img@example.com")
+    res = await client.put(
+        f"/api/v1/sellers/products/{pid}/images",
+        json={"image_paths": [f"{sid2}/{_uuid.uuid7()}.jpg"]},  # 형식은 유효한 본인 경로 — 막히는 건 상품 소유권
+        headers=_auth(t2),
+    )
+    assert res.status_code == 404

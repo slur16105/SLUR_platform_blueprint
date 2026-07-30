@@ -129,6 +129,25 @@ class ProductResponse(BaseModel):
     variants: list[VariantResponse] = []
 
 
+class ImagesReplace(BaseModel):
+    """상품 이미지 전체 교체 — VariantsReplace와 같은 방식(현재 목록을 통째로 보낸다).
+
+    ProductCreate.image_paths와 같은 규칙을 쓴다: [0]이 대표, 대표 포함 최대 N장, 중복 불가.
+    """
+
+    image_paths: list[str] = Field(min_length=1)
+
+    @field_validator("image_paths")
+    @classmethod
+    def image_count(cls, v: list[str]) -> list[str]:
+        cap = 1 + get_settings().max_extra_images
+        if len(v) > cap:
+            raise ValueError(f"이미지는 대표 1장 포함 최대 {cap}장까지입니다.")
+        if len(set(v)) != len(v):
+            raise ValueError("중복된 이미지가 있습니다.")
+        return v
+
+
 class ProductUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     base_price: int | None = Field(default=None, ge=0, le=100_000_000)

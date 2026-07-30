@@ -210,6 +210,28 @@ async def replace_variants(session: AsyncSession, seller_id: uuid.UUID, product_
     return product
 
 
+async def replace_images(session: AsyncSession, seller_id: uuid.UUID, product_id: uuid.UUID, paths: list[str]) -> Product:
+    """상품 이미지 전체 교체 — 목록 순서가 곧 sort_order이고 [0]이 대표.
+
+    variants와 달리 이미지 행은 다른 테이블이 참조하지 않아 지우고 다시 넣는다.
+    경로는 create와 같은 소유권 검사를 통과해야 한다(타 판매자 도용·경로 탈출 차단).
+    """
+    _validate_image_ownership(seller_id, paths)
+    product = await session.scalar(
+        select(Product).where(Product.id == product_id, Product.seller_id == seller_id)
+    )
+    if product is None:  # 타인 상품·미존재 구분 없이 404 (존재 노출 방지 — replace_variants와 같은 규칙)
+        raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
+    for img in await session.scalars(select(ProductImage).where(ProductImage.product_id == product_id)):
+        await session.delete(img)
+    await session.flush()  # 삭제를 먼저 반영해야 같은 경로를 재사용해도 충돌하지 않는다
+    for order, path in enumerate(paths):
+        session.add(ProductImage(product_id=product_id, path=path, sort_order=order))
+    await session.commit()
+    logger.info("product %s images replaced by seller %s (%d)", product_id, seller_id, len(paths))
+    return product
+
+
 async def get_variants(session: AsyncSession, product_ids: list[uuid.UUID]) -> dict:
     if not product_ids:
         return {}
