@@ -5,8 +5,11 @@
 .page_admin_settings .m_muted { color: var(--color-text-muted); }
 
 /* 2단 배치(계좌+운영 수치 / 카테고리+안내) — 좁은 화면에서는 한 단으로 쌓인다.
-   카드는 자기 내용만큼만 높아진다(align-items: start) — 짧은 카드가 늘어나 빈 공간을 만들지 않게. */
-.page_admin_settings .p_pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: start; }
+   같은 행의 두 카드는 높이를 맞춘다(stretch): 짧은 카드가 먼저 끝나면 행마다 아래 여백이
+   달라져 행 간 간격이 제각각으로 보인다. 카드 내용은 위에서부터 쌓이고 남는 공간은 아래로 간다. */
+.page_admin_settings .p_pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: stretch; }
+/* 그리드 자식이 늘어나도 내부 내용이 세로로 벌어지지 않게 — 위로 모으고 남는 높이는 아래 여백으로 */
+.page_admin_settings .p_pair > .p_card { justify-content: flex-start; }
 @media (max-width: 960px) {
   .page_admin_settings .p_pair { grid-template-columns: 1fr; }
 }
