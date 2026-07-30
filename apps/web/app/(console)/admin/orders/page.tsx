@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
+import { pageRange, pageWindow } from "@/app/(console)/pagination";
 import { statusBadgeClass, statusLabel } from "./status";
 import "./orders.css";
 
@@ -41,14 +42,6 @@ const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
   { value: "7d", label: "최근 7일" },
   { value: "30d", label: "최근 30일" },
 ];
-
-/** 페이지 번호 창 — 현재 페이지 주변 최대 5개. 총 페이지가 적으면 있는 만큼만. */
-function pageWindow(page: number, lastPage: number): number[] {
-  const span = Math.min(5, lastPage);
-  let start = Math.max(1, page - Math.floor(span / 2));
-  if (start + span - 1 > lastPage) start = lastPage - span + 1;
-  return Array.from({ length: span }, (_, i) => start + i);
-}
 
 function formatDateTime(s: string) {
   // 판매자·입금 확인 화면과 대사 시 시간 불일치 방지 — KST 고정
@@ -247,9 +240,7 @@ function AdminOrdersInner() {
             </tbody>
           </table></div>
           <div className="i_foot">
-            <span className="i_count">
-              총 {total}건 · {(page - 1) * size + 1}–{(page - 1) * size + items.length} 표시
-            </span>
+            <span className="i_count">총 {total}건 · {pageRange(page, size, items.length)} 표시</span>
             <div className="i_btn_wrap">
               <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>

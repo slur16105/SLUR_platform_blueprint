@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import ConsoleShell from "@/app/(console)/console-shell";
+import { pageRange, pageWindow } from "@/app/(console)/pagination";
 import "./deposits.css";
 
 type PendingOrder = {
@@ -23,6 +25,15 @@ function formatDateTime(s: string) {
   return new Date(s).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Seoul" });
 }
 
+const IMMINENT_MS = 24 * 60 * 60 * 1000;
+
+/** 기한 임박 — 24시간 내 만료. 만료 판정(expired)은 서버 시각 기준이라 그대로 쓰고, 임박만 클라에서 잰다. */
+function isImminent(dueAt: string, expired: boolean) {
+  if (expired) return false;
+  const left = new Date(dueAt).getTime() - Date.now();
+  return left > 0 && left <= IMMINENT_MS;
+}
+
 function shortUuid(id: string) {
   return `${id.slice(0, 8)}…${id.slice(-4)}`;
 }
@@ -40,6 +51,7 @@ export default function AdminDeposits() {
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [account, setAccount] = useState<string | null>(null); // 대조할 입금계좌 — 전 주문 공통(설정값)
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadSeq = useRef(0); // 요청 세대 카운터 — 페이지 연타 시 늦은 응답 폐기
@@ -86,6 +98,21 @@ export default function AdminDeposits() {
   useEffect(() => {
     void (async () => { await load(page); })();
   }, [page, load]);
+
+  // 대조할 입금계좌 — 목록과 무관한 1회 조회. 실패해도 화면 기능은 그대로(안내만 생략).
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        const row = ((data.items ?? []) as { key: string; value: string }[]).find((s) => s.key === "deposit_account");
+        setAccount(row?.value ?? null);
+      } catch {
+        // 무시 — 입금 확인 처리에는 영향 없다
+      }
+    })();
+  }, []);
 
   useEffect(() => () => {
     if (copyTimer.current) clearTimeout(copyTimer.current);
@@ -178,6 +205,11 @@ export default function AdminDeposits() {
       description="입금대기 주문을 확인하고 결제완료로 처리합니다."
     >
       <div className="page_admin_deposits">
+      {/* 대조 기준 계좌를 화면에서 한 번 알려준다 — 주문마다 같은 계좌라 행에 반복 표기하지 않는다 */}
+      <p className="p_account">
+        대조할 입금계좌 <strong>{account ?? "설정되지 않음"}</strong>
+        <Link className="i_link" href="/admin/settings">설정에서 변경</Link>
+      </p>
       {notice && <div className="alert m_inline m_success" role="status">{notice}</div>}
       {error && <div className="alert m_inline m_danger" role="alert">{error}</div>}
       {loading ? (
@@ -216,7 +248,11 @@ export default function AdminDeposits() {
                   <td className="m_num"><strong>{o.grand_total.toLocaleString()}원</strong></td>
                   <td>
                     <span className="i_due">{formatDateTime(o.deposit_due_at)}</span>
-                    {o.expired && <span className="badge m_danger">기한 경과</span>}
+                    {o.expired ? (
+                      <span className="badge m_danger">기한 경과</span>
+                    ) : isImminent(o.deposit_due_at, o.expired) && (
+                      <span className="badge m_warning">기한 임박</span>
+                    )}
                   </td>
                   <td className="i_product">{o.title}</td>
                   <td>
@@ -228,11 +264,16 @@ export default function AdminDeposits() {
             </tbody>
           </table></div>
           <div className="i_foot">
-            <span className="i_count">총 {total}건</span>
+            <span className="i_count">총 {total}건 · {pageRange(page, size, items.length)} 표시</span>
             <div className="i_btn_wrap">
               <button className="btn m_small" type="button" disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}>이전</button>
-              <span className="i_page">{page} / {lastPage}</span>
+              {pageWindow(page, lastPage).map((n) => (
+                <button key={n} className="btn m_small" type="button"
+                  data-state={n === page ? "active" : undefined}
+                  aria-current={n === page ? "page" : undefined}
+                  onClick={() => setPage(n)}>{n}</button>
+              ))}
               <button className="btn m_small" type="button" disabled={page >= lastPage}
                 onClick={() => setPage((p) => p + 1)}>다음</button>
             </div>
