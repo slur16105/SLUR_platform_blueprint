@@ -70,7 +70,8 @@ export default function AdminDashboard() {
 
   const queue = [
     { label: "입금 확인", count: deposits, href: "/admin/deposits", hint: "무통장 입금 대기" },
-    { label: "배송 준비", count: preparing, href: "/admin/orders?status=preparing", hint: "발송 대기 주문" },
+    // 라벨은 주문 상태 라벨(STATUS_LABEL)과 같은 표기를 쓴다 — 화면마다 다른 이름으로 부르지 않는다
+    { label: "배송준비", count: preparing, href: "/admin/orders?status=preparing", hint: "판매자 발송 전 주문" },
     { label: "입점 심사", count: applications, href: "/admin/sellers/applications", hint: "판매자 신청 대기" },
   ];
 

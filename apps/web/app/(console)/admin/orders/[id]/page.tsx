@@ -294,7 +294,7 @@ export default function AdminOrderDetail() {
         action: "confirm_payment", order_id: detail.order_id,
         expected_grand_total: action.deposit.grand_total, // 모달에 표시된 금액 그대로 — stale 금액 확인 방지
         note: note.trim() || undefined,
-      }, "입금 확인 완료 — 결제완료로 전환됐고 판매자의 발송 대기 목록으로 넘어갔습니다.");
+      }, "입금 확인 완료 — 배송준비로 전환됐습니다. 이후 발송은 판매자가 진행합니다.");
       return;
     }
     submitAction({ action: "mark_refunded", cancellation_id: action.cancellation.cancellation_id },
@@ -493,7 +493,7 @@ export default function AdminOrderDetail() {
               {action.kind === "confirm_payment" && (
                 <p className="i_text">
                   통장에 <strong>{action.deposit.grand_total.toLocaleString()}원</strong>이 실제로 들어왔는지 확인한 뒤 눌러 주세요.
-                  결제완료로 전환되고 판매자에게 배송준비 주문으로 넘어갑니다.
+                  주문 상태가 <strong>배송준비</strong>로 바뀌고, 이후 발송은 판매자가 진행합니다.
                   {action.deposit.expired && " 입금기한이 지난 주문입니다."}
                 </p>
               )}

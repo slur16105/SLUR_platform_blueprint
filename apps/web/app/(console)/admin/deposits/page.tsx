@@ -167,8 +167,7 @@ export default function AdminDeposits() {
         // 확인한 행은 이 목록에서 사라지므로 어디로 갔는지 알려준다 — 배송준비 목록으로 딥링크
         showNotice(
           <>
-            입금 확인 완료 — 주문 <strong>{confirming.order_no}</strong>이 결제완료로 전환됐고,
-            판매자의 발송 대기 목록으로 넘어갔습니다.
+            입금 확인 완료 — 주문 <strong>{confirming.order_no}</strong>이 <strong>배송준비</strong>로 전환됐습니다.
             <Link className="i_link" href="/admin/orders?status=preparing">주문 관리 · 배송준비에서 보기 →</Link>
           </>,
           { persist: true },
@@ -211,7 +210,7 @@ export default function AdminDeposits() {
     <ConsoleShell
       role="admin"
       title="입금 확인"
-      description="입금대기 주문을 통장과 대조해 확인 처리합니다. 확인한 주문은 판매자의 발송 대기 목록으로 넘어갑니다."
+      description="입금대기 주문을 통장과 대조해 확인 처리합니다. 확인한 주문은 배송준비가 되어 주문 관리에서 이어집니다."
     >
       <div className="page_admin_deposits">
       {/* 대조 기준 계좌를 화면에서 한 번 알려준다 — 주문마다 같은 계좌라 행에 반복 표기하지 않는다 */}
@@ -300,8 +299,8 @@ export default function AdminDeposits() {
             </div>
             <div className="i_body">
               <p className="i_text">
-                아래 주문의 입금을 확인 처리합니다. 확인하면 결제완료로 바뀌고 <strong>판매자의 발송 대기 목록</strong>으로
-                넘어갑니다. 처리 후에는 되돌릴 수 없습니다.
+                아래 주문의 입금을 확인 처리합니다. 확인하면 주문 상태가 <strong>배송준비</strong>로 바뀌고,
+                이후 발송은 판매자가 진행합니다. 처리 후에는 되돌릴 수 없습니다.
               </p>
               <dl className="i_summary">
                 <div><dt>주문번호</dt><dd><strong>{confirming.order_no}</strong></dd></div>

@@ -129,7 +129,8 @@ export default function SellerHome() {
           <>
             <div className="p_stats">
               <a className="card p_stat" href="/seller/orders">
-                <span className="i_label">신규 주문 (배송준비 대기)</span>
+                {/* 라벨은 주문 관리 탭 이름(배송준비)과 같은 표기 — 같은 것을 두 이름으로 부르지 않는다 */}
+                <span className="i_label">배송준비 — 발송할 주문</span>
                 <strong className="i_value">{dashboard.preparing_count}건</strong>
               </a>
               <a className="card p_stat" href="/seller/orders?status=shipping">
