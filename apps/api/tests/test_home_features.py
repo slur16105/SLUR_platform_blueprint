@@ -20,15 +20,25 @@ async def _make_product(client, t, sid, cid, name, stock=5):
     )).json()["id"]
 
 
-@pytest.fixture
-async def clean_home(clean_products):
-    yield
+async def _truncate_home():
     from sqlalchemy import text
 
     from app.core.db import engine
 
     async with engine.begin() as conn:
         await conn.execute(text("TRUNCATE home_features CASCADE"))  # home_feature_items 동반
+
+
+@pytest.fixture
+async def clean_home(clean_products):
+    """편성 격리 — 시작 전·종료 후 모두 정리.
+
+    시작 전 정리가 없으면 로컬 seed로 넣어둔 편성 데이터(히어로/슬롯)가 남아
+    '비어 있어야 한다'를 검증하는 테스트가 깨진다. clean_auth_tables와 같은 방식.
+    """
+    await _truncate_home()
+    yield
+    await _truncate_home()
 
 
 @pytest.mark.asyncio
