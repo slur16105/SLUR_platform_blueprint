@@ -294,7 +294,7 @@ export default function AdminOrderDetail() {
         action: "confirm_payment", order_id: detail.order_id,
         expected_grand_total: action.deposit.grand_total, // 모달에 표시된 금액 그대로 — stale 금액 확인 방지
         note: note.trim() || undefined,
-      }, `주문 ${detail.order_no} 입금 확인 처리되었습니다.`);
+      }, "입금 확인 완료 — 결제완료로 전환됐고 판매자의 발송 대기 목록으로 넘어갔습니다.");
       return;
     }
     submitAction({ action: "mark_refunded", cancellation_id: action.cancellation.cancellation_id },
