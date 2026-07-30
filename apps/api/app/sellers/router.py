@@ -61,7 +61,10 @@ def _product_response(product, images, variants=()) -> ProductResponse:
     return ProductResponse(
         id=product.id, name=product.name, base_price=product.base_price, description=product.description,
         status=product.status, category_id=product.category_id,
-        images=[ProductImageResponse(path=i.path, sort_order=i.sort_order) for i in images],
+        images=[
+            ProductImageResponse(path=i.path, sort_order=i.sort_order, url=products_service._image_url(i.path))
+            for i in images
+        ],
         variants=[VariantResponse.model_validate(v, from_attributes=True) for v in variants],
     )
 

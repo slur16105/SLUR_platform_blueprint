@@ -113,6 +113,9 @@ class ProductCreate(BaseModel):
 class ProductImageResponse(BaseModel):
     path: str
     sort_order: int
+    # 화면이 Storage 주소를 조립하지 않게 서버가 완성된 URL을 준다 — 판매자 콘솔이
+    # Supabase 주소를 상수로 박아두던 것을 없애기 위함. Storage 미연결 환경은 None/데모.
+    url: str | None = None
 
 
 class ProductResponse(BaseModel):

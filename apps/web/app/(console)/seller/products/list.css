@@ -7,7 +7,13 @@
 .page_seller_products .i_prod { display: flex; align-items: center; gap: var(--space-12); }
 .page_seller_products .i_thumb { width: 2.5rem; height: 2.5rem; border-radius: var(--radius-8); object-fit: cover; flex: none; }
 .page_seller_products .i_thumb.m_empty { background: var(--color-surface-hover); }
+.page_seller_products .i_prod_text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .page_seller_products .i_name { color: var(--color-text-primary); font-weight: var(--weight-medium); }
+.page_seller_products .i_option_count { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* 재고 — 0이면 경고색으로 즉시 눈에 띄게 */
+.page_seller_products .i_stock { font-variant-numeric: tabular-nums; }
+.page_seller_products .i_stock[data-state="zero"] { font-weight: var(--weight-semibold); color: var(--color-danger); }
 
 /* 처리 셀 — 행 액션 버튼들 */
 .page_seller_products .i_actions { display: flex; gap: var(--space-4); }
