@@ -32,6 +32,11 @@ SELLER = {
     "password": "local-seller-password-2026",
     "name": "로컬 판매자",
 }
+BUYER = {
+    "email": "local-buyer@example.com",
+    "password": "local-buyer-password-2026",
+    "name": "로컬 구매자",
+}
 BRAND_NAME = "SLUR 로컬 스튜디오"
 MARKER = "[로컬 검증]"
 
@@ -210,6 +215,10 @@ async def seed() -> None:
                 created.raise_for_status()
 
             print(f"로컬 데모 카탈로그 생성 완료: 카테고리 {len(CATEGORIES)}개, 상품 {len(PRODUCTS)}개")
+
+        # 구매자 데모 계정 — 로컬 화면 확인용(빠른 로그인 버튼이 이 계정을 쓴다)
+        await _signup_or_login(client, BUYER)
+        print(f"로컬 구매자 계정 준비: {BUYER['email']}")
 
         # 편성은 카탈로그와 독립적으로 멱등 처리 — 기존 로컬 DB(편성 이전 시드)에도 편성이 채워지게 한다.
         await _seed_home_features(client, admin_token)

@@ -72,6 +72,8 @@ services:
       NODE_ENV: production
       # 기본 true(HTTPS 터널·프로덕션). 로컬 http 검증에서만 .env에서 COOKIE_SECURE=false로 끈다.
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      # 로컬 확인용 빠른 로그인 버튼 — 기본 꺼짐. 켜는 것은 로컬 .env에서만 한다(실서비스 노출 금지).
+      DEV_QUICK_LOGIN: ${DEV_QUICK_LOGIN:-false}
       API_BASE_URL: http://api:8000
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-http://localhost:3000/api/auth/kakao/callback}

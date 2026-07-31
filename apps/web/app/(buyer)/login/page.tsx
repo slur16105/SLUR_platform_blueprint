@@ -14,6 +14,7 @@ import { API_BASE } from "@/lib/auth";
 import { safeNextPath } from "@/lib/nav";
 
 import LoginFormThemed from "./login-form-themed";
+import QuickLogin from "./quick-login";
 import { firstParam, kakaoNotice } from "../auth-errors";
 import { SiteFooter, SiteHeader } from "../site-chrome";
 import type { NavCategory } from "../labels";
@@ -53,6 +54,9 @@ export default async function LoginPage({
         <p className="mb-10 text-center text-[14px] text-muted-foreground">
           골라온 것들을 담아두고 바로 구매하세요.
         </p>
+        {/* 빠른 로그인 — 서버가 환경으로 판정한다. 클라이언트에서 정하면 번들에 데모 계정이
+            남고 조건이 틀어지는 순간 실서비스에 드러난다. 기본값은 '숨김'이다. */}
+        {process.env.DEV_QUICK_LOGIN === "true" && <QuickLogin next={next} />}
         <LoginFormThemed next={next} notice={notice} />
       </main>
       <SiteFooter />
