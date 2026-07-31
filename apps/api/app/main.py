@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.addresses.router import router as addresses_router
 from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
 from app.carts.router import router as carts_router
@@ -85,6 +86,7 @@ async def health() -> dict[str, str]:
 
 # 리소스 경로 관례: /api/v1/{복수형-리소스}, 필드 snake_case, page 기반 페이지네이션
 app.include_router(auth_router, prefix=API_V1)
+app.include_router(addresses_router, prefix=API_V1)
 app.include_router(sellers_router, prefix=API_V1)
 app.include_router(products_router, prefix=API_V1)
 app.include_router(carts_router, prefix=API_V1)

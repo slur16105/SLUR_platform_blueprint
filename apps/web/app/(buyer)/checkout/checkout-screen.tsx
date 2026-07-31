@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 
 import AddressFormThemed, { OrderNoteFieldThemed } from "./address-form-themed";
 import PostcodeOverlay, { type PostcodeResult } from "./postcode-overlay";
+import SavedAddresses, { toValues, type SavedAddress } from "./saved-addresses";
 import {
   SERVER_FIELD_MAP,
   digitsOnly,
@@ -437,6 +438,19 @@ export default function CheckoutScreen() {
           <section aria-labelledby="co_h_ship" className="border-t border-border py-8 first:border-t-0 first:pt-0">
             <h2 id="co_h_ship" className="mb-6 text-[18px] font-semibold uppercase tracking-wide">배송지</h2>
             <div className="max-w-xl">
+              {/* 저장된 배송지 — 고르면 아래 폼을 채운다. 주문에 실리는 값은 여전히 폼 내용이다 */}
+              <SavedAddresses
+                onPick={(a: SavedAddress) => {
+                  setValues((prev) => toValues(a, prev.orderNote));
+                  setErrors({});
+                }}
+                onLoaded={(rows) => {
+                  // 기본 배송지를 처음 한 번만 자동 적용 — 사용자가 고친 값을 덮지 않는다
+                  const def = rows.find((r) => r.is_default) ?? rows[0];
+                  if (!def) return;
+                  setValues((prev) => (prev.recipientName || prev.address1 ? prev : toValues(def, prev.orderNote)));
+                }}
+              />
               <AddressFormThemed
                 values={values}
                 errors={errors}

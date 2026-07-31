@@ -17,6 +17,7 @@ import { API_BASE } from "@/lib/auth";
 import { BROKER_NOTICE, COMPANY } from "@/app/config/company";
 
 import AccountCardThemed from "./account-card-themed";
+import AddressBook from "./address-book";
 import LogoutButtonThemed from "./logout-button-themed";
 import { SiteFooter, SiteHeader } from "../site-chrome";
 import type { NavCategory } from "../labels";
@@ -83,6 +84,12 @@ export default async function MePage() {
               </Link>
             ))}
           </nav>
+
+          {/* 배송지 관리 — 주문서는 '고르기'만 하고 추가·수정은 여기서 한다
+              (결제 경로 한가운데 관리 기능을 두면 이탈이 는다) */}
+          <div className="mt-10">
+            <AddressBook />
+          </div>
 
           <div className="mt-8">
             <LogoutButtonThemed />
