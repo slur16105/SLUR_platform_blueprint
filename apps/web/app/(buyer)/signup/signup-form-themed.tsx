@@ -4,11 +4,12 @@
    🚨 signup-form.tsx의 **로직을 그대로 옮긴 것**이고 바뀐 것은 마크업뿐이다.
    · 클라이언트 선검증은 백엔드 계약과 **같은 값**으로만 한다 — 더 엄격하면 백엔드가 통과시키는
      입력을 화면이 막아 사용자만 손해다.
-   · 동의 상태는 서버로 보내지 않는다 — 백엔드 스키마에 필드가 없다(ERD 무변경).
+   · 동의 사실은 서버가 가입 트랜잭션에서 직접 기록한다(user_agreements) — 화면이 따로 보내지 않는다.
+     화면은 "지금 시행 중인 버전"을 표기해, 어떤 문서에 동의하는지 사용자가 확인할 수 있게 한다.
    · 가입 성공 후 이동·배지 갱신 규칙은 로그인과 같다. */
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MSG, mapFieldErrors, type ErrorEnvelope, type FieldErrors } from "../auth-errors";
 import { useCartCount } from "../cart-count";
@@ -85,6 +86,19 @@ export default function SignupFormThemed({ next }: { next: string | null }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // 시행 중인 약관 버전 — 실패해도 가입은 막지 않는다(동의 기록은 서버가 남긴다)
+  const [versions, setVersions] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const res = await fetch("/api/legal/agreements").catch(() => null);
+      if (!alive || !res?.ok) return;
+      const rows: { type: string; version: string }[] = await res.json().catch(() => []);
+      setVersions(Object.fromEntries(rows.map((r) => [r.type, r.version])));
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const agreed = agreeTerms && agreePrivacy;
 
@@ -172,6 +186,9 @@ export default function SignupFormThemed({ next }: { next: string | null }) {
               />
               <span>
                 <i className="not-italic font-medium text-accent">[필수]</i> {t.text}
+                {versions[t.kind] && (
+                  <span className="ml-1 text-[12px] text-muted-foreground">v{versions[t.kind]}</span>
+                )}
               </span>
             </label>
             {/* 모달로 연다 — 절반 채운 폼을 떠나지 않으므로 입력이 보존된다.

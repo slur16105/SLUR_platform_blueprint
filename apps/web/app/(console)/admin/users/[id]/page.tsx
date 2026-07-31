@@ -24,6 +24,14 @@ type Seller = {
   created_at: string;
 };
 
+type AgreementRecord = {
+  type: string;
+  label: string;
+  version: string;
+  agreed_at: string;
+  effective_at: string;
+};
+
 type UserDetail = {
   id: string;
   email: string;
@@ -31,6 +39,7 @@ type UserDetail = {
   roles: string[];
   created_at: string;
   seller: Seller | null;
+  agreements: AgreementRecord[];
 };
 
 const ROLE_LABEL: Record<string, string> = { buyer: "구매자", seller: "판매자", admin: "관리자" };
@@ -104,6 +113,37 @@ export default function AdminUserDetail() {
               <div className="i_block_foot">
                 <Link className="btn m_small" href={`/admin/orders?q=${encodeURIComponent(user.email)}`}>주문 이력 보기</Link>
               </div>
+            )}
+          </section>
+
+          {/* 분쟁 시 "어떤 약관 버전에 언제 동의했는지"를 확인하는 유일한 경로 (법정 보존 기록) */}
+          <section className="card p_block">
+            <div className="i_block_head">
+              <h2 className="i_title">약관 동의 이력</h2>
+            </div>
+            {(user.agreements ?? []).length === 0 ? (
+              <p className="m_muted">동의 기록이 없습니다. (기록 기능 도입 전에 가입한 계정)</p>
+            ) : (
+              <div className="table_scroll"><table className="table_data">
+                <thead>
+                  <tr>
+                    <th>문서</th>
+                    <th>버전</th>
+                    <th>동의 일시</th>
+                    <th>시행일</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(user.agreements ?? []).map((a) => (
+                    <tr key={`${a.type}-${a.version}`}>
+                      <td>{a.label}</td>
+                      <td>v{a.version}</td>
+                      <td>{formatDateTime(a.agreed_at)}</td>
+                      <td className="m_muted">{formatDateTime(a.effective_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
             )}
           </section>
 

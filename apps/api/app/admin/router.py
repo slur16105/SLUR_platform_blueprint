@@ -8,6 +8,7 @@ from app.core.db import get_session
 from app.core.security import require_role
 from app.products import service as products_service
 from app.products.schemas import CategoryAdminItem, CategoryCreate, CategoryOrder, CategoryRename, CategoryResponse
+from app.legal import service as legal_service
 from app.sellers import service as sellers_service
 from app.sellers.schemas import ApplicationResponse
 
@@ -448,7 +449,9 @@ async def admin_get_user(
         if seller is not None:
             counts = await products_service.count_products_by_sellers(session, [seller["id"]])
             seller["product_count"] = counts.get(seller["id"], 0)
-    return {**user, "seller": seller}
+    # 동의 이력 — 분쟁 시 "어떤 약관 버전에 언제 동의했는지"를 확인하는 유일한 경로
+    agreements = await legal_service.list_user_agreements(session, user_id)
+    return {**user, "seller": seller, "agreements": agreements}
 
 
 @router.get("/sellers")

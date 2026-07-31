@@ -14,6 +14,7 @@ from app.core.db import engine
 from app.core.errors import AppError, CODE_SERVICE_UNAVAILABLE, register_error_handlers
 from app.home.router import admin_router as home_admin_router
 from app.home.router import router as home_router
+from app.legal.router import router as legal_router
 from app.orders.router import router as orders_router
 from app.products.router import router as products_router
 from app.sellers.router import router as sellers_router
@@ -23,6 +24,17 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # 코드가 선언한 약관 버전을 DB에 반영한다 — 시행 중인 버전이 없으면 가입이 막히므로(동의 기록 불가)
+    # 배포 때마다 자동으로 맞춘다. 기존 버전 행은 절대 수정하지 않는다(이미 동의한 사람이 있다).
+    try:
+        from app.core.db import async_session_factory
+        from app.legal import service as legal_service
+
+        async with async_session_factory() as session:
+            await legal_service.sync_versions(session)
+    except Exception:
+        logging.getLogger("slur.legal").exception("약관 버전 동기화 실패 — 가입이 막힐 수 있다")
+
     # 스케줄러는 러닝 루프가 있는 여기서만 start (테스트 ASGITransport는 lifespan 미실행 → 자연 미기동)
     scheduler = None
     try:
@@ -74,3 +86,4 @@ app.include_router(orders_router, prefix=API_V1)
 app.include_router(admin_router, prefix=API_V1)
 app.include_router(home_router, prefix=API_V1)
 app.include_router(home_admin_router, prefix=API_V1)
+app.include_router(legal_router, prefix=API_V1)

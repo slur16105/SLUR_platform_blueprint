@@ -73,6 +73,10 @@ async def signup(session: AsyncSession, email: str, password: str, name: str, ph
     except IntegrityError as exc:  # 동시 가입 레이스 — UNIQUE 제약이 최종 방어
         await session.rollback()
         raise AppError(CODE_EMAIL_EXISTS, "이미 가입된 이메일입니다.", status_code=409) from exc
+    # 필수 약관 동의를 같은 트랜잭션에서 남긴다 — 계정만 생기고 동의 기록이 빠지면 소급이 불가능하다
+    from app.legal import service as legal_service  # 순환 임포트 회피 (legal → auth 모델 참조)
+
+    await legal_service.record_signup_consent(session, user.id)
     return await _issue_tokens(session, user.id)
 
 
@@ -183,6 +187,10 @@ async def _kakao_login_with_identity(session: AsyncSession, identity: KakaoIdent
         if email is None:  # 이메일 충돌일 수 없는 레이스 — 오도성 메시지 방지
             raise AppError("service_unavailable", "잠시 후 다시 시도해 주세요.", status_code=503) from exc
         raise AppError(CODE_EMAIL_CONFLICT, "이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해 주세요.", status_code=409) from exc
+    # 소셜 가입도 신규 계정이다 — 이메일 가입과 같은 동의 이력을 남긴다(재로그인은 위에서 반환됨)
+    from app.legal import service as legal_service
+
+    await legal_service.record_signup_consent(session, user.id)
     return await _issue_tokens(session, user.id)
 
 
