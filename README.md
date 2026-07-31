@@ -8,9 +8,13 @@
 >
 > *이전 이름은 `SLUR Platform Blueprint`였습니다. "범용 청사진을 뽑는다"는 처음 의도 대신 실서비스로 방향이 굳어 이름을 바꿨습니다(2026-08-01). 기획 문서 폴더·GitHub 주소에는 옛 이름이 남아 있습니다 — 그 시점의 기록이라 그대로 둡니다.*
 
-> **🔗 라이브 데모**: <https://results-reply-shark-confidentiality.trycloudflare.com/>
+> **🔗 외부 데모** — 고정 주소가 없습니다. Cloudflare Quick Tunnel은 **켤 때마다 주소가 새로 발급**되고, 터널이 꺼지면 그 주소는 즉시 죽습니다. 그래서 문서에 주소를 박아두지 않습니다.
 >
-> 외부에서 바로 열어볼 수 있는 데모입니다(Cloudflare Quick Tunnel로 자체 서버를 노출). 서버와 터널이 실행 중일 때만 접속되며, **임시 주소라 재시작 시 바뀔 수 있습니다.**
+> 필요할 때 Hub맥에서 터널을 열고, 그때 출력되는 주소를 공유하세요:
+> ```bash
+> cloudflared tunnel --url http://localhost:3000
+> ```
+> 상시 공개가 필요하면 Quick Tunnel 대신 **이름 있는 터널(Named Tunnel)** 로 고정 도메인을 붙이는 것이 맞습니다.
 
 ## 무엇을 검증하나요?
 
@@ -69,6 +73,10 @@
 ![주문 내역](docs/screenshots/buyer-orders.png)
 
 ![주문 상세 — 입금 안내](docs/screenshots/buyer-order-detail.png)
+
+배송이 끝나면 같은 화면에 송장이 보이고, 취소 자리에 **반품·교환 신청**이 들어섭니다.
+
+![주문 상세 — 배송 완료](docs/screenshots/buyer-order-delivered.png)
 
 #### 반품 · 교환
 전자상거래법 제17조 청약철회 창구입니다. 품목별로 수량을 골라 신청하며(부분 반품), **기한은 서버가 판정합니다** — 단순 변심 7일, 상품 하자·오배송 30일.
@@ -201,15 +209,15 @@
 
 ### 모바일 뷰 (구매자)
 
-구매자 화면은 반응형입니다. 아래는 7월 28일 모바일 캡처입니다.
+구매자 화면은 반응형입니다. iPhone 14 폭(390px) 기준으로 캡처했습니다.
 
-| 홈 | 상품 상세 | 장바구니 |
-| --- | --- | --- |
-| ![](docs/screenshots/buyer-home-mobile.png) | ![](docs/screenshots/buyer-product-detail-mobile.png) | ![](docs/screenshots/buyer-cart-mobile.png) |
+| 홈 | 상품 상세 | 장바구니 | 주문서 |
+| --- | --- | --- | --- |
+| ![](docs/screenshots/buyer-home-mobile.png) | ![](docs/screenshots/buyer-product-detail-mobile.png) | ![](docs/screenshots/buyer-cart-mobile.png) | ![](docs/screenshots/buyer-checkout-mobile.png) |
 
-| 주문서 | 주문 내역 | 내 정보 |
-| --- | --- | --- |
-| ![](docs/screenshots/buyer-checkout-mobile.png) | ![](docs/screenshots/buyer-orders-mobile.png) | ![](docs/screenshots/buyer-me-mobile.png) |
+| 주문 내역 | 반품·교환 | 내 정보 | 로그인 |
+| --- | --- | --- | --- |
+| ![](docs/screenshots/buyer-orders-mobile.png) | ![](docs/screenshots/buyer-returns-mobile.png) | ![](docs/screenshots/buyer-me-mobile.png) | ![](docs/screenshots/buyer-login-mobile.png) |
 
 ### 스크린샷 촬영 가이드
 
@@ -311,7 +319,7 @@ docker compose --profile tools run --rm seed
 
 | 대상 | 주소 |
 | --- | --- |
-| 외부 접속 (임시 터널) | <https://results-reply-shark-confidentiality.trycloudflare.com/> |
+| 외부 접속 | 임시 터널을 열 때 발급되는 주소 (위 안내 참고) |
 | 웹 (로컬) | <http://localhost:3000> |
 | API health | <http://localhost:8000/api/v1/health> |
 | 같은 Wi‑Fi의 다른 기기 | `http://<서버-LAN-IP>:3000` |

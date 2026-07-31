@@ -21,6 +21,7 @@ const SHOTS = [
   ["buyer-checkout", "/checkout", "buyer", { full: true }],
   ["buyer-orders", "/orders", "buyer", {}],
   ["buyer-order-detail", "ORDER", "buyer", { full: true }],
+  ["buyer-order-delivered", "ORDER_DELIVERED", "buyer", { full: true }],
   ["buyer-returns", "/returns", "buyer", {}],
   ["buyer-support", "/support", "buyer", {}],
   ["buyer-notices", "/notices", "buyer", {}],
@@ -59,7 +60,20 @@ async function resolvePath(ctx, token) {
   if (token === "PRODUCT") {
     const r = await ctx.request.get(`${BASE}/api/products`);
     const items = (await r.json()).items ?? [];
-    return items.length ? `/products/${items[0].id}` : "/";
+    // 품절이 아니고 **상세 설명이 충실한** 상품을 고른다.
+    // 대표 화면이 "품절"이거나 설명 한 줄짜리면 기능을 오해한다.
+    for (const it of items.filter((i) => !i.sold_out)) {
+      const d = await (await ctx.request.get(`${BASE}/api/products/${it.id}`)).json();
+      if ((d.description ?? "").length > 200) return `/products/${it.id}`;
+    }
+    const live = items.find((i) => !i.sold_out) ?? items[0];
+    return live ? `/products/${live.id}` : "/";
+  }
+  if (token === "ORDER_DELIVERED") {
+    const r = await ctx.request.get(`${BASE}/api/orders`);
+    const items = (await r.json()).items ?? [];
+    const done = items.find((o) => o.display_status === "delivered");
+    return done ? `/orders/${done.order_id}` : "/orders";
   }
   if (token === "ORDER" || token === "ADMIN_ORDER") {
     const r = await ctx.request.get(`${BASE}/api/${token === "ORDER" ? "orders" : "admin/orders?page=1"}`);
@@ -70,6 +84,18 @@ async function resolvePath(ctx, token) {
   }
   return token;
 }
+
+// 모바일 캡처 — README의 모바일 표가 참조하는 파일명을 그대로 쓴다
+const MOBILE = [
+  ["buyer-home-mobile", "/", "buyer"],
+  ["buyer-product-detail-mobile", "PRODUCT", "buyer"],
+  ["buyer-cart-mobile", "/cart", "buyer"],
+  ["buyer-checkout-mobile", "/checkout", "buyer"],
+  ["buyer-orders-mobile", "/orders", "buyer"],
+  ["buyer-me-mobile", "/me", "buyer"],
+  ["buyer-returns-mobile", "/returns", "buyer"],
+  ["buyer-login-mobile", "/login", null],
+];
 
 const browser = await chromium.launch();
 fs.mkdirSync(OUT, { recursive: true });
@@ -98,5 +124,30 @@ for (const [name, target, role, opt] of SHOTS) {
   }
 }
 
+for (const [name, target, role] of MOBILE) {
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 }, // iPhone 14 기준
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    locale: "ko-KR",
+    timezoneId: "Asia/Seoul",
+  });
+  try {
+    if (role) await login(ctx, role);
+    const page = await ctx.newPage();
+    const url = BASE + (await resolvePath(ctx, target));
+    await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+    await page.waitForTimeout(700);
+    await page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: false });
+    console.log(`  ✓ ${name}  (모바일)`);
+    done += 1;
+  } catch (e) {
+    console.log(`  ✗ ${name}  ${e.message.split("\n")[0]}`);
+  } finally {
+    await ctx.close();
+  }
+}
+
 await browser.close();
-console.log(`\n캡처 ${done}/${SHOTS.length}`);
+console.log(`\n캡처 ${done}/${SHOTS.length + MOBILE.length}`);

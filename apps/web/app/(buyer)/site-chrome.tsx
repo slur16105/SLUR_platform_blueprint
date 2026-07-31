@@ -143,7 +143,8 @@ export function SiteFooter() {
               <li><Link href="/returns" className="hover:text-foreground">반품 · 교환</Link></li>
               <li><Link href="/faq#shipping" className="hover:text-foreground">배송 안내</Link></li>
               <li>
-                <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">1:1 문의</a>
+                {/* 로그인 없이 연락할 수단 — 위의 1:1 문의(회원 전용)와 역할이 다르다 */}
+                <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">이메일 문의</a>
               </li>
             </ul>
           </div>
