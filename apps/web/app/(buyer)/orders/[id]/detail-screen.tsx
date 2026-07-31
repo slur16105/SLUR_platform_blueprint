@@ -33,6 +33,9 @@ const NO_CANCEL = "배송준비 이후에는 취소할 수 없습니다.";
 const FREE_SHIPPING = "무료배송";
 const TRACKING_LABEL = "운송장";
 const CANCELED_STATUS = "canceled";
+const DELIVERED_STATUS = "delivered";
+// 배송 완료 후에는 취소가 아니라 반품·교환이다 — 경로를 섞지 않는다(기한 판정은 서버 몫).
+const RETURN_LABEL = "반품 · 교환 신청";
 
 const TONE_CLASS: Record<string, string> = {
   waiting: "border-accent text-accent",
@@ -308,6 +311,13 @@ export default function DetailScreen() {
                     >
                       {CANCEL_LABEL}
                     </button>
+                  ) : sub.display_status === DELIVERED_STATUS ? (
+                    <Link
+                      href={`/returns?order_id=${order.order_id}&sub_order_id=${sub.sub_order_id}`}
+                      className="border border-foreground px-4 py-2 text-[13px] font-medium transition-colors hover:bg-foreground hover:text-background"
+                    >
+                      {RETURN_LABEL}
+                    </Link>
                   ) : (
                     <span className="text-[13px] text-muted-foreground">{NO_CANCEL}</span>
                   )}

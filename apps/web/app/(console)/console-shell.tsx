@@ -28,6 +28,9 @@ const I = {
   card: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="2" y="4" width="12" height="8" rx="1" /><path d="M2 7h12" /></svg>
   ),
+  undo: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 8a5 5 0 1 1 1.6 3.7" strokeLinecap="round" /><path d="M2 4.5V8h3.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  ),
   megaphone: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 6.5v3a1 1 0 0 0 1 1h1.5L10 13.5v-11L5.5 5.5H4a1 1 0 0 0-1 1z" strokeLinejoin="round" /><path d="M12.5 6a3 3 0 0 1 0 4" strokeLinecap="round" /></svg>
   ),
@@ -56,6 +59,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/orders", label: "주문 관리", icon: I.list },
   { href: "/admin/deposits", label: "입금 확인", icon: I.card },
   { href: "/admin/sellers/applications", label: "입점 심사", icon: I.badge },
+  { href: "/admin/returns", label: "반품·교환", icon: I.undo },
   { href: "/admin/inquiries", label: "문의 관리", icon: I.chat },
   { href: "/admin/notices", label: "공지사항", icon: I.megaphone },
   { href: "/admin/home", label: "메인 화면 관리", icon: I.layout },

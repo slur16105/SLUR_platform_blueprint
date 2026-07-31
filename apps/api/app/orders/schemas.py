@@ -92,6 +92,9 @@ class OrderListResponse(BaseModel):
 
 
 class OrderLineView(BaseModel):
+    # 반품 신청이 품목을 지목하려면 id가 필요하다 (2026-07-31 반품 도입).
+    # 스냅샷 값은 아니지만 참조 키이므로 노출해도 정보가 새지 않는다.
+    order_item_id: uuid.UUID
     product_name: str
     option_text: str
     unit_price: int

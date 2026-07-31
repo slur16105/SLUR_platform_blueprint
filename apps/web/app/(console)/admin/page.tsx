@@ -50,6 +50,7 @@ export default function AdminDashboard() {
   const [preparing, setPreparing] = useState<number | null>(null);
   const [applications, setApplications] = useState<number | null>(null);
   const [inquiries, setInquiries] = useState<number | null>(null);
+  const [returns, setReturns] = useState<number | null>(null);
   const [recent, setRecent] = useState<RecentOrder[] | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [period, setPeriod] = useState("today");
@@ -74,14 +75,15 @@ export default function AdminDashboard() {
     setError(null);
     try {
       // 처리 대기 카운트 + 최근 주문을 병렬 조회 (전부 기존 엔드포인트의 total/items)
-      const [d, o, a, r, q] = await Promise.all([
+      const [d, o, a, r, q, rt] = await Promise.all([
         fetch("/api/admin/deposits?page=1"),
         fetch("/api/admin/orders?status=preparing&page=1"),
         fetch("/api/admin/applications?status=pending"),
         fetch("/api/admin/orders?page=1"),
         fetch("/api/admin/inquiries?status=open&page=1"),
+        fetch("/api/admin/returns?status=requested&page=1"),
       ]);
-      const all = [d, o, a, r, q];
+      const all = [d, o, a, r, q, rt];
       if (all.some((x) => x.status === 401)) return void router.replace("/login");
       if (all.some((x) => x.status === 403)) return void router.replace("/no-role"); // R7
       const dj = d.ok ? await d.json() : null;
@@ -94,6 +96,8 @@ export default function AdminDashboard() {
       setRecent(rj?.items ? (rj.items as RecentOrder[]).slice(0, 5) : []);
       const qj = q.ok ? await q.json() : null;
       setInquiries(qj?.total ?? null);
+      const rtj = rt.ok ? await rt.json() : null;
+      setReturns(rtj?.total ?? null);
       if (!d.ok && !o.ok && !a.ok && !r.ok) setError("대시보드를 불러오지 못했습니다. 새로고침해 주세요.");
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
@@ -112,6 +116,8 @@ export default function AdminDashboard() {
     { label: "입점 심사", count: applications, href: "/admin/sellers/applications", hint: "판매자 신청 대기" },
     // 소비자 불만 처리는 법적 의무다 — 대기 건수를 랜딩에서 바로 보이게 둔다
     { label: "문의 답변", count: inquiries, href: "/admin/inquiries?status=open", hint: "답변 대기 중인 1:1 문의" },
+    // 청약철회는 법정 기한이 있다 — 접수 건이 랜딩에서 바로 보여야 한다
+    { label: "반품·교환", count: returns, href: "/admin/returns?status=requested", hint: "승인·거부 대기" },
   ];
 
   return (

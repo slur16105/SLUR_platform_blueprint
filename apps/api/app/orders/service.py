@@ -677,7 +677,8 @@ async def _order_detail_view(session: AsyncSession, order, *, admin: bool = Fals
             "shipping_fee": sub.shipping_fee, "remote_extra_fee": sub.remote_extra_fee,
             "cancellable": bool(active) and sub.shipping_status is None,  # 4.6 가드와 동치 — 서버 파생 (AD-12)
             "items": [{
-                **({"order_item_id": i.id} if admin else {}),
+                # 구매자 화면도 반품 신청에서 품목을 지목해야 해서 항상 내려준다(2026-07-31)
+                "order_item_id": i.id,
                 "product_name": i.product_name, "option_text": i.option_text,
                 "unit_price": i.unit_price, "extra_price": i.extra_price, "quantity": i.quantity,
                 "line_total": (i.unit_price + i.extra_price) * i.quantity, "status": i.status,

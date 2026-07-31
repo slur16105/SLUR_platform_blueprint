@@ -140,6 +140,7 @@ export function SiteFooter() {
               <li><Link href="/notices" className="hover:text-foreground">공지사항</Link></li>
               <li><Link href="/faq" className="hover:text-foreground">자주 묻는 질문</Link></li>
               <li><Link href="/support" className="hover:text-foreground">1:1 문의</Link></li>
+              <li><Link href="/returns" className="hover:text-foreground">반품 · 교환</Link></li>
               <li><Link href="/faq#shipping" className="hover:text-foreground">배송 안내</Link></li>
               <li>
                 <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">1:1 문의</a>
