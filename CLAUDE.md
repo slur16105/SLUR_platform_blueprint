@@ -12,7 +12,9 @@ SLUR 커머스 플랫폼 1호 — 운영자가 판매자를 직접 선별·초�
 
 ```bash
 # API (apps/api) — 로컬 Postgres는 docker compose up
-cd apps/api && uv run pytest -q          # 전체 테스트 (153 — 마지막 실측 2026-07-20, 커밋 20c6d45)
+cd apps/api && uv run pytest -q          # 전체 테스트 (236 — 마지막 실측 2026-08-01)
+# 테스트는 전용 DB(slur_test)를 자동 생성·마이그레이션한다 — 개발용 slur DB를 건드리지 않는다.
+# 접속 정보는 DATABASE_URL(또는 apps/api/.env)에서 DB 이름만 바꿔 쓴다. 별도 준비 불필요.
 uv run alembic upgrade head              # 마이그레이션
 # 웹 (apps/web)
 cd apps/web && npx tsc --noEmit && npm run lint
