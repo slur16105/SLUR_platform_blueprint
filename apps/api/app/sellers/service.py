@@ -136,11 +136,14 @@ async def get_my_seller(session: AsyncSession, user_id: uuid.UUID) -> Seller:
     return seller
 
 
-async def update_shipping_fees(session: AsyncSession, user_id: uuid.UUID, base: int, jeju: int, island: int) -> Seller:
+async def update_shipping_fees(
+    session: AsyncSession, user_id: uuid.UUID, base: int, jeju: int, island: int, free_threshold: int = 0
+) -> Seller:
     seller = await get_my_seller(session, user_id)
     seller.base_shipping_fee = base
     seller.jeju_extra_fee = jeju
     seller.island_extra_fee = island
+    seller.free_shipping_threshold = free_threshold
     await session.commit()
     logger.info("shipping fees updated for seller %s", seller.id)
     return seller
@@ -220,3 +223,19 @@ async def list_sellers_admin(session: AsyncSession, q: str | None, page: int, si
         } for s in sellers],
         "total": total, "page": page, "size": size,
     }
+
+
+async def update_payout_account(
+    session: AsyncSession, user_id: uuid.UUID, bank: str, account_no: str, holder: str
+) -> Seller:
+    """정산 지급 계좌 등록 — 중개 모델에서 대금을 넘기려면 필수.
+
+    실제 지급 실행은 PG·정산 도입 시점이고, 지금은 **받아 둘 자리**를 만드는 단계다.
+    """
+    seller = await get_my_seller(session, user_id)
+    seller.payout_bank = bank.strip()
+    seller.payout_account_no = account_no.strip()
+    seller.payout_holder = holder.strip()
+    await session.commit()
+    logger.info("payout account updated for seller %s", seller.id)
+    return seller

@@ -64,6 +64,14 @@ class Seller(Base):
     base_shipping_fee: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
     jeju_extra_fee: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
     island_extra_fee: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
+    # 조건부 무료배송 — 이 판매자 상품 합계가 기준 이상이면 기본 배송비를 받지 않는다.
+    # 0이면 미사용(항상 기본 배송비). 국내 커머스 사실상 표준이라 컬럼 하나로 연다.
+    # 🚨 도서산간 추가비는 면제 대상이 아니다 — 실제 추가 운임이 발생하는 비용이다.
+    free_shipping_threshold: Mapped[int] = mapped_column(nullable=False, default=0, server_default="0")
+    # 정산 지급 계좌 — 중개 모델에서 대금을 받아 넘기려면 필수. 실제 지급은 PG·정산 도입 시점.
+    payout_bank: Mapped[str] = mapped_column(String(50), nullable=False, default="", server_default="")
+    payout_account_no: Mapped[str] = mapped_column(String(50), nullable=False, default="", server_default="")
+    payout_holder: Mapped[str] = mapped_column(String(50), nullable=False, default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False

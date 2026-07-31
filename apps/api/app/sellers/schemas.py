@@ -59,10 +59,20 @@ class ApplicationResponse(BaseModel):
     created_at: datetime
 
 
+class PayoutAccount(BaseModel):
+    """정산 지급 계좌 — 실제 지급 실행은 PG·정산 도입 시점. 지금은 등록·조회만."""
+
+    payout_bank: str = Field(default="", max_length=50)
+    payout_account_no: str = Field(default="", max_length=50)
+    payout_holder: str = Field(default="", max_length=50)
+
+
 class ShippingFees(BaseModel):
     base_shipping_fee: int = Field(ge=0)
     jeju_extra_fee: int = Field(ge=0)
     island_extra_fee: int = Field(ge=0)
+    # 0 = 미사용(항상 기본 배송비). 기본 배송비만 면제하고 도서산간 추가비는 면제하지 않는다.
+    free_shipping_threshold: int = Field(default=0, ge=0, le=100_000_000)
 
     @field_validator("base_shipping_fee", "jeju_extra_fee", "island_extra_fee")
     @classmethod
@@ -77,3 +87,7 @@ class SellerMeResponse(ShippingFees):
     brand_name: str
     brand_intro: str
     company_name: str
+    free_shipping_threshold: int = 0
+    payout_bank: str = ""
+    payout_account_no: str = ""
+    payout_holder: str = ""

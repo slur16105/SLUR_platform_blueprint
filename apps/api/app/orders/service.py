@@ -38,13 +38,20 @@ async def get_remote_area_kind(session: AsyncSession, postal_code: str) -> str |
     return await session.scalar(select(RemoteAreaZip.kind).where(RemoteAreaZip.zip_code == postal_code))
 
 
-def _seller_shipping_fee(seller, remote_kind: str | None) -> tuple[int, int]:
-    """판매자 1명의 (기본 배송비, 도서산간 추가비) — 설정은 sellers 데이터가 정답 소스."""
+def _seller_shipping_fee(seller, remote_kind: str | None, item_total: int = 0) -> tuple[int, int]:
+    """판매자 1명의 (기본 배송비, 도서산간 추가비) — 설정은 sellers 데이터가 정답 소스.
+
+    조건부 무료배송: 이 판매자 상품 합계가 기준 이상이면 **기본 배송비만** 면제한다.
+    도서산간 추가비는 면제하지 않는다 — 실제로 추가 운임이 나가는 비용이라 면제하면 판매자가 손해다.
+    기준 0은 미사용을 뜻한다.
+    """
+    threshold = getattr(seller, "free_shipping_threshold", 0) or 0
+    base = 0 if (threshold > 0 and item_total >= threshold) else seller.base_shipping_fee
     if remote_kind == "jeju":
-        return seller.base_shipping_fee, seller.jeju_extra_fee
+        return base, seller.jeju_extra_fee
     if remote_kind == "island":
-        return seller.base_shipping_fee, seller.island_extra_fee
-    return seller.base_shipping_fee, 0
+        return base, seller.island_extra_fee
+    return base, 0
 
 
 async def quote(session: AsyncSession, entries: list[dict], postal_code: str) -> dict:
@@ -75,7 +82,7 @@ async def quote(session: AsyncSession, entries: list[dict], postal_code: str) ->
         seller = sellers.get(seller_id)
         if seller is None:  # 조회 사이 판매자 삭제 레이스 — raw KeyError 500 대신 봉투로
             raise AppError("internal_error", "판매자 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.", status_code=500)
-        base_fee, extra_fee = _seller_shipping_fee(seller, remote_kind)
+        base_fee, extra_fee = _seller_shipping_fee(seller, remote_kind, g["item_total"])
         seller_groups.append({
             "seller_id": seller_id, "brand_name": g["brand_name"], "items": g["items"],
             "item_total": g["item_total"], "shipping_fee": base_fee, "remote_extra_fee": extra_fee,
@@ -327,18 +334,9 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
     days = await get_int_setting(session, SETTING_UNPAID_CANCEL_DAYS)
     deposit_account = (await get_deposit_account(session))["display"]
 
-    # 조건부 차감 — rowcount가 최종 진실. variant_id 정렬로 잠금 획득 순서 고정 (교차 주문 교착 방지)
-    deduct_failed = []
-    for e in sorted(entries, key=lambda e: str(e["variant"].id)):
-        ok = await products_service.deduct_stock(session, e["variant"].id, e["item"].quantity)
-        if not ok:
-            deduct_failed.append(e)
-    if deduct_failed:  # 예외 → 호출자 rollback — 이미 차감된 항목도 원복
-        raise AppError(
-            CODE_OUT_OF_STOCK, "재고가 부족한 상품이 있습니다.",
-            status_code=422, details=[_fail_detail(e) for e in deduct_failed],
-        )
-    # id를 먼저 확정해 주문번호를 같은 값에서 뽑는다 — 번호와 주문이 1:1로 묶인다
+    # 주문 행을 먼저 만든다 — 재고 원장이 "어느 주문 때문에 줄었는지"를 가리키려면 order_id가 필요하다.
+    # 차감이 실패하면 전체 트랜잭션이 롤백되므로 주문만 남는 일은 없다.
+    # id를 먼저 확정해 주문번호를 같은 값에서 뽑는다 — 번호와 주문이 1:1로 묶인다.
     order_id = uuid7()
     order = Order(
         id=order_id,
@@ -352,11 +350,23 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
     session.add(order)
     try:
         await session.flush()
-    except IntegrityError as exc:  # order_no 충돌(끝 8자 동일) — UUID를 새로 뽑아 1회 재시도
+    except IntegrityError as exc:  # order_no 충돌(끝 8자 동일)
         if "order_no" not in str(exc.orig):
             raise
         await session.rollback()
         raise AppError("service_unavailable", "주문번호 생성에 실패했습니다. 다시 시도해 주세요.", status_code=503) from exc
+
+    # 조건부 차감 — rowcount가 최종 진실. variant_id 정렬로 잠금 획득 순서 고정 (교차 주문 교착 방지)
+    deduct_failed = []
+    for e in sorted(entries, key=lambda e: str(e["variant"].id)):
+        ok = await products_service.deduct_stock(session, e["variant"].id, e["item"].quantity, order_id=order_id)
+        if not ok:
+            deduct_failed.append(e)
+    if deduct_failed:  # 예외 → 호출자 rollback — 이미 차감된 항목도 원복
+        raise AppError(
+            CODE_OUT_OF_STOCK, "재고가 부족한 상품이 있습니다.",
+            status_code=422, details=[_fail_detail(e) for e in deduct_failed],
+        )
 
     by_seller: dict[uuid.UUID, list[dict]] = {}
     for e in entries:
@@ -835,13 +845,56 @@ async def ship_sub_order(
     session: AsyncSession, seller_id: uuid.UUID, user_id: uuid.UUID,
     sub_order_id: uuid.UUID, carrier: str, tracking_number: str,
 ) -> None:
-    """배송 시작 — 송장 가드·기록·이벤트는 엔진 소유 (AD-3)."""
+    """배송 시작 — 송장 가드·기록·이벤트는 엔진 소유 (AD-3).
+
+    송장은 shipments에도 남긴다(분할배송). sub_orders의 1쌍 컬럼은 **대표 송장**으로 유지한다 —
+    화면·API가 이미 쓰고 있고, 여러 건일 때는 마지막 것이 대표가 된다.
+    """
+    from app.orders.shipment_models import Shipment
+
     await _owned_sub_order(session, seller_id, sub_order_id)
     await transition(
         session, layer=t.LAYER_SUB_ORDER, entity_id=sub_order_id, to_status=t.SUB_SHIPPING,
         actor_role=t.ROLE_SELLER, actor_user_id=user_id, carrier=carrier, tracking_number=tracking_number,
     )
+    session.add(Shipment(sub_order_id=sub_order_id, carrier=carrier, tracking_number=tracking_number))
     await session.commit()
+
+
+async def add_shipment(
+    session: AsyncSession, seller_id: uuid.UUID, sub_order_id: uuid.UUID,
+    carrier: str, tracking_number: str, note: str = "",
+) -> dict:
+    """송장 추가 — 이미 배송중인 묶음을 나눠 보낼 때(2박스 이상).
+
+    상태 전이는 없다(이미 shipping). 대표 송장은 최신으로 갱신해 기존 화면이 최근 것을 보이게 한다.
+    """
+    sub = await _owned_sub_order(session, seller_id, sub_order_id)
+    if sub.shipping_status != t.SUB_SHIPPING:
+        raise AppError("invalid_transition", "배송중인 주문에만 송장을 추가할 수 있습니다.", status_code=422)
+    from app.orders.shipment_models import Shipment
+
+    row = Shipment(
+        sub_order_id=sub_order_id, carrier=carrier.strip(),
+        tracking_number=tracking_number.strip(), note=note.strip(),
+    )
+    session.add(row)
+    sub.carrier, sub.tracking_number = row.carrier, row.tracking_number
+    await session.commit()
+    return {"id": row.id, "carrier": row.carrier, "tracking_number": row.tracking_number, "note": row.note}
+
+
+async def list_shipments(session: AsyncSession, sub_order_id: uuid.UUID) -> list[dict]:
+    """묶음의 송장 목록 — 1건이면 대표 송장과 같은 값이다."""
+    from app.orders.shipment_models import Shipment
+
+    rows = await session.scalars(
+        select(Shipment).where(Shipment.sub_order_id == sub_order_id).order_by(Shipment.shipped_at)
+    )
+    return [{
+        "id": r.id, "carrier": r.carrier, "tracking_number": r.tracking_number,
+        "note": r.note, "shipped_at": r.shipped_at,
+    } for r in rows]
 
 
 async def deliver_sub_order(session: AsyncSession, seller_id: uuid.UUID, user_id: uuid.UUID, sub_order_id: uuid.UUID) -> None:

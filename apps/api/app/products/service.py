@@ -415,7 +415,9 @@ def variant_option_text(variant: Variant) -> str:
     )
 
 
-async def restore_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -> None:
+async def restore_stock(
+    session: AsyncSession, variant_id: uuid.UUID, qty: int, *, reason: str = "cancel", order_id=None
+) -> None:
     """취소 확정 트랜잭션 안에서 orders 전이 경로만 호출한다 (AD-4 — 재고 증감의 유일한 소유자).
 
     복원은 증가라 조건절이 불필요한 원자적 UPDATE. 차감(주문 생성)은 stock >= n 조건부 UPDATE — 4.4.
@@ -425,9 +427,11 @@ async def restore_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) 
     result = await session.execute(update(Variant).where(Variant.id == variant_id).values(stock=Variant.stock + qty))
     if result.rowcount == 0:  # variant_id 확인과 UPDATE 사이 조합 삭제 레이스 — 복원 소실 흔적을 남긴다
         logger.warning("restore_stock: variant %s 없음 — 취소 복원 %d개 소실 (조합 삭제 레이스)", variant_id, qty)
+        return
+    await _log_inventory(session, variant_id, qty, reason=reason, order_id=order_id)
 
 
-async def deduct_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -> bool:
+async def deduct_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int, *, order_id=None) -> bool:
     """주문 생성 트랜잭션 전용 조건부 차감 (AD-4) — `stock >= n`일 때만 원자적으로 빼고 성공 여부를 돌려준다.
 
     읽고-계산하고-쓰기 금지: 이 UPDATE의 rowcount가 재고의 최종 진실이다. 복원은 restore_stock.
@@ -437,7 +441,27 @@ async def deduct_stock(session: AsyncSession, variant_id: uuid.UUID, qty: int) -
     result = await session.execute(
         update(Variant).where(Variant.id == variant_id, Variant.stock >= qty).values(stock=Variant.stock - qty)
     )
-    return result.rowcount == 1
+    ok = result.rowcount == 1
+    if ok:
+        await _log_inventory(session, variant_id, -qty, reason="order", order_id=order_id)
+    return ok
+
+
+async def _log_inventory(session: AsyncSession, variant_id: uuid.UUID, delta: int, *, reason: str, order_id=None, actor_user_id=None, note: str = "") -> None:
+    """재고 증감 원장 기록 — 사실을 남길 뿐 재고의 진실은 아니다(진실은 variants.stock, AD-4).
+
+    같은 트랜잭션에서 남긴다. 실패하면 재고 변경도 함께 롤백되는 것이 맞다 —
+    "재고는 줄었는데 왜 줄었는지 모르는" 상태를 만들지 않는다.
+    """
+    from app.products.inventory_models import InventoryTransaction
+
+    stock_after = await session.scalar(select(Variant.stock).where(Variant.id == variant_id))
+    if stock_after is None:  # 조합 삭제 레이스 — 기록할 대상이 없다
+        return
+    session.add(InventoryTransaction(
+        variant_id=variant_id, delta=delta, stock_after=stock_after,
+        reason=reason, order_id=order_id, actor_user_id=actor_user_id, note=note,
+    ))
 
 
 LOW_STOCK_LIMIT = 20  # 대시보드 표시 상한 — 전체 목록은 상품 관리로

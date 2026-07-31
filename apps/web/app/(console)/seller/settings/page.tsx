@@ -18,12 +18,22 @@ type Profile = {
   base_shipping_fee: number;
   jeju_extra_fee: number;
   island_extra_fee: number;
+  free_shipping_threshold: number;
+  payout_bank: string;
+  payout_account_no: string;
+  payout_holder: string;
 };
 
 const FEE_FIELDS = [
   { name: "base_shipping_fee", label: "기본 배송비", help: "구매자가 내 상품을 주문할 때 붙는 기본 배송비입니다. 0이면 무료배송으로 표시됩니다." },
   { name: "jeju_extra_fee", label: "제주 추가 배송비", help: "제주 주소로 배송할 때 기본 배송비에 더해집니다." },
   { name: "island_extra_fee", label: "도서산간 추가 배송비", help: "제주 외 도서산간 주소에 더해집니다." },
+  {
+    name: "free_shipping_threshold",
+    label: "무료배송 기준 금액",
+    // 도서산간 추가비는 실제 추가 운임이라 면제 대상이 아니다 — 오해하지 않게 문장으로 밝힌다
+    help: "내 상품 합계가 이 금액 이상이면 기본 배송비를 받지 않습니다. 0이면 사용하지 않습니다. 도서산간 추가비는 면제되지 않습니다.",
+  },
 ] as const;
 
 export default function SellerSettings() {
@@ -34,6 +44,11 @@ export default function SellerSettings() {
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // 정산 계좌 — 실제 지급은 결제 연동 시점이고, 지금은 등록만 받는다
+  const [payout, setPayout] = useState<Record<string, string>>({
+    payout_bank: "", payout_account_no: "", payout_holder: "",
+  });
+  const [payoutBusy, setPayoutBusy] = useState(false);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
@@ -49,6 +64,12 @@ export default function SellerSettings() {
         base_shipping_fee: String(p.base_shipping_fee),
         jeju_extra_fee: String(p.jeju_extra_fee),
         island_extra_fee: String(p.island_extra_fee),
+        free_shipping_threshold: String(p.free_shipping_threshold ?? 0),
+      });
+      setPayout({
+        payout_bank: p.payout_bank ?? "",
+        payout_account_no: p.payout_account_no ?? "",
+        payout_holder: p.payout_holder ?? "",
       });
     } catch {
       setLoadError("네트워크 연결을 확인해 주세요.");
@@ -75,6 +96,7 @@ export default function SellerSettings() {
           base_shipping_fee: Number(fees.base_shipping_fee),
           jeju_extra_fee: Number(fees.jeju_extra_fee),
           island_extra_fee: Number(fees.island_extra_fee),
+          free_shipping_threshold: Number(fees.free_shipping_threshold || 0),
         }),
       });
       if (res.status === 401) return void router.replace("/login");
@@ -94,6 +116,35 @@ export default function SellerSettings() {
       setError("네트워크 연결을 확인해 주세요.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function savePayout(e: React.FormEvent) {
+    e.preventDefault();
+    setPayoutBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/sellers/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ op: "payout", ...payout }),
+      });
+      if (res.status === 401) return void router.replace("/login");
+      if (res.status === 403) return void router.replace("/no-role");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(data?.details?.[0]?.reason ?? data?.message ?? "저장에 실패했습니다.");
+        return;
+      }
+      if (data) setProfile(data);
+      setNotice("정산 계좌를 저장했습니다. 실제 지급은 결제 연동 이후에 시작됩니다.");
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+      noticeTimer.current = setTimeout(() => setNotice(null), 5000);
+    } catch {
+      setError("네트워크 연결을 확인해 주세요.");
+    } finally {
+      setPayoutBusy(false);
     }
   }
 
@@ -132,6 +183,27 @@ export default function SellerSettings() {
             {/* 우측 열은 짧은 카드 둘을 세로로 — 좌측 배송비 카드와 같은 행 높이를 채운다 */}
             <div className="p_stack">
               <section className="card p_card">
+                <h2 className="i_title">정산 계좌</h2>
+                <p className="i_desc">판매 대금을 받을 계좌입니다. 실제 지급은 결제 연동 이후에 시작됩니다.</p>
+                <form className="i_form" onSubmit={savePayout}>
+                  {[
+                    { name: "payout_bank", label: "은행", placeholder: "예: 국민은행" },
+                    { name: "payout_account_no", label: "계좌번호", placeholder: "예: 123456-78-901234" },
+                    { name: "payout_holder", label: "예금주", placeholder: "예: 오이뮤" },
+                  ].map((f) => (
+                    <div className="field" key={f.name}>
+                      <label className="i_label" htmlFor={f.name}>{f.label}</label>
+                      <input id={f.name} className="input_text" type="text" maxLength={50}
+                        placeholder={f.placeholder} value={payout[f.name] ?? ""}
+                        onChange={(e) => setPayout((v) => ({ ...v, [f.name]: e.target.value }))} />
+                    </div>
+                  ))}
+                  <button className="btn m_primary i_submit" type="submit" disabled={payoutBusy}
+                    data-state={payoutBusy ? "loading" : undefined}>저장</button>
+                </form>
+              </section>
+
+              <section className="card p_card">
                 <h2 className="i_title">내 브랜드</h2>
                 <dl className="i_info">
                   <div><dt>브랜드명</dt><dd>{profile.brand_name}</dd></div>
@@ -154,8 +226,8 @@ export default function SellerSettings() {
                     <dd><Link href="/seller/orders">주문 관리</Link>에서 합니다.</dd>
                   </div>
                   <div>
-                    <dt>정산</dt>
-                    <dd>결제 연동 전이라 아직 제공하지 않습니다.</dd>
+                    <dt>정산 지급</dt>
+                    <dd>계좌 등록은 위에서 합니다. 실제 지급은 결제 연동 이후에 시작됩니다.</dd>
                   </div>
                 </dl>
               </section>

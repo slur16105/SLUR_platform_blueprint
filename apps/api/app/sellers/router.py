@@ -10,7 +10,7 @@ from app.products import service as products_service
 from app.products import storage as products_storage
 from app.products.schemas import ImagesReplace, PresignRequest, ProductCreate, ProductUpdate, ProductImageResponse, ProductResponse, VariantResponse, VariantsReplace
 from app.sellers import service
-from app.sellers.schemas import ApplicationRequest, ApplicationResponse, SellerMeResponse, ShippingFees
+from app.sellers.schemas import ApplicationRequest, ApplicationResponse, PayoutAccount, SellerMeResponse, ShippingFees
 
 router = APIRouter(prefix="/sellers")
 
@@ -52,7 +52,21 @@ async def update_shipping_fees(
     session: AsyncSession = Depends(get_session),
 ) -> SellerMeResponse:
     seller = await service.update_shipping_fees(
-        session, user_id, body.base_shipping_fee, body.jeju_extra_fee, body.island_extra_fee
+        session, user_id, body.base_shipping_fee, body.jeju_extra_fee, body.island_extra_fee,
+        body.free_shipping_threshold,
+    )
+    return SellerMeResponse.model_validate(seller, from_attributes=True)
+
+
+@router.put("/me/payout-account", response_model=SellerMeResponse)
+async def update_payout_account(
+    body: PayoutAccount,
+    user_id: uuid.UUID = Depends(require_role("seller")),
+    session: AsyncSession = Depends(get_session),
+) -> SellerMeResponse:
+    """정산 지급 계좌 — 실제 지급은 PG·정산 도입 시점, 지금은 등록만 받는다."""
+    seller = await service.update_payout_account(
+        session, user_id, body.payout_bank, body.payout_account_no, body.payout_holder
     )
     return SellerMeResponse.model_validate(seller, from_attributes=True)
 

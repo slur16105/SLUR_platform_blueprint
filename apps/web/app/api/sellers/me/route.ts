@@ -13,6 +13,18 @@ export async function PUT(req: NextRequest) {
   if (forbidden) return forbidden;
 
   const body = await req.json().catch(() => ({}));
+  // { op: "payout" } → 정산 계좌, 그 외 → 배송비 설정
+  if (body.op === "payout") {
+    return proxyWithRefresh(req, "/api/v1/sellers/me/payout-account", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        payout_bank: body.payout_bank ?? "",
+        payout_account_no: body.payout_account_no ?? "",
+        payout_holder: body.payout_holder ?? "",
+      }),
+    });
+  }
   return proxyWithRefresh(req, "/api/v1/sellers/me/shipping-fees", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

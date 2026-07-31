@@ -75,5 +75,8 @@ class Variant(Base):
     option2_value: Mapped[str] = mapped_column(String(30), nullable=False, default="")
     extra_price: Mapped[int] = mapped_column(nullable=False, default=0)  # 원 단위 정수, 음수 허용(할인 조합)
     stock: Mapped[int] = mapped_column(nullable=False, default=0)
+    # 판매자 관리코드 — 택배사 연동·정산 대조·재고 실사의 공통 키. 빈 문자열은 미사용.
+    # 판매자 안에서만 유일하면 되므로 전역 UNIQUE는 걸지 않는다(다른 판매자와 겹칠 수 있다).
+    sku: Mapped[str] = mapped_column(String(50), nullable=False, default="", server_default="")
     is_active: Mapped[bool] = mapped_column(nullable=False, default=True)  # 수동 품절 토글
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
