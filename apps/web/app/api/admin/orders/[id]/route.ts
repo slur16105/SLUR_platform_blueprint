@@ -11,5 +11,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   if (!UUID_RE.test(id)) {
     return Response.json({ code: "validation_error", message: "올바르지 않은 주문 ID입니다.", details: [] }, { status: 422 });
   }
-  return proxyWithRefresh(req, `/api/v1/admin/orders/${id.toLowerCase()}`, { method: "GET" });
+  // ?view=ledger → 결제·환불 원장 (같은 주문 아래 자원이라 라우트를 나누지 않는다)
+  const view = req.nextUrl.searchParams.get("view");
+  const path = view === "ledger"
+    ? `/api/v1/admin/orders/${id.toLowerCase()}/ledger`
+    : `/api/v1/admin/orders/${id.toLowerCase()}`;
+  return proxyWithRefresh(req, path, { method: "GET" });
 }

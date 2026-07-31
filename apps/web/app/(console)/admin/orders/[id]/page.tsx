@@ -90,6 +90,18 @@ const RESP_LABEL: Record<string, string> = { buyer: "구매자 귀책", seller: 
 const ROLE_LABEL: Record<string, string> = { buyer: "구매자", seller: "판매자", admin: "관리자", system: "시스템" };
 const ENTITY_LABEL: Record<string, string> = { order: "주문", sub_order: "판매자 묶음", order_item: "품목" };
 // 타임라인은 표시 상태 외에 내부 상태(pending_payment 등)도 지나간다 — 표기만 보강
+type Ledger = {
+  payments: { id: string; method: string; status: string; amount: number; provider_tid: string; paid_at: string | null }[];
+  refunds: { id: string; amount: number; reason: string; status: string; note: string; refunded_at: string | null }[];
+  paid_total: number;
+  refunded_total: number;
+  net_total: number;
+};
+
+const REFUND_REASON_LABEL: Record<string, string> = {
+  order_cancel: "주문 취소", item_cancel: "품목 취소", return: "반품", etc: "기타",
+};
+
 const EVENT_STATUS: Record<string, string> = { ...STATUS_LABEL, pending_payment: "입금대기", paid: "결제완료", ordered: "주문" };
 // 표준 UUID — 하이픈 위치·hex 검증, 대소문자 허용 (소문자 정규화는 BFF가 담당)
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -113,6 +125,8 @@ export default function AdminOrderDetail() {
   const params = useParams<{ id: string }>();
   const id = typeof params?.id === "string" ? params.id : "";
   const [detail, setDetail] = useState<OrderDetail | null>(null);
+  // 거래 원장은 별도 조회 — 실패해도 주문 상세는 보여야 한다(원장은 부가 정보)
+  const [ledger, setLedger] = useState<Ledger | null>(null);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +166,9 @@ export default function AdminOrderDetail() {
     }
     try {
       const res = await fetch(`/api/admin/orders/${id}`);
+      void fetch(`/api/admin/orders/${id}?view=ledger`)
+        .then(async (r) => setLedger(r.ok ? await r.json() : null))
+        .catch(() => setLedger(null));
       if (gen !== loadSeq.current) return; // 더 최신 요청이 있음 — 이 응답은 폐기
       if (res.status === 401) return void router.replace("/login");
       if (res.status === 403) return void router.replace("/no-role"); // R7: FastAPI 판정 결과를 따른다
@@ -443,6 +460,28 @@ export default function AdminOrderDetail() {
               </dl>
               {detail.deposit_info?.expired && (
                 <p className="i_note" role="status">입금기한이 지났습니다 — 자동취소 대상입니다.</p>
+              )}
+              {/* 거래 원장 — 받은 돈과 돌려준 돈. PG 연동 후에는 승인번호가 함께 보인다 */}
+              {ledger && ledger.payments.length > 0 && (
+                <dl className="i_meta i_ledger">
+                  <div><dt>받은 금액</dt><dd><strong>{ledger.paid_total.toLocaleString()}원</strong></dd></div>
+                  {ledger.refunded_total > 0 && (
+                    <>
+                      <div><dt>환불 금액</dt><dd>{ledger.refunded_total.toLocaleString()}원</dd></div>
+                      <div><dt>실수령</dt><dd><strong>{ledger.net_total.toLocaleString()}원</strong></dd></div>
+                    </>
+                  )}
+                  {ledger.refunds.map((r) => (
+                    <div key={r.id}>
+                      <dt>환불 내역</dt>
+                      <dd>
+                        {r.amount.toLocaleString()}원 · {REFUND_REASON_LABEL[r.reason] ?? r.reason}
+                        {r.refunded_at ? ` · ${formatDateTime(r.refunded_at)}` : ""}
+                        {r.note ? ` · ${r.note}` : ""}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               )}
             </section>
 

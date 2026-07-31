@@ -32,6 +32,7 @@ import app.support.models  # noqa: F401
 import app.support.notice_models  # noqa: F401
 import app.returns.models  # noqa: F401
 import app.addresses.models  # noqa: F401
+import app.payments.models  # noqa: F401
 
 # configparser는 %를 보간 문법으로 해석하므로 %% 로 이스케이프 (URL 인코딩된 비밀번호 대응)
 config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))

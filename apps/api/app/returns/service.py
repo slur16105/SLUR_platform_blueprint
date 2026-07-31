@@ -228,6 +228,22 @@ async def resolve(
             raise AppError("validation_error", "환불 금액을 입력해 주세요.", status_code=422)
         row.refund_amount = refund_amount
         row.completed_at = now
+        # 거래 원장에도 남긴다 — returns.refund_amount는 신청 단위 값이고,
+        # 정산·세무가 보는 것은 결제에 매달린 환불 원장이다(부분 환불이 여러 번일 수 있다).
+        if refund_amount > 0:
+            from app.payments import service as payments_service
+
+            sub = await orders_service.sub_order_snapshot(session, row.sub_order_id)
+            payment = await payments_service.latest_paid_payment(session, sub["order_id"]) if sub else None
+            if payment is not None:
+                await payments_service.record_refund(
+                    session, payment.id, amount=refund_amount, reason="return",
+                    admin_id=admin_id, return_id=row.id, note=note.strip(),
+                    idempotency_key=f"return:{row.id}",  # 같은 신청이 두 번 완료되어도 원장은 한 줄
+                )
+            else:
+                # 결제 기록이 없는 주문(원장 도입 전 데이터) — 신청 쪽 금액만 남는다
+                logger.info("return %s: 연결할 결제 기록 없음 — 원장 미기록", row.id)
     await session.commit()
     logger.info("return %s -> %s by admin %s", return_id, to_status, admin_id)
     return await get_return(session, return_id)

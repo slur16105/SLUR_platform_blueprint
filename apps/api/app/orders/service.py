@@ -770,6 +770,15 @@ async def confirm_payment(
         session, layer=t.LAYER_ORDER, entity_id=order_id, to_status=t.ORDER_PAID,
         actor_role=t.ROLE_ADMIN, actor_user_id=admin_id, note=note,
     )
+    # 거래 원장에 결제 1건 기록 — 같은 트랜잭션이라 상태와 원장이 어긋나지 않는다.
+    # 지금은 무통장이라 provider가 비어 있고, PG 연동 시 이 호출부에 승인번호만 채우면 된다.
+    from app.payments import service as payments_service
+
+    await payments_service.record_payment(
+        session, order_id, amount=active_grand, method=payments_service.METHOD_BANK,
+        # 관리자 확인 1건당 하나 — 같은 주문을 두 번 확인해도 원장이 두 줄로 늘지 않는다
+        idempotency_key=f"bank:{order_id}",
+    )
     await session.commit()
 
 

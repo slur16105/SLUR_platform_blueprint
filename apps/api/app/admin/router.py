@@ -325,6 +325,21 @@ async def admin_search_orders(
     return data
 
 
+@router.get("/orders/{order_id}/ledger")
+async def admin_order_ledger(
+    order_id: uuid.UUID,
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+):
+    """주문의 결제·환불 원장 — "받은 돈과 돌려준 돈"을 한 자리에서 본다.
+
+    PG 연동 후에는 여기에 승인번호·결제수단이 함께 보인다(구조 변경 없음).
+    """
+    from app.payments import service as payments_service
+
+    return await payments_service.order_ledger(session, order_id)
+
+
 @router.get("/orders/{order_id}")
 async def admin_order_detail(
     order_id: uuid.UUID,
