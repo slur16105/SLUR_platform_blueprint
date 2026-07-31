@@ -1,0 +1,21 @@
+/* 관리자 문의 관리 — 목록은 콘솔 공통 테이블, 상세·답변은 모달 (룩은 components/modal.css) */
+.page_admin_inquiries { display: flex; flex: 1; flex-direction: column; gap: var(--space-16); }
+.page_admin_inquiries .p_empty { padding: var(--space-24); color: var(--color-text-muted); text-align: center; }
+.page_admin_inquiries .i_title { display: block; color: var(--color-text-primary); }
+.page_admin_inquiries .i_order { display: block; margin-top: 2px; font-size: var(--text-xs); color: var(--color-text-brand); }
+.page_admin_inquiries .i_email { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* 모달 내부 — 라벨·값 2컬럼(긴 값이 라벨 밑으로 접히지 않게), 본문은 줄바꿈 보존 */
+.page_admin_inquiries .modal_dialog .i_body { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-12) var(--space-20) 0; }
+.page_admin_inquiries .modal_dialog .i_summary { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-12); border-radius: var(--radius-8); background: var(--color-surface-sunken); font-size: var(--text-sm); }
+.page_admin_inquiries .modal_dialog .i_summary > div { display: flex; gap: var(--space-8); }
+.page_admin_inquiries .modal_dialog .i_summary dt { flex: none; width: 4.5rem; color: var(--color-text-muted); }
+.page_admin_inquiries .modal_dialog .i_summary dd { flex: 1; min-width: 0; color: var(--color-text-primary); word-break: break-word; }
+.page_admin_inquiries .i_question { white-space: pre-wrap; font-size: var(--text-sm); color: var(--color-text-primary); }
+.page_admin_inquiries .i_replies { display: flex; flex-direction: column; gap: var(--space-8); }
+.page_admin_inquiries .i_replies li { padding: var(--space-12); border-left: 2px solid var(--color-brand); background: var(--color-surface-hover); }
+.page_admin_inquiries .i_rmeta { display: block; margin-bottom: var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); }
+.page_admin_inquiries .i_rbody { white-space: pre-wrap; font-size: var(--text-sm); color: var(--color-text-primary); }
+.page_admin_inquiries .modal_dialog .field { display: flex; flex-direction: column; gap: var(--space-4); }
+.page_admin_inquiries .modal_dialog .i_label { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.page_admin_inquiries .input_text.m_textarea { height: auto; padding: var(--space-12); resize: vertical; }

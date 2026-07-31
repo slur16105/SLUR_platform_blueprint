@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // 구매자 보호 라우트 — prefix 판정. `/orders/complete`·`/orders/[id]`도 `/orders`가 덮는다.
-const PROTECTED = ["/cart", "/checkout", "/orders", "/me"];
+const PROTECTED = ["/cart", "/checkout", "/orders", "/me", "/support"];
 
 // UX 라우팅 가드 — 보안 판정은 FastAPI가 한다 (AD-1). 여기는 편의 리다이렉트일 뿐.
 // 미들웨어 통과 ≠ 인증: slur_role(14일)이 slur_access(30분)보다 오래 살아 있어
@@ -43,5 +43,6 @@ export const config = {
   matcher: [
     "/seller/:path*", "/admin/:path*", "/apply/:path*", "/apply",   // 기존 그대로
     "/cart", "/checkout", "/orders", "/orders/:path*", "/me",        // 신규 (구매자 보호 라우트)
+    "/support",                                                      // 1:1 문의 — 개인별 내역이라 로그인 필요
   ],
 };

@@ -138,6 +138,7 @@ export function SiteFooter() {
             <p className="mb-3.5 text-[15px] font-semibold">SUPPORT</p>
             <ul className="space-y-2.5 text-[14px] text-muted-foreground">
               <li><Link href="/faq" className="hover:text-foreground">자주 묻는 질문</Link></li>
+              <li><Link href="/support" className="hover:text-foreground">1:1 문의</Link></li>
               <li><Link href="/faq#shipping" className="hover:text-foreground">배송 안내</Link></li>
               <li>
                 <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">1:1 문의</a>

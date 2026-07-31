@@ -1184,3 +1184,12 @@ async def admin_stats(session: AsyncSession, start) -> dict:
         "pending_payment_count": int(pending_count or 0),
         "pending_payment_amount": int(pending_items or 0) + int(pending_shipping or 0),
     }
+
+
+async def order_owner_id(session: AsyncSession, order_id: uuid.UUID) -> uuid.UUID | None:
+    """주문 소유자 — 다른 도메인이 "이 주문이 이 사람 것인가"만 확인할 때 쓴다(AD-2 서비스 경유).
+
+    타 도메인이 Order 모델을 직접 임포트하면 주문 상태 가드(test_no_status_writes_outside_engine)가
+    그 파일의 무관한 `.status` 대입까지 위반으로 잡는다.
+    """
+    return await session.scalar(select(Order.user_id).where(Order.id == order_id))

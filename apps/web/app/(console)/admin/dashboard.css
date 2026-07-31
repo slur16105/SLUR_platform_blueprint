@@ -12,7 +12,7 @@
 .page_admin_dash .i_thint { font-size: var(--text-xs); color: var(--color-text-muted); }
 
 /* ── 처리 대기 큐 (지배 섹션) ── */
-.page_admin_dash .p_queue .i_grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-16); margin-top: var(--space-12); }
+.page_admin_dash .p_queue .i_grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-16); margin-top: var(--space-12); }
 .page_admin_dash .i_qcard { display: flex; flex-direction: column; gap: var(--space-12); padding: var(--space-20); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-12); background: var(--color-surface-card); box-shadow: var(--shadow-sm); transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
 .page_admin_dash .i_qcard:hover { border-color: var(--color-border-default); box-shadow: var(--shadow-md); }
 .page_admin_dash .i_qmain { display: flex; flex-direction: column; gap: 2px; }
