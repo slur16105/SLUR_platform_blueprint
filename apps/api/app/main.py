@@ -16,6 +16,8 @@ from app.home.router import admin_router as home_admin_router
 from app.home.router import router as home_router
 from app.legal.router import router as legal_router
 from app.support.router import admin_router as support_admin_router
+from app.support.notice_router import admin_router as notice_admin_router
+from app.support.notice_router import router as notice_router
 from app.support.router import router as support_router
 from app.orders.router import router as orders_router
 from app.products.router import router as products_router
@@ -91,3 +93,5 @@ app.include_router(home_admin_router, prefix=API_V1)
 app.include_router(legal_router, prefix=API_V1)
 app.include_router(support_router, prefix=API_V1)
 app.include_router(support_admin_router, prefix=API_V1)
+app.include_router(notice_router, prefix=API_V1)
+app.include_router(notice_admin_router, prefix=API_V1)

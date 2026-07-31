@@ -28,6 +28,9 @@ const I = {
   card: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="2" y="4" width="12" height="8" rx="1" /><path d="M2 7h12" /></svg>
   ),
+  megaphone: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 6.5v3a1 1 0 0 0 1 1h1.5L10 13.5v-11L5.5 5.5H4a1 1 0 0 0-1 1z" strokeLinejoin="round" /><path d="M12.5 6a3 3 0 0 1 0 4" strokeLinecap="round" /></svg>
+  ),
   chat: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 3h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H6.5L3.5 13.5V11H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" strokeLinejoin="round" /></svg>
   ),
@@ -54,6 +57,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/deposits", label: "입금 확인", icon: I.card },
   { href: "/admin/sellers/applications", label: "입점 심사", icon: I.badge },
   { href: "/admin/inquiries", label: "문의 관리", icon: I.chat },
+  { href: "/admin/notices", label: "공지사항", icon: I.megaphone },
   { href: "/admin/home", label: "메인 화면 관리", icon: I.layout },
   { href: "/admin/lookup", label: "회원 관리", icon: I.people },
   // 관리자는 상품을 읽기만 한다(FR-30) — 화면 제목과 같은 "상품 조회"로 표기
