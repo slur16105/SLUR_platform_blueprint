@@ -1131,6 +1131,12 @@ async def update_deposit_account(session: AsyncSession, admin_id: uuid.UUID, val
         return
     logger.info("deposit_account 변경 by admin=%s: %r -> %r", admin_id, setting.value, value)
     setting.value = value
+    # 옛 단일 문자열 경로로 바꾸면 3필드를 비운다 — 안 비우면 3필드가 우선되어(get_deposit_account)
+    # 방금 저장한 값이 구매자 화면에 반영되지 않는다. 어느 시점이든 정본은 하나여야 한다.
+    for row in await session.scalars(
+        select(Setting).where(Setting.key.in_([k for k, _ in DEPOSIT_FIELDS])).with_for_update()
+    ):
+        row.value = ""
     await session.commit()
 
 
