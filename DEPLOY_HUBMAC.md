@@ -24,7 +24,7 @@ GitHub → 리포 **Settings → Actions → Runners → New self-hosted runner 
 ```bash
 # (GitHub가 준 curl/tar 명령으로 actions-runner를 받은 폴더에서)
 ./config.sh \
-  --url https://github.com/slur16105/SLUR_platform_blueprint \
+  --url https://github.com/slur16105/SLUR_Market \
   --token <GITHUB가_준_토큰> \
   --labels hub-mac \
   --name hub-mac
@@ -40,7 +40,7 @@ macOS에서는 launchd 서비스로 올라가 Hub맥이 켜져 있으면 러너�
 ### ③ 배포 디렉토리 알려주기 (리포 변수)
 GitHub → **Settings → Secrets and variables → Actions → Variables → New repository variable**
 - 이름: `HUBMAC_DEPLOY_DIR`
-- 값: Hub맥에서 **이 리포를 클론해 두고 `.env`가 있는 경로** (예: `/Users/슬러/SLUR_platform_blueprint`)
+- 값: Hub맥에서 **이 리포를 클론해 두고 `.env`가 있는 경로** (예: `/Users/슬러/SLUR_Market`)
 
 > 워크플로는 러너의 임시 폴더가 아니라 이 경로에서 `git reset --hard` + `docker compose`를 실행한다. `.env`(gitignore)는 이 경로에만 있으므로 반드시 그 클론을 가리켜야 한다.
 

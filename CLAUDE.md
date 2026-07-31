@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트
 
-SLUR 커머스 플랫폼 1호 — 운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍 마켓플레이스(통신판매중개자 모델). 1차 목표는 매출이 아니라 **실서비스 완주**, 2차 목표는 완성 후 범용 커머스 블루프린트 추출. 기능 추가 판단 기준은 "완주에 기여하는가".
+**SLUR Market** — 운영자가 판매자를 직접 선별·초청하는 큐레이션형 디자인 편집숍 마켓플레이스(통신판매중개자 모델). 목표는 **실서비스 오픈**이며, 기능 추가 판단 기준은 "오픈에 기여하는가".
+
+이름: 2026-08-01에 `SLUR Platform Blueprint` → `SLUR Market`으로 변경. "범용 청사진 추출"이라는 2차 목표는 폐기됐다(실서비스로 방향 확정). 저장소 주소·기획 문서 폴더명에는 옛 이름이 남아 있으며 **바꾸지 않는다** — 그 시점 기록의 좌표다.
 
 **구현 상태 (2026-07-30): v1 전 스토리(Epic 1~6) 완주 + Epic 8(구매자 반응형 웹 전환) 완료 — 실기 검증까지 마쳤다.** Epic 9(구매자 홈 편성)는 구현·리뷰 완료 `review`. 잔여는 실서비스 오픈 게이트 항목(`_bmad-output/implementation-artifacts/deferred-work.md` 참조): PG 연동, 사업자 실정보·법률 검토, 도서산간 공식 대조 등.
 
@@ -26,9 +28,9 @@ cd apps/web && npx tsc --noEmit && npm run lint
 
 | 문서 | 경로 |
 |---|---|
-| PRD (final) — FR-1~35, NFR, 용어집, ASSUMPTION 색인 | `_bmad-output/planning-artifacts/prds/prd-SLUR_platform_blueprint-2026-07-14/prd.md` |
+| PRD (final) — FR-1~35, NFR, 용어집, ASSUMPTION 색인 | `_bmad-output/planning-artifacts/prds/prd-SLUR_Market-2026-07-14/prd.md` |
 | PRD 부록 — 기각 대안·기술 노트·벤치마킹 수치 | 같은 폴더 `addendum.md` |
-| 프로덕트 브리프 (final) | `_bmad-output/planning-artifacts/briefs/brief-SLUR_platform_blueprint-2026-07-14/brief.md` |
+| 프로덕트 브리프 (final) | `_bmad-output/planning-artifacts/briefs/brief-SLUR_Market-2026-07-14/brief.md` |
 | 리서치 (시장·PG·옵션모델) | PRD 폴더의 `research-*.md` |
 
 요구사항 관련 질문은 PRD가 정답 소스다. 결정의 이유가 궁금하면 PRD 폴더의 `.memlog.md`(결정 이력)와 `addendum.md`(기각 대안 표)를 본다.
