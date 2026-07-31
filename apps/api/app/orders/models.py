@@ -76,6 +76,9 @@ class SubOrder(Base):
     shipping_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # paid 전이 시 preparing 진입 (4.3)
     shipping_fee: Mapped[int] = mapped_column(nullable=False)  # 기본 배송비 스냅샷
     remote_extra_fee: Mapped[int] = mapped_column(nullable=False, default=0)  # 도서산간 추가비 스냅샷
+    # 배송 완료 시각 — 청약철회 기한(배송 후 7일) 판정의 기준점.
+    # order_events에도 전이 기록이 남지만, 반품 가능 여부는 목록·화면마다 물어야 해서 컬럼으로 둔다.
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     carrier: Mapped[str | None] = mapped_column(String(50), nullable=True)  # 5.3 배송 처리용 선행 확보
     tracking_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

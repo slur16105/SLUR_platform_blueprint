@@ -835,12 +835,13 @@ async def ship_sub_order(
 
 
 async def deliver_sub_order(session: AsyncSession, seller_id: uuid.UUID, user_id: uuid.UUID, sub_order_id: uuid.UUID) -> None:
-    """배송 완료 — shipping→delivered."""
-    await _owned_sub_order(session, seller_id, sub_order_id)
+    """배송 완료 — shipping→delivered. 완료 시각을 남긴다(청약철회 기한 기준점)."""
+    sub = await _owned_sub_order(session, seller_id, sub_order_id)
     await transition(
         session, layer=t.LAYER_SUB_ORDER, entity_id=sub_order_id, to_status=t.SUB_DELIVERED,
         actor_role=t.ROLE_SELLER, actor_user_id=user_id,
     )
+    sub.delivered_at = await session.scalar(select(func.now()))  # DB 시각 — 앱 서버 시계 편차 배제
     await session.commit()
 
 
@@ -1299,3 +1300,48 @@ async def update_deposit_fields(session: AsyncSession, admin_id: uuid.UUID, valu
     else:
         await session.commit()
     return await get_deposit_account(session)
+
+
+async def sub_order_snapshot(session: AsyncSession, sub_order_id: uuid.UUID) -> dict | None:
+    """다른 도메인이 쓰는 묶음 요약 — 소유자·배송 상태·배송 완료 시각 (AD-2 서비스 경유).
+
+    타 도메인이 SubOrder/Order 모델을 직접 임포트하면 주문 상태 가드
+    (test_no_status_writes_outside_engine)가 그 파일의 무관한 `.status` 대입까지 위반으로 잡는다.
+    """
+    row = (await session.execute(
+        select(SubOrder.id, SubOrder.order_id, SubOrder.shipping_status, SubOrder.delivered_at, Order.user_id)
+        .join(Order, SubOrder.order_id == Order.id)
+        .where(SubOrder.id == sub_order_id)
+    )).first()
+    if row is None:
+        return None
+    return {
+        "sub_order_id": row.id, "order_id": row.order_id, "user_id": row.user_id,
+        "shipping_status": row.shipping_status, "delivered_at": row.delivered_at,
+    }
+
+
+async def active_items_of_sub(session: AsyncSession, sub_order_id: uuid.UUID) -> list[dict]:
+    """묶음의 살아있는(취소되지 않은) 품목 — 반품 신청 대상 목록."""
+    rows = await session.scalars(
+        select(OrderItem)
+        .where(OrderItem.sub_order_id == sub_order_id, OrderItem.status == t.ITEM_ORDERED)
+        .order_by(OrderItem.created_at, OrderItem.id)
+    )
+    return [{
+        "order_item_id": i.id, "product_name": i.product_name,
+        "option_text": i.option_text, "quantity": i.quantity,
+    } for i in rows]
+
+
+async def order_items_by_ids(session: AsyncSession, item_ids: list[uuid.UUID]) -> dict:
+    """품목 표시 정보 배치 조회 — 반품 내역이 상품명을 보여줄 때 쓴다."""
+    if not item_ids:
+        return {}
+    rows = await session.scalars(select(OrderItem).where(OrderItem.id.in_(item_ids)))
+    return {i.id: {"product_name": i.product_name, "option_text": i.option_text} for i in rows}
+
+
+async def is_delivered(shipping_status: str | None) -> bool:
+    """배송 완료 여부 — 상태 문자열을 타 도메인이 직접 비교하지 않게 한다."""
+    return shipping_status == t.SUB_DELIVERED
