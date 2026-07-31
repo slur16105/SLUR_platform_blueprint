@@ -48,6 +48,9 @@ export async function POST(req: NextRequest) {
     if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/.test(body.id)) {
       return Response.json({ code: "validation_error", message: "입력값이 올바르지 않습니다.", details: [] }, { status: 422 });
     }
+    if (!Array.isArray(body.image_paths) || body.image_paths.length === 0) {
+      return Response.json({ code: "validation_error", message: "이미지는 최소 1장이 필요합니다.", details: [] }, { status: 422 });
+    }
     return proxyWithRefresh(req, `/api/v1/sellers/products/${body.id}/images`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

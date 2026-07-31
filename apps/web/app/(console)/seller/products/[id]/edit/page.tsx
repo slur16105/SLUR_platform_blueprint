@@ -37,6 +37,7 @@ export default function EditProductPage() {
 
   const [original, setOriginal] = useState<Product | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [name, setName] = useState("");
@@ -87,7 +88,9 @@ export default function EditProductPage() {
       const found = list.find((p) => p.id === productId);
       if (!found) return void setLoadError("상품을 찾을 수 없습니다. 목록에서 다시 선택해 주세요.");
       applyProduct(found);
+      // 카테고리만 실패해도 알린다 — 조용히 두면 셀렉트가 빈 채로 떠서 카테고리가 사라진 것처럼 보인다
       if (cr.ok) setCategories(await cr.json());
+      else setCategoryError("카테고리를 불러오지 못했습니다. 새로고침해 주세요.");
     } catch {
       setLoadError("네트워크 연결을 확인해 주세요.");
     }
@@ -175,9 +178,20 @@ export default function EditProductPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!original || !dirty.any) return;
+    // 숫자 칸을 비운 채 저장하면 Number("")가 0이 되어 가격·재고가 조용히 0으로 바뀐다
+    const blank = rows.find((r) => r.extra_price.trim() === "" || r.stock.trim() === "");
+    if (blank) {
+      setError("추가금액과 재고를 비워둘 수 없습니다. 0을 입력해 주세요.");
+      return;
+    }
     setBusy(true);
     setError(null);
     setNotice(null);
+    // 어디까지 저장됐는지 사용자에게 정확히 말하기 위해 성공한 묶음을 기록한다.
+    // 이전에는 실패 문구가 무조건 "다른 변경은 저장됐습니다"라, 저장된 게 없어도 그렇게 떴다.
+    const saved: string[] = [];
+    const failNotice = (msg: string) =>
+      setError(saved.length ? `${msg} (저장된 항목: ${saved.join("·")})` : msg);
     try {
       if (dirty.fields) {
         const res = await fetch("/api/sellers/products", {
@@ -190,24 +204,17 @@ export default function EditProductPage() {
           }),
         });
         if (res.status === 401) return void router.replace("/login");
+        if (res.status === 403) return void router.replace("/no-role");
         if (!res.ok) {
           const d = await res.json().catch(() => null);
-          setError(d?.details?.[0]?.reason ?? d?.message ?? "저장에 실패했습니다.");
+          failNotice(d?.details?.[0]?.reason ?? d?.message ?? "기본 정보 저장에 실패했습니다.");
+          await load();  // 화면을 서버 상태로 되돌린다 — 실패한 값이 저장된 것처럼 남지 않게
           return;
         }
+        saved.push("기본 정보");
       }
-      if (dirty.images) {
-        const res = await fetch("/api/sellers/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ op: "images", id: original.id, image_paths: imagePaths }),
-        });
-        if (!res.ok) {
-          const d = await res.json().catch(() => null);
-          setError(d?.details?.[0]?.reason ?? d?.message ?? "이미지 저장에 실패했습니다. 다른 변경은 저장됐습니다.");
-          return;
-        }
-      }
+      // 옵션(재고)을 이미지보다 먼저 저장한다 — 재고가 판매에 직접 영향을 주므로
+      // 이미지 실패 때문에 재고 변경이 통째로 누락되는 순서를 피한다.
       if (dirty.variants) {
         const res = await fetch("/api/sellers/products", {
           method: "POST",
@@ -228,9 +235,25 @@ export default function EditProductPage() {
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
-          setError(d?.details?.[0]?.reason ?? d?.message ?? "옵션 저장에 실패했습니다. 다른 변경은 저장됐습니다.");
+          failNotice(d?.details?.[0]?.reason ?? d?.message ?? "옵션·재고 저장에 실패했습니다.");
+          await load();
           return;
         }
+        saved.push("옵션·재고");
+      }
+      if (dirty.images) {
+        const res = await fetch("/api/sellers/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ op: "images", id: original.id, image_paths: imagePaths }),
+        });
+        if (!res.ok) {
+          const d = await res.json().catch(() => null);
+          failNotice(d?.details?.[0]?.reason ?? d?.message ?? "이미지 저장에 실패했습니다.");
+          await load();
+          return;
+        }
+        saved.push("이미지");
       }
       showNotice("변경 사항을 저장했습니다.");
       setNewPreviews({});
@@ -291,6 +314,7 @@ export default function EditProductPage() {
               <select id="category" className="input_text" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+              {categoryError && <span className="i_help">{categoryError}</span>}
             </div>
             <div className="field">
               <label className="i_label" htmlFor="status">판매 상태</label>

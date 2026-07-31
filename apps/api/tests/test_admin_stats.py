@@ -82,7 +82,7 @@ async def test_canceled_order_not_counted_as_revenue(client, clean_products):
         f"/api/v1/admin/order-items/{item_id}/cancel",
         json={"reason": "집계 검증용 취소", "responsibility": "admin"}, headers=_auth(admin_t),
     )
-    assert r.status_code in (200, 204)
+    assert r.status_code == 200  # 품목 취소는 취소 건수를 담은 200 (계약 고정)
 
     after = await _stats(client, admin_t)
     assert after["revenue"] == 0  # 품목도 배송비도 남지 않는다
@@ -103,3 +103,74 @@ async def test_stats_requires_admin(client, clean_products):
     )
     res = await client.get("/api/v1/admin/stats", headers=_auth(signup.json()["access_token"]))
     assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_period_window_widens(client, clean_products):
+    """기간이 넓어지면 집계도 넓어진다 — 오늘엔 없고 30일엔 잡히는 주문으로 확인.
+
+    _period_start의 오프바이원(예: 7d가 8일치를 세는 회귀)을 잡는 자리다.
+    과거 주문은 API로 만들 수 없어 paid_at·created_at을 직접 뒤로 민다(테스트 전용).
+    """
+    from sqlalchemy import text
+
+    from app.core.db import async_session_factory
+
+    st, _pid, vs = await _shop(client)
+    admin_t = await _admin_login(client)
+    await _fees(client, st)
+    bt = await _buyer(client, email="stats-period@example.com")
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    expected = await _expected(client, bt)
+    oid, _sub = await make_order(client, bt)
+    await client.post(
+        f"/api/v1/admin/orders/{oid}/confirm-payment",
+        json={"expected_grand_total": expected}, headers=_auth(admin_t),
+    )
+
+    # 10일 전으로 밀면 today·7d에서는 빠지고 30d에만 남아야 한다
+    async with async_session_factory() as session:
+        await session.execute(
+            text("UPDATE orders SET created_at = created_at - interval '10 days',"
+                 "                  paid_at = paid_at - interval '10 days' WHERE id = :oid"),
+            {"oid": oid},
+        )
+        await session.commit()
+
+    today = await _stats(client, admin_t, "today")
+    week = await _stats(client, admin_t, "7d")
+    month = await _stats(client, admin_t, "30d")
+
+    assert today["revenue"] == 0 and today["new_orders"] == 0
+    assert week["revenue"] == 0 and week["new_orders"] == 0
+    assert month["revenue"] == expected and month["new_orders"] == 1
+
+
+@pytest.mark.asyncio
+async def test_period_boundary_is_kst_midnight(client, clean_products):
+    """'오늘'의 경계는 KST 자정 — 25시간 전 주문은 오늘에서 빠지고 7일엔 남는다."""
+    from sqlalchemy import text
+
+    from app.core.db import async_session_factory
+
+    st, _pid, vs = await _shop(client)
+    admin_t = await _admin_login(client)
+    await _fees(client, st)
+    bt = await _buyer(client, email="stats-boundary@example.com")
+    await client.post("/api/v1/carts/items", json={"variant_id": vs[0]["id"], "quantity": 1}, headers=_auth(bt))
+    expected = await _expected(client, bt)
+    oid, _sub = await make_order(client, bt)
+    await client.post(
+        f"/api/v1/admin/orders/{oid}/confirm-payment",
+        json={"expected_grand_total": expected}, headers=_auth(admin_t),
+    )
+    async with async_session_factory() as session:
+        await session.execute(
+            text("UPDATE orders SET created_at = created_at - interval '25 hours',"
+                 "                  paid_at = paid_at - interval '25 hours' WHERE id = :oid"),
+            {"oid": oid},
+        )
+        await session.commit()
+
+    assert (await _stats(client, admin_t, "today"))["new_orders"] == 0
+    assert (await _stats(client, admin_t, "7d"))["new_orders"] == 1

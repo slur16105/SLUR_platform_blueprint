@@ -22,7 +22,8 @@ type LowStockItem = {
 type Dashboard = {
   preparing_count: number;
   shipping_count: number;
-  low_stock: LowStockItem[];
+  low_stock: LowStockItem[];   // 표시용 — 서버가 상한까지만 잘라 보낸다
+  low_stock_count: number;     // 전체 건수 — 카드 숫자는 목록 길이가 아니라 이 값
   low_stock_threshold: number;
 };
 
@@ -49,6 +50,9 @@ export default function SellerDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [preparing, setPreparing] = useState<SubOrder[] | null>(null);
+  // 조회를 한 번이라도 마쳤는가 — null만으로는 "아직 로딩 중"과 "불러오기 실패"가 구분되지 않아
+  // 실패했을 때 화면이 영영 "불러오는 중…"에 멈춰 있었다.
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 대시보드 값은 전부 서버 응답 표시만 (AD-12) — 클라이언트 계산 없음
@@ -66,14 +70,21 @@ export default function SellerDashboard() {
       if (d.ok) setDashboard(await d.json());
       if (o.ok) {
         const data = await o.json();
-        setPreparing(((data.items ?? []) as SubOrder[]).slice(0, 5));
+        // 카드(preparing_count)는 전 품목 취소된 묶음을 세지 않는다 — 목록도 같은 기준으로 걸러야
+        // "0건인데 아래에 행이 있는" 어긋남과 품목 칸이 빈 유령 행이 생기지 않는다.
+        const rows = ((data.items ?? []) as SubOrder[]).filter((s) => !s.all_canceled);
+        setPreparing(rows.slice(0, 5));
       } else {
         setPreparing([]);
       }
       if (p.ok) setProfile(await p.json());
-      if (!d.ok && !o.ok) setError("대시보드를 불러오지 못했습니다.");
+      // 하나만 실패해도 알린다 — 둘 다 실패할 때만 알리면 실패한 쪽이 영영 로딩 상태로 남는다
+      if (!d.ok) setDashboard(null);
+      if (!d.ok || !o.ok) setError("일부 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
     } catch {
       setError("네트워크 연결을 확인해 주세요.");
+    } finally {
+      setLoaded(true);  // 성공·실패 무관 — 로딩 표시를 반드시 끝낸다
     }
   }, [router]);
 
@@ -87,7 +98,7 @@ export default function SellerDashboard() {
     // 라벨은 주문 관리 탭 이름과 같은 표기 — 같은 것을 화면마다 다른 이름으로 부르지 않는다
     { label: "배송준비", count: dashboard?.preparing_count ?? null, href: "/seller/orders?status=preparing", hint: "송장 입력이 필요한 주문" },
     { label: "배송중", count: dashboard?.shipping_count ?? null, href: "/seller/orders?status=shipping", hint: "배송 완료 처리 대기" },
-    { label: "품절 임박", count: dashboard ? lowStock.length : null, href: "/seller/products", hint: dashboard ? `재고 ${dashboard.low_stock_threshold}개 이하` : "재고 부족 상품" },
+    { label: "품절 임박", count: dashboard ? dashboard.low_stock_count : null, href: "/seller/products", hint: dashboard ? `재고 ${dashboard.low_stock_threshold}개 이하` : "재고 부족 상품" },
   ];
 
   return (
@@ -110,7 +121,7 @@ export default function SellerDashboard() {
           <div className="i_grid">
             {queue.map((q) => (
               <Link key={q.href} href={q.href} className="i_qcard"
-                data-alert={q.count && q.count > 0 ? "" : undefined}>
+                data-alert={q.count !== null && q.count > 0 ? "" : undefined}>
                 <span className="i_qmain">
                   <span className="i_qlabel">{q.label}</span>
                   <span className="i_qhint">{q.hint}</span>
@@ -129,8 +140,10 @@ export default function SellerDashboard() {
             <h2 className="p_section_title">발송할 주문</h2>
             <Link className="i_more" href="/seller/orders?status=preparing">전체 보기 →</Link>
           </div>
-          {preparing === null ? (
+          {!loaded ? (
             <p className="p_loading" role="status">불러오는 중…</p>
+          ) : preparing === null ? (
+            <p className="p_empty">주문을 불러오지 못했습니다.</p>
           ) : preparing.length === 0 ? (
             <p className="p_empty">발송할 주문이 없습니다.</p>
           ) : (
@@ -149,7 +162,6 @@ export default function SellerDashboard() {
                       <td>
                         <strong>{o.order_no}</strong>
                         <span className="i_time">{formatDateTime(o.created_at)}</span>
-                        {o.all_canceled && <span className="badge m_small m_danger">전체 취소됨</span>}
                       </td>
                       <td>
                         {o.recipient_name}
@@ -181,8 +193,10 @@ export default function SellerDashboard() {
             </h2>
             <Link className="i_more" href="/seller/products">상품 관리 →</Link>
           </div>
-          {dashboard === null ? (
+          {!loaded ? (
             <p className="p_loading" role="status">불러오는 중…</p>
+          ) : dashboard === null ? (
+            <p className="p_empty">재고 정보를 불러오지 못했습니다.</p>
           ) : lowStock.length === 0 ? (
             <p className="p_empty">품절 임박 상품이 없습니다.</p>
           ) : (

@@ -38,7 +38,7 @@ from app.main import app
 from app.orders.models import Order
 
 # (며칠 전, 주문 수, 목표 상태) — 오늘에서 멀수록 배송이 끝난 주문이 많아지는 자연스러운 분포.
-# 오늘 치는 local_seed_bulk가 이미 만들어 두므로 여기서는 1일 전부터 채운다.
+# 오늘 치는 local_seed_bulk가 이미 만들어 두므로 여기서는 2일 전부터 채운다.
 HISTORY_PLAN = [
     # 최근 7일 구간 (오늘 제외) — 2~7일 전
     *[(d, 2, "delivered") for d in range(2, 8)],
@@ -55,7 +55,9 @@ async def _backdate(order_id: str, days_ago: int) -> None:
     """주문과 딸린 행들의 시각을 함께 과거로 옮긴다 (로컬 전용 · DB 직접 갱신)."""
     async with async_session_factory() as session:
         # 이동 폭은 '며칠 전'을 그대로 쓰되, 시:분은 흩어 놓아 목록이 한 시각에 뭉치지 않게 한다.
-        shift = timedelta(days=days_ago, hours=(hash(order_id) % 9) - 4, minutes=hash(order_id) % 60)
+        # hash()는 PYTHONHASHSEED 무작위화로 실행마다 값이 달라 재현이 안 된다 — uuid 문자열에서 고정 추출
+        spread = int(order_id.replace("-", "")[-4:], 16)
+        shift = timedelta(days=days_ago, hours=(spread % 9) - 4, minutes=spread % 60)
         # 초 단위 숫자로 넘기고 SQL에서 interval로 만든다 — timedelta를 그대로 바인딩하면
         # asyncpg가 $1의 타입을 timestamptz로 추론해 타입 불일치가 난다.
         params = {"oid": order_id, "secs": shift.total_seconds()}
@@ -140,6 +142,8 @@ async def _restock(client, tokens: dict) -> None:
         for p in r.json():
             if p["status"] != "active":
                 continue
+            if len(p["variants"]) != 1:
+                continue  # variants PUT은 전체 교체다 — 조합이 여럿인 상품에 1개만 보내면 나머지가 삭제된다
             v = p["variants"][0]
             if v["stock"] >= 200:
                 continue
@@ -160,10 +164,6 @@ async def seed() -> None:
         if await grant_admin(ADMIN["email"]) != 0:
             raise RuntimeError("로컬 관리자 권한을 부여할 수 없습니다.")
         admin_token = (await _signup_or_login(client, ADMIN))["access_token"]
-
-        moved = await _spread_user_signups()
-        if moved:
-            print(f"더미 구매자 가입일 분산: {moved}명")
 
         # 이미 과거 주문이 있으면 중복 생성하지 않는다 (재실행 안전)
         async with async_session_factory() as session:
@@ -190,7 +190,15 @@ async def seed() -> None:
             s = await _signup_or_login(client, acct)
             buyer_tokens.append((s["access_token"], b["name"], 100 + b_i))
 
+        # 계정을 다 만든 뒤에 분산한다 — 생성 전에 돌리면 대상이 0명이라 아무 효과가 없다
+        moved = await _spread_user_signups()
+        if moved:
+            print(f"더미 구매자 가입일 분산: {moved}명")
+
         brands = [b for b in pools if pools[b]]
+        if not brands:
+            print("주문 가능한 더미 상품이 없습니다. 먼저 `python -m app.local_seed_bulk`를 실행하세요.")
+            return
         made = {"delivered": 0, "shipping": 0, "canceled": 0}
         skipped = 0
         order_idx = 1000

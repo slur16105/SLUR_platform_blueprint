@@ -78,12 +78,14 @@ export default function SellerSettings() {
         }),
       });
       if (res.status === 401) return void router.replace("/login");
-      const data = await res.json();
+      if (res.status === 403) return void router.replace("/no-role");
+      // 본문이 비어 있어도 catch로 흘러 "네트워크 연결" 오해를 부르지 않게 한다
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data.details?.[0]?.reason ?? data.message ?? "저장에 실패했습니다.");
+        setError(data?.details?.[0]?.reason ?? data?.message ?? "저장에 실패했습니다.");
         return;
       }
-      setProfile(data);
+      if (data) setProfile(data);
       // 변경 시점부터의 새 주문에만 적용된다는 점을 분명히 — 기존 주문 금액은 바뀌지 않는다
       setNotice("배송비를 저장했습니다. 저장 이후 들어오는 주문부터 적용됩니다.");
       if (noticeTimer.current) clearTimeout(noticeTimer.current);

@@ -23,8 +23,9 @@ async def test_create_and_list(client, clean_products):
     # 판매자 콘솔이 Storage 주소를 조립하지 않도록 서버가 완성된 URL을 함께 준다.
     # (Storage 미연결 환경은 None 또는 로컬 데모 경로 — 어느 쪽이든 화면이 처리한다)
     img = items[0]["images"][0]
-    assert "url" in img
-    assert img["url"] is None or img["url"].endswith(".jpg") or img["path"] in img["url"]
+    # Storage 미연결 로컬은 데모 경로, 연결 환경은 path가 포함된 공개 URL — 둘 중 하나여야 한다
+    # (OR를 느슨하게 두면 어떤 값이든 통과해 검증이 무의미해진다)
+    assert img["url"] == "/local-product-images/local-demo.jpg" or img["path"] in img["url"]
 
 
 @pytest.mark.asyncio

@@ -255,7 +255,8 @@ class LowStockItem(BaseModel):
 class SellerDashboard(BaseModel):
     preparing_count: int  # 신규 주문(입금 완료·배송준비 대기) — epics "paid 건수"와 동일 값 (승인된 구체화)
     shipping_count: int
-    low_stock: list[LowStockItem]
+    low_stock: list[LowStockItem]  # 표시용 — LOW_STOCK_LIMIT까지만 잘려 온다
+    low_stock_count: int  # 전체 건수 — 대시보드 카드 숫자는 목록 길이가 아니라 이 값을 쓴다
     low_stock_threshold: int  # settings 값 — 화면 표기용
 
 
@@ -269,4 +270,5 @@ async def seller_dashboard(
     counts = await orders_service.seller_shipping_counts(session, seller.id)
     threshold = await orders_service.get_int_setting(session, orders_service.SETTING_LOW_STOCK_THRESHOLD, minimum=0)
     low = await products_service.low_stock_variants(session, seller.id, threshold)
-    return {**counts, "low_stock": low, "low_stock_threshold": threshold}
+    low_count = await products_service.count_low_stock_variants(session, seller.id, threshold)
+    return {**counts, "low_stock": low, "low_stock_count": low_count, "low_stock_threshold": threshold}

@@ -10,8 +10,13 @@ def test_local_without_supabase_storage_uses_local_demo_image(monkeypatch):
     from app.core.config import get_settings
     from app.products.service import _image_url
 
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    # 환경변수만 지우면 pydantic-settings가 `.env` 파일에서 값을 다시 읽어와 무력화된다
+    # (개발 맥에는 실제 SUPABASE_URL이 든 .env가 있어 이 테스트만 항상 실패했다).
+    # 설정 객체 자체를 비운 상태로 바꿔 파일 존재 여부와 무관하게 성립시킨다.
     get_settings.cache_clear()
+    settings = get_settings()
+    monkeypatch.setattr(settings, "supabase_url", "", raising=True)
+    monkeypatch.setattr(settings, "environment", "local", raising=True)
     try:
         assert _image_url("00000000-0000-0000-0000-000000000000/example.jpg") == "/local-product-images/local-demo.jpg"
     finally:

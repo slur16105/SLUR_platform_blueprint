@@ -456,6 +456,11 @@ def test_no_status_writes_outside_engine():
                         violations.append(f"{py}:{node.lineno} {fname}(status류 kwarg)")
                 elif fname == "text" and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
                     sql = node.args[0].value.lower()
-                    if "update" in sql and any(k in sql for k in ("payment_status", "shipping_status", "order_items", "sub_orders", "orders set")):
+                    # 주문 테이블을 건드리는 raw UPDATE 중 **상태 컬럼을 쓰는 것만** 잡는다.
+                    # 테이블 이름만 보면 시각 보정 같은 비상태 UPDATE까지 걸려(로컬 시더 오탐),
+                    # 정작 이 가드가 지키려는 규칙(상태 전이는 엔진에서만)과 무관한 실패가 난다.
+                    touches_order_tables = any(k in sql for k in ("order_items", "sub_orders", "orders set"))
+                    touches_status = "status" in sql
+                    if "update" in sql and touches_order_tables and touches_status:
                         violations.append(f"{py}:{node.lineno} raw SQL 상태 UPDATE 의심")
     assert not violations, f"전이 함수 밖 상태 변경 발견: {violations}"

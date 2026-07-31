@@ -60,10 +60,14 @@ export default function AdminDashboard() {
     void (async () => {
       const res = await fetch(`/api/admin/stats?period=${period}`).catch(() => null);
       if (!alive) return;
-      setStats(res?.ok ? await res.json() : null);
+      // 세션 만료·권한 상실은 큐 조회와 같은 경로로 처리한다 — 통계만 조용히 "–"로 남으면
+      // 운영자가 서버 장애인지 로그인이 풀린 것인지 구분할 수 없다.
+      if (res?.status === 401) return void router.replace("/login");
+      if (res?.status === 403) return void router.replace("/no-role");
+      setStats(res?.ok ? await res.json().catch(() => null) : null);
     })();
     return () => { alive = false; };
-  }, [period]);
+  }, [period, router]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -116,7 +120,7 @@ export default function AdminDashboard() {
         <section className="p_stats">
           <div className="i_head">
             <h2 className="p_section_title">현황</h2>
-            <nav className="tab_menu m_small" aria-label="집계 기간">
+            <nav className="tab_menu" aria-label="집계 기간">
               {PERIODS.map((p) => (
                 <button key={p.value} type="button" className="i_tab"
                   data-state={period === p.value ? "active" : undefined}
@@ -154,7 +158,7 @@ export default function AdminDashboard() {
           <div className="i_grid">
             {queue.map((q) => (
               <Link key={q.href} href={q.href} className="i_qcard"
-                data-alert={q.count && q.count > 0 ? "" : undefined}>
+                data-alert={q.count !== null && q.count > 0 ? "" : undefined}>
                 <span className="i_qmain">
                   <span className="i_qlabel">{q.label}</span>
                   <span className="i_qhint">{q.hint}</span>

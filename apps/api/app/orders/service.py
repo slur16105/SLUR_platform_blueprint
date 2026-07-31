@@ -1108,16 +1108,14 @@ def _line_amount_sq():
     return func.coalesce(func.sum((OrderItem.unit_price + OrderItem.extra_price) * OrderItem.quantity), 0)
 
 
-async def _revenue_between(session: AsyncSession, start, *, paid_only: bool = True) -> int:
+async def _revenue_between(session: AsyncSession, start) -> int:
     """확정 금액 합 = 살아있는 품목 금액 + 그 품목이 남아있는 묶음의 배송비.
 
+    입금 확인된 주문만, 기준 시각은 paid_at이다 — 운영자가 "오늘 얼마 들어왔나"로 읽는 값.
     전 품목이 취소된 묶음의 배송비는 빼는 것이 판매자 주문 목록(all_canceled → 배송비 '-')과
     같은 규칙이다. 취소 주문이 매출로 잡히지 않게 한다.
     """
-    where_order = [Order.payment_status == t.ORDER_PAID] if paid_only else []
-    time_col = Order.paid_at if paid_only else Order.created_at
-    if start is not None:
-        where_order.append(time_col >= start)
+    where_order = [Order.payment_status == t.ORDER_PAID, Order.paid_at >= start]
 
     items = await session.scalar(
         select(_line_amount_sq())

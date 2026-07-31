@@ -449,6 +449,23 @@ async def low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, thresh
     } for v, p in rows]
 
 
+async def count_low_stock_variants(session: AsyncSession, seller_id: uuid.UUID, threshold: int) -> int:
+    """품절 임박 전체 건수 — 목록은 표시용으로 잘리므로(LOW_STOCK_LIMIT) 카드 숫자는 이 값을 쓴다.
+
+    목록 길이를 건수로 쓰면 21개 이상일 때 화면이 20에서 멈춰 판매자가 남은 일을 과소평가한다.
+    조건은 low_stock_variants와 동일해야 한다 — 어긋나면 목록과 숫자가 서로 다른 것을 센다.
+    """
+    return int(await session.scalar(
+        select(func.count())
+        .select_from(Variant)
+        .join(Product, Variant.product_id == Product.id)
+        .where(
+            Product.seller_id == seller_id, Product.status == "active",
+            Variant.is_active.is_(True), Variant.stock <= threshold,
+        )
+    ) or 0)
+
+
 async def count_products_by_categories(session: AsyncSession) -> dict[uuid.UUID, int]:
     """카테고리별 상품 수 — 관리자 카테고리 패널이 "삭제 가능한가"를 누르기 전에 보여주기 위해.
 
