@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="285" height="220" viewBox="0 0 285 220" role="img" aria-label="아위 블레이저">
-	<rect width="285" height="220" fill="#6b7c74"/>
-	<rect x="10" y="10" width="265" height="200" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-	<text x="24" y="38" fill="rgba(255,255,255,0.75)" font-family="Arial, sans-serif" font-size="10" letter-spacing="3">OUTER</text>
-	<text x="142.5" y="120" fill="#ffffff" text-anchor="middle" font-family="Georgia, 'Apple SD Gothic Neo', serif" font-size="34" font-weight="700">블레이저</text>
-	<line x1="118" y1="140" x2="167" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-	<text x="142.5" y="176" fill="rgba(255,255,255,0.75)" text-anchor="middle" font-family="'Apple SD Gothic Neo', sans-serif" font-size="13" letter-spacing="1">아위</text>
-</svg>
