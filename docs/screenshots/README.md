@@ -1,26 +1,29 @@
 # 스크린샷
 
-루트 [README.md](../../README.md)의 **기능 안내** 섹션이 참조하는 화면 캡처를 이 폴더에 둡니다.
+루트 [README.md](../../README.md)의 **기능 안내** 섹션이 참조하는 화면 캡처입니다.
 
-로컬 스택을 띄우고(`docker compose up -d --build --wait` + `docker compose --profile tools run --build --rm seed`) 각 화면을 캡처해 아래 파일명으로 저장하면 README에 자동으로 표시됩니다. 권장 폭 ~1280px.
+## 다시 찍기
 
-| 파일명 | 화면 | 경로 | 계정 |
-| --- | --- | --- | --- |
-| `buyer-home.png` | 편성 홈 | `/` | 비로그인 |
-| `buyer-product-detail.png` | 상품 상세 | `/products/{id}` | 비로그인 |
-| `buyer-cart.png` | 장바구니 | `/cart` | 구매자 |
-| `buyer-checkout.png` | 주문서 | `/checkout` | 구매자 |
-| `buyer-orders.png` | 주문 내역 | `/orders` | 구매자 |
-| `buyer-me.png` | 내 정보 | `/me` | 구매자 |
-| `buyer-login.png` | 로그인(약관 모달) | `/login` | 비로그인 |
-| `seller-products.png` | 판매자 상품 관리 | `/seller` | `local-seller@example.com` |
-| `seller-orders.png` | 판매자 주문 관리 | `/seller` | `local-seller@example.com` |
-| `admin-approvals.png` | 입점 승인 | `/admin` | `local-admin@example.com` |
-| `admin-home-curation.png` | 홈 편성 관리 | `/admin/home` | `local-admin@example.com` |
-| `admin-deposits.png` | 입금 확인 | `/admin/deposits` | `local-admin@example.com` |
+```bash
+docker compose up -d --build --wait
+docker compose --profile tools run --build --rm seed
+docker compose exec -T api uv run python -m app.local_seed_bulk      # 데모 주문·판매자 (선택)
+docker compose exec -T api uv run python -m app.local_seed_history   # 과거 30일치 (선택)
 
-계정 비밀번호: 관리자 `local-admin@example.com` / `local-admin-password-2026`, 판매자 `local-seller@example.com` / `local-seller-password-2026`.
+npx playwright install chromium
+node docs/shoot.mjs docs/screenshots
+```
 
-구매자 화면의 모바일 뷰는 같은 이름에 `-mobile.png` 접미사로 저장합니다(예: `buyer-home-mobile.png`). 뷰포트 390px, 하단 탭바 포함.
+`docs/shoot.mjs`가 역할별로 로그인해 28개 화면을 찍습니다. 파일명이 README의 이미지 경로와
+1:1로 맞춰져 있어 다시 찍으면 문서가 자동 갱신됩니다.
 
-참고: `apps/web/public/submission-assets/screenshots/`의 기존 캡처 2장은 홈 편성(Epic 9) 반영 전 화면이라 최신이 아닙니다 — 새로 촬영을 권장합니다.
+## 파일
+
+| 접두사 | 역할 | 계정 |
+| --- | --- | --- |
+| `buyer-*` | 구매자 | `local-buyer@example.com` / `local-buyer-password-2026` |
+| `seller-*` | 판매자 | `local-seller@example.com` / `local-seller-password-2026` |
+| `admin-*` | 관리자 | `local-admin@example.com` / `local-admin-password-2026` |
+
+`*-mobile.png`와 `admin-approvals.png`·`admin-home-curation.png`는 2026-07-28에 찍은 것으로,
+보고서(`docs/report-2026-08-01.html`)의 "이전" 자료로도 쓰입니다.
