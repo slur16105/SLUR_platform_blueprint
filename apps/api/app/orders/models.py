@@ -9,6 +9,15 @@ from app.auth.models import uuid7
 from app.core.db import Base
 
 
+def new_order_no() -> str:
+    """주문번호 기본값 — UUID 끝 8자(대문자). 표시 형식은 컬럼화 전과 동일하다.
+
+    서비스(create_order)는 주문 id에서 뽑은 값을 명시적으로 넣지만, 시더·테스트처럼 Order를
+    직접 만드는 경로도 있어 모델 기본값을 둔다. 고유성은 UNIQUE 제약이 보장한다.
+    """
+    return str(uuid7()).replace("-", "")[-8:].upper()
+
+
 class Order(Base):
     """결제 상태 층 (AD-3). 대표 상태·총액 컬럼 없음 — 라인·배송비 스냅샷에서 파생 (AD-12)."""
 
@@ -23,6 +32,10 @@ class Order(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True  # 주문 이력은 법정 보존
     )
+    # 사람이 읽는 주문번호 — CS 응대·입금자 대조·PG 가맹점 주문번호로 쓴다.
+    # 이전에는 UUID 앞 8자를 런타임에 잘라 썼는데 UNIQUE 보장이 없었다(충돌 시 대조 불가).
+    # PG는 가맹점 주문번호를 고유·불변·재사용 금지로 요구하므로 연동 전에 컬럼으로 못박는다.
+    order_no: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, default=new_order_no)
     payment_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending_payment")
     # 배송지 스냅샷 — 4.4가 채운다 (스키마만 선행)
     recipient_name: Mapped[str] = mapped_column(String(50), nullable=False)

@@ -263,3 +263,30 @@ async def test_detail_remote_total_splits_shipping(client, clean_products):
     assert d["item_total"] + d["shipping_total"] == d["grand_total"]
     # 묶음별 값과도 대사된다
     assert sum(s["remote_extra_fee"] for s in d["sub_orders"]) == d["remote_total"]
+
+
+@pytest.mark.asyncio
+async def test_order_no_is_stored_and_unique(client, clean_products):
+    """주문번호는 파생이 아니라 컬럼이다 — PG가 요구하는 고유·불변 조건."""
+    from sqlalchemy import func
+
+    from app.core.db import async_session_factory
+
+    st, _pid, vs = await _shop(client, stock=9)
+    await _fees(client, st)
+    bt = await _buyer(client)
+    admin_t = await _admin_login(client)
+    oid, _sid, _item = await _order(client, bt, vs)
+
+    async with async_session_factory() as session:
+        row = await session.scalar(select(Order).where(Order.id == u.UUID(oid)))
+        assert row.order_no, "주문번호가 저장돼야 한다"
+        # 표시 형식은 컬럼화 전과 동일해야 한다 — 기존 CS 기록·안내와 대조가 끊기지 않게
+        assert row.order_no == oid.replace("-", "")[-8:].upper()
+        total = await session.scalar(select(func.count()).select_from(Order))
+        distinct = await session.scalar(select(func.count(func.distinct(Order.order_no))).select_from(Order))
+        assert total == distinct, "주문번호는 중복될 수 없다"
+
+    # 저장된 번호로 관리자 검색이 된다
+    found = (await client.get(SEARCH, params={"q": row.order_no}, headers=_auth(admin_t))).json()
+    assert any(i["order_id"] == oid for i in found["items"])

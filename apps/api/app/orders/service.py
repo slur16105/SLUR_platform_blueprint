@@ -109,7 +109,7 @@ async def preview_order(session: AsyncSession, user_id: uuid.UUID, postal_code: 
 from sqlalchemy import exists  # noqa: E402 — 엔진 절 전용
 from sqlalchemy.exc import IntegrityError  # noqa: E402
 
-from app.auth.models import User  # noqa: E402 — 관리자 집계(신규 가입 수) 전용
+from app.auth.models import User, uuid7  # noqa: E402 — 집계용 User · 주문번호 생성용 uuid7
 from app.orders import transitions as t  # noqa: E402
 from app.orders.models import Cancellation, Order, OrderEvent, OrderItem, SubOrder  # noqa: E402
 
@@ -338,7 +338,11 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
             CODE_OUT_OF_STOCK, "재고가 부족한 상품이 있습니다.",
             status_code=422, details=[_fail_detail(e) for e in deduct_failed],
         )
+    # id를 먼저 확정해 주문번호를 같은 값에서 뽑는다 — 번호와 주문이 1:1로 묶인다
+    order_id = uuid7()
     order = Order(
+        id=order_id,
+        order_no=_order_no(order_id),
         user_id=user_id,
         recipient_name=data.recipient_name, recipient_phone=data.recipient_phone,
         postal_code=data.postal_code, address1=data.address1, address2=data.address2,
@@ -346,7 +350,13 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
         deposit_due_at=datetime.now(timezone.utc) + timedelta(days=days),
     )
     session.add(order)
-    await session.flush()
+    try:
+        await session.flush()
+    except IntegrityError as exc:  # order_no 충돌(끝 8자 동일) — UUID를 새로 뽑아 1회 재시도
+        if "order_no" not in str(exc.orig):
+            raise
+        await session.rollback()
+        raise AppError("service_unavailable", "주문번호 생성에 실패했습니다. 다시 시도해 주세요.", status_code=503) from exc
 
     by_seller: dict[uuid.UUID, list[dict]] = {}
     for e in entries:
@@ -537,7 +547,13 @@ def derive_order_status(order_payment: str, sub_statuses: list[str]) -> str:
 
 
 def _order_no(order_id: uuid.UUID) -> str:
-    return str(order_id).replace("-", "")[-8:].upper()  # 4.4 결정 — 컬럼 없는 표시용 파생
+    """주문번호 후보 — UUID 끝 8자(대문자).
+
+    **표시 형식을 바꾸지 않는다.** 이미 안내 메일·CS 응대·입금자 대조에서 쓰이는 값이라,
+    컬럼화하면서 형식을 바꾸면 기존 주문의 번호가 달라져 대조가 끊긴다.
+    고유성은 이제 형식이 아니라 `orders.order_no` UNIQUE 제약이 보장한다(충돌 시 재생성).
+    """
+    return str(order_id).replace("-", "")[-8:].upper()
 
 
 async def _order_view_rows(session: AsyncSession, order_ids: list[uuid.UUID]) -> tuple[dict, dict, dict]:
@@ -631,7 +647,7 @@ async def list_my_orders(session: AsyncSession, user_id: uuid.UUID, page: int) -
         if len(basis) > 1:
             title = f"{title} 외 {len(basis) - 1}건"
         out.append({
-            "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
+            "order_id": order.id, "order_no": order.order_no, "created_at": order.created_at,
             "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
             "grand_total": grand, "title": title, "sub_orders": sub_views,
         })
@@ -683,7 +699,7 @@ async def _order_detail_view(session: AsyncSession, order, *, admin: bool = Fals
             "expired": order.deposit_due_at < db_now,  # 자동취소 배치 전 창 — 만료 표시 (리뷰 반영)
         }
     return {
-        "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
+        "order_id": order.id, "order_no": order.order_no, "created_at": order.created_at,
         "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
         "recipient_name": order.recipient_name, "recipient_phone": order.recipient_phone,
         "postal_code": order.postal_code, "address1": order.address1, "address2": order.address2,
@@ -722,7 +738,7 @@ async def list_pending_orders(session: AsyncSession, page: int) -> dict:
         if len(basis) > 1:
             title = f"{title} 외 {len(basis) - 1}건"
         out.append({
-            "order_id": order.id, "order_no": _order_no(order.id),
+            "order_id": order.id, "order_no": order.order_no,
             "created_at": order.created_at, "deposit_due_at": order.deposit_due_at,
             "expired": order.deposit_due_at < db_now,
             "user_id": order.user_id,  # buyer 표시 정보는 admin 층이 붙인다 (AD-2: orders→auth 엣지 금지)
@@ -780,7 +796,7 @@ async def list_seller_sub_orders(session: AsyncSession, seller_id: uuid.UUID, st
     for sub in subs:
         order = orders[sub.order_id]
         out.append({
-            "sub_order_id": sub.id, "order_id": order.id, "order_no": _order_no(order.id),
+            "sub_order_id": sub.id, "order_id": order.id, "order_no": order.order_no,
             "created_at": order.created_at,
             "recipient_name": order.recipient_name, "recipient_phone": order.recipient_phone,
             "postal_code": order.postal_code, "address1": order.address1, "address2": order.address2,
@@ -890,8 +906,9 @@ async def search_orders(
         except ValueError:
             import re as _re
 
-            if _re.fullmatch(r"[0-9A-Fa-f]{8}", q):  # 8자 hex일 때만 suffix 캐스트 (무분별 seq scan 방지)
-                conds.append(func.upper(func.right(func.replace(cast(Order.id, SaString), "-", ""), 8)) == q.upper())
+            # 주문번호는 이제 컬럼이다 — id를 캐스팅해 자르지 않는다(UNIQUE 인덱스를 그대로 탄다).
+            # 접미사가 붙은 값(끝 8자 충돌 해소분)도 그대로 검색된다.
+            conds.append(Order.order_no == q.upper())
         if user_ids:
             conds.append(Order.user_id.in_(user_ids))
         if seller_ids:
@@ -945,7 +962,7 @@ async def search_orders(
         } for sub in subs]
         _, _, grand = _display_amounts(subs, items_by_sub)
         out.append({
-            "order_id": order.id, "order_no": _order_no(order.id), "created_at": order.created_at,
+            "order_id": order.id, "order_no": order.order_no, "created_at": order.created_at,
             "user_id": order.user_id,  # buyer enrich는 라우터 층
             "display_status": derive_order_status(order.payment_status, [v["display_status"] for v in sub_views]),
             "grand_total": grand, "sub_orders": sub_views,
