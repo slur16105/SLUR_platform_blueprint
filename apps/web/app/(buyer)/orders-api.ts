@@ -109,8 +109,12 @@ export type OrderListResponse = {
 export type DepositInfo = {
   /** 잔여 활성분 — 부분 취소를 반영한 값이다 (5.1, 과입금 방지) */
   grand_total: number;
-  /** settings의 한 문자열. 화면이 은행/번호/예금주로 쪼개지 않는다 (D11, 위험 1) */
+  /** 서버가 조립한 한 줄 표기 — 분리 필드가 비었을 때의 폴백 (화면이 직접 쪼개지 않는다) */
   deposit_account: string;
+  /** 2026-07-31 분리 도입 — 구매자 안내가 '예금주' 줄을 따로 보여줄 수 있어야 한다 */
+  deposit_bank?: string;
+  deposit_account_no?: string;
+  deposit_holder?: string;
   deposit_due_at: string;
   /** 기한 경과(자동취소 배치 전 창) — 서버 파생 (AD-12) */
   expired: boolean;

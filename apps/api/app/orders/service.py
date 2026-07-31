@@ -17,7 +17,10 @@ logger = logging.getLogger("slur.orders")
 CODE_EMPTY_CART = "empty_cart"
 
 # settings 시드 key (AD-13 — 수치는 DB에, 코드에는 key만)
-SETTING_DEPOSIT_ACCOUNT = "deposit_account"
+SETTING_DEPOSIT_ACCOUNT = "deposit_account"  # 조립 표시용(하위호환) — 쓰기는 아래 3키로 한다
+SETTING_DEPOSIT_BANK = "deposit_bank"
+SETTING_DEPOSIT_ACCOUNT_NO = "deposit_account_no"
+SETTING_DEPOSIT_HOLDER = "deposit_holder"
 SETTING_UNPAID_CANCEL_DAYS = "unpaid_cancel_days"
 SETTING_LOW_STOCK_THRESHOLD = "low_stock_threshold"
 
@@ -322,7 +325,7 @@ async def create_order(session: AsyncSession, user_id: uuid.UUID, data) -> dict:
 
     # settings는 차감(행 잠금) 전에 읽는다 — 잠금 유지 구간 최소화
     days = await get_int_setting(session, SETTING_UNPAID_CANCEL_DAYS)
-    deposit_account = await get_setting(session, SETTING_DEPOSIT_ACCOUNT)
+    deposit_account = (await get_deposit_account(session))["display"]
 
     # 조건부 차감 — rowcount가 최종 진실. variant_id 정렬로 잠금 획득 순서 고정 (교차 주문 교착 방지)
     deduct_failed = []
@@ -669,9 +672,13 @@ async def _order_detail_view(session: AsyncSession, order, *, admin: bool = Fals
     if order.payment_status == t.ORDER_PENDING_PAYMENT:
         _, _, active_grand = _amounts(subs, items_by_sub)  # 입금 안내는 항상 활성 기준 (과입금 방지)
         db_now = await session.scalar(select(func.now()))
+        account = await get_deposit_account(session)
         deposit_info = {
             "grand_total": active_grand,
-            "deposit_account": await get_setting(session, SETTING_DEPOSIT_ACCOUNT),
+            "deposit_account": account["display"],
+            "deposit_bank": account["bank"],
+            "deposit_account_no": account["account_no"],
+            "deposit_holder": account["holder"],
             "deposit_due_at": order.deposit_due_at,
             "expired": order.deposit_due_at < db_now,  # 자동취소 배치 전 창 — 만료 표시 (리뷰 반영)
         }
@@ -1076,6 +1083,34 @@ async def list_settings(session: AsyncSession) -> list[dict]:
     return [{"key": r.key, "value": r.value, "description": r.description, "updated_at": r.updated_at} for r in rows]
 
 
+DEPOSIT_FIELDS = (
+    (SETTING_DEPOSIT_BANK, "은행"),
+    (SETTING_DEPOSIT_ACCOUNT_NO, "계좌번호"),
+    (SETTING_DEPOSIT_HOLDER, "예금주"),
+)
+
+
+async def get_deposit_account(session: AsyncSession) -> dict:
+    """입금 계좌 — 은행·계좌번호·예금주 3필드와 한 줄 표시 문자열.
+
+    구매자 주문서·입금 안내가 "예금주" 줄을 따로 보여줄 수 있어야 해서 필드를 나눴다.
+    `display`는 하위호환(기존 응답 필드 deposit_account)과 한 줄 표기 자리를 위해 서버가 조립한다 —
+    화면마다 조립하면 표기가 갈린다.
+    """
+    rows = {s.key: s.value for s in await session.scalars(
+        select(Setting).where(Setting.key.in_([k for k, _ in DEPOSIT_FIELDS]))
+    )}
+    bank = (rows.get(SETTING_DEPOSIT_BANK) or "").strip()
+    number = (rows.get(SETTING_DEPOSIT_ACCOUNT_NO) or "").strip()
+    holder = (rows.get(SETTING_DEPOSIT_HOLDER) or "").strip()
+    if bank and number:
+        display = f"{bank} {number}" + (f" ({holder})" if holder else "")
+    else:
+        # 3필드가 아직 안 채워진 환경 — 옛 단일 문자열을 그대로 쓴다(마이그레이션 전/미설정)
+        display = await get_setting(session, SETTING_DEPOSIT_ACCOUNT)
+    return {"bank": bank, "account_no": number, "holder": holder, "display": display}
+
+
 async def update_deposit_account(session: AsyncSession, admin_id: uuid.UUID, value: str) -> None:
     """입금 계좌 갱신 — 이전 값을 감사 로그로 남긴다 (설정 이력 테이블은 과설계 — 5.7 결정)."""
     value = value.strip()
@@ -1193,3 +1228,51 @@ async def order_owner_id(session: AsyncSession, order_id: uuid.UUID) -> uuid.UUI
     그 파일의 무관한 `.status` 대입까지 위반으로 잡는다.
     """
     return await session.scalar(select(Order.user_id).where(Order.id == order_id))
+
+
+async def update_deposit_fields(session: AsyncSession, admin_id: uuid.UUID, values: dict[str, str]) -> dict:
+    """입금 계좌 3필드 갱신 — 은행·계좌번호·예금주.
+
+    한 문자열이던 것을 나눈 이유는 구매자 안내가 "예금주"를 따로 보여줘야 하기 때문이다.
+    감사 로그는 기존과 같이 이전값→새값을 남긴다(설정 이력 테이블은 과설계 — 5.7 결정).
+    """
+    import re as _re
+
+    cleaned: dict[str, str] = {}
+    for key, label in DEPOSIT_FIELDS:
+        v = (values.get(key) or "").strip()
+        if not v:
+            raise AppError("validation_error", f"{label}을(를) 입력해 주세요.", status_code=422)
+        if len(v) > 100:
+            raise AppError("validation_error", f"{label}은(는) 100자 이내로 입력해 주세요.", status_code=422)
+        if _re.search(r"[\x00-\x1f\x7f​-‏‪-‮]", v):  # 제어·개행·bidi·zero-width 차단
+            raise AppError("validation_error", f"{label}에 사용할 수 없는 문자가 있습니다.", status_code=422)
+        cleaned[key] = v
+
+    rows = {s.key: s for s in await session.scalars(
+        select(Setting).where(Setting.key.in_(list(cleaned))).with_for_update()
+    )}
+    changed = False
+    for key, value in cleaned.items():
+        row = rows.get(key)
+        if row is None:  # 시드 누락 — 배포 오류지만 여기서 만들어 복구한다
+            session.add(Setting(key=key, value=value, description="무통장입금 안내 계좌"))
+            changed = True
+            continue
+        if row.value != value:
+            logger.info("%s 변경 by admin=%s: %r -> %r", key, admin_id, row.value, value)
+            row.value = value
+            changed = True
+
+    # 하위호환 단일 문자열도 같은 값으로 맞춘다 — 옛 경로가 읽어도 어긋나지 않게
+    display = f"{cleaned[SETTING_DEPOSIT_BANK]} {cleaned[SETTING_DEPOSIT_ACCOUNT_NO]} ({cleaned[SETTING_DEPOSIT_HOLDER]})"
+    legacy = await session.scalar(select(Setting).where(Setting.key == SETTING_DEPOSIT_ACCOUNT).with_for_update())
+    if legacy is not None and legacy.value != display:
+        legacy.value = display
+        changed = True
+
+    if not changed:
+        await session.rollback()
+    else:
+        await session.commit()
+    return await get_deposit_account(session)

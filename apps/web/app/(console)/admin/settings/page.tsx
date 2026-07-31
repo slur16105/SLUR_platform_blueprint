@@ -28,7 +28,8 @@ export default function AdminSettings() {
   const [error, setError] = useState<string | null>(null); // 로딩 실패 — 재시도 버튼과 함께 표시
   const [saveError, setSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
+  // 계좌는 은행·계좌번호·예금주 3필드다 — 구매자 안내가 "예금주" 줄을 따로 보여줘야 한다
+  const [draft, setDraft] = useState({ bank: "", account_no: "", holder: "" });
   const [confirming, setConfirming] = useState(false);
   const [checking, setChecking] = useState(false); // 모달 열기 전 서버 값 재확인 중
   const [pendingTotal, setPendingTotal] = useState<number | null>(null); // 입금대기 건수 — 조회 실패 시 null
@@ -84,13 +85,16 @@ export default function AdminSettings() {
   }, [confirming, submitting]);
 
   const account = settings["deposit_account"];
-  const nextValue = draft.trim();
+  const trimmed = { bank: draft.bank.trim(), account_no: draft.account_no.trim(), holder: draft.holder.trim() };
+  const filled = Boolean(trimmed.bank && trimmed.account_no && trimmed.holder);
+  // 화면에서 조립하지 않는다 — 확인 모달의 "새 계좌" 미리보기 용도로만 쓰고, 정본은 서버가 만든다
+  const nextValue = filled ? `${trimmed.bank} ${trimmed.account_no} (${trimmed.holder})` : "";
 
   async function openConfirm() {
     if (checking) return;
     setSaveError(null);
-    if (nextValue.length < 1 || nextValue.length > 200) {
-      return void setSaveError("계좌 정보는 1~200자로 입력해 주세요.");
+    if (!filled) {
+      return void setSaveError("은행·계좌번호·예금주를 모두 입력해 주세요.");
     }
     if (account && nextValue === account.value) {
       return void setSaveError("현재 계좌와 동일합니다. 변경할 내용이 없습니다.");
@@ -141,18 +145,24 @@ export default function AdminSettings() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ value: nextValue }),
+        body: JSON.stringify({ op: "deposit-fields", ...trimmed }),
       });
       if (res.status === 401) return void router.replace("/login");
       if (res.status === 403) return void router.replace("/no-role");
-      if (res.status === 204) {
+      if (res.ok) {
+        const saved = await res.json().catch(() => null);
         setSettings((prev) => ({
           ...prev,
           // updated_at은 서버가 응답에 싣지 않는 204 — 표시용으로 현재 시각 사용 (다음 GET에서 서버 값으로 대체)
-          deposit_account: { key: "deposit_account", value: nextValue, description: prev.deposit_account?.description ?? "", updated_at: new Date().toISOString() },
+          deposit_account: {
+            key: "deposit_account",
+            value: saved?.display ?? nextValue,
+            description: prev.deposit_account?.description ?? "",
+            updated_at: new Date().toISOString(),
+          },
         }));
         setConfirming(false);
-        setDraft("");
+        setDraft({ bank: "", account_no: "", holder: "" });
         showNotice("입금 계좌가 변경되었습니다. 기존 입금대기 주문의 입금 안내에도 즉시 적용됩니다 — 옛 계좌로 입금될 수 있으니 입금대기 건을 확인하세요.");
         return;
       }
@@ -197,11 +207,16 @@ export default function AdminSettings() {
               </dd>
             </dl>
             <form className="i_form" onSubmit={(e) => { e.preventDefault(); openConfirm(); }}>
-              <input className="input_text" type="text" maxLength={200} value={draft}
-                aria-label="새 입금 계좌"
-                placeholder="예: 국민은행 123456-78-901234 (주)슬러"
-                onChange={(e) => { setDraft(e.target.value); setSaveError(null); }} />
-              <button className="btn m_primary" type="submit" disabled={!nextValue || checking}
+              <input className="input_text" type="text" maxLength={100} value={draft.bank}
+                aria-label="은행" placeholder="은행 (예: 국민은행)"
+                onChange={(e) => { setDraft({ ...draft, bank: e.target.value }); setSaveError(null); }} />
+              <input className="input_text" type="text" maxLength={100} value={draft.account_no}
+                aria-label="계좌번호" placeholder="계좌번호 (예: 123456-78-901234)"
+                onChange={(e) => { setDraft({ ...draft, account_no: e.target.value }); setSaveError(null); }} />
+              <input className="input_text" type="text" maxLength={100} value={draft.holder}
+                aria-label="예금주" placeholder="예금주 (예: (주)슬러)"
+                onChange={(e) => { setDraft({ ...draft, holder: e.target.value }); setSaveError(null); }} />
+              <button className="btn m_primary" type="submit" disabled={!filled || checking}
                 data-state={checking ? "loading" : undefined}>저장</button>
             </form>
             {saveError && <div className="alert m_inline m_danger" role="alert">{saveError}</div>}

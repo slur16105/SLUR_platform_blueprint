@@ -181,3 +181,60 @@ async def test_replace_images_foreign_product_404(client, clean_products):
         headers=_auth(t2),
     )
     assert res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_replace_images_deletes_removed_objects(client, clean_products, monkeypatch):
+    """교체로 빠진 사진은 Storage에서도 지운다 — 안 지우면 공개 URL로 계속 열린다."""
+    import uuid as _uuid
+
+    from app.products import storage as products_storage
+
+    deleted: list[list[str]] = []
+
+    async def _spy(paths):
+        deleted.append(list(paths))
+        return len(paths)
+
+    monkeypatch.setattr(products_storage, "delete_objects", _spy)
+
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t)
+    t, sid = await _seller_with_prefix(client, admin_t)
+    body = _product_body(sid, cid, n_images=2)
+    pid = (await client.post("/api/v1/sellers/products", json=body, headers=_auth(t))).json()["id"]
+    old = body["image_paths"]
+
+    keep, new_path = old[0], f"{sid}/{_uuid.uuid7()}.jpg"
+    res = await client.put(
+        f"/api/v1/sellers/products/{pid}/images", json={"image_paths": [keep, new_path]}, headers=_auth(t)
+    )
+    assert res.status_code == 200
+
+    # 남긴 사진은 지우지 않고, 빠진 사진만 지운다
+    assert deleted == [[old[1]]], deleted
+
+
+@pytest.mark.asyncio
+async def test_replace_images_survives_storage_failure(client, clean_products, monkeypatch):
+    """Storage 삭제가 실패해도 상품 수정은 성공한다 — 판매자가 수정 자체를 못 하게 되면 안 된다."""
+    import uuid as _uuid
+
+    from app.products import storage as products_storage
+
+    async def _boom(paths):
+        raise RuntimeError("storage down")
+
+    monkeypatch.setattr(products_storage, "delete_objects", _boom)
+
+    admin_t = await _admin_token(client)
+    cid = await _category(client, admin_t)
+    t, sid = await _seller_with_prefix(client, admin_t)
+    body = _product_body(sid, cid, n_images=2)
+    pid = (await client.post("/api/v1/sellers/products", json=body, headers=_auth(t))).json()["id"]
+
+    res = await client.put(
+        f"/api/v1/sellers/products/{pid}/images",
+        json={"image_paths": [f"{sid}/{_uuid.uuid7()}.jpg"]}, headers=_auth(t),
+    )
+    assert res.status_code == 200

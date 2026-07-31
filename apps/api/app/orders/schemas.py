@@ -115,7 +115,10 @@ class OrderSubView(BaseModel):
 
 class DepositInfo(BaseModel):
     grand_total: int  # 잔여 활성분 — 과입금 방지
-    deposit_account: str
+    deposit_account: str  # 서버가 조립한 한 줄 표기 (하위호환)
+    deposit_bank: str = ""
+    deposit_account_no: str = ""
+    deposit_holder: str = ""
     deposit_due_at: datetime
     expired: bool  # 기한 경과 (자동취소 배치 전 창) — 클라는 경고 표시
 

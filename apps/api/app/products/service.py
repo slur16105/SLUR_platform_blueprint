@@ -222,12 +222,24 @@ async def replace_images(session: AsyncSession, seller_id: uuid.UUID, product_id
     )
     if product is None:  # 타인 상품·미존재 구분 없이 404 (존재 노출 방지 — replace_variants와 같은 규칙)
         raise AppError("not_found", "상품을 찾을 수 없습니다.", status_code=404)
+    old_paths = set()
     for img in await session.scalars(select(ProductImage).where(ProductImage.product_id == product_id)):
+        old_paths.add(img.path)
         await session.delete(img)
     await session.flush()  # 삭제를 먼저 반영해야 같은 경로를 재사용해도 충돌하지 않는다
     for order, path in enumerate(paths):
         session.add(ProductImage(product_id=product_id, path=path, sort_order=order))
     await session.commit()
+    # 목록에서 빠진 사진은 Storage에서도 지운다 — 안 지우면 공개 URL로 계속 열린다.
+    # DB 반영 뒤에 하고, 실패해도 되돌리지 않는다(위 delete_objects 주석 참조).
+    removed = sorted(old_paths - set(paths))
+    if removed:
+        from app.products import storage as products_storage
+
+        try:
+            await products_storage.delete_objects(removed)
+        except Exception:  # 어떤 실패도 상품 수정을 되돌리지 않는다 — 고아는 노출 위험일 뿐 정합성 문제가 아니다
+            logger.warning("이미지 %d건 Storage 삭제 실패 (product %s) — 고아로 남음", len(removed), product_id)
     logger.info("product %s images replaced by seller %s (%d)", product_id, seller_id, len(paths))
     return product
 

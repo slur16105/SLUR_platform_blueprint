@@ -13,8 +13,27 @@ export async function PUT(req: NextRequest) {
   const forbidden = assertSameOrigin(req);
   if (forbidden) return forbidden;
 
-  // { value } → 무통장입금 계좌 변경 (FastAPI deposit-account, 성공 시 204)
   const body = await req.json().catch(() => ({}));
+
+  // { op: "deposit-fields", bank, account_no, holder } → 은행·계좌번호·예금주 (정본 경로)
+  if (body.op === "deposit-fields") {
+    const bank = typeof body.bank === "string" ? body.bank.trim() : "";
+    const accountNo = typeof body.account_no === "string" ? body.account_no.trim() : "";
+    const holder = typeof body.holder === "string" ? body.holder.trim() : "";
+    if (!bank || !accountNo || !holder) {
+      return Response.json({ code: "validation_error", message: "은행·계좌번호·예금주를 모두 입력해 주세요.", details: [] }, { status: 422 });
+    }
+    if (bank.length > 100 || accountNo.length > 100 || holder.length > 100) {
+      return Response.json({ code: "validation_error", message: "각 항목은 100자 이내로 입력해 주세요.", details: [] }, { status: 422 });
+    }
+    return proxyWithRefresh(req, "/api/v1/admin/settings/deposit-fields", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bank, account_no: accountNo, holder }),
+    });
+  }
+
+  // { value } → 옛 단일 문자열 경로 (하위호환 — 화면은 더 이상 쓰지 않는다)
   const value = typeof body.value === "string" ? body.value.trim() : "";
   if (value.length < 1 || value.length > 200) {
     return Response.json({ code: "validation_error", message: "계좌 정보는 1~200자로 입력해 주세요.", details: [] }, { status: 422 });

@@ -521,6 +521,21 @@ class DepositAccountUpdate(BaseModel):
     value: str = Field(min_length=1, max_length=200)
 
 
+class DepositFieldsUpdate(BaseModel):
+    """입금 계좌 3필드 — 구매자 안내가 '예금주' 줄을 따로 보여줄 수 있어야 해서 나눴다."""
+
+    bank: str = Field(min_length=1, max_length=100)
+    account_no: str = Field(min_length=1, max_length=100)
+    holder: str = Field(min_length=1, max_length=100)
+
+
+class DepositAccountResponse(BaseModel):
+    bank: str
+    account_no: str
+    holder: str
+    display: str  # 서버 조립 한 줄 표기
+
+
 @router.get("/settings", response_model=SettingsResponse)
 async def admin_list_settings(
     _admin: uuid.UUID = Depends(require_role("admin")),
@@ -528,6 +543,29 @@ async def admin_list_settings(
 ):
     """설정 조회 — deposit_account만 수정 가능, 수치는 표시용 (Slur 승인 범위)."""
     return {"items": await orders_service.list_settings(session)}
+
+
+@router.get("/settings/deposit-account", response_model=DepositAccountResponse)
+async def admin_get_deposit_account(
+    _admin: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> DepositAccountResponse:
+    return DepositAccountResponse(**await orders_service.get_deposit_account(session))
+
+
+@router.put("/settings/deposit-fields", response_model=DepositAccountResponse)
+async def admin_update_deposit_fields(
+    body: DepositFieldsUpdate,
+    admin_id: uuid.UUID = Depends(require_role("admin")),
+    session: AsyncSession = Depends(get_session),
+) -> DepositAccountResponse:
+    """입금 계좌 갱신 — 구매자 주문서·입금 안내가 즉시 새 값을 표시한다."""
+    data = await orders_service.update_deposit_fields(session, admin_id, {
+        orders_service.SETTING_DEPOSIT_BANK: body.bank,
+        orders_service.SETTING_DEPOSIT_ACCOUNT_NO: body.account_no,
+        orders_service.SETTING_DEPOSIT_HOLDER: body.holder,
+    })
+    return DepositAccountResponse(**data)
 
 
 @router.put("/settings/deposit-account", status_code=204)

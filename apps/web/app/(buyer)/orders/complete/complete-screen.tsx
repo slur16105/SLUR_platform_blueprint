@@ -146,6 +146,9 @@ export default function CompleteScreen() {
           <DepositBoxThemed
             amount={deposit.grand_total}
             account={deposit.deposit_account}
+            bank={deposit.deposit_bank}
+            accountNo={deposit.deposit_account_no}
+            holder={deposit.deposit_holder}
             dueAt={deposit.deposit_due_at}
             expired={deposit.expired}
           />
