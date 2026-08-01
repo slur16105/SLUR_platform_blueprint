@@ -240,16 +240,15 @@
 ```
 
 - **FastAPI**가 인증, 권한, 상태 전이, 주문 로직의 유일한 소유자입니다.
-- 구매자·판매자·관리자 웹은 모두 FastAPI API만 호출합니다. (초기 Flutter 구매자 앱은 반응형 웹으로 전환됐으며 `apps/mobile`은 제거 예정)
-- **Supabase**는 향후 매니지드 PostgreSQL 및 Storage 연결 대상으로 두며, Supabase Auth·RLS·Edge Functions는 사용하지 않습니다.
-- 현재 사전 운영 검증의 기본 DB는 운영 Supabase와 분리된 **Docker PostgreSQL**입니다.
+- 구매자·판매자·관리자 웹은 모두 FastAPI API만 호출합니다. (초기 Flutter 구매자 앱은 반응형 웹으로 전환했고, 소스는 `flutter-app-final` 태그에 보존한 뒤 저장소에서 제거했습니다)
+- **Supabase는 매니지드 PostgreSQL과 Storage(상품 이미지)로만 씁니다.** Auth·RLS·Edge Functions는 쓰지 않습니다 — 인증과 권한을 두 곳에서 관리하면 규칙이 갈라지기 때문입니다.
+- 현재 운영 검증의 기본 DB는 운영 Supabase와 분리된 **Docker PostgreSQL**이며, `DATABASE_URL` 교체만으로 전환됩니다.
 
 ## 기술 구성
 
 - API: Python 3.14, FastAPI, SQLAlchemy Async, Alembic, PostgreSQL
-- 웹: Next.js, TypeScript
-- 모바일: Flutter
-- 로컬 통합 실행: Docker Compose
+- 웹: Next.js(App Router), TypeScript — 구매자 반응형 웹 + PWA, 판매자·관리자 콘솔
+- 통합 실행: Docker Compose
 
 ## 빠른 시작 — 로컬 실행
 
@@ -296,10 +295,18 @@ PostgreSQL → Alembic migration → FastAPI → Next.js
 docker compose --profile tools run --rm seed
 ```
 
-- 카테고리 2개와 데모 상품 6개를 생성합니다.
+- 카테고리 2개와 데모 상품 6개, 역할별 데모 계정을 생성합니다.
 - 로컬 환경과 Docker Postgres에서만 실행되도록 보호됩니다.
 - 다시 실행해도 중복 생성하지 않습니다.
 - Supabase Storage를 연결하지 않은 상태에서는 포함된 로컬 데모 이미지를 사용합니다.
+
+데모 계정 — 로컬 전용이며, 로그인 화면의 빠른 로그인 버튼과 같은 값입니다.
+
+| 역할 | 이메일 | 비밀번호 |
+| --- | --- | --- |
+| 관리자 | `local-admin@example.com` | `local-admin-password-2026` |
+| 판매자 | `local-seller@example.com` | `local-seller-password-2026` |
+| 구매자 | `local-buyer@example.com` | `local-buyer-password-2026` |
 
 ### 4. 확인 주소
 
