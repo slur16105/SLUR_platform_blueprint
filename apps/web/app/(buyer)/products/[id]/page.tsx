@@ -10,6 +10,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 
 import { API_BASE } from "@/lib/auth";
 
@@ -29,7 +30,7 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
   }
 }
 
-/* 탭 타이틀 — 상품명·브랜드로. 없는 상품이면 기본 이름으로 둔다(404 화면은 본체가 그린다). */
+/* 탭 타이틀 — 상품명·브랜드로. 없는 상품은 본체에서 notFound()로 끊는다. */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const p = await getJson<{ name?: string; brand_name?: string } | null>(
@@ -43,11 +44,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function ProductDetailPage() {
-  const [categories, cookieStore] = await Promise.all([
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const [product, categories, cookieStore] = await Promise.all([
+    getJson<{ id?: string } | null>(`/api/v1/products/${encodeURIComponent(id)}`, null),
     getJson<NavCategory[]>("/api/v1/products/categories", []),
     cookies(),
   ]);
+  // 없는 상품·숨김 상품은 404로 끊는다. 예전에는 헤더·푸터만 있는 빈 화면이 200으로 나가
+  // 손님은 무엇이 잘못됐는지 알 수 없었고, 검색엔진에도 빈 페이지가 노출됐다.
+  if (!product?.id) notFound();
   const loggedIn = Boolean(cookieStore.get("slur_role"));
 
   return (

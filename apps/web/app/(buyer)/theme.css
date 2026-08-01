@@ -20,6 +20,14 @@
 /* 소스 스캔 범위 — 구매자 폴더 */
 @source "./";
 
+/* 🚨 안내 화면(404·오류·권한 없음)은 (buyer) 밖에 살지만 이 테마를 쓴다.
+   Tailwind v4는 @source로 훑은 파일에서 **실제로 등장한 클래스만** 생성하므로,
+   여기에 적어주지 않으면 그 화면들의 클래스가 통째로 비어 스타일 없는 날것으로 뜬다. */
+@source "../status-screen.tsx";
+@source "../not-found.tsx";
+@source "../error.tsx";
+@source "../(console)/no-role/page.tsx";
+
 /* ── shadcn/ui 디자인 토큰 (neutral 모노크롬) ──────────────────
    shadcn 기본 팔레트와 같은 구조: background/foreground 쌍 + muted/border/ring.
    값은 무채색만 쓴다(색상 0). */

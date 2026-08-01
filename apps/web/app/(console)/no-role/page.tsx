@@ -1,27 +1,43 @@
-import Link from "next/link";
+/* 권한 없음 — 판매자·관리자 화면에 자격 없이 접근했을 때.
 
-import LogoutButton from "@/app/logout-button";
-import SiteFooter from "@/app/site-footer";
+   여기 오는 경로는 둘이다:
+     ① 구매자 계정으로 /seller·/admin 주소를 직접 입력 → 미들웨어가 보낸다
+     ② 승인 직전/직후라 아직 역할이 토큰에 반영되지 않았다
+   "안 됩니다"로 끝내면 사용자는 다음에 뭘 할지 모른다. **막힌 이유와 다음 행동**을 함께 준다:
+   입점하려면 신청, 계정이 잘못됐으면 다시 로그인, 그 외에는 쇼핑을 계속.
 
-/* 판매자·관리자 화면 접근 안내 전용 (D3).
-   정상 로그인 동선에서 구매자가 여기에 도달하는 경로는 없다 —
-   다만 /seller·/admin을 직접 입력하면 미들웨어가 여전히 여기로 보내므로 화면을 남긴다.
-   `쇼핑 계속하기`가 그때의 출구다. 구매자 전용 로그아웃(→ /)은 /me(8.7) 소관이다. */
+   🚨 권한 판정 자체는 FastAPI가 한다(AD-1). 이 화면은 그 결과를 사람이 읽을 말로 옮길 뿐이다. */
+
+import type { Metadata } from "next";
+
+import StatusScreen from "@/app/status-screen";
+
+import "../../(buyer)/theme.css";
+
+export const metadata: Metadata = {
+  title: "접근 권한이 없습니다 — SLUR",
+  robots: { index: false, follow: false },
+};
+
 export default function NoRole() {
   return (
-    <>
-      <main className="page_landing">
-        <h1>접근 권한이 없습니다</h1>
-        <p>이 화면은 판매자·관리자 전용입니다.</p>
-        <p>
-          입점을 원하시면 <Link href="/apply">입점 신청</Link>을 이용해 주세요.
-        </p>
-        <p>
-          <Link href="/">쇼핑 계속하기</Link>
-        </p>
-        <LogoutButton />
-      </main>
-      <SiteFooter />
-    </>
+    <StatusScreen
+      title="접근 권한이 없습니다"
+      message={
+        <>
+          이 화면은 <b className="font-medium text-foreground">판매자·관리자 전용</b>입니다.
+          입점을 원하시면 신청을 남겨 주세요 — 운영자가 확인 후 연락드립니다.
+          <br />
+          이미 판매자라면 <b className="font-medium text-foreground">해당 계정으로 다시 로그인</b>했는지
+          확인해 주세요. 승인 직후에는 다시 로그인해야 권한이 반영됩니다.
+        </>
+      }
+      actions={[
+        { href: "/apply", label: "입점 신청하기", primary: true },
+        { href: "/login", label: "다른 계정으로 로그인" },
+        { href: "/", label: "쇼핑 계속하기" },
+      ]}
+      links={[{ href: "/support", label: "1:1 문의" }]}
+    />
   );
 }
