@@ -60,3 +60,16 @@ docker compose down -v
 이 Compose의 Postgres 볼륨은 빈 로컬 테스트 DB로 시작한다. Railway가 쓰던 서비스 데이터는 Supabase에 남아 있으며 자동 복사하지 않는다. 실제 데이터 복제는 백업·복원 절차와 개인정보 처리 범위를 별도로 확정한 뒤 수행한다.
 
 Supabase Storage를 연결하지 않은 로컬 환경에서 `docker compose --profile tools run --rm seed`로 만든 데모 상품은 Web 정적 자산 `/local-product-images/local-demo.jpg`를 공통 썸네일로 사용한다. 이는 Hub맥 UI 검증용 fallback이며, 운영 환경에서는 Supabase Storage의 실제 상품 이미지를 사용한다.
+
+## 외부 임시 공개 (Cloudflare Quick Tunnel)
+
+내부 검토자에게 잠깐 보여줄 때만 씁니다.
+
+```bash
+cloudflared tunnel --url http://localhost:3000
+```
+
+- 실행할 때마다 **새 주소가 발급**되고, 터널을 끄면 그 주소는 즉시 죽습니다.
+  그래서 README·문서에 주소를 적어두지 않습니다 — 적어두면 반드시 죽은 링크가 됩니다.
+- 상시 공개가 필요하면 Quick Tunnel이 아니라 **Named Tunnel**로 도메인을 붙입니다.
+- 공개 중에는 데모 데이터만 두세요. 빠른 로그인 버튼(`DEV_QUICK_LOGIN`)은 반드시 꺼야 합니다.

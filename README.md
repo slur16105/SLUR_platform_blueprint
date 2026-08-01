@@ -4,34 +4,15 @@
 
 판매자 입점부터 상품·장바구니·주문·반품·정산 준비까지, 실제로 물건을 팔고 운영하는 데 필요한 흐름을 갖췄습니다.
 
-> 현재 상태: **결제(PG)만 붙이면 문을 열 수 있는 단계**입니다. 자체 서버(Docker)에서 운영 검증 중이며, 남은 오픈 게이트는 PG 계약·사업자 실정보 등록·약관 법률 검토·택배사 계약입니다.
+> 현재 상태: **결제(PG)만 붙이면 문을 열 수 있는 단계**입니다. 자체 서버(Docker)로 운영 검증 중이며, 남은 항목은 [남은 오픈 게이트](#남은-오픈-게이트)에 있습니다.
 >
-> *이전 이름은 `SLUR Platform Blueprint`였습니다. "범용 청사진을 뽑는다"는 처음 의도 대신 실서비스로 방향이 굳어 이름을 바꿨습니다(2026-08-01). 기획 문서 폴더·GitHub 주소에는 옛 이름이 남아 있습니다 — 그 시점의 기록이라 그대로 둡니다.*
-
-> **🔗 외부 데모** — 고정 주소가 없습니다. Cloudflare Quick Tunnel은 **켤 때마다 주소가 새로 발급**되고, 터널이 꺼지면 그 주소는 즉시 죽습니다. 그래서 문서에 주소를 박아두지 않습니다.
->
-> 필요할 때 Hub맥에서 터널을 열고, 그때 출력되는 주소를 공유하세요:
-> ```bash
-> cloudflared tunnel --url http://localhost:3000
-> ```
-> 상시 공개가 필요하면 Quick Tunnel 대신 **이름 있는 터널(Named Tunnel)** 로 고정 도메인을 붙이는 것이 맞습니다.
-
-## 무엇을 검증하나요?
-
-- 단일 계정 기반의 구매자·판매자·관리자 역할 모델
-- 이메일 및 카카오 로그인 경계
-- 판매자 입점 신청과 관리자 승인
-- 카테고리, 상품, 옵션 조합, 재고 관리
-- 구매자 상품 탐색, 장바구니, 주문 생성
-- 무통장입금 확인 기반의 주문·배송·취소 운영 흐름
-- 판매자·관리자용 Next.js 콘솔
-- 자체 서버에서의 Docker 통합 실행과 같은 네트워크 다른 기기의 LAN 검토
+> 외부 데모는 고정 주소를 두지 않습니다(임시 터널은 켤 때마다 주소가 바뀝니다). 여는 방법은 [LOCAL_DOCKER.md](LOCAL_DOCKER.md)를 참고하세요.
 
 ## 기능 안내
 
 전체 기능을 화면 단위로 정리합니다. 하나의 계정이 **구매자·판매자·관리자** 역할을 겸할 수 있으며, 구매자는 반응형 웹, 판매자·관리자는 같은 웹의 콘솔 영역에서 역할로 분기합니다.
 
-> **스크린샷** — 로컬 스택(`localhost:3000`)을 실제로 띄우고 데모 데이터를 넣은 뒤 자동 캡처한 화면입니다(`docs/screenshots/`). 재촬영 방법은 [촬영 가이드](#스크린샷-촬영-가이드)를 참고하세요. 데모 계정·시드는 [빠른 시작](#빠른-시작--자체-서버-로컬-검증)에 있습니다.
+> **스크린샷** — 로컬 스택을 실제로 띄우고 데모 데이터를 넣어 캡처한 화면입니다. 데모 계정은 [빠른 시작](#빠른-시작--로컬-실행)에 있습니다.
 
 ### 한눈에 보기
 
@@ -219,26 +200,6 @@
 | --- | --- | --- | --- |
 | ![](docs/screenshots/buyer-orders-mobile.png) | ![](docs/screenshots/buyer-returns-mobile.png) | ![](docs/screenshots/buyer-me-mobile.png) | ![](docs/screenshots/buyer-login-mobile.png) |
 
-### 스크린샷 촬영 가이드
-
-로컬 스택을 띄우고 데모 데이터를 넣은 뒤, 캡처 스크립트를 실행하면 `docs/screenshots/`가 갱신됩니다.
-
-```bash
-# 1) 스택 + 기본 시드
-docker compose up -d --build --wait
-docker compose --profile tools run --build --rm seed
-
-# 2) 화면이 비어 보이지 않도록 데모 데이터 채우기(선택)
-docker compose exec -T api uv run python -m app.local_seed_bulk      # 판매자·상품·주문 34건
-docker compose exec -T api uv run python -m app.local_seed_history   # 과거 30일치 주문(기간 탭 확인용)
-
-# 3) 캡처 (playwright 필요)
-npx playwright install chromium
-node docs/shoot.mjs docs/screenshots
-```
-
-`docs/shoot.mjs`가 역할별로 로그인해 28개 화면을 찍습니다. 파일명은 README의 이미지 경로와 1:1로 맞춰져 있어, 다시 찍으면 문서가 자동으로 갱신됩니다.
-
 ## 아키텍처
 
 ```text
@@ -265,7 +226,7 @@ node docs/shoot.mjs docs/screenshots
 - 모바일: Flutter
 - 로컬 통합 실행: Docker Compose
 
-## 빠른 시작 — 자체 서버 로컬 검증
+## 빠른 시작 — 로컬 실행
 
 ### 준비물
 
@@ -334,20 +295,18 @@ ipconfig getifaddr en0
 
 > LAN URL은 내부 검토용 HTTP 서비스입니다. 라우터 포트포워딩이나 공개 터널을 기본으로 열지 않습니다.
 
-## 검증
+## 테스트
 
 ```bash
+# 스택 연결 점검 — Compose 구성·서비스 준비·API health·웹·BFF
 npm run test
+
+# 도메인 테스트 236개 (주문·결제·반품·권한·집계 등)
+cd apps/api && uv run pytest -q
 ```
 
-이 명령은 Compose 구성, 서비스 준비 상태, API health, 웹 루트, 웹 BFF 카테고리 요청을 통합 점검합니다.
-
-추가 API 테스트는 다음에서 실행합니다.
-
-```bash
-cd apps/api
-uv run pytest -q
-```
+도메인 테스트는 전용 DB(`slur_test`)를 자동으로 만들고 마이그레이션까지 올립니다 —
+개발용 데이터는 건드리지 않습니다.
 
 ## 운영 명령
 
@@ -377,8 +336,8 @@ docker compose down -v
 ```text
 apps/
   api/          FastAPI API, Alembic migration, 도메인 테스트
-  web/          Next.js 판매자·관리자·구매자 웹
-  mobile/       Flutter 구매자 앱
+  web/          Next.js 구매자 웹 + 판매자·관리자 콘솔
+docs/           스크린샷, 변경 보고서, 캡처·데모 데이터 스크립트
 _bmad-output/   PRD, 아키텍처, UX, 구현 산출물
 docker-compose.yml
 LOCAL_DOCKER.md
@@ -389,12 +348,17 @@ LOCAL_DOCKER.md
 - [로컬 Docker 운영 가이드](LOCAL_DOCKER.md)
 - [프로젝트 작업 규칙 및 아키텍처](CLAUDE.md)
 - 기획·PRD·아키텍처 산출물: [`_bmad-output/`](_bmad-output/)
+- 변경 보고서(7/28 이후): [`docs/report-2026-08-01.html`](docs/report-2026-08-01.html)
+- 스크린샷 촬영·데모 데이터 스크립트: [`docs/screenshots/README.md`](docs/screenshots/README.md)
 
-## 현재 제한 사항
+## 남은 오픈 게이트
 
-이 저장소의 로컬 Docker 구성은 **실서비스 운영 가능성 검증용**입니다. 다음 항목은 실제 외부 판매 오픈 전 별도 완료가 필요합니다.
+기능은 갖췄고, 실제 판매를 시작하려면 아래가 필요합니다. 전부 계약·검토 사안입니다.
 
-- PG 결제 연동
-- 사업자 정보와 법률 고지의 실정보 검토
-- 배송·도서산간 정책의 공식 기준 대조
-- 실제 Supabase PostgreSQL·Storage 전환 검증
+- **결제(PG) 연동** — 스키마·호출부·멱등 구조는 준비돼 있고, 결제사 선택 후 어댑터와 웹훅만 붙이면 됩니다. PG 전에는 외부 구매자를 받지 않습니다.
+- **사업자 실정보 등록** — 상호·사업자등록번호·통신판매업 신고번호·대표자·고객센터가 현재 임시값입니다(화면에 `임시 정보`로 표시됩니다).
+- **약관·개인정보처리방침 법률 검토** — 현재 문안은 초안입니다. 개정 시 버전을 올리고 공지사항으로 고지합니다.
+- **택배사 계약** — 계약사의 기준표로 도서산간 우편번호 목록을 최종 정렬합니다.
+- **정산 조건 확정** — 수수료율·지급 주기. 판매자 입점 안내에 들어가는 값이라 PG와 함께 정합니다.
+
+자세한 이력과 판단 근거는 [`deferred-work.md`](_bmad-output/implementation-artifacts/deferred-work.md)에 있습니다.
