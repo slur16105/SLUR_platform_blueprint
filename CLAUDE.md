@@ -37,7 +37,7 @@ cd apps/web && npx tsc --noEmit && npm run lint
 
 ## 아키텍처 (확정)
 
-- **FastAPI(Python)가 유일한 문지기.** 인증(JWT+bcrypt), RBAC, 상태 전이, 주문 로직 전부 FastAPI 소유. Next.js는 FastAPI API만 호출한다.
+- **FastAPI(Python)가 유일한 문지기.** 인증(JWT+argon2), RBAC, 상태 전이, 주문 로직 전부 FastAPI 소유. Next.js는 FastAPI API만 호출한다.
 - **Supabase는 매니지드 Postgres + Storage로만 사용.** Supabase Auth·RLS·Edge Functions는 의도적으로 배제된 결정이다 — 제안하지 말 것.
 - **클라이언트 표면은 Next.js 웹 하나다 (AD-14).** 구매자·판매자·관리자가 같은 앱에서 Role로 갈린다 — 구매자 라우트는 모바일 퍼스트 반응형+PWA, 판매자·관리자 라우트는 PC 폭. (구매자 Flutter 앱은 2026-07-21 코스 코렉션으로 웹 전환, 2026-07-30 저장소에서 제거 — 소스는 태그 `flutter-app-final`에 보존)
 - 계정 모델: 단일 계정 + 역할(구매자/판매자/관리자 중복 보유 가능).
