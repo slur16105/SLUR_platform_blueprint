@@ -28,17 +28,20 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.chat import baseline, rag, retriever  # noqa: E402
+from app.chat import baseline, pipeline, rag, retriever  # noqa: E402
 from app.chat.llm import OllamaProvider  # noqa: E402
 
 EVALSET = Path(__file__).resolve().parents[3] / "docs" / "chatbot-evalset-v1.yaml"
 RESULTS = Path(__file__).resolve().parent.parent / ".eval-results"
 
+# 기대하는 결과. **여러 개를 허용하는 이유**: "모르겠다"와 "사람 연결"은
+# 정책상 같은 결과다(pipeline.py 참조) — 모르면 담당자에게 넘긴다.
+# 채점이 정책과 어긋나면 잘 만든 것을 오답으로 세게 된다.
 EXPECTED = {
-    "doc_answer": "answer",
-    "no_answer": "unknown",
-    "escalate": "escalate",
-    "api_lookup": "tool",
+    "doc_answer": {"answer"},
+    "no_answer": {"unknown", "escalate"},
+    "escalate": {"escalate"},
+    "api_lookup": {"tool"},
 }
 # 이 유형에서 'answer'가 나오면 지어낸 것이다 — 정답률과 별개로 따로 센다
 HALLUCINATION_TYPES = {"no_answer", "api_lookup"}
@@ -48,40 +51,45 @@ async def run(args) -> dict:
     data = yaml.safe_load(EVALSET.read_text(encoding="utf-8"))
     items = [i for i in data["items"] if not args.only or i["type"] == args.only]
     provider = OllamaProvider(model=args.model)
-    ret = retriever.load_index() if args.mode == "rag" else None
+    ret = retriever.load_index() if args.mode in ("rag", "pipeline") else None
 
     rows, started = [], time.monotonic()
     for n, item in enumerate(items, 1):
         t0 = time.monotonic()
-        hits = []
+        hits, gate = [], ""
         try:
-            if ret is None:
+            if args.mode == "baseline":
                 reply = await baseline.answer(provider, item["q"])
-            else:
+            elif args.mode == "rag":
                 out = await rag.answer(provider, ret, item["q"], k=args.k, min_score=args.min_score)
                 reply, hits = out.reply, out.hits
+            else:  # pipeline — 관문을 통과한 최종 결과. 'unknown'은 사람 연결로 흡수된다
+                r = await pipeline.answer(provider, ret, item["q"], k=args.k, min_score=args.min_score)
+                reply = {"action": r.outcome, "answer": r.answer, "cited_ids": r.cited_ids}
+                hits, gate = r.hits, r.gate
         except Exception as exc:  # 한 문항이 죽어도 나머지는 돌아야 한다
             reply = {"action": "error", "answer": f"{type(exc).__name__}: {exc}", "cited_ids": []}
 
         want = EXPECTED[item["type"]]
-        ok = reply["action"] == want
+        ok = reply["action"] in want
         gold = item["gold"]
         found = [h.doc.locator for h in hits]
         rows.append({
             "id": item["id"], "q": item["q"], "type": item["type"],
-            "want": want, "got": reply["action"], "ok": ok,
+            "want": "/".join(sorted(want)), "got": reply["action"], "ok": ok,
             "answer": reply["answer"],
             "gold": gold, "found": found,
             # gold가 있는 문항만 검색 채점 대상. 없는 문항은 '가장 높은 점수'가
             # 임계값을 정하는 재료가 된다 (관련 없는 문서가 몇 점까지 올라오는가)
             "retrieval_ok": (any(g in found for g in gold) if gold else None),
             "top_score": round(hits[0].score, 3) if hits else None,
+            "gate": gate,
             "sec": round(time.monotonic() - t0, 1),
         })
         mark = "✅" if ok else "❌"
         rmark = {True: "🔎", False: "🚫", None: "  "}[rows[-1]["retrieval_ok"]]
         print(f"  [{n:2}/{len(items)}] {mark}{rmark} {item['id']} "
-              f"{want}→{reply['action']:9} {rows[-1]['sec']:>4}s  {item['q'][:26]}")
+              f"{rows[-1]['want'][:16]:16}→{reply['action']:9} {rows[-1]['sec']:>4}s  {item['q'][:24]}")
 
     return {"mode": args.mode, "model": args.model, "k": args.k, "min_score": args.min_score,
             "elapsed": round(time.monotonic() - started, 1), "rows": rows}
@@ -93,7 +101,9 @@ def report(res: dict) -> int:
     lies = [r for r in rows if r["type"] in HALLUCINATION_TYPES and r["got"] == "answer"]
     missed = [r for r in rows if r["type"] == "escalate" and r["got"] != "escalate"]
 
-    label = "기준선(검색 없음)" if res["mode"] == "baseline" else f"RAG (k={res['k']}, 하한 {res['min_score']})"
+    label = {"baseline": "기준선(검색 없음)",
+             "rag": f"RAG (k={res['k']}, 하한 {res['min_score']})",
+             "pipeline": f"파이프라인 (관문 적용, k={res['k']}, 하한 {res['min_score']})"}[res["mode"]]
     print(f"\n{'=' * 64}\n{label} · {res['model']}   총 {res['elapsed']}초\n{'=' * 64}")
     print(f"정답률   {ok}/{total}  ({ok / total * 100:.0f}%)")
     per = Counter()
@@ -133,6 +143,12 @@ def report(res: dict) -> int:
             found = "검색 성공" if r["retrieval_ok"] else ("검색 실패" if r["retrieval_ok"] is False else "")
             print(f"     {r['id']} {r['want']}→{r['got']:9} {found:9} {r['q'][:32]}")
 
+    gates = Counter(r["gate"] for r in rows if r["gate"])
+    if gates:
+        print("\n관문별 결과 (어디서 갈렸나)")
+        for g, n in gates.most_common():
+            print(f"  {g:18} {n}건")
+
     RESULTS.mkdir(exist_ok=True)
     out = RESULTS / f"{res['mode']}-{res['model'].replace(':', '_')}.json"
     out.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -142,7 +158,7 @@ def report(res: dict) -> int:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--mode", choices=["baseline", "rag"], default="baseline")
+    p.add_argument("--mode", choices=["baseline", "rag", "pipeline"], default="baseline")
     p.add_argument("--model", default="llama3.1:8b")
     p.add_argument("--k", type=int, default=5, help="검색으로 가져올 조각 수")
     p.add_argument("--min-score", type=float, default=0.0, help="이 점수 미만은 버린다")
