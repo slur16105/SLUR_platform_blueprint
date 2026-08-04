@@ -185,7 +185,7 @@ async def list_pending_orders(
     buyers = await auth_service.get_users_by_ids(session, list({r["user_id"] for r in data["items"]}))
     for row in data["items"]:  # buyer enrich — 결측·email NULL 방어 (탈퇴·소셜 전용 계정)
         buyer = buyers.get(row.pop("user_id"))
-        row["buyer_name"] = (buyer.name if buyer else "") or "(알 수 없는 사용자)"
+        row["buyer_name"] = auth_service.display_name(buyer)
         row["buyer_email"] = (buyer.email if buyer else "") or ""
     return data
 
@@ -320,7 +320,7 @@ async def admin_search_orders(
     buyers = await auth_service.get_users_by_ids(session, list({r["user_id"] for r in data["items"]}))
     for row in data["items"]:
         buyer = buyers.get(row.pop("user_id"))
-        row["buyer_name"] = (buyer.name if buyer else "") or "(알 수 없는 사용자)"
+        row["buyer_name"] = auth_service.display_name(buyer)
         row["buyer_email"] = (buyer.email if buyer else "") or ""
     return data
 
@@ -350,7 +350,7 @@ async def admin_order_detail(
     view = await orders_service.admin_get_order(session, order_id)
     buyers = await auth_service.get_users_by_ids(session, [view["user_id"]])
     buyer = buyers.get(view.pop("user_id"))
-    view["buyer_name"] = (buyer.name if buyer else "") or "(알 수 없는 사용자)"
+    view["buyer_name"] = auth_service.display_name(buyer)
     view["buyer_email"] = (buyer.email if buyer else "") or ""
     return view
 

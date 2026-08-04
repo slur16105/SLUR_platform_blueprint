@@ -148,3 +148,14 @@ async def delete_items(session: AsyncSession, user_id: uuid.UUID, item_ids: list
         sa_delete(CartItem).where(CartItem.user_id == user_id, CartItem.id.in_(item_ids))
     )
     return result.rowcount
+
+
+async def purge_for_user(session: AsyncSession, user_id: uuid.UUID) -> int:
+    """회원의 장바구니 전부 삭제 — 회원 탈퇴가 호출한다. 삭제 행 수 반환.
+
+    delete_items와 같은 규약: 트랜잭션·commit은 호출자가 소유한다 (AD-10).
+    """
+    from sqlalchemy import delete as sa_delete
+
+    result = await session.execute(sa_delete(CartItem).where(CartItem.user_id == user_id))
+    return result.rowcount

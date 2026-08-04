@@ -120,3 +120,16 @@ async def delete(session: AsyncSession, user_id: uuid.UUID, address_id: uuid.UUI
         if nxt is not None:
             nxt.is_default = True
     await session.commit()
+
+
+async def purge_for_user(session: AsyncSession, user_id: uuid.UUID) -> int:
+    """회원의 주소록 전부 삭제 — 회원 탈퇴가 호출한다. 삭제 행 수 반환.
+
+    트랜잭션·commit은 호출자(auth)가 소유한다 (AD-10) — 익명화와 한 트랜잭션이어야
+    "주소는 지워졌는데 회원 정보는 남은" 중간 상태가 생기지 않는다.
+    auth가 Address 모델을 직접 만지지 않도록 이 함수가 경계 역할을 한다 (AD-2).
+    """
+    from sqlalchemy import delete as sa_delete
+
+    result = await session.execute(sa_delete(Address).where(Address.user_id == user_id))
+    return result.rowcount

@@ -136,7 +136,7 @@ async def _enrich(session: AsyncSession, items: list[dict]) -> list[dict]:
     users = await auth_service.get_users_by_ids(session, list({i["user_id"] for i in items}))
     for i in items:
         u = users.get(i["user_id"])
-        i["buyer_name"] = (u.name if u else "") or "(알 수 없는 사용자)"
+        i["buyer_name"] = auth_service.display_name(u)  # 탈퇴 회원은 "(탈퇴한 회원)"으로 갈린다
         i["buyer_email"] = (u.email if u else "") or ""
     return items
 

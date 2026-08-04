@@ -19,6 +19,7 @@ import { BROKER_NOTICE, COMPANY } from "@/app/config/company";
 import AccountCardThemed from "./account-card-themed";
 import AddressBook from "./address-book";
 import LogoutButtonThemed from "./logout-button-themed";
+import WithdrawSection from "./withdraw-section";
 import { SiteFooter, SiteHeader } from "../site-chrome";
 import type { NavCategory } from "../labels";
 
@@ -94,6 +95,10 @@ export default async function MePage() {
           <div className="mt-8">
             <LogoutButtonThemed />
           </div>
+
+          {/* 탈퇴는 로그아웃 아래, 화면 맨 끝에 둔다 — 되돌릴 수 없는 동작이라
+              메뉴 사이에 섞이면 잘못 누른다 */}
+          <WithdrawSection />
         </div>
 
         {/* 우 — 사업자 정보 + 중개자 고지 (FR-31·32). API 없이 선다. */}

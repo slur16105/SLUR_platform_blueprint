@@ -21,6 +21,10 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)  # NULL = 소셜 전용
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # 탈퇴 시각. NULL = 정상 회원. 값이 있으면 위 개인정보 칸은 이미 비워진 상태다.
+    # 행을 지우지 않는 이유는 orders·user_agreements 등의 FK가 RESTRICT이기 때문 —
+    # 거래·법정 기록은 보존하고 사람만 지운다. 되돌리는 경로는 만들지 않는다(복구 없음).
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False

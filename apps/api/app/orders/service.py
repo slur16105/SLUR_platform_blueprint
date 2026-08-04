@@ -1408,3 +1408,27 @@ async def order_items_by_ids(session: AsyncSession, item_ids: list[uuid.UUID]) -
 async def is_delivered(shipping_status: str | None) -> bool:
     """배송 완료 여부 — 상태 문자열을 타 도메인이 직접 비교하지 않게 한다."""
     return shipping_status == t.SUB_DELIVERED
+
+
+async def has_open_orders(session: AsyncSession, user_id: uuid.UUID) -> bool:
+    """탈퇴를 막아야 하는 진행 중 주문이 있는가 (회원 탈퇴 게이트).
+
+    막는 것은 **아직 오갈 것이 남은** 주문뿐이다:
+      - 입금 대기 — 돈이 들어올 수 있다
+      - 활성 라인이 있는 묶음의 배송이 preparing·shipping — 물건이 가는 중이다
+
+    배송완료·전체취소는 끝난 거래라 막지 않는다. 기록은 어차피 보존되고,
+    끝난 주문까지 막으면 5년 동안 아무도 탈퇴할 수 없다.
+    """
+    return bool(await session.scalar(
+        select(
+            exists().where(
+                Order.user_id == user_id,
+                (Order.payment_status == t.ORDER_PENDING_PAYMENT)
+                | (
+                    (Order.payment_status == t.ORDER_PAID)
+                    & _active_sub_sq(Order.id, SubOrder.shipping_status.in_([t.SUB_PREPARING, t.SUB_SHIPPING]))
+                ),
+            )
+        )
+    ))

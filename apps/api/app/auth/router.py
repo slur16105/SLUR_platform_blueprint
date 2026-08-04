@@ -58,3 +58,15 @@ async def me(
 ) -> MeResponse:
     user = await service.get_user(session, user_id)
     return MeResponse(id=user.id, email=user.email, name=user.name, phone=user.phone)
+
+
+@router.delete("/me", status_code=204)
+async def withdraw(
+    user_id: uuid.UUID = Depends(get_current_user_id), session: AsyncSession = Depends(get_session)
+) -> None:
+    """회원 탈퇴 — 개인정보 파기(주문 기록은 법정 보존 기간 동안 남는다).
+
+    본문이 없다. 무엇을 지울지 고를 수 없는 동작이라 옵션이 없고, 확인 절차는 화면의 책임이다.
+    차단(진행 중 주문·반품, 판매자 계정)은 409로 나가며 message가 그대로 사용자에게 보일 문구다.
+    """
+    await service.withdraw(session, user_id)

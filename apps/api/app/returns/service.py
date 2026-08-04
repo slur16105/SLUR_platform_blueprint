@@ -13,7 +13,7 @@ import logging
 import uuid
 from datetime import timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -197,6 +197,19 @@ async def count_open(session: AsyncSession) -> int:
     return int(await session.scalar(
         select(func.count()).select_from(ReturnRequest).where(ReturnRequest.status == STATUS_REQUESTED)
     ) or 0)
+
+
+async def has_open_returns(session: AsyncSession, user_id: uuid.UUID) -> bool:
+    """탈퇴를 막아야 하는 처리 중 반품·교환이 있는가 (회원 탈퇴 게이트).
+
+    OPEN_STATUSES(requested·approved)만 막는다 — 아직 회수·환불이 오갈 것이 남은 건이다.
+    rejected·completed는 끝난 건이라 막지 않는다(기록은 어차피 보존된다).
+    """
+    return bool(await session.scalar(
+        select(
+            exists().where(ReturnRequest.user_id == user_id, ReturnRequest.status.in_(OPEN_STATUSES))
+        )
+    ))
 
 
 _ALLOWED = {  # 상태 전이표 — 주문 도메인과 같은 방식으로 표에 못박는다
