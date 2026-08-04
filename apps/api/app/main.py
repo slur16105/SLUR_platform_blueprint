@@ -10,6 +10,7 @@ from app.addresses.router import router as addresses_router
 from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
 from app.carts.router import router as carts_router
+from app.chat.router import router as chat_router
 from app.core.config import get_settings
 from app.core.db import engine
 from app.core.errors import AppError, CODE_SERVICE_UNAVAILABLE, register_error_handlers
@@ -101,3 +102,4 @@ app.include_router(notice_router, prefix=API_V1)
 app.include_router(notice_admin_router, prefix=API_V1)
 app.include_router(returns_router, prefix=API_V1)
 app.include_router(returns_admin_router, prefix=API_V1)
+app.include_router(chat_router, prefix=API_V1)  # 로컬 검증 전용 — chat_enabled 기본 꺼짐

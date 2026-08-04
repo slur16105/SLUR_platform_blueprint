@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     kakao_rest_api_key: str = ""
     kakao_client_secret: str = ""
     kakao_app_id: int = 0  # 콘솔 앱 ID — 네이티브 토큰 app_id 검증용
+    # 챗봇 (로컬 검증 전용) — **기본 꺼짐**. Ollama는 개발 머신에만 있어서
+    # 배포 환경(Hub맥)에서 켜면 전부 503이 된다. 켜는 것은 로컬 .env에서만 한다.
+    chat_enabled: bool = False
+    chat_model: str = "qwen3:14b"
+    chat_think: bool = False  # 추론 모델의 '생각하기'. 실측상 끄는 편이 더 정확하고 4배 빨랐다
+    chat_top_k: int = 5
+    chat_min_score: float = 0.60  # 이보다 안 닮았으면 근거 없음으로 본다
+    chat_ollama_url: str = "http://localhost:11434"
     # 서버측 redirect_uri allowlist — 콘솔 등록 목록에만 의존하지 않는다 (코드 주입 방어)
     kakao_redirect_uris: list[str] = ["http://localhost:3000/auth/kakao/callback"]
 

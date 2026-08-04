@@ -15,6 +15,7 @@ import { cookies } from "next/headers";
 import { API_BASE } from "@/lib/auth";
 import { BROKER_NOTICE, COMPANY } from "@/app/config/company";
 
+import ChatBox from "./chat-box";
 import { FAQ_GROUPS } from "./faq-content";
 import { SiteFooter, SiteHeader } from "../site-chrome";
 import type { NavCategory } from "../labels";
@@ -90,6 +91,9 @@ export default async function FaqPage() {
             </div>
           </section>
         ))}
+
+        {/* 안내 도우미 — 서버가 꺼져 있으면 아무것도 그리지 않는다(로컬 검증 전용) */}
+        <ChatBox />
 
         {/* 더 물을 곳 — 여기서만 연락처를 노출한다(정본은 config/company.ts) */}
         <section className="border border-border p-7">
