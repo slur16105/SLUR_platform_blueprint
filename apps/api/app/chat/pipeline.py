@@ -5,9 +5,10 @@
 사용자에게 다음 행동이 남아야 한다.
 
     질문
-      ├─ 관문1  비슷한 문서가 있나?        없음 ──► 👤
-      ├─ 관문2  모델이 답할 수 있다 하나?   아니오 ─► 👤
-      └─ 통과                                     ──► 💬
+      ├─ 관문0  검색에 태울 질문인가?       처리요구 ─► 👤   조회 ─► 🔧
+      ├─ 관문1  비슷한 문서가 있나?        없음 ────► 👤
+      ├─ 관문2  모델이 답할 수 있다 하나?   아니오 ──► 👤
+      └─ 통과                                       ──► 💬
 
 🚨 관문1은 **모델을 부르기 전에** 코드로 막는다. 실측에서 문서가 0개인데도
    모델이 답을 지어낸 사례가 나왔다(B05 "상품 후기 어디에 써요?" → 없는 안내를 창작).
@@ -20,7 +21,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-from app.chat import prompts
+from app.chat import prompts, triage
 from app.chat.llm import Provider
 from app.chat.retriever import Hit, Retriever
 
@@ -28,6 +29,9 @@ from app.chat.retriever import Hit, Retriever
 Outcome = Literal["answer", "escalate", "tool"]
 
 ESCALATE_MESSAGE = "제가 정확히 답변드리기 어려운 내용이에요. 담당자에게 전달해 드릴까요?"
+# 조회는 아직 도구가 없다. 붙기 전까지는 사람이 안전한 기본값이다 —
+# "재고 있습니다"를 지어내는 것보다 담당자에게 넘기는 편이 낫다.
+LOOKUP_MESSAGE = "지금 값을 확인해야 하는 내용이에요. 담당자에게 전달해 드릴까요?"
 
 
 @dataclass
@@ -46,6 +50,13 @@ async def answer(
     k: int = 5,
     min_score: float = 0.60,
 ) -> Result:
+    # ── 관문 0 · 검색에 태울 질문이 아니다 (검색·모델 호출 없음) ──
+    lane = triage.route(question)
+    if lane == "escalate":
+        return Result("escalate", ESCALATE_MESSAGE, gate="triage_escalate")
+    if lane == "lookup":
+        return Result("tool", LOOKUP_MESSAGE, gate="triage_lookup")
+
     hits = await retriever.search(question, k=k, min_score=min_score)
 
     # ── 관문 1 · 근거가 아예 없다 (모델 호출 없음) ──
