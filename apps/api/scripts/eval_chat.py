@@ -50,7 +50,7 @@ HALLUCINATION_TYPES = {"no_answer", "api_lookup"}
 async def run(args) -> dict:
     data = yaml.safe_load(EVALSET.read_text(encoding="utf-8"))
     items = [i for i in data["items"] if not args.only or i["type"] == args.only]
-    provider = OllamaProvider(model=args.model)
+    provider = OllamaProvider(model=args.model, think=args.think)
     ret = retriever.load_index() if args.mode in ("rag", "pipeline") else None
 
     rows, started = [], time.monotonic()
@@ -92,6 +92,7 @@ async def run(args) -> dict:
               f"{rows[-1]['want'][:16]:16}→{reply['action']:9} {rows[-1]['sec']:>4}s  {item['q'][:24]}")
 
     return {"mode": args.mode, "model": args.model, "k": args.k, "min_score": args.min_score,
+            "think": args.think,
             "elapsed": round(time.monotonic() - started, 1), "rows": rows}
 
 
@@ -150,7 +151,8 @@ def report(res: dict) -> int:
             print(f"  {g:18} {n}건")
 
     RESULTS.mkdir(exist_ok=True)
-    out = RESULTS / f"{res['mode']}-{res['model'].replace(':', '_')}.json"
+    suffix = "" if res.get("think") is None else ("-think" if res["think"] else "-nothink")
+    out = RESULTS / f"{res['mode']}-{res['model'].replace(':', '_')}{suffix}.json"
     out.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n결과 저장: .eval-results/{out.name}")
     return 0 if not lies and not missed else 1
@@ -163,6 +165,8 @@ def main() -> int:
     p.add_argument("--k", type=int, default=5, help="검색으로 가져올 조각 수")
     p.add_argument("--min-score", type=float, default=0.0, help="이 점수 미만은 버린다")
     p.add_argument("--only", choices=list(EXPECTED))
+    p.add_argument("--think", type=lambda v: v.lower() == "true", default=None,
+                   help="추론 모델의 '생각하기' 강제 on/off (기본: 모델 기본값)")
     a = p.parse_args()
     return report(asyncio.run(run(a)))
 

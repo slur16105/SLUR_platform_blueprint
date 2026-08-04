@@ -51,8 +51,12 @@ class OllamaProvider:
     """로컬 Ollama. 맥에서는 **네이티브 설치**여야 GPU(Metal)를 쓴다 —
     도커 안에 넣으면 리눅스 VM이라 Metal이 전달되지 않아 몇 배 느려진다."""
 
-    def __init__(self, model: str, base_url: str = "http://localhost:11434", timeout: float = 120.0):
+    def __init__(self, model: str, base_url: str = "http://localhost:11434", timeout: float = 300.0,
+                 think: bool | None = None):
         self.model = model
+        # qwen3 계열은 기본이 '생각하기 켬'이라 짧은 답에도 추론 토큰을 잔뜩 쓴다.
+        # 우리는 판정(action)과 한두 문장이 전부라 대개 끌 만하다. None이면 모델 기본값.
+        self.think = think
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
 
@@ -67,6 +71,8 @@ class OllamaProvider:
             "stream": False,
             "options": {"temperature": 0},  # 평가는 재현 가능해야 한다
         }
+        if self.think is not None:
+            payload["think"] = self.think
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 res = await client.post(f"{self.base_url}/api/chat", json=payload)
